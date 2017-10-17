@@ -2,8 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class AsteroidCtrl : DrillableObject
-{
+public class AsteroidCtrl : DrillableObject {
 	/* Fields */
 	#region
 	[Header("References to objects and components.")]
@@ -21,8 +20,9 @@ public class AsteroidCtrl : DrillableObject
 	public ChunkCoordinates chunkRef;
 	[HideInInspector]
 	public int chunkPart;
+
 	[HideInInspector]
-	public Vector2 Position {get {return (Vector2)transform.position; }}
+	public Vector2 Position { get { return (Vector2)transform.position; } }
 
 	[Header("Properties of the asteroid.")]
 	[Tooltip("Picks a random value between given value and negative given value to determine its rotation speed")]
@@ -30,32 +30,28 @@ public class AsteroidCtrl : DrillableObject
 	private float spinSpeed;
 	[Tooltip("Health decreases when taking damage such as via drilling. When it reaches 0 the asteroid is destroyed.")]
 	public float health;
-	private bool isBeingDrilled;
 	#endregion
 
-	void Awake()
-	{
+	void Awake() {
 		//pick a random sprite from given list of sprites
 		sprRend.sprite = shapes[Random.Range(0, shapes.Length)];
 		spinSpeed = Mathf.Pow(Random.Range(-1f, 1f), 3f) * spinSpeedRange;
 	}
 
-	void Update()
-	{
-		transform.Rotate(Vector3.forward * spinSpeed * Time.deltaTime);
+	public void Update() {
+		if (!beingDrilled) {
+			transform.Rotate(Vector3.forward * spinSpeed * Time.deltaTime);
+		}
 	}
 
-	void OnTriggerEnter2D(Collider2D other)
-	{
-		if (other.CompareTag("DeadZone"))
-		{
+	void OnTriggerEnter2D(Collider2D other) {
+		if (other.CompareTag("DeadZone")) {
 			DestroySelf(false);
 		}
 	}
 
 	//initialises variables given by the generator
-	public void ChunkRefInit(ChunkCoordinates chCoord, int part, AsteroidGenerator astGen)
-	{
+	public void ChunkRefInit(ChunkCoordinates chCoord, int part, AsteroidGenerator astGen) {
 		chunkRef = chCoord;
 		chunkPart = part;
 		asterGen = astGen;
@@ -64,33 +60,27 @@ public class AsteroidCtrl : DrillableObject
 	}
 
 	//if colliding with other asteroids, it will try to find a new empty position
-	private void MoveToFreePosition(int part)
-	{
+	private void MoveToFreePosition(int part) {
 		int freezeCheck = 0;
 		//pick a direction
 		int angle = Random.Range(0, 360);
 		Vector3 move = new Vector3(Mathf.Sin(Mathf.Deg2Rad * angle), Mathf.Cos(Mathf.Deg2Rad * angle), 0f);
 		//move in that direction until no longer colliding
-		while (CheckCollision())
-		{
+		while (CheckCollision()) {
 			transform.position += move * col.radius;
 
 			freezeCheck++;
-			if (freezeCheck >= Cnsts.FREEZE_LIMIT)
-			{
+			if (freezeCheck >= Cnsts.FREEZE_LIMIT) {
 				break;
 			}
 		}
 	}
 
 	//checks if colliding with "Solid" (such as other asteroids except itself)
-	private bool CheckCollision()
-	{
+	private bool CheckCollision() {
 		foreach (Collider2D other in 
-			Physics2D.OverlapCircleAll(col.bounds.center, col.radius * 2f, 1 << LayerMask.NameToLayer("Solid")))
-		{
-			if (other.gameObject != gameObject)
-			{
+			Physics2D.OverlapCircleAll(col.bounds.center, col.radius * 2f, 1 << LayerMask.NameToLayer("Solid"))) {
+			if (other.gameObject != gameObject) {
 				return true;
 			}
 		}
@@ -99,20 +89,16 @@ public class AsteroidCtrl : DrillableObject
 
 	//tells the generator that it will destroy itself, then does so.
 	//Explode boolean determines whether particle effects should be made
-	public void DestroySelf(bool explode)
-	{
+	public void DestroySelf(bool explode) {
 		asterGen.DestroyAsteroid(chunkRef, chunkPart);
-		if (explode)
-		{
+		if (explode) {
 			//particle effect stuff or something
 		}
 		Destroy(gameObject, 0f);
 	}
 
-	private bool CheckHealth()
-	{
-		if (health <= 0f)
-		{
+	private bool CheckHealth() {
+		if (health <= 0f) {
 			DestroySelf(true);
 			return true;
 		}
@@ -120,9 +106,19 @@ public class AsteroidCtrl : DrillableObject
 	}
 
 	//take the damage and if health drops to 0 then signal that this asteroid will be destroyed
-	public override bool TakeDrillDamage(float damage)
-	{
+	public override bool TakeDrillDamage(float damage) {
+		base.TakeDrillDamage(damage);
 		health -= damage;
 		return CheckHealth();
+	}
+
+	//shake the sprite in response to being drilled
+	public override void Shake() {
+		ShakeEffect.Shake(sprRend.transform, 0.02f);
+		base.Shake();
+	}
+
+	public override void ShakeReset() {
+		sprRend.transform.localPosition = Vector2.zero;
 	}
 }
