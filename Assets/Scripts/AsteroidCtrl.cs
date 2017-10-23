@@ -10,8 +10,6 @@ public class AsteroidCtrl : DrillableObject {
 	public Sprite[] shapes;
 	[Tooltip("Reference to the sprite renderer of the asteroid.")]
 	public SpriteRenderer sprRend;
-	[Tooltip("Reference to the CircleCollider2D of the asteroid.")]
-	public CircleCollider2D col;
 	//reference to the asteroid generator (to be given by the generator upon creation)
 	private AsteroidGenerator asterGen;
 
@@ -67,7 +65,7 @@ public class AsteroidCtrl : DrillableObject {
 		Vector3 move = new Vector3(Mathf.Sin(Mathf.Deg2Rad * angle), Mathf.Cos(Mathf.Deg2Rad * angle), 0f);
 		//move in that direction until no longer colliding
 		while (CheckCollision()) {
-			transform.position += move * col.radius;
+//			transform.position += move * col.radius;
 
 			freezeCheck++;
 			if (freezeCheck >= Cnsts.FREEZE_LIMIT) {
@@ -78,12 +76,12 @@ public class AsteroidCtrl : DrillableObject {
 
 	//checks if colliding with "Solid" (such as other asteroids except itself)
 	private bool CheckCollision() {
-		foreach (Collider2D other in 
-			Physics2D.OverlapCircleAll(col.bounds.center, col.radius * 2f, 1 << LayerMask.NameToLayer("Solid"))) {
-			if (other.gameObject != gameObject) {
-				return true;
-			}
-		}
+//		foreach (Collider2D other in 
+//			Physics2D.OverlapCircleAll(col.bounds.center, col.radius * 2f, 1 << LayerMask.NameToLayer("Solid"))) {
+//			if (other.gameObject != gameObject) {
+//				return true;
+//			}
+//		}
 		return false;
 	}
 

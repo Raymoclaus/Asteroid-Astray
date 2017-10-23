@@ -81,6 +81,53 @@ public struct ChunkCoordinates
 		return new Vector2[] { min * Cnsts.CHUNK_SIZE, max * Cnsts.CHUNK_SIZE };
 	}
 
+	public bool IsValid() {
+		return direction >= 0 && direction <= 3 && x >= 0 && y >= 0;
+	}
+
+	public ChunkCoordinates Validate() {
+		if (!IsValid()) {
+			//fix direction to be within bounds
+			direction = Mathf.Abs(direction) % 4;
+			//adjust direction if x is not valid
+			if (x < 0) {
+				switch (direction) {
+					case 0:
+						direction = 1;
+						break;
+					case 1:
+						direction = 0;
+						break;
+					case 2:
+						direction = 3;
+						break;
+					case 3:
+						direction = 2;
+						break;
+				}
+				x = Mathf.Abs(x) - 1;
+			}
+			//adjust direction if y is not valid
+			if (y < 0) {
+				switch (direction) {
+					case 0:
+						direction = 2;
+						break;
+					case 1:
+						direction = 3;
+						break;
+					case 2:
+						direction = 0;
+						break;
+					case 3:
+						direction = 1;
+						break;
+				}
+			}
+		}
+		return this;
+	}
+
 	public override string ToString()
 	{
 		return string.Format(string.Format("Direction: {0}, Coordinates({1}, {2})", direction, x, y));

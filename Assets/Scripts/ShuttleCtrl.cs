@@ -4,18 +4,12 @@ using UnityEngine;
 
 public class ShuttleCtrl : MonoBehaviour {
 	/* Fields */
-
 	#region
 	[Header("Required references")]
 	[Tooltip("Requires reference to the CircleCollider2D on the shuttle.")]
 	public CircleCollider2D col;
 	[Tooltip("Requires reference to the SpriteRenderer of the shuttle.")]
 	public SpriteRenderer sprRend;
-
-	//define movement types
-	private enum MovementType { TypeA, TypeB }
-	//moveType determines the controls for basic movement
-	private MovementType moveType;
 
 	[Header("Movement related")]
 	[Tooltip("Rate of speed accumulation when moving forward.")]
@@ -24,16 +18,14 @@ public class ShuttleCtrl : MonoBehaviour {
 	public float deceleration;
 	[Tooltip("If speed is higher than this limit then deceleration is increased to compensate.")]
 	public float speedLimit;
-	[Tooltip("The angle at which the shuttle can steer.")]
-	public float rotationSpeed;
-	[Tooltip("Rate of speed accumulation when moving in reverse.")]
-	public float reverseAcceleration;
-	[Tooltip("If speed is lower (negatively) than this limit then deceleration towards 0 is increased to compensate.")]
-	public float reverseLimit;
-	//currentSpeed: the above variables contribute to calculate this
-	private float currentSpeed;
+	//maximum rotation speed
+	public float maxRotSpeed = 120f;
 	//the rotation that the shuttle should be at
 	private Vector3 rot;
+	//the velocity of the shuttle
+	private Vector3 vel;
+	//force of acceleration via the shuttle
+	private Vector3 accel;
 	//used to calculate where to move each frame
 	private Vector3 calcPos;
 	//player can only turn if these conditions are met
@@ -48,7 +40,7 @@ public class ShuttleCtrl : MonoBehaviour {
 	private float dashSpeed;
 	//whether the shuttle is above speed limit
 	//This can be true during a dash and as you begin decelerating back to the speed limit
-	private bool Speeding { get { return currentSpeed > speedLimit; } }
+	private bool Speeding { get { return vel.magnitude > speedLimit; } }
 
 	[Header("Drill Attack related")]
 	[Tooltip("Reference to the object at the drill's position.")]
@@ -67,17 +59,11 @@ public class ShuttleCtrl : MonoBehaviour {
 	private bool drilling;
 	//reference to object being drilled if any
 	private DrillableObject drilledObject;
-
 	#endregion
-
-	void Start() {
-		//grab the player preference for move type
-		SetMovementType((MovementType)PlayerPrefs.GetInt("MoveType", 0));
-	}
 
 	void Update() {
 		if (Input.GetKeyDown(KeyCode.Space)) {
-			if (!Speeding) {
+			if (!Dashing) {
 				usingDrill = true;
 				dashTime = drillDashTime;
 				dashSpeed = drillDashSpeed;
@@ -105,109 +91,66 @@ public class ShuttleCtrl : MonoBehaviour {
 	}
 
 	void FixedUpdate() {
-		//update shuttle movement based on movement type preference
-		switch (moveType) {
-			case MovementType.TypeA:
-				UpdateMovementTypeA();
-				break;
-			case MovementType.TypeB:
-				UpdateMovementTypeB();
-				break;
-		}
+		//get shuttle movement input
+		GetMovementInput();
 		//calculate position based on input
 		CalculatePosition();
-
 		//actually move the object to the calculated position
 		ApplyMovement();
 	}
 
-	/* Movement Input Methods */
-	#region
-	private void UpdateMovementTypeA() {
-		//get movement input
-		if (Input.GetKey(KeyCode.W)) {
-			currentSpeed += acceleration * Time.fixedDeltaTime;
+	private void GetMovementInput() {
+		//get rotation input
+		Vector3 cursorPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+		float angle = Vector2.Angle(Vector2.up, cursorPos - transform.position);
+		if (transform.position.x < cursorPos.x) {
+			angle = 180f + (180f - angle);
 		}
-		if (Input.GetKey(KeyCode.S)) {
-			currentSpeed -= currentSpeed > 0 ?
-				acceleration * Time.fixedDeltaTime :
-				reverseAcceleration * Time.fixedDeltaTime;
-		}
-		//get input for turning if not in the middle of a dash
-		if (CanTurn) {
-			if (Input.GetKey(KeyCode.A)) {
-				rot.z += rotationSpeed *
-				(currentSpeed >= 0 ? currentSpeed / speedLimit + 1f : -1f) * Time.fixedDeltaTime;
-			}
-			if (Input.GetKey(KeyCode.D)) {
-				rot.z -= rotationSpeed *
-				(currentSpeed >= 0 ? currentSpeed / speedLimit + 1f : -1f) * Time.fixedDeltaTime;
-			}
-		}
-		//make sure rotation is wrapped around 360 degrees for easy calculation
-		if (rot.z < 0f) {
-			rot.z += 360f;
-		}
-		if (rot.z >= 360f) {
-			rot.z -= 360f;
-		}
-	}
+		rot.z = Mathf.MoveTowardsAngle(rot.z, angle, Time.fixedDeltaTime * maxRotSpeed);
 
-	private void UpdateMovementTypeB() {
-		float targetAngle = 0f;
-		bool moveDetected = false;
 		//get movement input
 		if (Input.GetKey(KeyCode.W)) {
-			moveDetected = true;
+			accel.y += acceleration;
 		}
 		if (Input.GetKey(KeyCode.S)) {
-			moveDetected = true;
-			targetAngle = 180f;
+			accel.y -= acceleration;
 		}
 		if (Input.GetKey(KeyCode.A)) {
-			targetAngle = Mathf.MoveTowards(targetAngle, 270f, moveDetected ? 45f : 90f);
-			moveDetected = true;
+			accel.x -= acceleration;
 		}
 		if (Input.GetKey(KeyCode.D)) {
-			targetAngle = Mathf.MoveTowards(targetAngle, 90f, moveDetected ? 45f : 90f);
-			moveDetected = true;
+			accel.x += acceleration;
 		}
-		if (moveDetected) {
-			//slow down if trying to reverse
-			if (Input.GetKeyDown(KeyCode.LeftControl)) {
-				currentSpeed -= (currentSpeed > 0f ? acceleration : reverseAcceleration) * Time.fixedDeltaTime;
-			}
-			//otherwise speed up if trying to move forward
-			else {
-				currentSpeed += acceleration * Time.fixedDeltaTime;
-			}
-			//rotate to target angle if movement detected and not in the middle of a dash
-			if (CanTurn) {
-				rot.z = Mathf.MoveTowardsAngle(rot.z, targetAngle,
-					rotationSpeed * (currentSpeed >= 0 ? currentSpeed / speedLimit + 0.25f : -1f) * Time.fixedDeltaTime);
-			}
+
+		//normalise acceleration
+		if (accel != Vector3.zero) {
+			accel.Normalize();
+			accel *= acceleration;
 		}
 	}
-	#endregion
 
 	//use calculated rotation and speed to determine where to move to
 	private void CalculatePosition() {
 		float decelerationModifier = 1f;
 		//apply speed limit
-		if (currentSpeed > speedLimit || currentSpeed < reverseLimit) {
+		if (Speeding) {
 			decelerationModifier += 1f;
 		}
+		//apply acceleration
+		vel += accel;
+		accel = Vector3.zero;
 		//apply deceleration
-		currentSpeed = Mathf.MoveTowards(currentSpeed, 0f, deceleration * Time.fixedDeltaTime * decelerationModifier);
-		//alter speed if dashing
+		vel = Vector3.MoveTowards(vel, Vector3.zero, deceleration * decelerationModifier);
+		//use dash speed if dashing
 		if (Dashing) {
-			currentSpeed = speedLimit * dashSpeed;
+			vel.Normalize();
+			vel *= speedLimit * dashSpeed;
 			dashTime -= Time.fixedDeltaTime;
 		}
 		//set rotation
 		transform.eulerAngles = rot;
 		//move forward at calculated speed
-		calcPos = transform.up * currentSpeed;
+		calcPos += vel;
 	}
 
 	//gradually transforms object to calculated position until it is either reached or is interrupted by a collision
@@ -313,8 +256,11 @@ public class ShuttleCtrl : MonoBehaviour {
 			(Vector2)col.bounds.center + dir, col.radius, 1 << LayerMask.NameToLayer("Solid"));
 	}
 
-	//change the movement type to the newly set one
-	private void SetMovementType(MovementType newType) {
-		moveType = newType;
+	private void SetRot(float newRot) {
+		rot.z = Mathf.Abs(newRot % 360f);
+	}
+
+	private void AddRot(float addRot) {
+		rot.z = Mathf.Abs((rot.z + addRot) % 360f);
 	}
 }
