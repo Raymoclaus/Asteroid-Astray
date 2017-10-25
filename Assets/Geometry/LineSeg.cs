@@ -3,7 +3,17 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class LineSeg : Shape {
-	public Vector2 a, b, center = Vector2.zero;
+	private Vector2 a, b;
+	public Vector2 center = Vector2.zero;
+	public Bounds bounds;
+
+	public Vector2 CenterA {
+		get { return a + center; }
+	}
+
+	public Vector2 CenterB {
+		get { return b + center; }
+	}
 
 	public float Length {
 		get { return Vector2.Distance(a, b); }
@@ -31,11 +41,20 @@ public class LineSeg : Shape {
 
 	public LineSeg() {
 		a = b = Vector2.zero;
+		CalculateBounds();
 	}
 
 	public LineSeg(Vector2 a, Vector2 b) {
 		this.a = a;
 		this.b = b;
+		CalculateBounds();
+	}
+
+	public LineSeg(Vector2 center, Vector2 a, Vector2 b) {
+		this.center = center;
+		this.a = a;
+		this.b = b;
+		CalculateBounds();
 	}
 
 	public bool IsLine() {
@@ -75,11 +94,34 @@ public class LineSeg : Shape {
 		return new List<Vector2>() { a + center, b + center };
 	}
 
+	public List<Vector2> GetOffsetVerts(Vector2 offset) {
+		return new List<Vector2>() { a + center + offset, b + center + offset };
+	}
+
 	public Bounds GetBounds() {
-		Bounds bds = new Bounds();
-		foreach (Vector2 vert in GetVerts()) {
-			bds.Encapsulate(vert);
-		}
-		return bds;
+		return new Bounds((Vector2)bounds.center + center, bounds.size);
+	}
+
+	private void CalculateBounds() {
+		bounds = new Bounds(a, Vector2.zero);
+		bounds.Encapsulate(b);
+	}
+
+	public Vector2 GetA() {
+		return a;
+	}
+
+	public Vector2 GetB() {
+		return b;
+	}
+
+	public void SetA(Vector2 change) {
+		a = change;
+		CalculateBounds();
+	}
+
+	public void SetB(Vector2 change) {
+		b = change;
+		CalculateBounds();
 	}
 }

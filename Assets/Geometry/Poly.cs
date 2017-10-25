@@ -5,6 +5,7 @@ using UnityEngine;
 public class Poly : Shape {
 	private List<Vector2> verts;
 	public Vector2 center = Vector2.zero;
+	public Bounds bounds;
 	public int VertsCount {
 		get {
 			return verts.Count;
@@ -16,6 +17,7 @@ public class Poly : Shape {
 		for (int i = 0; i < 3; i++) {
 			verts.Add(Vector2.zero);
 		}
+		CalculateBounds();
 	}
 
 	public Poly(int size) {
@@ -23,16 +25,18 @@ public class Poly : Shape {
 		for (int i = 0; i < size; i++) {
 			verts.Add(Vector2.zero);
 		}
+		CalculateBounds();
 	}
 
 	public Poly(Vector2[] vertArr) {
-		verts = new List<Vector2>(vertArr.Length);
+		verts = new List<Vector2>(vertArr);
 		for (int i = 0; i < vertArr.Length; i++) {
 			verts.Add(vertArr[i]);
 		}
 		while (verts.Count < 3) {
 			verts.Add(Vector2.zero);
 		}
+		CalculateBounds();
 	}
 
 	public Poly(List<Vector2> vertArr) {
@@ -40,6 +44,7 @@ public class Poly : Shape {
 		while (verts.Count < 3) {
 			verts.Add(Vector2.zero);
 		}
+		CalculateBounds();
 	}
 
 	public bool IsLine() {
@@ -71,10 +76,13 @@ public class Poly : Shape {
 		return false;
 	}
 
+	/// Returns the list of vertices of the polygon relative to its center.
+	/// Changes to this list will affect the polygon because it is not a copy.
 	public List<Vector2> GetVerts() {
 		return verts;
 	}
 
+	/// Returns a copy of the list of vertices of the polygon offset by its center.
 	public List<Vector2> GetOffsetVerts() {
 		List<Vector2> offsetVerts = new List<Vector2>(verts);
 		for (int i = 0; i < offsetVerts.Count; i++) {
@@ -83,31 +91,39 @@ public class Poly : Shape {
 		return offsetVerts;
 	}
 
+	/// Returns a copy of the list of vertices of the polygon offset by its center and the given position.
 	public List<Vector2> GetOffsetVerts(Vector2 otherOffset) {
-		List<Vector2> offsetVerts = new List<Vector2>(verts.Count);
+		List<Vector2> offsetVerts = new List<Vector2>(verts);
 		for (int i = 0; i < verts.Count; i++) {
-			offsetVerts.Add(verts[i] + center + otherOffset);
+			offsetVerts[i] += center + otherOffset;
 		}
 		return offsetVerts;
 	}
 
+	/// Returns the bounds of the polygon in world space
 	public Bounds GetBounds() {
-		Bounds bds = new Bounds();
-		foreach (Vector2 vert in GetVerts()) {
-			bds.Encapsulate(vert);
+		return new Bounds((Vector2)bounds.center + center, bounds.size);
+	}
+
+	private void CalculateBounds() {
+		bounds = new Bounds(verts[0], Vector2.zero);
+		for (int i = 1; i < verts.Count; i++) {
+			bounds.Encapsulate(verts[i]);
 		}
-		return bds;
 	}
 
 	public void AddVertex(Vector2 vert) {
 		verts.Add(vert);
+		bounds.Encapsulate(vert);
 	}
 
 	public void SetVertexPosition(int vertID, Vector2 pos) {
 		verts[vertID] = pos;
+		CalculateBounds();
 	}
 
 	public void SetVertexPosition(int vertID, float x, float y) {
 		verts[vertID] = new Vector2(x, y);
+		CalculateBounds();
 	}
 }

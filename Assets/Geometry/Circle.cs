@@ -3,11 +3,23 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Circle : Shape {
-	public float radius = 1f;
+	private float radius = 1f;
 	public Vector2 center = Vector2.zero;
+	public Bounds bounds;
+
+	public Circle() {
+		CalculateBounds();
+	}
 
 	public Circle(float radius) {
 		this.radius = radius;
+		CalculateBounds();
+	}
+
+	public Circle(Vector2 center, float radius) {
+		this.center = center;
+		this.radius = radius;
+		CalculateBounds();
 	}
 
 	public bool IsLine() {
@@ -48,6 +60,19 @@ public class Circle : Shape {
 	}
 
 	public Bounds GetBounds() {
-		return new Bounds(center, Vector2.one * radius);
+		return new Bounds((Vector2)bounds.center + center, bounds.size);
+	}
+
+	private void CalculateBounds() {
+		bounds = new Bounds(center, Vector2.one * 2 * radius);
+	}
+
+	public float GetRadius() {
+		return radius;
+	}
+
+	public void SetRadius(float change) {
+		radius = change;
+		CalculateBounds();
 	}
 }

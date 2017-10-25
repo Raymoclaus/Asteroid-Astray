@@ -16,48 +16,78 @@ public struct Geometry2D {
 	///Returns whether a point lies on a line segment
 	public static bool PointOnLineSeg(Vector2 p, LineSeg lns) {
 		//if the distance between p and the segment ends is equal to the length of the segment, then point is on the segment
-		return Mathf.Approximately(Vector2.Distance(p, lns.a) + Vector2.Distance(p, lns.b), lns.Length);
+		return Mathf.Approximately(Vector2.Distance(p, lns.CenterA) + Vector2.Distance(p, lns.CenterB), lns.Length);
 	}
 
 	///Returns whether a point lies in a circle (excludes being on the perimeter)
 	public static bool PointInCircle(Vector2 p, Circle c) {
 		//if the distance from p and the center of the circle is less than the radius then p is within the circle
-		return Vector2.Distance(p, c.center) < c.radius;
+		return Vector2.Distance(p, c.center) < c.GetRadius();
 	}
 
 	///Returns whether a point lies on the perimeter of a circle
 	public static bool PointOnCirclePerimeter(Vector2 p, Circle c) {
 		//if the distance from p and the center of the circle is equal to the circle's radius then p is on the perimeter
-		return Mathf.Approximately(Vector2.Distance(p, c.center), c.radius);
+		return Mathf.Approximately(Vector2.Distance(p, c.center), c.GetRadius());
 	}
 
-	//source: https://stackoverflow.com/a/14998816 seems to work for concave irregular polygons
-	///Returns whether a point lies within a polygon
+	//source: http://geomalgorithms.com/a03-_inclusion.html tested for irregular, concave and self-intersecting polygons
+	///Returns whether a point lies within a polygon given its vertices
 	public static bool PointInPoly(Vector2 p, List<Vector2> verts) {
-		//honestly have no idea what's going on. Refer to source for possible explanation
-		bool result = false;
+		//first check to see if the point is in a bounding box for efficiency reasons
+		if (!PointInBounds(p, verts)) {
+			return false;
+		}
+
+		int wn = 0;
 		int j = verts.Count - 1;
 		for (int i = 0; i < verts.Count; i++) {
-			if (verts[i].y < p.y && verts[j].y >= p.y ||
-			    verts[j].y < p.y && verts[i].y >= p.y) {
-				if (verts[i].x + (p.y - verts[i].y) / (verts[j].y - verts[i].y) * (verts[j].x - verts[i].x) < p.x) {
-					result = !result;
+			if (verts[j].y <= p.y) {
+				if (verts[i].y > p.y) {
+					if (IsLeft(verts[j], verts[i], p) > 0f) {
+						wn++;
+					}
+				}
+			} else {
+				if (verts[i].y <= p.y) {
+					if (IsLeft(verts[j], verts[i], p) < 0f) {
+						wn--;
+					}
 				}
 			}
 			j = i;
 		}
 
-		return result;
+		return wn != 0;
 	}
 
-	///Returns whether a point lies on the perimeter of a polygon
+	///Returns whether a point lies within a polygon
+	public static bool PointInPoly(Vector2 p, Poly poly) {
+		return PointInPoly(p - poly.center, poly.GetVerts());
+	}
+
+	private static float IsLeft(Vector2 e1, Vector2 e2, Vector2 p) {
+		//returns whether point p is to the left of line segment (e1, e2)
+		// >0 (is left) ... =0 (on segment) ... <0 (is right)
+		return (e2.x - e1.x) * (p.y - e1.y) - (p.x - e1.x) * (e2.y - e1.y);
+	}
+
+	public static bool PointInBounds(Vector2 p, List<Vector2> verts) {
+		Bounds bds = new Bounds(verts[0], Vector2.zero);
+		for (int i = 1; i < verts.Count; i++) {
+			bds.Encapsulate(verts[i]);
+		}
+		return bds.Contains(p);
+	}
+
+	///Returns whether a point lies on the perimeter of a polygon given its vertices
 	public static bool PointOnPolyPerimeter(Vector2 p, List<Vector2> verts) {
 		LineSeg lineCheck = new LineSeg();
 		int j = verts.Count - 1;
 		//checks every line segment of the polygon to see if the point lies on any segment
 		for (int i = 0; i < verts.Count; i++) {
-			lineCheck.a = verts[i];
-			lineCheck.b = verts[j];
+			lineCheck.SetA(verts[i]);
+			lineCheck.SetB(verts[j]);
 			if (PointOnLineSeg(p, lineCheck)) {
 				return true;
 			}
@@ -65,6 +95,11 @@ public struct Geometry2D {
 		}
 
 		return false;
+	}
+
+	///Returns whether a point lies on the perimeter of a polygon
+	public static bool PointOnPolyPerimeter(Vector2 p, Poly poly) {
+		return PointOnPolyPerimeter(p - poly.center, poly.GetVerts());
 	}
 	#endregion
 
@@ -75,10 +110,10 @@ public struct Geometry2D {
 		//if lines have the same slope (i.e. parallel or collinear)
 		if (Mathf.Approximately(lns1.Slope, lns2.Slope)) {
 			//returns whether the ends of either segment lies on either segment
-			return PointOnLineSeg(lns1.a, lns2) ||
-			PointOnLineSeg(lns1.b, lns2) ||
-			PointOnLineSeg(lns2.a, lns1) ||
-			PointOnLineSeg(lns2.b, lns1);
+			return PointOnLineSeg(lns1.CenterA, lns2) ||
+				PointOnLineSeg(lns1.CenterB, lns2) ||
+				PointOnLineSeg(lns2.CenterA, lns1) ||
+				PointOnLineSeg(lns2.CenterB, lns1);
 		}
 
 		Vector2 p;
@@ -103,16 +138,16 @@ public struct Geometry2D {
 	///Returns whether a line segment intersects a circle
 	public static bool LineSegIntersectsCircle(LineSeg lns, Circle c) {
 		//for efficiency, check if either end of the line is in the circle first
-		if (PointInCircle(lns.a, c) || PointInCircle(lns.b, c)) {
+		if (PointInCircle(lns.CenterA, c) || PointInCircle(lns.CenterB, c)) {
 			return true;
 		}
 
 		Vector2 point = Vector2.zero;
 		//do checks to see whether the slope is 0 or infinite
 		if (Mathf.Approximately(lns.Slope, 0f)) {
-			point = new Vector2(c.center.x, lns.a.y);
+			point = new Vector2(c.center.x, lns.CenterA.y);
 		} else if (lns.Slope == float.PositiveInfinity) {
-			point = new Vector2(lns.a.x, c.center.y);
+			point = new Vector2(lns.CenterA.x, c.center.y);
 		} else {
 			//get negative reciprocal of slope of line segment to find a new perpendicular line
 			float slope = -1f / lns.Slope;
@@ -129,12 +164,17 @@ public struct Geometry2D {
 
 	///Returns whether a line segment intersects a polygon (given a list of vertices)
 	public static bool LineSegIntersectsPoly(LineSeg lns, List<Vector2> verts) {
+		//Check to see if either end of the segment is in the polygon
+		if (PointInPoly(lns.CenterA, verts) || PointInPoly(lns.CenterB, verts)) {
+			return true;
+		}
+
 		int j = verts.Count - 1;
 		LineSeg lnsCheck = new LineSeg();
 		//checks every line segment in the polygon until an intersection is found
 		for (int i = 0; i < verts.Count; i++) {
-			lnsCheck.a = verts[i];
-			lnsCheck.b = verts[j];
+			lnsCheck.SetA(verts[i]);
+			lnsCheck.SetB(verts[j]);
 			if (LineSegIntersectsLineSeg(lns, lnsCheck)) {
 				return true;
 			}
@@ -146,20 +186,7 @@ public struct Geometry2D {
 
 	///Returns whether a line segment intersects a polygon
 	public static bool LineSegIntersectsPoly(LineSeg lns, Poly p) {
-		List<Vector2> verts = p.GetOffsetVerts();
-		int j = verts.Count - 1;
-		LineSeg lnsCheck = new LineSeg();
-		//checks every line segment in the polygon until an intersection is found
-		for (int i = 0; i < verts.Count; i++) {
-			lnsCheck.a = verts[i];
-			lnsCheck.b = verts[j];
-			if (LineSegIntersectsLineSeg(lns, lnsCheck)) {
-				return true;
-			}
-			j = i;
-		}
-
-		return false;
+		return LineSegIntersectsPoly(new LineSeg(lns.center - p.center, lns.GetA(), lns.GetB()), p.GetVerts());
 	}
 	#endregion
 
@@ -168,12 +195,17 @@ public struct Geometry2D {
 	///Returns whether two circles intersect
 	public static bool CircleIntersectsCircle(Circle c1, Circle c2) {
 		//if the distance between the center of each circle adds up to less than the sum of the radii then they intersect
-		return Vector2.Distance(c1.center, c2.center) < c1.radius + c2.radius;
+		return Vector2.Distance(c1.center, c2.center) < c1.GetRadius() + c2.GetRadius();
 	}
 
 	///Returns whether a circle intersects a polygon (given a list of vertices)
 	public static bool CircleIntersectsPoly(Circle c, List<Vector2> verts) {
-		//quickly check to see if any points are in the circle (more efficient) and catches most cases
+		//check to see if the center of the circle is in the poly
+		if (PointInPoly(c.center, verts)) {
+			return true;
+		}
+
+		//check to see if any points are in the circle
 		foreach (Vector2 vert in verts) {
 			if (PointInCircle(vert, c)) {
 				return true;
@@ -184,8 +216,8 @@ public struct Geometry2D {
 		int j = verts.Count - 1;
 		//check each line segment of the polygon until an intersection is found
 		for (int i = 0; i < verts.Count; i++) {
-			lnsCheck.a = verts[i];
-			lnsCheck.b = verts[j];
+			lnsCheck.SetA(verts[i]);
+			lnsCheck.SetB(verts[j]);
 			if (LineSegIntersectsCircle(lnsCheck, c)) {
 				return true;
 			}
@@ -197,27 +229,7 @@ public struct Geometry2D {
 
 	///Returns whether a circle intersects a polygon
 	public static bool CircleIntersectsPoly(Circle c, Poly p) {
-		List<Vector2> verts = p.GetOffsetVerts();
-		//quickly check to see if any points are in the circle (more efficient)
-		foreach (Vector2 vert in verts) {
-			if (PointInCircle(vert, c)) {
-				return true;
-			}
-		}
-
-		LineSeg lnsCheck = new LineSeg();
-		int j = verts.Count - 1;
-		//check each line segment of the polygon until an intersection is found
-		for (int i = 0; i < verts.Count; i++) {
-			lnsCheck.a = verts[i];
-			lnsCheck.b = verts[j];
-			if (LineSegIntersectsCircle(lnsCheck, c)) {
-				return true;
-			}
-			j = i;
-		}
-
-		return false;
+		return CircleIntersectsPoly(new Circle(c.center - p.center, c.GetRadius()), p.GetVerts());
 	}
 	#endregion
 
@@ -242,8 +254,8 @@ public struct Geometry2D {
 		LineSeg lnsCheck = new LineSeg();
 		int j = verts1.Count - 1;
 		for (int i = 0; i < verts1.Count; i++) {
-			lnsCheck.a = verts1[i];
-			lnsCheck.b = verts1[j];
+			lnsCheck.SetA(verts1[i]);
+			lnsCheck.SetB(verts1[j]);
 			if (LineSegIntersectsPoly(lnsCheck, verts2)) {
 				return true;
 			}
@@ -255,35 +267,7 @@ public struct Geometry2D {
 
 	///Returns whether a polygon intersects another polygon
 	public static bool PolyIntersectsPoly(Poly p1, Poly p2) {
-		List<Vector2> verts1 = p1.GetVerts();
-		List<Vector2> verts2 = p2.GetOffsetVerts(-p1.center);
-
-		//check to see if any vertices exist inside either polygon (efficient and catches most cases)
-		foreach (Vector2 vert in verts1) {
-			if (PointInPoly(vert, verts2)) {
-				return true;
-			}
-		}
-		foreach (Vector2 vert in verts2) {
-			if (PointInPoly(vert, new List<Vector2>(verts1))) {
-				return true;
-			}
-		}
-
-		//check to see if any of the edges of a polygon intersect with the edges of the other
-		//this code ensures concave shapes work too but it's potentially slow
-		LineSeg lnsCheck = new LineSeg();
-		int j = verts1.Count - 1;
-		for (int i = 0; i < verts1.Count; i++) {
-			lnsCheck.a = verts1[i];
-			lnsCheck.b = verts1[j];
-			if (LineSegIntersectsPoly(lnsCheck, verts2)) {
-				return true;
-			}
-			j = i;
-		}
-
-		return false;
+		return PolyIntersectsPoly(p1.GetOffsetVerts(-p2.center), p2.GetVerts());
 	}
 	#endregion
 }

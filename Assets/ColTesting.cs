@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class ColTesting : MonoBehaviour {
 	Circle c = new Circle(3f);
-	Circle c2 = new Circle(2f);
+	Circle c2 = new Circle(0.3f);
 	Poly poly = new Poly(new List<Vector2>() {
 		new Vector2(-2f, 0f),
 		new Vector2(-3f, 3f),
@@ -21,6 +21,18 @@ public class ColTesting : MonoBehaviour {
 		new Vector2(0f, 2f),
 		new Vector2(3f, 3f)
 	});
+	Poly poly3 = new Poly(new List<Vector2>() {
+		new Vector2(-2f, -2f),
+		new Vector2(2f, -2f),
+		new Vector2(2f, 2f),
+		new Vector2(-1f, 2f),
+		new Vector2(-1f, 1f),
+		new Vector2(1f, 1f),
+		new Vector2(1f, 0f),
+		new Vector2(0f, 0f),
+		new Vector2(0f, 3f),
+		new Vector2(-2f, 3f),
+	});
 	LineSeg lns = new LineSeg(Vector2.zero, Vector2.one * 5f);
 	LineSeg lns2 = new LineSeg(Vector2.zero, new Vector2(1f, -1f) * 5f);
 	public LineRenderer lineRend;
@@ -32,7 +44,8 @@ public class ColTesting : MonoBehaviour {
 
 	void Start() {
 //		DrawShape(lineRend, GenerateCirclePositions(c));
-		DrawShape(lineRend, GetPolyPositions(poly2));
+//		DrawShape(lineRend, GetPolyPositions(poly2));
+		DrawShape(lineRend, GetPolyPositions(poly3));
 	}
 
 	void Awake() {
@@ -42,11 +55,11 @@ public class ColTesting : MonoBehaviour {
 	}
 
 	void Update() {
-//		bool isIntersecting = Geometry2D.PointInCircle(Camera.main.ScreenToWorldPoint(Input.mousePosition), c);
+//		bool isIntersecting = Geometry2D.PointInPoly(Camera.main.ScreenToWorldPoint(Input.mousePosition), poly3.GetVerts());
 
 		c2.center = Camera.main.ScreenToWorldPoint(Input.mousePosition);
 		DrawShape(lineRend2, GenerateCirclePositions(c2));
-		bool isIntersecting = c2.Intersects(poly2);
+		bool isIntersecting = c2.Intersects(poly3);
 
 //		poly.center = Camera.main.ScreenToWorldPoint(Input.mousePosition);
 //		DrawShape(lineRend2, GetPolyPositions(poly));
@@ -74,7 +87,7 @@ public class ColTesting : MonoBehaviour {
 		for (int i = 0; i < positions.Length; i++) {
 			positions[i].x = Mathf.Sin(((float)i / thetaScale) * (2f * Mathf.PI));
 			positions[i].y = Mathf.Cos(((float)i / thetaScale) * (2f * Mathf.PI));
-			positions[i] *= circ.radius;
+			positions[i] *= circ.GetRadius();
 			positions[i] += (Vector3)circ.center;
 		}
 
