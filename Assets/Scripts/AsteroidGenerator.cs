@@ -68,20 +68,20 @@ public class AsteroidGenerator : MonoBehaviour {
 		//if these coordinates have no been generated yet then reserve some space for the new coordinates
 		GenerateVoid(chCoord);
 		//if these coordinates haven't been filled yet then carry out filling process
-		if (!wasFilled[chCoord.direction][chCoord.x][chCoord.y]) {
+		if (!wasFilled[(int)chCoord.direction][chCoord.x][chCoord.y]) {
 			//flag that this chunk coordinates was filled
-			wasFilled[chCoord.direction][chCoord.x][chCoord.y] = true;
+			wasFilled[(int)chCoord.direction][chCoord.x][chCoord.y] = true;
 			//fill chunk with asteroids
-			Vector2[] range = ChunkCoordinates.GetRange(chCoord);
+			Vector2Pair range = ChunkCoordinates.GetCellArea(chCoord);
 			Vector2 spawnPos = new Vector2();
 			for (int i = 0; i < (int)(Mathf.Pow(Cnsts.CHUNK_SIZE, 2f) * asteroidDensity); i++) {
 				//pick a position within the chunk coordinates
-				spawnPos.x = Random.Range(range[0].x, range[1].x);
-				spawnPos.y = Random.Range(range[0].y, range[1].y);
+				spawnPos.x = Random.Range(range.a.x, range.b.x);
+				spawnPos.y = Random.Range(range.a.y, range.b.y);
 				//spawn asteroid at coordinates
 				AsteroidCtrl newAsteroid = Instantiate<AsteroidCtrl>(
 					                           asteroid, spawnPos, Quaternion.identity, transform);
-				OPool.asteroids[chCoord.direction][chCoord.x][chCoord.y].Add(newAsteroid);
+				OPool.asteroids[(int)chCoord.direction][chCoord.x][chCoord.y].Add(newAsteroid);
 				newAsteroid.ChunkRefInit(chCoord, i, this);
 			}
 		}
@@ -92,15 +92,15 @@ public class AsteroidGenerator : MonoBehaviour {
 			CreateDirections();
 		}
 		//check to see if the coordinate has been previously recorded
-		while (OPool.asteroids[chCoord.direction].Count <= chCoord.x) {
+		while (OPool.asteroids[(int)chCoord.direction].Count <= chCoord.x) {
 			//add x coordinates until chCoord is within limits
-			OPool.asteroids[chCoord.direction].Add(new List<List<AsteroidCtrl>>());
-			wasFilled[chCoord.direction].Add(new List<bool>());
+			OPool.asteroids[(int)chCoord.direction].Add(new List<List<AsteroidCtrl>>());
+			wasFilled[(int)chCoord.direction].Add(new List<bool>());
 		}
-		while (OPool.asteroids[chCoord.direction][chCoord.x].Count <= chCoord.y) {
+		while (OPool.asteroids[(int)chCoord.direction][chCoord.x].Count <= chCoord.y) {
 			//add y coordinates until chCoord is within limits
-			OPool.asteroids[chCoord.direction][chCoord.x].Add(new List<AsteroidCtrl>());
-			wasFilled[chCoord.direction][chCoord.x].Add(false);
+			OPool.asteroids[(int)chCoord.direction][chCoord.x].Add(new List<AsteroidCtrl>());
+			wasFilled[(int)chCoord.direction][chCoord.x].Add(false);
 		}
 	}
 
@@ -132,13 +132,13 @@ public class AsteroidGenerator : MonoBehaviour {
 	}
 
 	public void DestroyAsteroid(ChunkCoordinates refVal, int part) {
-		OPool.asteroids[refVal.direction][refVal.x][refVal.y].RemoveAt(part);
+		OPool.asteroids[(int)refVal.direction][refVal.x][refVal.y].RemoveAt(part);
 		DecrementAsteroidIds(refVal, part);
 	}
 
 	private void DecrementAsteroidIds(ChunkCoordinates chunk, int part) {
-		for (int i = part; i < OPool.asteroids[chunk.direction][chunk.x][chunk.y].Count; i++) {
-			OPool.asteroids[chunk.direction][chunk.x][chunk.y][i].chunkPart--;
+		for (int i = part; i < OPool.asteroids[(int)chunk.direction][chunk.x][chunk.y].Count; i++) {
+			OPool.asteroids[(int)chunk.direction][chunk.x][chunk.y][i].chunkPart--;
 		}
 	}
 }

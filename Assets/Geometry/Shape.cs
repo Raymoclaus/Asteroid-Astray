@@ -7,8 +7,6 @@ public interface Shape {
 
 	bool IsCircle();
 
-	bool IsRegularPoly();
-
 	bool IsPoly();
 
 	bool Intersects(Shape s);
@@ -18,4 +16,10 @@ public interface Shape {
 	List<Vector2> GetOffsetVerts();
 
 	Bounds GetBounds();
+
+	void AttachToTransform(Transform t);
+
+	Vector2 GetRefCenter();
+
+	void Translate(Vector2 move);
 }

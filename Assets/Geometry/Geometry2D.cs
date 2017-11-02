@@ -22,13 +22,13 @@ public struct Geometry2D {
 	///Returns whether a point lies in a circle (excludes being on the perimeter)
 	public static bool PointInCircle(Vector2 p, Circle c) {
 		//if the distance from p and the center of the circle is less than the radius then p is within the circle
-		return Vector2.Distance(p, c.center) < c.GetRadius();
+		return Vector2.Distance(p, c.WorldCenter) < c.GetRadius();
 	}
 
 	///Returns whether a point lies on the perimeter of a circle
 	public static bool PointOnCirclePerimeter(Vector2 p, Circle c) {
 		//if the distance from p and the center of the circle is equal to the circle's radius then p is on the perimeter
-		return Mathf.Approximately(Vector2.Distance(p, c.center), c.GetRadius());
+		return Mathf.Approximately(Vector2.Distance(p, c.WorldCenter), c.GetRadius());
 	}
 
 	//source: http://geomalgorithms.com/a03-_inclusion.html tested for irregular, concave and self-intersecting polygons
@@ -63,7 +63,7 @@ public struct Geometry2D {
 
 	///Returns whether a point lies within a polygon
 	public static bool PointInPoly(Vector2 p, Poly poly) {
-		return PointInPoly(p - poly.center, poly.GetVerts());
+		return PointInPoly(p, poly.GetOffsetVerts());
 	}
 
 	private static float IsLeft(Vector2 e1, Vector2 e2, Vector2 p) {
@@ -99,7 +99,7 @@ public struct Geometry2D {
 
 	///Returns whether a point lies on the perimeter of a polygon
 	public static bool PointOnPolyPerimeter(Vector2 p, Poly poly) {
-		return PointOnPolyPerimeter(p - poly.center, poly.GetVerts());
+		return PointOnPolyPerimeter(p, poly.GetOffsetVerts());
 	}
 	#endregion
 
@@ -145,14 +145,14 @@ public struct Geometry2D {
 		Vector2 point = Vector2.zero;
 		//do checks to see whether the slope is 0 or infinite
 		if (Mathf.Approximately(lns.Slope, 0f)) {
-			point = new Vector2(c.center.x, lns.CenterA.y);
+			point = new Vector2(c.WorldCenter.x, lns.CenterA.y);
 		} else if (lns.Slope == float.PositiveInfinity) {
-			point = new Vector2(lns.CenterA.x, c.center.y);
+			point = new Vector2(lns.CenterA.x, c.WorldCenter.y);
 		} else {
 			//get negative reciprocal of slope of line segment to find a new perpendicular line
 			float slope = -1f / lns.Slope;
 			//find the offset that the new line needs to also contain the center of the circle
-			float offset = -slope * c.center.x + c.center.y;
+			float offset = -slope * c.WorldCenter.x + c.WorldCenter.y;
 			//calculate point of intersection between the perpendicular lines
 			point.x = (lns.Offset - offset) / (slope - lns.Slope);
 			point.y = slope * point.x + offset;
@@ -186,7 +186,7 @@ public struct Geometry2D {
 
 	///Returns whether a line segment intersects a polygon
 	public static bool LineSegIntersectsPoly(LineSeg lns, Poly p) {
-		return LineSegIntersectsPoly(new LineSeg(lns.center - p.center, lns.GetA(), lns.GetB()), p.GetVerts());
+		return LineSegIntersectsPoly(lns, p.GetOffsetVerts());
 	}
 	#endregion
 
@@ -195,13 +195,13 @@ public struct Geometry2D {
 	///Returns whether two circles intersect
 	public static bool CircleIntersectsCircle(Circle c1, Circle c2) {
 		//if the distance between the center of each circle adds up to less than the sum of the radii then they intersect
-		return Vector2.Distance(c1.center, c2.center) < c1.GetRadius() + c2.GetRadius();
+		return Vector2.Distance(c1.WorldCenter, c2.WorldCenter) < c1.GetRadius() + c2.GetRadius();
 	}
 
 	///Returns whether a circle intersects a polygon (given a list of vertices)
 	public static bool CircleIntersectsPoly(Circle c, List<Vector2> verts) {
 		//check to see if the center of the circle is in the poly
-		if (PointInPoly(c.center, verts)) {
+		if (PointInPoly(c.WorldCenter, verts)) {
 			return true;
 		}
 
@@ -229,7 +229,7 @@ public struct Geometry2D {
 
 	///Returns whether a circle intersects a polygon
 	public static bool CircleIntersectsPoly(Circle c, Poly p) {
-		return CircleIntersectsPoly(new Circle(c.center - p.center, c.GetRadius()), p.GetVerts());
+		return CircleIntersectsPoly(c, p.GetOffsetVerts());
 	}
 	#endregion
 
@@ -267,7 +267,7 @@ public struct Geometry2D {
 
 	///Returns whether a polygon intersects another polygon
 	public static bool PolyIntersectsPoly(Poly p1, Poly p2) {
-		return PolyIntersectsPoly(p1.GetOffsetVerts(-p2.center), p2.GetVerts());
+		return PolyIntersectsPoly(p1.GetOffsetVerts(), p2.GetOffsetVerts());
 	}
 	#endregion
 }

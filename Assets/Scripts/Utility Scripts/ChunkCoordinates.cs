@@ -2,9 +2,20 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum Quadrant { UpperLeft, UpperRight, LowerLeft, LowerRight }
+
+public struct Vector2Pair {
+	public Vector2 a, b;
+	public Vector2Pair(Vector2 a, Vector2 b) {
+		this.a = a;
+		this.b = b;
+	}
+}
+
 public struct ChunkCoordinates
 {
-	public int direction, x, y;
+	public Quadrant direction;
+	public int x, y;
 
 	public ChunkCoordinates(Vector2 pos)
 	{
@@ -20,89 +31,83 @@ public struct ChunkCoordinates
 		return new int[] { (int)Mathf.Abs(pos.x), (int)Mathf.Abs(pos.y) };
 	}
 
-	public static int GetDirection(Vector2 pos)
+	public static Quadrant GetDirection(Vector2 pos)
 	{
 		pos /= Cnsts.CHUNK_SIZE;
 		return GetDirection(pos.x, pos.y);
 	}
-	public static int GetDirection(float x, float y)
+	public static Quadrant GetDirection(float x, float y)
 	{
-		int direction = 0;
+		Quadrant dir;
 		if (x >= 0)
 		{
 			if (y >= 0)
 			{
-				direction = 1;
+				dir = Quadrant.UpperRight;
 			}
 			else
 			{
-				direction = 3;
+				dir = Quadrant.LowerRight;
 			}
 		}
 		else
 		{
 			if (y >= 0)
 			{
-				direction = 0;
+				dir = Quadrant.UpperLeft;
 			}
 			else
 			{
-				direction = 2;
+				dir = Quadrant.LowerLeft;
 			}
 		}
-		return direction;
+		return dir;
 	}
 
-	public static Vector2[] GetRange(ChunkCoordinates chCoord)
+	public static Vector2Pair GetCellArea(ChunkCoordinates chCoord)
 	{
 		Vector2 min = new Vector2(chCoord.x, chCoord.y);
 		Vector2 max = new Vector2(chCoord.x + 1, chCoord.y + 1);
 		switch(chCoord.direction)
 		{
-		case 0:
+			case Quadrant.UpperLeft:
 			min.x *= -1f;
 			max.x *= -1f;
-//			min.x -= 1f;
-//			max.x += 1f;
 			break;
-		case 2:
+			case Quadrant.LowerLeft:
 			min *= -1F;
 			max *= -1F;
-//			min -= Vector2.one;
-//			max -= Vector2.one;
 			break;
-		case 3:
+			case Quadrant.LowerRight:
 			min.y *= -1f;
 			max.y *= -1f;
-//			min.y -= 1f;
-//			max.y += 1f;
 			break;
 		}
-		return new Vector2[] { min * Cnsts.CHUNK_SIZE, max * Cnsts.CHUNK_SIZE };
+		return new Vector2Pair(min * Cnsts.CHUNK_SIZE, max * Cnsts.CHUNK_SIZE);
 	}
 
 	public bool IsValid() {
-		return direction >= 0 && direction <= 3 && x >= 0 && y >= 0;
+		return (int)direction >= 0 && (int)direction <= 3 && x >= 0 && y >= 0;
 	}
 
 	public ChunkCoordinates Validate() {
 		if (!IsValid()) {
 			//fix direction to be within bounds
-			direction = Mathf.Abs(direction) % 4;
+			direction = (Quadrant)(Mathf.Abs((int)direction) % 4);
 			//adjust direction if x is not valid
 			if (x < 0) {
 				switch (direction) {
-					case 0:
-						direction = 1;
+					case Quadrant.UpperLeft:
+						direction = Quadrant.UpperRight;
 						break;
-					case 1:
-						direction = 0;
+					case Quadrant.UpperRight:
+						direction = Quadrant.UpperLeft;
 						break;
-					case 2:
-						direction = 3;
+					case Quadrant.LowerLeft:
+						direction = Quadrant.LowerRight;
 						break;
-					case 3:
-						direction = 2;
+					case Quadrant.LowerRight:
+						direction = Quadrant.LowerLeft;
 						break;
 				}
 				x = Mathf.Abs(x) - 1;
@@ -110,17 +115,17 @@ public struct ChunkCoordinates
 			//adjust direction if y is not valid
 			if (y < 0) {
 				switch (direction) {
-					case 0:
-						direction = 2;
+					case Quadrant.UpperLeft:
+						direction = Quadrant.LowerLeft;
 						break;
-					case 1:
-						direction = 3;
+					case Quadrant.UpperRight:
+						direction = Quadrant.LowerRight;
 						break;
-					case 2:
-						direction = 0;
+					case Quadrant.LowerLeft:
+						direction = Quadrant.UpperLeft;
 						break;
-					case 3:
-						direction = 1;
+					case Quadrant.LowerRight:
+						direction = Quadrant.UpperRight;
 						break;
 				}
 			}

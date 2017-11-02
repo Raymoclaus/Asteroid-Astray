@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class ColTesting : MonoBehaviour {
-	Circle c = new Circle(3f);
-	Circle c2 = new Circle(0.3f);
+	Circle c = new Circle(null, Vector2.zero, 3f);
+	Circle c2 = new Circle(null, Vector2.zero, 0.3f);
 	Poly poly = new Poly(new List<Vector2>() {
 		new Vector2(-2f, 0f),
 		new Vector2(-3f, 3f),
@@ -45,6 +45,7 @@ public class ColTesting : MonoBehaviour {
 	void Start() {
 //		DrawShape(lineRend, GenerateCirclePositions(c));
 //		DrawShape(lineRend, GetPolyPositions(poly2));
+		poly3.AttachToTransform(transform);
 		DrawShape(lineRend, GetPolyPositions(poly3));
 	}
 
@@ -57,7 +58,7 @@ public class ColTesting : MonoBehaviour {
 	void Update() {
 //		bool isIntersecting = Geometry2D.PointInPoly(Camera.main.ScreenToWorldPoint(Input.mousePosition), poly3.GetVerts());
 
-		c2.center = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+		c2.refCenter = Camera.main.ScreenToWorldPoint(Input.mousePosition);
 		DrawShape(lineRend2, GenerateCirclePositions(c2));
 		bool isIntersecting = c2.Intersects(poly3);
 
@@ -72,6 +73,8 @@ public class ColTesting : MonoBehaviour {
 			lineRend.startColor = Color.red;
 			lineRend.endColor = Color.red;
 		}
+
+		transform.Rotate(Vector3.forward * 1f);
 	}
 
 	private void DrawShape(LineRenderer lr, Vector3[] positions) {
@@ -88,7 +91,7 @@ public class ColTesting : MonoBehaviour {
 			positions[i].x = Mathf.Sin(((float)i / thetaScale) * (2f * Mathf.PI));
 			positions[i].y = Mathf.Cos(((float)i / thetaScale) * (2f * Mathf.PI));
 			positions[i] *= circ.GetRadius();
-			positions[i] += (Vector3)circ.center;
+			positions[i] += (Vector3)circ.refCenter;
 		}
 
 
@@ -100,7 +103,7 @@ public class ColTesting : MonoBehaviour {
 		Vector3[] positions = new Vector3[p.GetVerts().Count + 1];
 
 		for (int i = 0; i < p.GetVerts().Count; i++) {
-			positions[i] = p.GetVerts()[i] + p.center;
+			positions[i] = p.GetVerts()[i] + p.refCenter;
 		}
 
 		positions[positions.Length - 1] = positions[0];

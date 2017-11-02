@@ -4,20 +4,22 @@ using UnityEngine;
 
 public class Circle : Shape {
 	private float radius = 1f;
+	public Vector2 refCenter = Vector2.zero;
 	public Vector2 center = Vector2.zero;
+	public Vector2 WorldCenter {
+		get {
+			return GetRefCenter() + center;
+		}
+		set {
+			center = value - GetRefCenter();
+		}
+	}
 	public Bounds bounds;
+	private Transform target;
 
-	public Circle() {
-		CalculateBounds();
-	}
-
-	public Circle(float radius) {
-		this.radius = radius;
-		CalculateBounds();
-	}
-
-	public Circle(Vector2 center, float radius) {
-		this.center = center;
+	public Circle(Transform target = null, Vector2? center = null, float radius = 1f) {
+		this.target = target;
+		this.center = center ?? this.center;
 		this.radius = radius;
 		CalculateBounds();
 	}
@@ -30,10 +32,6 @@ public class Circle : Shape {
 		return true;
 	}
 
-	public bool IsRegularPoly() {
-		return false;
-	}
-
 	public bool IsPoly() {
 		return false;
 	}
@@ -43,8 +41,6 @@ public class Circle : Shape {
 			return Geometry2D.LineSegIntersectsCircle((LineSeg)s, this);
 		} else if (s.IsCircle()) {
 			return Geometry2D.CircleIntersectsCircle((Circle)s, this);
-		} else if (s.IsRegularPoly()) {
-			//TODO
 		} else if (s.IsPoly()) {
 			return Geometry2D.CircleIntersectsPoly(this, (Poly)s);
 		}
@@ -56,15 +52,15 @@ public class Circle : Shape {
 	}
 
 	public List<Vector2> GetOffsetVerts() {
-		return new List<Vector2>() { center };
+		return new List<Vector2>() { WorldCenter };
 	}
 
 	public Bounds GetBounds() {
-		return new Bounds((Vector2)bounds.center + center, bounds.size);
+		return new Bounds((Vector2)bounds.center + GetRefCenter(), bounds.size);
 	}
 
 	private void CalculateBounds() {
-		bounds = new Bounds(center, Vector2.one * 2 * radius);
+		bounds = new Bounds(GetRefCenter(), Vector2.one * 2 * radius);
 	}
 
 	public float GetRadius() {
@@ -74,5 +70,18 @@ public class Circle : Shape {
 	public void SetRadius(float change) {
 		radius = change;
 		CalculateBounds();
+	}
+
+	public void AttachToTransform(Transform t) {
+		target = t;
+	}
+
+	public Vector2 GetRefCenter() {
+		return target != null ? (Vector2)target.position : refCenter;
+	}
+
+	public void Translate(Vector2 move) {
+		center += move;
+		bounds.center += (Vector3)move;
 	}
 }

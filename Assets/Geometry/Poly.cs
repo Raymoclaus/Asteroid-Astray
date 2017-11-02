@@ -4,46 +4,21 @@ using UnityEngine;
 
 public class Poly : Shape {
 	private List<Vector2> verts;
-	public Vector2 center = Vector2.zero;
+	public Vector2 refCenter = Vector2.zero;
 	public Bounds bounds;
+	private Transform target;
 	public int VertsCount {
 		get {
 			return verts.Count;
 		}
 	}
 
-	public Poly() {
-		verts = new List<Vector2>(3);
-		for (int i = 0; i < 3; i++) {
-			verts.Add(Vector2.zero);
-		}
-		CalculateBounds();
-	}
-
-	public Poly(int size) {
-		verts = new List<Vector2>(size);
-		for (int i = 0; i < size; i++) {
-			verts.Add(Vector2.zero);
-		}
-		CalculateBounds();
-	}
-
-	public Poly(Vector2[] vertArr) {
-		verts = new List<Vector2>(vertArr);
-		for (int i = 0; i < vertArr.Length; i++) {
-			verts.Add(vertArr[i]);
-		}
+	public Poly(List<Vector2> vertArr = null, Transform target = null) {
+		verts = vertArr != null ? vertArr : new List<Vector2>(3);
 		while (verts.Count < 3) {
 			verts.Add(Vector2.zero);
 		}
-		CalculateBounds();
-	}
-
-	public Poly(List<Vector2> vertArr) {
-		verts = vertArr;
-		while (verts.Count < 3) {
-			verts.Add(Vector2.zero);
-		}
+		this.target = target;
 		CalculateBounds();
 	}
 
@@ -52,10 +27,6 @@ public class Poly : Shape {
 	}
 
 	public bool IsCircle() {
-		return false;
-	}
-
-	public bool IsRegularPoly() {
 		return false;
 	}
 
@@ -68,8 +39,6 @@ public class Poly : Shape {
 			return Geometry2D.LineSegIntersectsPoly((LineSeg)s, GetVerts());
 		} else if (s.IsCircle()) {
 			return Geometry2D.CircleIntersectsPoly((Circle)s, GetVerts());
-		} else if (s.IsRegularPoly()) {
-			//TODO
 		} else if (s.IsPoly()) {
 			return Geometry2D.PolyIntersectsPoly(this, (Poly)s);
 		}
@@ -82,27 +51,28 @@ public class Poly : Shape {
 		return verts;
 	}
 
-	/// Returns a copy of the list of vertices of the polygon offset by its center.
+	/// Returns a copy of the list of vertices of the polygon offset by its center and the given offset.
 	public List<Vector2> GetOffsetVerts() {
 		List<Vector2> offsetVerts = new List<Vector2>(verts);
-		for (int i = 0; i < offsetVerts.Count; i++) {
-			offsetVerts[i] += center;
+		for (int i = 0; i < verts.Count; i++) {
+			offsetVerts[i] += GetRefCenter();
+			if (target != null && !Mathf.Approximately(target.eulerAngles.z, 0f)) {
+				offsetVerts[i] = RotatePointAroundPivot(offsetVerts[i], target.eulerAngles.z, target.position);
+			}
 		}
 		return offsetVerts;
 	}
 
-	/// Returns a copy of the list of vertices of the polygon offset by its center and the given position.
-	public List<Vector2> GetOffsetVerts(Vector2 otherOffset) {
-		List<Vector2> offsetVerts = new List<Vector2>(verts);
-		for (int i = 0; i < verts.Count; i++) {
-			offsetVerts[i] += center + otherOffset;
-		}
-		return offsetVerts;
+	private Vector2 RotatePointAroundPivot(Vector2 p, float angle, Vector2? pivot = null) {
+		Vector2 pvot = pivot != null ? (Vector2)pivot : Vector2.zero;
+		angle *= Mathf.Deg2Rad;
+		return new Vector2(Mathf.Cos(angle) * (p.x - pvot.x) - Mathf.Sin(angle) * (p.y - pvot.y) + pvot.x,
+			Mathf.Sin(angle) * (p.x - pvot.x) + Mathf.Cos(angle) * (p.y - pvot.y) + pvot.y);
 	}
 
 	/// Returns the bounds of the polygon in world space
 	public Bounds GetBounds() {
-		return new Bounds((Vector2)bounds.center + center, bounds.size);
+		return new Bounds((Vector2)bounds.center + GetRefCenter(), bounds.size);
 	}
 
 	private void CalculateBounds() {
@@ -125,5 +95,20 @@ public class Poly : Shape {
 	public void SetVertexPosition(int vertID, float x, float y) {
 		verts[vertID] = new Vector2(x, y);
 		CalculateBounds();
+	}
+
+	public void AttachToTransform(Transform t) {
+		target = t;
+	}
+
+	public Vector2 GetRefCenter() {
+		return target != null ? (Vector2)target.position : refCenter;
+	}
+
+	public void Translate(Vector2 move) {
+		for (int i = 0; i < verts.Count; i++) {
+			verts[i] += move;
+		}
+		bounds.center += (Vector3)move;
 	}
 }

@@ -4,15 +4,16 @@ using UnityEngine;
 
 public class LineSeg : Shape {
 	private Vector2 a, b;
-	public Vector2 center = Vector2.zero;
+	public Vector2 refCenter = Vector2.zero;
 	public Bounds bounds;
+	private Transform target;
 
 	public Vector2 CenterA {
-		get { return a + center; }
+		get { return a + GetRefCenter(); }
 	}
 
 	public Vector2 CenterB {
-		get { return b + center; }
+		get { return b + GetRefCenter(); }
 	}
 
 	public float Length {
@@ -51,7 +52,14 @@ public class LineSeg : Shape {
 	}
 
 	public LineSeg(Vector2 center, Vector2 a, Vector2 b) {
-		this.center = center;
+		this.refCenter = center;
+		this.a = a;
+		this.b = b;
+		CalculateBounds();
+	}
+
+	public LineSeg(Transform target, Vector2 a, Vector2 b) {
+		this.target = target;
 		this.a = a;
 		this.b = b;
 		CalculateBounds();
@@ -65,10 +73,6 @@ public class LineSeg : Shape {
 		return false;
 	}
 
-	public bool IsRegularPoly() {
-		return false;
-	}
-
 	public bool IsPoly() {
 		return false;
 	}
@@ -78,8 +82,6 @@ public class LineSeg : Shape {
 			return Geometry2D.LineSegIntersectsLineSeg(this, (LineSeg)s);
 		} else if (s.IsCircle()) {
 			return Geometry2D.LineSegIntersectsCircle(this, (Circle)s);
-		} else if (s.IsRegularPoly()) {
-			//TODO
 		} else if (s.IsPoly()) {
 			return Geometry2D.LineSegIntersectsPoly(this, (Poly)s);
 		}
@@ -87,19 +89,15 @@ public class LineSeg : Shape {
 	}
 
 	public List<Vector2> GetVerts() {
-		return new List<Vector2>() { a + center, b + center };
+		return new List<Vector2>() { a, b };
 	}
 
 	public List<Vector2> GetOffsetVerts() {
-		return new List<Vector2>() { a + center, b + center };
-	}
-
-	public List<Vector2> GetOffsetVerts(Vector2 offset) {
-		return new List<Vector2>() { a + center + offset, b + center + offset };
+		return new List<Vector2>() { a + GetRefCenter(), b + GetRefCenter() };
 	}
 
 	public Bounds GetBounds() {
-		return new Bounds((Vector2)bounds.center + center, bounds.size);
+		return new Bounds((Vector2)bounds.center + GetRefCenter(), bounds.size);
 	}
 
 	private void CalculateBounds() {
@@ -123,5 +121,23 @@ public class LineSeg : Shape {
 	public void SetB(Vector2 change) {
 		b = change;
 		CalculateBounds();
+	}
+
+	public void AttachToTransform(Transform t) {
+		target = t;
+	}
+
+	public Vector2 GetRefCenter() {
+		return target != null ? (Vector2)target.position : refCenter;
+	}
+
+	public void Translate(Vector2 move) {
+		a += move;
+		b += move;
+		bounds.center += (Vector3)move;
+	}
+
+	public float GetRotation() {
+		return target != null ? target.eulerAngles.z : 0f;
 	}
 }

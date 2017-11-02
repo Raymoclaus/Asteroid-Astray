@@ -26,7 +26,7 @@ public static class OPool {
 	public static List<GameObject> GetObjsInChunk(ChunkCoordinates crds) {
 		List<GameObject> objs = new List<GameObject>();
 		crds = crds.Validate();
-		foreach (AsteroidCtrl obj in asteroids[crds.direction][crds.x][crds.y]) {
+		foreach (AsteroidCtrl obj in asteroids[(int)crds.direction][crds.x][crds.y]) {
 			objs.Add(obj.gameObject);
 		}
 		return objs;
