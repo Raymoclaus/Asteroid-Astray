@@ -1,143 +1,193 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
-public class LineSeg : Shape {
-	private Vector2 a, b;
-	public Vector2 refCenter = Vector2.zero;
-	public Bounds bounds;
-	private Transform target;
+namespace Geometry
+{
+    public class LineSeg : IShape
+    {
+        private Vector2 _a, _b;
+        public Vector2 RefCenter = Vector2.zero;
+        public Bounds Bounds;
+        private Transform _target;
 
-	public Vector2 CenterA {
-		get { return a + GetRefCenter(); }
-	}
+        public Vector2 CenterA
+        {
+            get { return _a + GetRefCenter(); }
+        }
 
-	public Vector2 CenterB {
-		get { return b + GetRefCenter(); }
-	}
+        public Vector2 CenterB
+        {
+            get { return _b + GetRefCenter(); }
+        }
 
-	public float Length {
-		get { return Vector2.Distance(a, b); }
-	}
+        public float Length
+        {
+            get { return Vector2.Distance(_a, _b); }
+        }
 
-	public float Slope {
-		get {
-			if (a.x == b.x) {
-				return float.PositiveInfinity;
-			} else {
-				return (b.y - a.y) / (b.x - a.x);
-			}
-		}
-	}
+        public float Slope
+        {
+            get
+            {
+                if (_a.x == _b.x)
+                {
+                    return float.PositiveInfinity;
+                }
 
-	public float Offset {
-		get {
-			if (Slope == float.PositiveInfinity) {
-				return a.x;
-			} else {
-				return a.y - Slope * a.x;
-			}
-		}
-	}
+                return (_b.y - _a.y) / (_b.x - _a.x);
+            }
+        }
 
-	public LineSeg() {
-		a = b = Vector2.zero;
-		CalculateBounds();
-	}
+        public float Offset
+        {
+            get
+            {
+                if (Slope == float.PositiveInfinity)
+                {
+                    return _a.x;
+                }
 
-	public LineSeg(Vector2 a, Vector2 b) {
-		this.a = a;
-		this.b = b;
-		CalculateBounds();
-	}
+                return _a.y - Slope * _a.x;
+            }
+        }
 
-	public LineSeg(Vector2 center, Vector2 a, Vector2 b) {
-		this.refCenter = center;
-		this.a = a;
-		this.b = b;
-		CalculateBounds();
-	}
+        public LineSeg()
+        {
+            _a = _b = Vector2.zero;
+            CalculateBounds();
+        }
 
-	public LineSeg(Transform target, Vector2 a, Vector2 b) {
-		this.target = target;
-		this.a = a;
-		this.b = b;
-		CalculateBounds();
-	}
+        public LineSeg(Vector2 a, Vector2 b)
+        {
+            _a = a;
+            _b = b;
+            CalculateBounds();
+        }
 
-	public bool IsLine() {
-		return true;
-	}
+        public LineSeg(Vector2 center, Vector2 a, Vector2 b)
+        {
+            RefCenter = center;
+            _a = a;
+            _b = b;
+            CalculateBounds();
+        }
 
-	public bool IsCircle() {
-		return false;
-	}
+        public LineSeg(Transform target, Vector2 a, Vector2 b)
+        {
+            _target = target;
+            _a = a;
+            _b = b;
+            CalculateBounds();
+        }
 
-	public bool IsPoly() {
-		return false;
-	}
+        public bool IsPoint()
+        {
+            return false;
+        }
 
-	public bool Intersects(Shape s) {
-		if (s.IsLine()) {
-			return Geometry2D.LineSegIntersectsLineSeg(this, (LineSeg)s);
-		} else if (s.IsCircle()) {
-			return Geometry2D.LineSegIntersectsCircle(this, (Circle)s);
-		} else if (s.IsPoly()) {
-			return Geometry2D.LineSegIntersectsPoly(this, (Poly)s);
-		}
-		return false;
-	}
+        public bool IsLine()
+        {
+            return true;
+        }
 
-	public List<Vector2> GetVerts() {
-		return new List<Vector2>() { a, b };
-	}
+        public bool IsCircle()
+        {
+            return false;
+        }
 
-	public List<Vector2> GetOffsetVerts() {
-		return new List<Vector2>() { a + GetRefCenter(), b + GetRefCenter() };
-	}
+        public bool IsPoly()
+        {
+            return false;
+        }
 
-	public Bounds GetBounds() {
-		return new Bounds((Vector2)bounds.center + GetRefCenter(), bounds.size);
-	}
+        public bool Intersects(IShape s)
+        {
+            if (s.IsPoint())
+            {
+                return Geometry2D.PointOnLineSeg(((Point) s).Position, this);
+            }
 
-	private void CalculateBounds() {
-		bounds = new Bounds(a, Vector2.zero);
-		bounds.Encapsulate(b);
-	}
+            if (s.IsLine())
+            {
+                return Geometry2D.LineSegIntersectsLineSeg(this, (LineSeg) s);
+            }
 
-	public Vector2 GetA() {
-		return a;
-	}
+            if (s.IsCircle())
+            {
+                return Geometry2D.LineSegIntersectsCircle(this, (Circle) s);
+            }
 
-	public Vector2 GetB() {
-		return b;
-	}
+            if (s.IsPoly())
+            {
+                return Geometry2D.LineSegIntersectsPoly(this, (Poly) s);
+            }
 
-	public void SetA(Vector2 change) {
-		a = change;
-		CalculateBounds();
-	}
+            return false;
+        }
 
-	public void SetB(Vector2 change) {
-		b = change;
-		CalculateBounds();
-	}
+        public List<Vector2> GetVerts()
+        {
+            return new List<Vector2> {_a, _b};
+        }
 
-	public void AttachToTransform(Transform t) {
-		target = t;
-	}
+        public List<Vector2> GetOffsetVerts()
+        {
+            return new List<Vector2> {_a + GetRefCenter(), _b + GetRefCenter()};
+        }
 
-	public Vector2 GetRefCenter() {
-		return target != null ? (Vector2)target.position : refCenter;
-	}
+        public Bounds GetBounds()
+        {
+            return new Bounds((Vector2) Bounds.center + GetRefCenter(), Bounds.size);
+        }
 
-	public void Translate(Vector2 move) {
-		a += move;
-		b += move;
-		bounds.center += (Vector3)move;
-	}
+        private void CalculateBounds()
+        {
+            Bounds = new Bounds(_a, Vector2.zero);
+            Bounds.Encapsulate(_b);
+        }
 
-	public float GetRotation() {
-		return target != null ? target.eulerAngles.z : 0f;
-	}
+        public Vector2 GetA()
+        {
+            return _a;
+        }
+
+        public Vector2 GetB()
+        {
+            return _b;
+        }
+
+        public void SetA(Vector2 change)
+        {
+            _a = change;
+            CalculateBounds();
+        }
+
+        public void SetB(Vector2 change)
+        {
+            _b = change;
+            CalculateBounds();
+        }
+
+        public void AttachToTransform(Transform t)
+        {
+            _target = t;
+        }
+
+        public Vector2 GetRefCenter()
+        {
+            return _target != null ? (Vector2) _target.position : RefCenter;
+        }
+
+        public void Translate(Vector2 move)
+        {
+            _a += move;
+            _b += move;
+            Bounds.center = (Vector2)Bounds.center + move;
+        }
+
+        public float GetRotation()
+        {
+            return _target != null ? _target.eulerAngles.z : 0f;
+        }
+    }
 }

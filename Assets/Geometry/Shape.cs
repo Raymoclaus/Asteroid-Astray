@@ -1,25 +1,31 @@
-﻿using System.Collections;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public interface Shape {
-	bool IsLine();
+namespace Geometry
+{
+    public interface IShape
+    {
+        bool IsPoint();
 
-	bool IsCircle();
+        bool IsLine();
 
-	bool IsPoly();
+        bool IsCircle();
 
-	bool Intersects(Shape s);
+        bool IsPoly();
 
-	List<Vector2> GetVerts();
+        bool Intersects(IShape s);
 
-	List<Vector2> GetOffsetVerts();
+        List<Vector2> GetVerts();
 
-	Bounds GetBounds();
+        List<Vector2> GetOffsetVerts();
 
-	void AttachToTransform(Transform t);
+        Bounds GetBounds();
 
-	Vector2 GetRefCenter();
+        void AttachToTransform(Transform t);
 
-	void Translate(Vector2 move);
+        Vector2 GetRefCenter();
+
+        void Translate(Vector2 move);
+    }
 }

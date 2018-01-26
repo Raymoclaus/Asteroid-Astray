@@ -1,87 +1,122 @@
-﻿using System.Collections;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Circle : Shape {
-	private float radius = 1f;
-	public Vector2 refCenter = Vector2.zero;
-	public Vector2 center = Vector2.zero;
-	public Vector2 WorldCenter {
-		get {
-			return GetRefCenter() + center;
-		}
-		set {
-			center = value - GetRefCenter();
-		}
-	}
-	public Bounds bounds;
-	private Transform target;
+namespace Geometry
+{
+    public class Circle : IShape
+    {
+        private float _radius;
+        [HideInInspector] public Vector2 RefCenter = Vector2.zero;
+	    public Vector2 Center = Vector2.zero;
 
-	public Circle(Transform target = null, Vector2? center = null, float radius = 1f) {
-		this.target = target;
-		this.center = center ?? this.center;
-		this.radius = radius;
-		CalculateBounds();
-	}
+        public Vector2 WorldCenter
+        {
+            get { return GetRefCenter() + Center; }
+            set { Center = value - GetRefCenter(); }
+        }
 
-	public bool IsLine() {
-		return false;
-	}
+        public Bounds Bounds;
+        private Transform _target;
 
-	public bool IsCircle() {
-		return true;
-	}
+        public Circle(Transform target = null, Vector2? center = null, float radius = 1f)
+        {
+            _target = target;
+            Center = center ?? Center;
+            _radius = radius;
+            CalculateBounds();
+        }
 
-	public bool IsPoly() {
-		return false;
-	}
+        public bool IsPoint()
+        {
+            return false;
+        }
 
-	public bool Intersects(Shape s) {
-		if (s.IsLine()) {
-			return Geometry2D.LineSegIntersectsCircle((LineSeg)s, this);
-		} else if (s.IsCircle()) {
-			return Geometry2D.CircleIntersectsCircle((Circle)s, this);
-		} else if (s.IsPoly()) {
-			return Geometry2D.CircleIntersectsPoly(this, (Poly)s);
-		}
-		return false;
-	}
+        public bool IsLine()
+        {
+            return false;
+        }
 
-	public List<Vector2> GetVerts() {
-		return new List<Vector2>() { center };
-	}
+        public bool IsCircle()
+        {
+            return true;
+        }
 
-	public List<Vector2> GetOffsetVerts() {
-		return new List<Vector2>() { WorldCenter };
-	}
+        public bool IsPoly()
+        {
+            return false;
+        }
 
-	public Bounds GetBounds() {
-		return new Bounds((Vector2)bounds.center + GetRefCenter(), bounds.size);
-	}
+        public bool Intersects(IShape s)
+        {
+            if (s.IsPoint())
+            {
+                return Geometry2D.PointInCircle(((Point) s).Position, this);
+            }
 
-	private void CalculateBounds() {
-		bounds = new Bounds(GetRefCenter(), Vector2.one * 2 * radius);
-	}
+            if (s.IsLine())
+            {
+                return Geometry2D.LineSegIntersectsCircle((LineSeg) s, this);
+            }
 
-	public float GetRadius() {
-		return radius;
-	}
+            if (s.IsCircle())
+            {
+                return Geometry2D.CircleIntersectsCircle((Circle) s, this);
+            }
 
-	public void SetRadius(float change) {
-		radius = change;
-		CalculateBounds();
-	}
+            if (s.IsPoly())
+            {
+                return Geometry2D.CircleIntersectsPoly(this, (Poly) s);
+            }
 
-	public void AttachToTransform(Transform t) {
-		target = t;
-	}
+            return false;
+        }
 
-	public Vector2 GetRefCenter() {
-		return target != null ? (Vector2)target.position : refCenter;
-	}
+        public List<Vector2> GetVerts()
+        {
+            return new List<Vector2> {Center};
+        }
 
-	public void Translate(Vector2 move) {
-		center += move;
-		bounds.center += (Vector3)move;
-	}
+        public List<Vector2> GetOffsetVerts()
+        {
+            return new List<Vector2> {WorldCenter};
+        }
+
+        public Bounds GetBounds()
+        {
+            return new Bounds((Vector2) Bounds.center + GetRefCenter(), Bounds.size);
+        }
+
+        private void CalculateBounds()
+        {
+            Bounds = new Bounds(GetRefCenter(), Vector2.one * 2 * _radius);
+        }
+
+        public float GetRadius()
+        {
+            return _radius;
+        }
+
+        public void SetRadius(float change)
+        {
+            _radius = change;
+            CalculateBounds();
+        }
+
+        public void AttachToTransform(Transform t)
+        {
+            _target = t;
+        }
+
+        public Vector2 GetRefCenter()
+        {
+            return _target != null ? (Vector2) _target.position : RefCenter;
+        }
+
+        public void Translate(Vector2 move)
+        {
+            Center += move;
+            Bounds.center = (Vector2)Bounds.center + move;
+        }
+    }
 }

@@ -1,144 +1,149 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using Object_Controllers;
 using UnityEngine;
 
-public class AsteroidGenerator : MonoBehaviour {
+public static class AsteroidGenerator
+{
 	/* Fields */
 
 	#region
 
 	//reference to asteroid prefab
-	public AsteroidCtrl asteroid;
+	public static Asteroid AsteroidPfb;
+
+	//reference to the holder of asteroid objects
+	public static Transform AsteroidHolder;
+
 	//keeps track of whether chunks have been filled already. Prevents chunk from refilling if emptied by player
-	private List<List<List<bool>>> wasFilled = new List<List<List<bool>>>();
+	private static List<List<List<bool>>> _wasFilled = new List<List<List<bool>>>();
+
 	//how many asteroids per unit. eg a value of 0.3f means: number of asteroids per chunk = 0.3f * CHUNK_SIZE^2
-	public float asteroidDensity;
+	public static float AsteroidDensity = 0.1f;
 
 	#endregion
 
-	void Start() {
-		CreateDirections();
-	}
+	public static void FillChunk(ChunkCoords cc)
+	{
+		//don't bother if the given coordinates are not valid
+		if (!cc.IsValid())
+		{
+			return;
+		}
 
-	void Update() {
-		if (Input.GetKeyDown(KeyCode.RightBracket)) {
-			Debug.Log(string.Format("Number of chunks created: {0}", GetNumberOfChunks(false)));
-			Debug.Log(string.Format("Number of chunks filled: {0}", GetNumberOfChunks(true)));
-			Debug.Log(string.Format("Number of asteroids existing: {0}", GetAsteroidCount()));
+		//if these coordinates have no been generated yet then reserve some space for the new coordinates
+		GenerateVoid(cc);
+		//don't bother if the coordinates have already been filled
+		if (Chunk(cc))
+		{
+			return;
+		}
+
+		//flag that this chunk coordinates was filled
+		Column(cc)[cc.Y] = true;
+		//fill chunk with asteroids
+		Vector2Pair range = ChunkCoords.GetCellArea(cc);
+		Vector2 spawnPos = new Vector2();
+		for (int i = 0; i < (int) (Cnsts.ChunkSize * Cnsts.ChunkSize * AsteroidDensity); i++)
+		{
+			//pick a position within the chunk coordinates
+			spawnPos.x = Random.Range(range.A.x, range.B.x);
+			spawnPos.y = Random.Range(range.A.y, range.B.y);
+			//spawn asteroid at coordinates
+			Object.Instantiate(AsteroidPfb, spawnPos, Quaternion.identity, AsteroidHolder);
 		}
 	}
 
-	/* Stuff that gets statistics about asteroids. Not important for gameplay. */
+	/// Increases capacity of the fill trigger list to accomodate given coordinates
+	private static void GenerateVoid(ChunkCoords cc)
+	{
+		//ignore if given coordinates are invalid or they already exist
+		if (!cc.IsValid() || EntityNetwork.ChunkExists(cc))
+		{
+			return;
+		}
+
+		//add more columns until enough exist to make the given coordinates valid
+		if (Direction(cc).Capacity <= cc.X)
+		{
+			Debug.Log("Row capacity breached.");
+			Direction(cc).Capacity = cc.X + 1;
+		}
+
+		while (Direction(cc).Count <= cc.X)
+		{
+			Direction(cc).Add(new List<bool>());
+		}
+
+		//add more rows until the column is large enough to make the given coordinates valid
+		if (Column(cc).Capacity <= cc.Y)
+		{
+			Debug.Log("Column capacity breached.");
+			Column(cc).Capacity = cc.Y + 1;
+		}
+
+		while (Column(cc).Count <= cc.Y)
+		{
+			_wasFilled[(int) cc.Direction][cc.X].Add(false);
+		}
+	}
+
+	/// Fills up the list of fill triggers
+	public static void FillTriggerList()
+	{
+		for (int dir = 0; dir < EntityNetwork.QuadrantNumber; dir++)
+		{
+			_wasFilled.Add(new List<List<bool>>());
+			for (int x = 0; x < EntityNetwork.ReserveSize; x++)
+			{
+				_wasFilled[dir].Add(new List<bool>());
+				for (int y = 0; y < EntityNetwork.ReserveSize; y++)
+				{
+					_wasFilled[dir][x].Add(false);
+				}
+			}
+		}
+	}
+
+	/// Removes and destroys all asteroids in the entity network then sets all fill triggers to false
+	public static void DestroyAllAsteroids()
+	{
+		//destroy all asteroid entities
+		EntityNetwork.DestroyAllEntities(EntityType.Asteroid);
+
+		//set all fill triggers to false
+		ChunkCoords check = ChunkCoords.Zero;
+		for (int dir = 0; dir < _wasFilled.Count; dir++)
+		{
+			check.Direction = (Quadrant) dir;
+			for (int x = 0; x < Direction(check).Count; x++)
+			{
+				check.X = x;
+				for (int y = 0; y < Column(check).Count; y++)
+				{
+					Column(check)[y] = false;
+				}
+			}
+		}
+	}
+
+	/* Shorthand methods for accessing the grid */
 
 	#region
 
-	private int GetNumberOfChunks(bool checkingFilled) {
-		int count = 0;
-		for (int dir = 0; dir < OPool.asteroids.Count; dir++) {
-			for (int x = 0; x < OPool.asteroids[dir].Count; x++) {
-				if (checkingFilled) {
-					for (int y = 0; y < OPool.asteroids[dir][x].Count; y++) {
-						if (wasFilled[dir][x][y]) {
-							count++;
-						}
-					}
-				} else {
-					count += OPool.asteroids[dir][x].Count;
-				}
-			}
-		}
-		return count;
+	private static bool Chunk(ChunkCoords cc)
+	{
+		return Column(cc)[cc.Y];
 	}
 
-	private int GetAsteroidCount() {
-		int count = 0;
-		for (int dir = 0; dir < OPool.asteroids.Count; dir++) {
-			for (int x = 0; x < OPool.asteroids[dir].Count; x++) {
-				for (int y = 0; y < OPool.asteroids[dir][x].Count; y++) {
-					count += OPool.asteroids[dir][x][y].Count;
-				}
-			}
-		}
-		return count;
+	private static List<bool> Column(ChunkCoords cc)
+	{
+		return Direction(cc)[cc.X];
+	}
+
+	private static List<List<bool>> Direction(ChunkCoords cc)
+	{
+		return _wasFilled[(int) cc.Direction];
 	}
 
 	#endregion
-
-	public void FillChunk(ChunkCoordinates chCoord) {
-		//if these coordinates have no been generated yet then reserve some space for the new coordinates
-		GenerateVoid(chCoord);
-		//if these coordinates haven't been filled yet then carry out filling process
-		if (!wasFilled[(int)chCoord.direction][chCoord.x][chCoord.y]) {
-			//flag that this chunk coordinates was filled
-			wasFilled[(int)chCoord.direction][chCoord.x][chCoord.y] = true;
-			//fill chunk with asteroids
-			Vector2Pair range = ChunkCoordinates.GetCellArea(chCoord);
-			Vector2 spawnPos = new Vector2();
-			for (int i = 0; i < (int)(Mathf.Pow(Cnsts.CHUNK_SIZE, 2f) * asteroidDensity); i++) {
-				//pick a position within the chunk coordinates
-				spawnPos.x = Random.Range(range.a.x, range.b.x);
-				spawnPos.y = Random.Range(range.a.y, range.b.y);
-				//spawn asteroid at coordinates
-				AsteroidCtrl newAsteroid = Instantiate<AsteroidCtrl>(
-					                           asteroid, spawnPos, Quaternion.identity, transform);
-				OPool.asteroids[(int)chCoord.direction][chCoord.x][chCoord.y].Add(newAsteroid);
-				newAsteroid.ChunkRefInit(chCoord, i, this);
-			}
-		}
-	}
-
-	private void GenerateVoid(ChunkCoordinates chCoord) {
-		if (OPool.asteroids.Count < 4) {
-			CreateDirections();
-		}
-		//check to see if the coordinate has been previously recorded
-		while (OPool.asteroids[(int)chCoord.direction].Count <= chCoord.x) {
-			//add x coordinates until chCoord is within limits
-			OPool.asteroids[(int)chCoord.direction].Add(new List<List<AsteroidCtrl>>());
-			wasFilled[(int)chCoord.direction].Add(new List<bool>());
-		}
-		while (OPool.asteroids[(int)chCoord.direction][chCoord.x].Count <= chCoord.y) {
-			//add y coordinates until chCoord is within limits
-			OPool.asteroids[(int)chCoord.direction][chCoord.x].Add(new List<AsteroidCtrl>());
-			wasFilled[(int)chCoord.direction][chCoord.x].Add(false);
-		}
-	}
-
-	private void CreateDirections() {
-		//create all 4 directions
-		int directions = 4 - OPool.asteroids.Count;
-		for (int i = 0; i < directions; i++) {
-			OPool.asteroids.Add(new List<List<List<AsteroidCtrl>>>());
-			wasFilled.Add(new List<List<bool>>());
-		}
-	}
-
-	public void DestroyAll() {
-		//destroy all asteroids and clear the array
-		for (int dir = 0; dir < OPool.asteroids.Count; dir++) {
-			for (int x = 0; x < OPool.asteroids[dir].Count; x++) {
-				for (int y = 0; y < OPool.asteroids[dir][x].Count; y++) {
-					for (int i = 0; i < OPool.asteroids[dir][x][y].Count; i++) {
-						Destroy(OPool.asteroids[dir][x][y][i]);
-					}
-				}
-			}
-		}
-		//clear all arrays
-		OPool.asteroids.Clear();
-		wasFilled.Clear();
-		//refill directions
-		CreateDirections();
-	}
-
-	public void DestroyAsteroid(ChunkCoordinates refVal, int part) {
-		OPool.asteroids[(int)refVal.direction][refVal.x][refVal.y].RemoveAt(part);
-		DecrementAsteroidIds(refVal, part);
-	}
-
-	private void DecrementAsteroidIds(ChunkCoordinates chunk, int part) {
-		for (int i = part; i < OPool.asteroids[(int)chunk.direction][chunk.x][chunk.y].Count; i++) {
-			OPool.asteroids[(int)chunk.direction][chunk.x][chunk.y][i].chunkPart--;
-		}
-	}
 }
