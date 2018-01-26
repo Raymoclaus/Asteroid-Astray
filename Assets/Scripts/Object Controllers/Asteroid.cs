@@ -35,16 +35,12 @@ namespace Object_Controllers
 			//pick a random sprite from given list of sprites
 			SprRend.sprite = Shapes[Random.Range(0, Shapes.Length)];
 			//picks a random speed to spin at within a given range with chance favoring lower values
-			_spinSpeed = Mathf.Pow(Random.Range(0f, 2f), 2f) * SpinSpeedRange - SpinSpeedRange;
+			Rb.rotation = Mathf.Pow(Random.Range(0f, 2f), 2f) * SpinSpeedRange - SpinSpeedRange;
 		}
 
 		public void Update()
 		{
-			//if not being drilled or the camera is not too far zoomed out, rotate
-			if (!_beingDrilled && CameraCtrl.CamSize < 10f)
-			{
-				transform.Rotate(Vector3.forward * _spinSpeed * Cnsts.TimeSpeed);
-			}
+			
 		}
 
 		private void DestroySelf(bool explode)

@@ -46,18 +46,19 @@ namespace Object_Controllers
 			    //if going over the overall speed limit then definitely speeding
 			    if (sqrMag > SpeedLimit) return true;
 			    
-			    //speed limit is halved for sideways movement
-			    //formula for ellipsoid, determines if velocity magnitude is within range
+			    //formula for ellipsoid, determines if velocity is within range
 			    //for reference: https://www.maa.org/external_archive/joma/Volume8/Kalman/General.html
+			    //slightly modified for use with square magnitude for better efficiency
+			    //half and full would normally be squared
 			    float rotAngle = Mathf.Deg2Rad * _rot.z;
-			    float normalisedSpeed = SpeedLimit * 10f;
+			    float normalisedSpeed = SpeedLimit;
 			    float a = vel.x * Mathf.Cos(rotAngle) + vel.y * Mathf.Sin(rotAngle);
 			    float b = vel.x * Mathf.Sin(rotAngle) - vel.y * Mathf.Cos(rotAngle);
+			    //speed limit is halved for sideways movement
 			    float half = normalisedSpeed / 2f;
-			    float full = normalisedSpeed * normalisedSpeed;
+			    float full = normalisedSpeed;
 			    a *= a;
 			    b *= b;
-			    half *= half;
 			    float speedCheck = (a / half) + (b / full);
 			    return speedCheck > 1;
 		    }
