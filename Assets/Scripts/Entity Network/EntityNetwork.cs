@@ -1,0 +1,268 @@
+﻿using System;
+using System.Collections.Generic;
+using UnityEngine;
+using Utilities;
+
+/// Keeps track of all entities in an organised network based on their position.
+/// Useful in case you only want access to entities in a certain area. It's faster than checking every single one.
+public static class EntityNetwork
+{
+	//4 directions in the grid
+	public const int QuadrantNumber = 4;
+
+	//Determines the physical size of cells in the grid
+	public const float CHUNK_SIZE = 10;
+
+	//network of entities
+	private static List<List<List<List<Entity>>>> _grid = new List<List<List<List<Entity>>>>(QuadrantNumber);
+
+	//some large number of reserve to avoid List resizing lag
+	public const int ReserveSize = 1000;
+
+	//another large number for each individual cell in the grid
+	public const int CellReserve = 10;
+
+	/// Constructs and reserves a large amount of space for the grid
+	public static void CreateGrid()
+	{
+		//reserve space in each direction
+		//takes ~1.5 seconds for 1000 * 1000 * 10
+		for (int dir = 0; dir < QuadrantNumber; dir++)
+		{
+			_grid.Add(new List<List<List<Entity>>>(ReserveSize));
+			for (int x = 0; x < ReserveSize; x++)
+			{
+				_grid[dir].Add(new List<List<Entity>>(ReserveSize));
+				for (int y = 0; y < ReserveSize; y++)
+				{
+					_grid[dir][x].Add(new List<Entity>(CellReserve));
+					//no actual entities are created yet
+				}
+			}
+		}
+	}
+
+	/// Returns a list of all entities located in cells within range of the given coordinates
+	public static List<Entity> GetEntitiesInRange(ChunkCoords center, int range)
+	{
+		//declare a list to be filled and reserve some room
+		int r = range * 2 + 1;
+		List<Entity> entitiesInRange = new List<Entity>(CellReserve * r * r);
+		ChunkCoords cc = center;
+		//loop through surrounding chunks
+		for (int i = -range; i <= range; i++)
+		{
+			cc.X = center.X + i;
+			for (int j = -range; j <= range; j++)
+			{
+				cc.Y = center.Y + j;
+				//validate will adjust for edge cases
+				ChunkCoords validCc = cc;
+				validCc.Validate();
+				if (ChunkExists(validCc))
+				{
+					entitiesInRange.AddRange(Chunk(validCc));
+				}
+			}
+		}
+
+		return entitiesInRange;
+	}
+
+	/// Adds a given entity to the list at given coordinates
+	public static bool AddEntity(Entity e, ChunkCoords cc)
+	{
+		if (!cc.IsValid())
+		{
+			Debug.Log("Coordinates to add entity to are invalid.");
+			return false;
+		}
+
+		Chunk(cc).Add(e);
+		//set entity's coordinates to be equal to the given coordinates
+		e.SetCoordinates(cc);
+		return true;
+	}
+
+	/// Removes an entity from the network
+	public static bool RemoveEntity(Entity e, EntityType? type = null)
+	{
+		if (!e.GetCoords().IsValid())
+		{
+			Debug.Log("Removal coordinates are invalid.");
+			return false;
+		}
+
+		if (type != null && e.GetEntityType() != (EntityType) type)
+		{
+			Debug.Log("EntityType value given does not match entity's type");
+			return false;
+		}
+
+		if (Chunk(e.GetCoords()).Remove(e)) return true;
+
+		Debug.Log("Entity not found at removal coordinates.");
+		return false;
+	}
+
+	/// Removes an entity from the network and then destroys it if successful
+	public static bool DestroyEntity(Entity e)
+	{
+		if (!RemoveEntity(e))
+		{
+			Debug.Log("Entity: " + e + " could not be removed.");
+			return false;
+		}
+
+		e.DestroySelf();
+		return true;
+	}
+
+	/// Destroys all entities
+	public static void DestroyAllEntities(EntityType? type = null)
+	{
+		AccessAllEntities(e => { DestroyEntity(e); }, type);
+	}
+
+	/// Iterates through all entities and performs the action once for each entity
+	public static void AccessAllEntities(Action<Entity> act, EntityType? onlyType = null)
+	{
+		ChunkCoords check = ChunkCoords.Zero;
+		bool limitCheck = onlyType != null;
+		//Check every direction
+		for (int dir = 0; dir < _grid.Count; dir++)
+		{
+			check.Direction = (Quadrant) dir;
+			//Check every column
+			for (int x = 0; x < Direction(check).Count; x++)
+			{
+				check.X = x;
+				//Check every row
+				for (int y = 0; y < Column(check).Count; y++)
+				{
+					check.Y = y;
+					//Check every entity in chunk
+					for (int i = Chunk(check).Count; i >= 0; i--)
+					{
+						Entity e = Chunk(check)[i];
+						//only access entities with the given type (any if no type is given)
+						if ((limitCheck && e.GetEntityType() == (EntityType) onlyType) || !limitCheck)
+						{
+							act(e);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	/// Removes an entity from its position in the network and replaces it and the given destination
+	/// This will mostly be used by entities themselves as they are responsible for determining their place in the network
+	public static bool Reposition(Entity e, ChunkCoords destChunk)
+	{
+		if (!destChunk.IsValid())
+		{
+			Debug.Log("Destination coordinates are invalid.");
+			return false;
+		}
+
+		if (RemoveEntity(e)) return AddEntity(e, destChunk);
+		
+		//recursive search for entity if removal coordinates are incorrect or if entity was not found at its coordinates
+		ChunkCoords found = StartRecursiveSearch(e);
+		//RecursiveSearch will return ChunkCoordinates.Invalid if it was not found anywhere in the network
+		if (found == ChunkCoords.Invalid)
+		{
+			Debug.Log("Entity failed to reposition on grid.");
+			return false;
+		}
+
+		Chunk(found).Remove(e);
+
+		//add entity to the destination chunk
+		return AddEntity(e, destChunk);
+	}
+
+	/* Shorthand methods for accessing the grid */
+
+	#region
+
+	public static List<Entity> Chunk(ChunkCoords cc)
+	{
+		return Column(cc)[cc.Y];
+	}
+
+	public static List<List<Entity>> Column(ChunkCoords cc)
+	{
+		return Direction(cc)[cc.X];
+	}
+
+	public static List<List<List<Entity>>> Direction(ChunkCoords cc)
+	{
+		return _grid[(int) cc.Direction];
+	}
+
+	#endregion
+
+	/// Begins a recursive search and outputs some debug information
+	private static ChunkCoords StartRecursiveSearch(Entity e)
+	{
+		Debug.Log("Starting recursive search for: " + e);
+		FunctionTimer timer = new FunctionTimer();
+		ChunkCoords result = RecursiveSearch(e, ChunkCoords.Zero);
+		Debug.Log("Recursive search for: " + e + " completed in " + timer.Log() + " seconds.");
+		return result;
+	}
+
+	/// Recursively search the network for a given entity
+	/// This is slow so keep this for emergencies if you lose an entity
+	private static ChunkCoords RecursiveSearch(Entity e, ChunkCoords search)
+	{
+		if (Chunk(search).Contains(e))
+		{
+			//if found, return the coordinates the entity was found at
+			return search;
+		}
+
+		//else adjust the search and try again
+		search.Y++;
+		if (search.Y >= Column(search).Count)
+		{
+			search.Y = 0;
+			search.X++;
+			if (search.X >= Direction(search).Count)
+			{
+				search.X = 0;
+				search.Direction++;
+				//if every element has been checked, return invalid coordinates
+				if ((int) search.Direction >= _grid.Count)
+				{
+					Debug.Log("Entity not found in grid.");
+					return ChunkCoords.Invalid;
+				}
+			}
+		}
+
+		return RecursiveSearch(e, search);
+	}
+
+	/// Returns whether a given chunk is valid and exists in the network
+	public static bool ChunkExists(ChunkCoords cc)
+	{
+		//if coordinates are invalid then chunk definitely doesn't exist
+		if (!cc.IsValid())
+		{
+			return false;
+		}
+
+		//if the quadrant doesn't have x amount of columns or that column doesn't have y amount of cells, the chunk doesn't exist
+		if ((int) cc.Direction >= _grid.Count
+		    || cc.X >= Direction(cc).Count
+		    || cc.Y >= Column(cc).Count)
+		{
+			return false;
+		}
+
+		return true;
+	}
+}

@@ -1,8 +1,5 @@
 ﻿public static class Cnsts
 {
-	//mostly used for accuracy of collisions, higher numbers = less accurate but better performance
-	public const float Accuracy = 0.01f;
-
 	//whenever infinite loops are a possibility (even by accident) try to remember to use this to break out of loops
 	public const int FreezeLimit = 1000;
 

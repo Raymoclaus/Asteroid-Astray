@@ -19,8 +19,6 @@ namespace Utilities.Input
 		private KeyboardInputHandler _keyLayout;
 		//used to query the control scheme of a PS4 controller
 		private Ps4InputHandler _ps4Layout;
-		//keep track of how many joysticks are connected
-		private int _joystickCount;
 
 		private void Awake()
 		{
@@ -37,8 +35,6 @@ namespace Utilities.Input
 			
 			_keyLayout = new KeyboardInputHandler();
 			_ps4Layout = new Ps4InputHandler();
-
-			_joystickCount = UnityEngine.Input.GetJoystickNames().Length;
 		}
 
 		private void CheckForModeUpdate()
