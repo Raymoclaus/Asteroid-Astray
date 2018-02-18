@@ -2,112 +2,127 @@
 using UnityEngine;
 using System.IO;
 
-namespace Utilities.Input
+public class Ps4InputHandler : ICustomInputType
 {
-	public class Ps4InputHandler : ICustomInputType
-	{
-		//set of default key bindings that cannot be changed
-		private readonly Dictionary<string, string> _defaults = new Dictionary<string, string>
+	//set of default key bindings that cannot be changed
+	private readonly Dictionary<string, string> _defaults = new Dictionary<string, string>
 		{
 			{"MoveHorizontal", "J_LeftHorizontalAxis"},
 			{"MoveVertical", "J_LeftVerticalAxis"},
 			{"LookHorizontal", "J_RightHorizontalAxis"},
 			{"LookVertical", "J_RightVerticalAxis"}
 		};
-		//set of key bindings that can be changed
-		private readonly Dictionary<string, string> _bindings = new Dictionary<string, string>();
+	//set of key bindings that can be changed
+	private readonly Dictionary<string, string> _bindings = new Dictionary<string, string>();
+	//used to check if a direction (degrees) is "roughly" close to the expected value
+	private const float LEEWAY = 45f;
 
-		public Ps4InputHandler()
+	public Ps4InputHandler()
+	{
+		//check if a ps4 control scheme already exists and use that
+		if (File.Exists("Ps4Binds.txt"))
 		{
-			//check if a ps4 control scheme already exists and use that
-			if (File.Exists("Ps4Binds.txt"))
-			{
-				
-			}
-			else
-			{
-				//otherwise sets the bindings to default values
-				SetToDefaults();
-			}
+
 		}
-
-		private void SetToDefaults()
+		else
 		{
-			_bindings.Clear();
-			foreach (string val in _defaults.Values)
-			{
-				_bindings.Add(val, val);
-			}
+			//otherwise sets the bindings to default values
+			SetToDefaults();
 		}
+	}
 
-		public static float GetLookDirection()
+	private void SetToDefaults()
+	{
+		_bindings.Clear();
+		foreach (string val in _defaults.Values)
 		{
-			Vector2 axisInput = new Vector2(
-				UnityEngine.Input.GetAxisRaw("J_RightHorizontalAxis"),
-				UnityEngine.Input.GetAxisRaw("J_RightVerticalAxis"));
-			
-			//if the control is not being used then return a non-usable value
-			if (Mathf.Approximately(axisInput.x, 0f) && Mathf.Approximately(axisInput.y, 0f))
-				return float.PositiveInfinity;
-			
-			float angle = Vector2.Angle(Vector2.up, axisInput);
-			if (axisInput.x < 0f)
-			{
-				angle = 180f + (180f - angle);
-			}
-			return angle;
+			_bindings.Add(val, val);
 		}
+	}
 
-		//checks all methods of input to determine if ps4 controller is in use, excludes non-bound inputs
-		public bool ProcessInputs()
+	public static float GetLookDirection()
+	{
+		Vector2 axisInput = new Vector2(
+			UnityEngine.Input.GetAxisRaw("J_RightHorizontalAxis"),
+			UnityEngine.Input.GetAxisRaw("J_RightVerticalAxis"));
+
+		//if the control is not being used then return a non-usable value
+		if (Mathf.Approximately(axisInput.x, 0f) && Mathf.Approximately(axisInput.y, 0f))
+			return float.PositiveInfinity;
+
+		float angle = Vector2.Angle(Vector2.up, axisInput);
+		if (axisInput.x < 0f)
 		{
-			//checks all the bindings
-			foreach (string kb in _bindings.Values)
-			{
-				if (kb.Contains("button"))
-				{
-					if (UnityEngine.Input.GetKey(kb))
-						return true;
-					
-					continue;
-				}
+			angle = 180f + (180f - angle);
+		}
+		return angle;
+	}
 
-				if (!kb.Contains("Axis")) continue;
-				if (!Mathf.Approximately(UnityEngine.Input.GetAxisRaw(kb), 0f))
+	//checks all methods of input to determine if ps4 controller is in use, excludes non-bound inputs
+	public bool ProcessInputs()
+	{
+		//checks all the bindings
+		foreach (string kb in _bindings.Values)
+		{
+			if (kb.Contains("button"))
+			{
+				if (UnityEngine.Input.GetKey(kb))
 					return true;
+
+				continue;
 			}
 
-			return false;
+			if (!kb.Contains("Axis")) continue;
+			if (!Mathf.Approximately(UnityEngine.Input.GetAxisRaw(kb), 0f))
+				return true;
 		}
 
-		public void ChangeKeyBinding(string key, string newVal)
-		{
-			_bindings[key] = newVal;
-		}
+		return false;
+	}
 
-		public void ChangeAllKeyBindings(Dictionary<string, string> keys)
-		{
-			_bindings.Clear();
-			foreach (KeyValuePair<string, string> val in keys)
-			{
-				_bindings.Add(_defaults[val.Key], val.Value);
-			}
-		}
+	public void ChangeKeyBinding(string key, string newVal)
+	{
+		_bindings[key] = newVal;
+	}
 
-		public Dictionary<string, string> GetDefaults()
+	public void ChangeAllKeyBindings(Dictionary<string, string> keys)
+	{
+		_bindings.Clear();
+		foreach (KeyValuePair<string, string> val in keys)
 		{
-			return _defaults;
+			_bindings.Add(_defaults[val.Key], val.Value);
 		}
+	}
 
-		public float GetInput(string key)
-		{
-			if (GetBinding(key).Contains("button")) return UnityEngine.Input.GetKey(GetBinding(key)) ? 1f : 0f;
-			return GetBinding(key).Contains("Axis") ? UnityEngine.Input.GetAxisRaw(GetBinding(key)) : 0f;
-		}
+	public Dictionary<string, string> GetDefaults()
+	{
+		return _defaults;
+	}
 
-		private string GetBinding(string key)
-		{
-			return _bindings[_defaults[key]];
-		}
+	public float GetInput(string key)
+	{
+		if (GetBinding(key).Contains("button")) return UnityEngine.Input.GetKey(GetBinding(key)) ? 1f : 0f;
+		return GetBinding(key).Contains("Axis") ? UnityEngine.Input.GetAxisRaw(GetBinding(key)) : 0f;
+	}
+
+	private string GetBinding(string key)
+	{
+		return _bindings[_defaults[key]];
+	}
+
+	public bool IsHoldingBack(Vector2? refDir)
+	{
+		//get vector of movement
+		Vector2 moveVec = MoveVector();
+		//if no reference direction is given then assume it is directly upwards
+		//convert direction of vector to degrees (0 to 180)
+		float moveAngle = Vector2.Angle(refDir == null ? Vector2.up : (Vector2)refDir, moveVec);
+		//return true if value is close enough to 180
+		return moveAngle - 180f < -LEEWAY;
+	}
+
+	private Vector2 MoveVector()
+	{
+		return new Vector2(GetInput("MoveHorizontal"), GetInput("MoveVertical"));
 	}
 }

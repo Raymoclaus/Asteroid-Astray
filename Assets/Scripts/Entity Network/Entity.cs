@@ -7,7 +7,12 @@ public class Entity : MonoBehaviour
 	private ChunkCoords _coords;
 	public Collider2D Col;
 	public Rigidbody2D Rb;
-	public bool ShouldDisableOnDistance = true;
+	public bool ShouldDisablePhysicsOnDistance = true;
+	public bool ShouldDisableObjectOnDistance = true;
+	private bool _isActive = true;
+	private bool disabled = false;
+	private Vector3 vel;
+	private float disableTime;
 
 	//drill related
 	public bool canDrill;
@@ -20,18 +25,20 @@ public class Entity : MonoBehaviour
 	public Renderer Rend;
 	public Animator Anim;
 
-	public virtual void Awake()
-	{
-		_coords = new ChunkCoords(transform.position);
-		EntityNetwork.AddEntity(this, _coords);
-		RepositionInNetwork();
+	public static int physicsActive;
 
-		layerDrill = LayerMask.NameToLayer("Drill");
+	public static int GetActive()
+	{
+		return physicsActive;
 	}
 
-	public virtual void Start()
+	public virtual void Awake()
 	{
+		physicsActive++;
+		_coords = new ChunkCoords(transform.position);
+		EntityNetwork.AddEntity(this, _coords);
 
+		layerDrill = LayerMask.NameToLayer("Drill");
 	}
 
 	public virtual void LateUpdate()
@@ -39,23 +46,54 @@ public class Entity : MonoBehaviour
 		RepositionInNetwork();
 	}
 
-	private void RepositionInNetwork()
+	public void RepositionInNetwork()
 	{
 		ChunkCoords newCc = new ChunkCoords(transform.position);
 		if (newCc != _coords)
 			EntityNetwork.Reposition(this, newCc);
+		SetAllActivity(IsInView());
+		if (ShouldDisablePhysicsOnDistance)
+		{
+			if (IsInPhysicsRange())
+			{
+				if (!disabled) return;
+				physicsActive++;
+				disabled = false;
+				gameObject.SetActive(true);
+				PhysicsReEnabled();
+			}
+			else
+			{
+				if (disabled) return;
+				physicsActive--;
+				disabled = true;
+				vel = Rb.velocity;
+				disableTime = Time.time;
+				gameObject.SetActive(!ShouldDisableObjectOnDistance);
+			}
+		}
 	}
 
 	public void SetCoordinates(ChunkCoords newCc)
 	{
-		ChunkCoords check = new ChunkCoords(transform.position);
-		if (newCc == check)
-			_coords = newCc;
+		_coords = newCc;
+	}
+
+	protected bool IsInView()
+	{
+		return CameraCtrl.IsCoordInView(_coords);
+	}
+
+	protected bool IsInPhysicsRange()
+	{
+		return CameraCtrl.IsCoordInPhysicsRange(_coords);
 	}
 
 	public void SetAllActivity(bool active)
 	{
-		if (!ShouldDisableOnDistance) return;
+		if (active == _isActive || !ShouldDisablePhysicsOnDistance) return;
+
+		_isActive = active;
 
 		//enable/disable all relevant components
 		foreach (MonoBehaviour script in ScriptComponents)
@@ -83,7 +121,7 @@ public class Entity : MonoBehaviour
 
 		if (Rb != null)
 		{
-			Rb.bodyType = active ? RigidbodyType2D.Dynamic : RigidbodyType2D.Kinematic;
+			Rb.bodyType = active ? RigidbodyType2D.Dynamic : Rb.bodyType;
 		}
 	}
 
@@ -94,11 +132,10 @@ public class Entity : MonoBehaviour
 
 	public virtual void DestroySelf()
 	{
-		if (EntityNetwork.Chunk(_coords).Contains(this))
+		if (EntityNetwork.ConfirmLocation(this, _coords))
 		{
 			EntityNetwork.RemoveEntity(this);
 		}
-
 		Destroy(gameObject);
 	}
 
@@ -126,6 +163,17 @@ public class Entity : MonoBehaviour
 	public void AttachDrill(DrillBit db)
 	{
 		drill = db;
+	}
+
+	//This should be overridden. Called by a drill to determine how much damage it should deal to its target.
+	public virtual float DrillDamageQuery()
+	{
+		return 1f;
+	}
+
+	public virtual void PhysicsReEnabled()
+	{
+		transform.position += vel * (Time.time - disableTime) / 60f * Cnsts.TIME_SPEED;
 	}
 }
 

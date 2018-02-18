@@ -1,55 +1,71 @@
-﻿using System.Collections.Generic;
-using Object_Controllers;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public static class AsteroidGenerator
 {
-	/* Fields */
-
-	#region
-
+	#region Fields
 	//reference to asteroid prefab
 	public static Asteroid AsteroidPfb;
-
 	//reference to the holder of asteroid objects
 	public static Transform AsteroidHolder;
-
 	//keeps track of whether chunks have been filled already. Prevents chunk from refilling if emptied by player
 	private static List<List<List<bool>>> _wasFilled = new List<List<List<bool>>>();
-
 	//how many asteroids per unit. eg a value of 0.3f means: number of asteroids per chunk = 0.3f * CHUNK_SIZE^2
 	public static float AsteroidDensity = 0.1f;
-
+	//chunks to fill in batches
+	private static List<ChunkCoords> chunkBatches = new List<ChunkCoords>(100);
 	#endregion
 
 	public static void FillChunk(ChunkCoords cc)
 	{
 		//don't bother if the given coordinates are not valid
-		if (!cc.IsValid())
-		{
-			return;
-		}
+		if (!cc.IsValid()) return;
 
 		//if these coordinates have no been generated yet then reserve some space for the new coordinates
 		GenerateVoid(cc);
 		//don't bother if the coordinates have already been filled
-		if (Chunk(cc))
-		{
-			return;
-		}
+		if (Chunk(cc)) return;
 
 		//flag that this chunk coordinates was filled
 		Column(cc)[cc.Y] = true;
 		//fill chunk with asteroids
 		Vector2Pair range = ChunkCoords.GetCellArea(cc);
 		Vector2 spawnPos = new Vector2();
-		for (int i = 0; i < (int) (Cnsts.ChunkSize * Cnsts.ChunkSize * AsteroidDensity); i++)
+		for (int i = 0; i < (int) (Cnsts.CHUNK_SIZE * Cnsts.CHUNK_SIZE * AsteroidDensity); i++)
 		{
 			//pick a position within the chunk coordinates
 			spawnPos.x = Random.Range(range.A.x, range.B.x);
 			spawnPos.y = Random.Range(range.A.y, range.B.y);
 			//spawn asteroid at coordinates
 			Object.Instantiate(AsteroidPfb, spawnPos, Quaternion.identity, AsteroidHolder);
+		}
+	}
+
+	public static void InstantFillChunks(List<ChunkCoords> coords)
+	{
+		foreach(ChunkCoords c in coords)
+		{
+			FillChunk(c);
+		}
+	}
+
+	public static IEnumerator ChunkBatchOrder(List<ChunkCoords> coords)
+	{
+		bool executing = chunkBatches.Count > 0;
+		chunkBatches.AddRange(coords);
+		if (executing)
+		{
+			yield break;
+		}
+		while (chunkBatches.Count > 0)
+		{
+			for (int i = 0; i < Mathf.Round(Cnsts.TIME_SPEED) && chunkBatches.Count > 0; i++)
+			{
+				FillChunk(chunkBatches[0]);
+				chunkBatches.RemoveAt(0);
+			}
+			yield return null;
 		}
 	}
 

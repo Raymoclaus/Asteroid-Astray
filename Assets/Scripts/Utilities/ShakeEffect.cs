@@ -7,16 +7,20 @@ public class ShakeEffect : MonoBehaviour
 	private float intensityGoal;
 	private float intensityShift = 0.01f;
 	private float intensity;
+	private const float INTENSITY_LIMIT = 0.05f;
 
 	private IEnumerator Shake()
 	{
 		while (true)
 		{
-			intensity = Mathf.MoveTowards(intensity, intensityGoal, intensityShift);
+			//shift intensity towards the goal but don't surpass the limit
+			intensity = Mathf.MoveTowards(intensity, intensityGoal > INTENSITY_LIMIT ? INTENSITY_LIMIT : intensityGoal, intensityShift);
+			//set random position
 			transform.localPosition = new Vector2(
 				Mathf.Sin(Random.value * 2f * Mathf.PI),
 				Mathf.Cos(Random.value * 2f * Mathf.PI))
 				* intensity;
+			//wait for next frame
 			yield return null;
 		}
 	}

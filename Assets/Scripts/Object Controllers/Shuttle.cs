@@ -1,42 +1,30 @@
 ﻿using UnityEngine;
-using Utilities.Input;
 
 public class Shuttle : Entity
 {
     #region Fields
-
     [Header("Required references")]
     [Tooltip("Requires reference to the SpriteRenderer of the shuttle.")]
     public SpriteRenderer SprRend;
-
     [Header("Movement related")]
     [Tooltip("Rate of speed accumulation when moving forward.")]
     public float Acceleration = 5f;
-
     [Tooltip("Rate of speed decay.")]
     public float Deceleration = 1f;
-
     [Tooltip("If speed is higher than this limit then deceleration is increased to compensate.")]
     public float SpeedLimit = 10f;
-
 	[Tooltip("When drilling, this is multiplied with the speed limit to allow for faster boost after drilling completes.")]
 	public float DrillBoost = 2f;
-
     //maximum rotation speed
     public float MaxRotSpeed = 10f;
-
 	//used as a temporary storage for rigidbody velocity when the constraints are frozen
 	private Vector3 _vel;
-	    
     //the rotation that the shuttle should be at
     private Vector3 _rot;
-
     //force of acceleration via the shuttle
     private Vector2 _accel;
-	    
 	//store last look direction, useful for joysticks
 	private float _lastLookDirection;
-
     //whether the shuttle is above speed limit
     //This can be true during a dash and as you begin decelerating back to the speed limit
 	private bool IsSpeeding
@@ -45,41 +33,40 @@ public class Shuttle : Entity
 		{
 			Vector2 vel = Rb.velocity;
 			float sqrMag = vel.sqrMagnitude;
+			float spdLimit = SpeedLimit * Cnsts.TIME_SPEED;
 			//if going under a quarter the speed limit then ignore later calculations
-			if (sqrMag < SpeedLimit / 4f) return false;
+			if (sqrMag < spdLimit / 4f) return false;
 			//if going over the overall speed limit then definitely speeding
-			if (sqrMag > SpeedLimit) return true;
+			if (sqrMag > spdLimit) return true;
 			    
 			//formula for ellipsoid, determines if velocity is within range
 			//for reference: https://www.maa.org/external_archive/joma/Volume8/Kalman/General.html
 			//slightly modified for use with square magnitude for better efficiency
 			//half and full would normally be squared
 			float rotAngle = Mathf.Deg2Rad * _rot.z;
-			float normalisedSpeed = SpeedLimit;
 			float a = vel.x * Mathf.Cos(rotAngle) + vel.y * Mathf.Sin(rotAngle);
 			float b = vel.x * Mathf.Sin(rotAngle) - vel.y * Mathf.Cos(rotAngle);
 			//speed limit is halved for sideways movement
-			float half = normalisedSpeed / 2f;
-			float full = normalisedSpeed;
+			float half = spdLimit / 2f;
+			float full = spdLimit;
 			a *= a;
 			b *= b;
 			float speedCheck = (a / half) + (b / full);
 			return speedCheck > 1;
 		}
 	}
-
     #endregion
 
     private void Update()
     {
         //get shuttle movement input
         GetMovementInput();
-        //calculate position based on input
-        CalculateForces();
-    }
+		//calculate position based on input
+		CalculateForces();
+	}
 
 	//Checks for input related to movement and calculates acceleration
-    private void GetMovementInput()
+	private void GetMovementInput()
     {
 		//update rotation variable with transform's current rotation
 		_rot.z = transform.eulerAngles.z;
@@ -102,7 +89,7 @@ public class Shuttle : Entity
 	    }
 	    rotMod /= 180f;
 	    rotMod = Mathf.Pow(rotMod, 0.8f);
-        SetRot(Mathf.MoveTowardsAngle(_rot.z, -cursorAngle, MaxRotSpeed * rotMod * Cnsts.TimeSpeed));
+        SetRot(Mathf.MoveTowardsAngle(_rot.z, -cursorAngle, MaxRotSpeed * rotMod * Cnsts.TIME_SPEED));
 
         //get movement input
 	    _accel.y += InputHandler.GetInput("MoveVertical") * Acceleration;
@@ -144,7 +131,7 @@ public class Shuttle : Entity
             decelerationModifier = Acceleration / 2f;
         }
 
-		Vector3 addForce = _accel * Cnsts.TimeSpeed;
+		Vector3 addForce = _accel * Cnsts.TIME_SPEED;
 		//reset acceleration
 		_accel = Vector2.zero;
 
@@ -188,8 +175,8 @@ public class Shuttle : Entity
 			//apply deceleration
 			Rb.drag = Mathf.MoveTowards(
 				Rb.drag,
-				Deceleration * decelerationModifier * Cnsts.TimeSpeed,
-				Cnsts.TimeSpeed / 10f);
+				Deceleration * decelerationModifier,
+				Cnsts.TIME_SPEED / 10f);
 			//set rotation
 			transform.eulerAngles = _rot;
 		}
@@ -202,5 +189,10 @@ public class Shuttle : Entity
 	
 	public override EntityType GetEntityType() {
 		return EntityType.Shuttle;
+	}
+
+	public override float DrillDamageQuery()
+	{
+		return InputHandler.IsHoldingBack() ? 0f :_vel.magnitude;
 	}
 }

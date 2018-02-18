@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Collections.Generic;
 
 public class ChunkFiller : MonoBehaviour
 {
@@ -11,7 +12,7 @@ public class ChunkFiller : MonoBehaviour
 	{
 		_coords = new ChunkCoords(transform.position);
 		//load up some asteroids around the current position
-		FillChunks(_coords);
+		FillChunks(_coords, false);
 	}
 
 	private void Update()
@@ -37,19 +38,35 @@ public class ChunkFiller : MonoBehaviour
 
 	private void CoordsChanged(ChunkCoords newCc)
 	{
-		FillChunks(newCc);
+		FillChunks(newCc, true);
 	}
 
-	private void FillChunks(ChunkCoords center)
+	private void FillChunks(ChunkCoords center, bool? batchOrder = null)
 	{
-		int range = FillRange + RangeIncrease;
-		for (int i = -range; i <= range; i++)
+		List<ChunkCoords> coords = GetChunkFillList(center);
+		if (batchOrder == null || !(bool)batchOrder)
 		{
-			for (int j = -range; j <= range; j++)
+			AsteroidGenerator.InstantFillChunks(coords);
+		}
+		else
+		{
+			StartCoroutine(AsteroidGenerator.ChunkBatchOrder(coords));
+		}
+	}
+
+	private List<ChunkCoords> GetChunkFillList(ChunkCoords center)
+	{
+		List<ChunkCoords> coords = new List<ChunkCoords>(100);
+		int r = FillRange + RangeIncrease;
+
+		for (int i = -r; i <= r; i++)
+		{
+			for (int j = -r; j <= r; j++)
 			{
-				ChunkCoords check = new ChunkCoords(center.Direction, center.X + i, center.Y + j, true);
-				AsteroidGenerator.FillChunk(check);
+				coords.Add(new ChunkCoords(center.Direction, center.X + i, center.Y + j, true));
 			}
 		}
+
+		return coords;
 	}
 }

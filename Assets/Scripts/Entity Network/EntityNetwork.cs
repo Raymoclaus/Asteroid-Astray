@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Utilities;
@@ -7,20 +8,26 @@ using Utilities;
 /// Useful in case you only want access to entities in a certain area. It's faster than checking every single one.
 public static class EntityNetwork
 {
+	#region Fields
 	//4 directions in the grid
 	public const int QuadrantNumber = 4;
-
 	//Determines the physical size of cells in the grid
 	public const float CHUNK_SIZE = 10;
-
 	//network of entities
 	private static List<List<List<List<Entity>>>> _grid = new List<List<List<List<Entity>>>>(QuadrantNumber);
-
+	//list of coordinates that contain any entities
+	private static List<ChunkCoords> occupiedCoords = new List<ChunkCoords>(ReserveSize * ReserveSize);
+	//number of chunks to check each frame. Better than checking all at once, for performance
+	private const int ENTITY_CHECKUP_NUMBER = 100;
 	//some large number of reserve to avoid List resizing lag
 	public const int ReserveSize = 1000;
-
 	//another large number for each individual cell in the grid
 	public const int CellReserve = 10;
+	#endregion
+
+	#region Stat Tracking
+	private static int numEntities;
+	#endregion
 
 	/// Constructs and reserves a large amount of space for the grid
 	public static void CreateGrid()
@@ -45,9 +52,26 @@ public static class EntityNetwork
 	/// Returns a list of all entities located in cells within range of the given coordinates
 	public static List<Entity> GetEntitiesInRange(ChunkCoords center, int range)
 	{
+		List<ChunkCoords> coordsInRange = GetCoordsInRange(center, range);
 		//declare a list to be filled and reserve some room
-		int r = range * 2 + 1;
-		List<Entity> entitiesInRange = new List<Entity>(CellReserve * r * r);
+		return GetEntitiesAtCoords(coordsInRange);
+	}
+
+	public static List<Entity> GetEntitiesAtCoords(List<ChunkCoords> coordsList)
+	{
+		List<Entity> entitiesInCoords = new List<Entity>(CellReserve * coordsList.Count);
+		//loop through coordinates list and grab all entities at each coordinate
+		foreach (ChunkCoords coord in coordsList)
+		{
+			entitiesInCoords.AddRange(Chunk(coord));
+		}
+		return entitiesInCoords;
+	}
+
+	public static List<ChunkCoords> GetCoordsInRange(ChunkCoords center, int range)
+	{
+		int r = range + 2;
+		List<ChunkCoords> coordsInRange = new List<ChunkCoords>(r * r);
 		ChunkCoords cc = center;
 		//loop through surrounding chunks
 		for (int i = -range; i <= range; i++)
@@ -61,12 +85,12 @@ public static class EntityNetwork
 				validCc.Validate();
 				if (ChunkExists(validCc))
 				{
-					entitiesInRange.AddRange(Chunk(validCc));
+					coordsInRange.Add(validCc);
 				}
 			}
 		}
 
-		return entitiesInRange;
+		return coordsInRange;
 	}
 
 	/// Adds a given entity to the list at given coordinates
@@ -79,6 +103,12 @@ public static class EntityNetwork
 		}
 
 		Chunk(cc).Add(e);
+		numEntities++;
+		//update list of occupied coordinates
+		if (Chunk(cc).Count == 1)
+		{
+			occupiedCoords.Add(cc);
+		}
 		//set entity's coordinates to be equal to the given coordinates
 		e.SetCoordinates(cc);
 		return true;
@@ -87,7 +117,8 @@ public static class EntityNetwork
 	/// Removes an entity from the network
 	public static bool RemoveEntity(Entity e, EntityType? type = null)
 	{
-		if (!e.GetCoords().IsValid())
+		ChunkCoords cc = e.GetCoords();
+		if (!cc.IsValid())
 		{
 			Debug.Log("Removal coordinates are invalid.");
 			return false;
@@ -99,7 +130,16 @@ public static class EntityNetwork
 			return false;
 		}
 
-		if (Chunk(e.GetCoords()).Remove(e)) return true;
+		if (Chunk(cc).Remove(e))
+		{
+			numEntities--;
+			//update list of occupied coordinates
+			if (Chunk(cc).Count == 0)
+			{
+				occupiedCoords.Remove(cc);
+			}
+			return true;
+		}
 
 		Debug.Log("Entity not found at removal coordinates.");
 		return false;
@@ -185,16 +225,16 @@ public static class EntityNetwork
 
 	/* Shorthand methods for accessing the grid */
 
-	#region
+	#region Convenient Grid Methods
 
 	public static List<Entity> Chunk(ChunkCoords cc)
 	{
-		return Column(cc)[cc.Y];
+		return _grid[(int)cc.Direction][cc.X][cc.Y];
 	}
 
 	public static List<List<Entity>> Column(ChunkCoords cc)
 	{
-		return Direction(cc)[cc.X];
+		return _grid[(int)cc.Direction][cc.X];
 	}
 
 	public static List<List<List<Entity>>> Direction(ChunkCoords cc)
@@ -218,7 +258,7 @@ public static class EntityNetwork
 	/// This is slow so keep this for emergencies if you lose an entity
 	private static ChunkCoords RecursiveSearch(Entity e, ChunkCoords search)
 	{
-		if (Chunk(search).Contains(e))
+		if (ConfirmLocation(e, search))
 		{
 			//if found, return the coordinates the entity was found at
 			return search;
@@ -264,5 +304,79 @@ public static class EntityNetwork
 		}
 
 		return true;
+	}
+
+	public static IEnumerator RoutineCheckup()
+	{
+		int i = 0;
+		int j = 0;
+		ChunkCoords c;
+		int count = 0;
+		while (true)
+		{
+			for (count = 0; count < ENTITY_CHECKUP_NUMBER && i < occupiedCoords.Count; count++)
+			{
+				i++;
+				if (i >= occupiedCoords.Count)
+				{
+					i = 0;
+				}
+
+				c = occupiedCoords[i];
+				for (j = 0; j < Chunk(c).Count; j++)
+				{
+					Chunk(c)[j].RepositionInNetwork();
+				}
+			}
+			yield return null;
+		}
+	}
+
+	private static ChunkCoords Next(ChunkCoords c)
+	{
+		if (c.X < Column(c).Count - 1)
+		{
+			c.X += 1;
+			return c;
+		}
+
+		c.X = 0;
+		if (c.Y < Direction(c).Count - 1)
+		{
+			c.Y += 1;
+			return c;
+		}
+
+		c.Y = 0;
+		if ((int)c.Direction < _grid.Count - 1)
+		{
+			c.Direction += 1;
+			return c;
+		}
+
+		c.Direction = 0;
+		return c;
+	}
+
+	public static bool ConfirmLocation(Entity e, ChunkCoords c)
+	{
+		foreach (Entity ent in Chunk(c))
+		{
+			if (ent == e)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static void PrintStats()
+	{
+		Debug.Log(string.Format("Number of entities: {0}.", numEntities));
+	}
+
+	public static int GetEntityCount()
+	{
+		return numEntities;
 	}
 }

@@ -19,6 +19,9 @@ public class Asteroid : Entity, IDrillableObject
 	[Tooltip("Picks a random value between given value and negative given value to determine its rotation speed")]
 	public float SpinSpeedRange;
 
+	[Tooltip("Picks a random value between given value and negative given value to determine starting velocity")]
+	public float VelocityRange;
+
 	[Tooltip("Upper limit for health stat.")]
 	public float MaxHealth = 150f;
 	
@@ -26,15 +29,25 @@ public class Asteroid : Entity, IDrillableObject
 
 	#endregion
 
-	public override void Start()
+	public override void Awake()
 	{
-		base.Start();
+		base.Awake();
 		//pick a random sprite from given list of sprites
 		SprRend.sprite = Shapes[Random.Range(0, Shapes.Length)];
-		//picks a random speed to spin at within a given range with chance favoring lower values
-		Rb.rotation = Mathf.Pow(Random.Range(0f, 2f), 2f) * SpinSpeedRange - SpinSpeedRange;
+		RandomMovement();
 		//start health at max value
 		Health = MaxHealth;
+	}
+
+	private void RandomMovement()
+	{
+		//picks a random speed to spin at within a given range with chance favoring lower values
+		Rb.AddTorque((Mathf.Pow(Random.Range(0f, 2f), 2f) * SpinSpeedRange - SpinSpeedRange) * Cnsts.TIME_SPEED);
+		//picks a random direction and velocity within a given range with chance favoring lower values
+		Rb.velocity = new Vector2(
+			Mathf.Sin(Random.value * 2f * Mathf.PI),
+			Mathf.Cos(Random.value * 2f * Mathf.PI))
+			* (Mathf.Pow(Random.Range(0f, 2f), 2f) * VelocityRange - VelocityRange) * Cnsts.TIME_SPEED;
 	}
 
 	private void DestroySelf(bool explode)
@@ -58,8 +71,10 @@ public class Asteroid : Entity, IDrillableObject
 	//take the damage and if health drops to 0 then signal that this asteroid will be destroyed
 	public bool TakeDrillDamage(float damage)
 	{
+		//take damage
 		Health -= damage;
-		ShakeFX.SetIntensity(damage / MaxHealth);
+		//calculate shake intensity. Gets more intense the less health it has
+		ShakeFX.SetIntensity(damage / MaxHealth * (3f - (Health / MaxHealth * 2f)));
 		return CheckHealth();
 	}
 
@@ -109,5 +124,12 @@ public class Asteroid : Entity, IDrillableObject
 	public override EntityType GetEntityType()
 	{
 		return EntityType.Asteroid;
+	}
+
+	public override void PhysicsReEnabled()
+	{
+		base.PhysicsReEnabled();
+		RandomMovement();
+		//StartCoroutine(DelayedAction.Go(() => RandomMovement()));
 	}
 }

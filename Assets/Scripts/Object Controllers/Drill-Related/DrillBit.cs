@@ -26,7 +26,7 @@ public class DrillBit : MonoBehaviour
 	private void InflictDamage()
 	{
 		//query damage from parent
-		float damage = 1f;
+		float damage = parent.DrillDamageQuery();
 		//if damage is 0 then stop drilling
 		if (damage <= 0f)
 		{
@@ -35,7 +35,7 @@ public class DrillBit : MonoBehaviour
 		//else send the damage to the drill target
 		else
 		{
-			drillTarget.TakeDrillDamage(damage);
+			drillTarget.TakeDrillDamage(damage * Cnsts.TIME_SPEED);
 		}
 	}
 

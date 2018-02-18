@@ -20,6 +20,17 @@ public struct Vector2Pair
 	}
 }
 
+public struct IntPair
+{
+	public int A, B;
+
+	public IntPair(int a, int b)
+	{
+		A = a;
+		B = b;
+	}
+}
+
 public struct ChunkCoords
 {
 	public Quadrant Direction;
@@ -56,21 +67,21 @@ public struct ChunkCoords
 	{
 		ChunkCoords cc;
 		cc.Direction = GetDirection(pos);
-		int[] coord = ConvertToXy(pos);
-		cc.X = coord[0];
-		cc.Y = coord[1];
+		IntPair coord = ConvertToXy(pos);
+		cc.X = coord.A;
+		cc.Y = coord.B;
 		return cc;
 	}
 
-	private static int[] ConvertToXy(Vector2 pos)
+	private static IntPair ConvertToXy(Vector2 pos)
 	{
-		pos /= Cnsts.ChunkSize;
-		return new[] {Math.Abs((int) pos.x), Math.Abs((int) pos.y)};
+		pos /= Cnsts.CHUNK_SIZE;
+		return new IntPair(Math.Abs((int) pos.x), Math.Abs((int) pos.y));
 	}
 
 	public static Quadrant GetDirection(Vector2 pos)
 	{
-		pos /= Cnsts.ChunkSize;
+		pos /= Cnsts.CHUNK_SIZE;
 		return GetDirection(pos.x, pos.y);
 	}
 
@@ -123,7 +134,7 @@ public struct ChunkCoords
 				break;
 		}
 
-		return new Vector2Pair(min * Cnsts.ChunkSize, max * Cnsts.ChunkSize);
+		return new Vector2Pair(min * Cnsts.CHUNK_SIZE, max * Cnsts.CHUNK_SIZE);
 	}
 
 	public bool IsValid()
