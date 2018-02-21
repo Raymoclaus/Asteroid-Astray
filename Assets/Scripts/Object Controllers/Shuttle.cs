@@ -18,7 +18,7 @@ public class Shuttle : Entity
     //maximum rotation speed
     public float MaxRotSpeed = 10f;
 	//used as a temporary storage for rigidbody velocity when the constraints are frozen
-	private Vector3 _vel;
+	public Vector3 _vel;
     //the rotation that the shuttle should be at
     private Vector3 _rot;
     //force of acceleration via the shuttle
@@ -137,11 +137,6 @@ public class Shuttle : Entity
 
 		if (IsDrilling)
 		{
-			//save rigibody's velocity if it has just started drilling
-			if (Rb.constraints != RigidbodyConstraints2D.FreezeAll)
-			{
-				_vel = Rb.velocity;
-			}
 			//freeze constraints
 			Rb.constraints = RigidbodyConstraints2D.FreezeAll;
 			//add potential velocity
@@ -170,13 +165,14 @@ public class Shuttle : Entity
 				//apply acceleration
 				Rb.AddForce(addForce);
 			}
+			_vel = Rb.velocity;
 			//keep constraints unfrozen
 			Rb.constraints = RigidbodyConstraints2D.None | RigidbodyConstraints2D.FreezeRotation;
 			//apply deceleration
 			Rb.drag = Mathf.MoveTowards(
 				Rb.drag,
 				Deceleration * decelerationModifier,
-				Cnsts.TIME_SPEED / 10f);
+				Cnsts.TIME_SPEED / 100f);
 			//set rotation
 			transform.eulerAngles = _rot;
 		}
@@ -191,8 +187,15 @@ public class Shuttle : Entity
 		return EntityType.Shuttle;
 	}
 
-	public override float DrillDamageQuery()
+	public override float DrillDamageQuery(bool firstHit)
 	{
-		return InputHandler.IsHoldingBack() ? 0f :_vel.magnitude;
+		if (firstHit && _vel.magnitude >= Mathf.Sqrt(SpeedLimit) + 0.5f)
+		{
+			return InputHandler.IsHoldingBack() ? 0f : _vel.magnitude * 50f;
+		}
+		else
+		{
+			return InputHandler.IsHoldingBack() ? 0f : _vel.magnitude;
+		}
 	}
 }

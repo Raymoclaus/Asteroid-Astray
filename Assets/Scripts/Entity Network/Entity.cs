@@ -166,7 +166,7 @@ public class Entity : MonoBehaviour
 	}
 
 	//This should be overridden. Called by a drill to determine how much damage it should deal to its target.
-	public virtual float DrillDamageQuery()
+	public virtual float DrillDamageQuery(bool firstHit)
 	{
 		return 1f;
 	}

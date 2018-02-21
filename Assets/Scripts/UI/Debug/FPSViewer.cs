@@ -2,7 +2,7 @@
 using UnityEngine.UI;
 
 [RequireComponent(typeof(Text))]
-public class FPS : MonoBehaviour
+public class FPSViewer : MonoBehaviour
 {
 	private Text txt;
 	private float lastFrameTime;
