@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class ThrusterController : MonoBehaviour
@@ -7,16 +8,28 @@ public class ThrusterController : MonoBehaviour
 	public Shuttle shuttle;
 	public float baseSpeed = 1f;
 	public float baseTrailWidth = 0.04f;
-	public float speedMod = 1f;
+	public float speedMod = 0.3f;
+	public Transform thrusterForceHolder;
+	public AreaEffector2D thrusterArea;
+	public float thrusterStrengthMod = 0.5f;
+	private float shuttleMag;
+	public Vector3 ThrusterDirection
+	{
+		get
+		{
+			return -new Vector3(Mathf.Sin(Mathf.Deg2Rad * -shuttle._rot.z), Mathf.Cos(Mathf.Deg2Rad * -shuttle._rot.z), 0f) * thrusterStrengthMod * shuttleMag;
+		}
+	}
 
 	private void Update()
 	{
+		shuttleMag = shuttle._vel.magnitude;
 		SetSystemsValues();
+		SetThrusterForceValues();
 	}
 
 	private void SetSystemsValues()
 	{
-		float shuttleMag = shuttle._vel.magnitude;
 		float speed = baseSpeed * shuttleMag * speedMod;
 		float trailWidth = baseTrailWidth * speed / baseSpeed;
 
@@ -27,6 +40,15 @@ public class ThrusterController : MonoBehaviour
 
 			ParticleSystem.TrailModule trailMod = ps.trails;
 			trailMod.widthOverTrail = trailWidth;
+		}
+	}
+
+	private void SetThrusterForceValues()
+	{
+		thrusterForceHolder.localScale = Vector3.one * shuttleMag * speedMod;
+		if (thrusterArea != null)
+		{
+			thrusterArea.forceMagnitude = shuttleMag * thrusterStrengthMod;
 		}
 	}
 }

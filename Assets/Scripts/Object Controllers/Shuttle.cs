@@ -20,7 +20,7 @@ public class Shuttle : Entity
 	//used as a temporary storage for rigidbody velocity when the constraints are frozen
 	public Vector3 _vel;
     //the rotation that the shuttle should be at
-    private Vector3 _rot;
+    public Vector3 _rot;
     //force of acceleration via the shuttle
     private Vector2 _accel;
 	//store last look direction, useful for joysticks
