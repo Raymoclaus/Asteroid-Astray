@@ -8,20 +8,17 @@ public class Asteroid : Entity, IDrillableObject
 	[Header("References to objects and components.")]
 	[Tooltip("List of available sprites to choose from.")]
 	public Sprite[] Shapes;
-
 	[Tooltip("Reference to the sprite renderer of the asteroid.")]
 	public SpriteRenderer SprRend;
-
+	[Tooltip("Reference to the asteroid destruction particle effect prefab.")]
+	public Transform destructionParticleEffect;
 	[Tooltip("Reference to the shake effect script on the sprite.")]
 	public ShakeEffect ShakeFX;
-
 	[Header("Properties of the asteroid.")]
 	[Tooltip("Picks a random value between given value and negative given value to determine its rotation speed")]
 	public float SpinSpeedRange;
-
 	[Tooltip("Picks a random value between given value and negative given value to determine starting velocity")]
 	public float VelocityRange;
-
 	[Tooltip("Upper limit for health stat.")]
 	public float MaxHealth = 150f;
 	
@@ -54,7 +51,11 @@ public class Asteroid : Entity, IDrillableObject
 	{
 		if (explode)
 		{
-			//particle effect stuff or something
+			if (destructionParticleEffect != null)
+			{
+				Transform fx = Instantiate(destructionParticleEffect);
+				fx.position = transform.position;
+			}
 		}
 
 		base.DestroySelf();

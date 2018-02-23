@@ -8,15 +8,18 @@ public class Shuttle : Entity
     public SpriteRenderer SprRend;
     [Header("Movement related")]
     [Tooltip("Rate of speed accumulation when moving forward.")]
-    public float Acceleration = 5f;
+    public float EngineStrength = 3f;
     [Tooltip("Rate of speed decay.")]
     public float Deceleration = 1f;
     [Tooltip("If speed is higher than this limit then deceleration is increased to compensate.")]
-    public float SpeedLimit = 10f;
+    public float SpeedLimit = 3f;
 	[Tooltip("When drilling, this is multiplied with the speed limit to allow for faster boost after drilling completes.")]
 	public float DrillBoost = 2f;
-    //maximum rotation speed
-    public float MaxRotSpeed = 10f;
+	[Tooltip("Controls how quickly the shuttle can rotate.")]
+	public float MaxRotSpeed = 10f;
+	[Tooltip("Controls how effective the shuttle's deceleration mechanism is.")]
+	[Range(0f, 1f)]
+	public float decelerationEffectiveness = 0.01f;
 	//used as a temporary storage for rigidbody velocity when the constraints are frozen
 	public Vector3 _vel;
     //the rotation that the shuttle should be at
@@ -25,20 +28,15 @@ public class Shuttle : Entity
     private Vector2 _accel;
 	//store last look direction, useful for joysticks
 	private float _lastLookDirection;
-    //whether the shuttle is above speed limit
-    //This can be true during a dash and as you begin decelerating back to the speed limit
-	private bool IsSpeeding
+	//return how far over the speed limit the shuttle's velocity is
+	private float SpeedCheck
 	{
 		get
 		{
 			Vector2 vel = Rb.velocity;
 			float sqrMag = vel.sqrMagnitude;
-			float spdLimit = SpeedLimit * Cnsts.TIME_SPEED;
-			//if going under a quarter the speed limit then ignore later calculations
-			if (sqrMag < spdLimit / 4f) return false;
-			//if going over the overall speed limit then definitely speeding
-			if (sqrMag > spdLimit) return true;
-			    
+			float spdLimit = SpeedLimit * SpeedLimit * Cnsts.TIME_SPEED;
+
 			//formula for ellipsoid, determines if velocity is within range
 			//for reference: https://www.maa.org/external_archive/joma/Volume8/Kalman/General.html
 			//slightly modified for use with square magnitude for better efficiency
@@ -47,12 +45,12 @@ public class Shuttle : Entity
 			float a = vel.x * Mathf.Cos(rotAngle) + vel.y * Mathf.Sin(rotAngle);
 			float b = vel.x * Mathf.Sin(rotAngle) - vel.y * Mathf.Cos(rotAngle);
 			//speed limit is halved for sideways movement
-			float half = spdLimit / 2f;
-			float full = spdLimit;
+			float sidewaysLimit = spdLimit / 4f;
+			float forwardLimit = spdLimit;
 			a *= a;
 			b *= b;
-			float speedCheck = (a / half) + (b / full);
-			return speedCheck > 1;
+			float speedCheck = (a / sidewaysLimit) + (b / forwardLimit);
+			return speedCheck;
 		}
 	}
     #endregion
@@ -92,8 +90,11 @@ public class Shuttle : Entity
         SetRot(Mathf.MoveTowardsAngle(_rot.z, -cursorAngle, MaxRotSpeed * rotMod * Cnsts.TIME_SPEED));
 
         //get movement input
-	    _accel.y += InputHandler.GetInput("MoveVertical") * Acceleration;
-	    _accel.x += InputHandler.GetInput("MoveHorizontal") * Acceleration;
+	    _accel.y += Mathf.Clamp01(InputHandler.GetInput("MoveVertical")) * EngineStrength;
+		if (!IsDrilling)
+		{
+			_accel.x += InputHandler.GetInput("MoveHorizontal") * EngineStrength;
+		}
 	    float magnitude = _accel.magnitude;
 
         //if no acceleration then ignore the rest
@@ -113,10 +114,11 @@ public class Shuttle : Entity
 		    shuttleDir.y = Mathf.Cos(Mathf.Deg2Rad * (360f - _rot.z + accelAngle));
 		    _accel = shuttleDir;
 	    }
-	        
-	    if (magnitude > Acceleration)
+
+		float topSpeed = Mathf.Min(EngineStrength, SpeedLimit);
+		if (magnitude > topSpeed)
 	    {
-		    magnitude = Acceleration;
+		    magnitude = topSpeed;
 	    }
 	    _accel *= magnitude;
     }
@@ -124,12 +126,13 @@ public class Shuttle : Entity
     //use calculated rotation and speed to determine where to move to
     private void CalculateForces()
     {
+		//calculate drag factor
+		float checkSpeed = SpeedCheck;
         float decelerationModifier = 1f;
-        //apply speed limit
-        if (IsSpeeding)
-        {
-            decelerationModifier = Acceleration / 2f;
-        }
+		if (checkSpeed > 1f)
+		{
+			decelerationModifier *= checkSpeed;
+		}
 
 		Vector3 addForce = _accel * Cnsts.TIME_SPEED;
 		//reset acceleration
@@ -144,7 +147,8 @@ public class Shuttle : Entity
 			//apply a continuous slowdown effect
 			_vel = Vector3.MoveTowards(_vel, Vector3.zero, 0.1f);
 			//calculate how powerful the drill can be
-			float drillSpeedModifier = SpeedLimit * DrillBoost * DrillBoost;
+			float drillSpeedModifier = SpeedLimit * DrillBoost;
+			drillSpeedModifier *= drillSpeedModifier;
 			//set an upper limit so that the drill speed doesn't go too extreme
 			if (_vel.sqrMagnitude > drillSpeedModifier)
 			{
@@ -172,7 +176,7 @@ public class Shuttle : Entity
 			Rb.drag = Mathf.MoveTowards(
 				Rb.drag,
 				Deceleration * decelerationModifier,
-				Cnsts.TIME_SPEED / 100f);
+				Cnsts.TIME_SPEED * decelerationEffectiveness);
 			//set rotation
 			transform.eulerAngles = _rot;
 		}
@@ -189,7 +193,7 @@ public class Shuttle : Entity
 
 	public override float DrillDamageQuery(bool firstHit)
 	{
-		if (firstHit && _vel.magnitude >= Mathf.Sqrt(SpeedLimit) + 0.5f)
+		if (firstHit && _vel.magnitude >= SpeedLimit + 0.5f)
 		{
 			return InputHandler.IsHoldingBack() ? 0f : _vel.magnitude * 50f;
 		}
