@@ -4,26 +4,25 @@ public class Asteroid : Entity, IDrillableObject
 {
 
 	#region Fields
-
-	[Header("References to objects and components.")]
+	[Header("Asteroid Fields")]
 	[Tooltip("List of available sprites to choose from.")]
 	public Sprite[] Shapes;
 	[Tooltip("Reference to the sprite renderer of the asteroid.")]
 	public SpriteRenderer SprRend;
 	[Tooltip("Reference to the asteroid destruction particle effect prefab.")]
 	public Transform destructionParticleEffect;
+	//for testing resource drop
+	public ResourceDrop resource;
 	[Tooltip("Reference to the shake effect script on the sprite.")]
 	public ShakeEffect ShakeFX;
-	[Header("Properties of the asteroid.")]
 	[Tooltip("Picks a random value between given value and negative given value to determine its rotation speed")]
 	public float SpinSpeedRange;
 	[Tooltip("Picks a random value between given value and negative given value to determine starting velocity")]
 	public float VelocityRange;
 	[Tooltip("Upper limit for health stat.")]
 	public float MaxHealth = 150f;
-	
+	//current health value between 0 and MaxHealth
 	private float Health;
-
 	#endregion
 
 	public override void Awake()
@@ -51,10 +50,18 @@ public class Asteroid : Entity, IDrillableObject
 	{
 		if (explode)
 		{
+			//particle effect
 			if (destructionParticleEffect != null)
 			{
 				Transform fx = Instantiate(destructionParticleEffect);
 				fx.position = transform.position;
+			}
+
+			//drop resources
+			for (int i = 0; i < Random.Range(1, 4); i++)
+			{
+				Transform drop = Instantiate(resource).transform;
+				drop.position = transform.position;
 			}
 		}
 
@@ -131,6 +138,5 @@ public class Asteroid : Entity, IDrillableObject
 	{
 		base.PhysicsReEnabled();
 		RandomMovement();
-		//StartCoroutine(DelayedAction.Go(() => RandomMovement()));
 	}
 }

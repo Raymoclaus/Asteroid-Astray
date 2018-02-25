@@ -13,13 +13,19 @@ public class ParticleReactToThrusters : MonoBehaviour
 	private void Awake()
 	{
 		ps = ps == null ? GetComponent<ParticleSystem>() : ps;
+		thruster = thruster == null ? FindObjectOfType<ThrusterController>() : thruster;
 	}
 
 	private void OnParticleTrigger()
 	{
 		int numEnter = ps.GetTriggerParticles(ParticleSystemTriggerEventType.Inside, parts);
+		if (numEnter == 0) return;
 
-		Vector3 velocity = thruster.ThrusterDirection * thrusterResistance;
+		Vector3 velocity = Vector3.zero;
+		if (thruster != null)
+		{
+			velocity = thruster.ThrusterDirection* thrusterResistance;
+		}
 
 		for (int i = 0; i < numEnter; i++)
 		{

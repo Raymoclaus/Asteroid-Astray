@@ -23,6 +23,8 @@ public static class EntityNetwork
 	public const int ReserveSize = 1000;
 	//another large number for each individual cell in the grid
 	public const int CellReserve = 10;
+	//check if grid has already been created
+	private static bool gridCreated = false;
 	#endregion
 
 	#region Stat Tracking
@@ -32,6 +34,8 @@ public static class EntityNetwork
 	/// Constructs and reserves a large amount of space for the grid
 	public static void CreateGrid()
 	{
+		if (gridCreated) return;
+
 		//reserve space in each direction
 		//takes ~1.5 seconds for 1000 * 1000 * 10
 		for (int dir = 0; dir < QuadrantNumber; dir++)
@@ -47,6 +51,8 @@ public static class EntityNetwork
 				}
 			}
 		}
+
+		gridCreated = true;
 	}
 
 	/// Returns a list of all entities located in cells within range of the given coordinates
@@ -96,6 +102,12 @@ public static class EntityNetwork
 	/// Adds a given entity to the list at given coordinates
 	public static bool AddEntity(Entity e, ChunkCoords cc)
 	{
+		//check if grid has been created yet
+		if (!gridCreated)
+		{
+			CreateGrid();
+		}
+
 		if (!cc.IsValid())
 		{
 			Debug.Log("Coordinates to add entity to are invalid.");
@@ -222,19 +234,17 @@ public static class EntityNetwork
 		//add entity to the destination chunk
 		return AddEntity(e, destChunk);
 	}
-
-	/* Shorthand methods for accessing the grid */
-
+	
 	#region Convenient Grid Methods
 
 	public static List<Entity> Chunk(ChunkCoords cc)
 	{
-		return _grid[(int)cc.Direction][cc.X][cc.Y];
+		return Column(cc)[cc.Y];
 	}
 
 	public static List<List<Entity>> Column(ChunkCoords cc)
 	{
-		return _grid[(int)cc.Direction][cc.X];
+		return Direction(cc)[cc.X];
 	}
 
 	public static List<List<List<Entity>>> Direction(ChunkCoords cc)
@@ -370,9 +380,16 @@ public static class EntityNetwork
 		return false;
 	}
 
-	public static void PrintStats()
+	public static bool ContainsType(EntityType type, ChunkCoords c)
 	{
-		Debug.Log(string.Format("Number of entities: {0}.", numEntities));
+		foreach (Entity e in Chunk(c))
+		{
+			if (e.GetEntityType() == type)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public static int GetEntityCount()

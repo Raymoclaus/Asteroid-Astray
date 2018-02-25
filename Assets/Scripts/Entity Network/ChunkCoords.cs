@@ -9,6 +9,7 @@ public enum Quadrant
 	LowerRight
 }
 
+[Serializable]
 public struct Vector2Pair
 {
 	public Vector2 A, B;
@@ -20,6 +21,7 @@ public struct Vector2Pair
 	}
 }
 
+[Serializable]
 public struct IntPair
 {
 	public int A, B;
@@ -31,6 +33,7 @@ public struct IntPair
 	}
 }
 
+[Serializable]
 public struct ChunkCoords
 {
 	public Quadrant Direction;
@@ -135,6 +138,12 @@ public struct ChunkCoords
 		}
 
 		return new Vector2Pair(min * Cnsts.CHUNK_SIZE, max * Cnsts.CHUNK_SIZE);
+	}
+
+	public static Vector2 GetCenterCell(ChunkCoords c)
+	{
+		Vector2Pair bounds = GetCellArea(c);
+		return new Vector2((bounds.A.x + bounds.B.x) / 2f, (bounds.A.y + bounds.B.y) / 2f);
 	}
 
 	public bool IsValid()

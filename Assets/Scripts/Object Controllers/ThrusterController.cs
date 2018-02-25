@@ -11,6 +11,7 @@ public class ThrusterController : MonoBehaviour
 	public float speedMod = 0.3f;
 	public Transform thrusterForceHolder;
 	public AreaEffector2D thrusterArea;
+	public Component thrusterCol;
 	public float thrusterStrengthMod = 0.5f;
 	private float shuttleMag;
 	public Vector3 ThrusterDirection
@@ -19,6 +20,14 @@ public class ThrusterController : MonoBehaviour
 		{
 			return -new Vector3(Mathf.Sin(Mathf.Deg2Rad * -shuttle._rot.z), Mathf.Cos(Mathf.Deg2Rad * -shuttle._rot.z), 0f) * thrusterStrengthMod * shuttleMag;
 		}
+	}
+
+	private void Awake()
+	{
+		//get required references
+		shuttle = shuttle == null ? GetComponentInParent<Shuttle>() : shuttle;
+		thrusterArea = thrusterArea == null ? GetComponentInChildren<AreaEffector2D>() : thrusterArea;
+		thrusterCol = thrusterCol == null ? thrusterArea.GetComponent<Component>() : thrusterCol;
 	}
 
 	private void Update()

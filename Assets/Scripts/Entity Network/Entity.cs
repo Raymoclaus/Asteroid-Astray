@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class Entity : MonoBehaviour
 {
-	private ChunkCoords _coords;
+	[Header("Entity Fields")]
+	protected ChunkCoords _coords;
 	public Collider2D Col;
 	public Rigidbody2D Rb;
 	public bool ShouldDisablePhysicsOnDistance = true;
@@ -25,16 +25,16 @@ public class Entity : MonoBehaviour
 	public Renderer Rend;
 	public Animator Anim;
 
-	public static int physicsActive;
+	private static int entitiesActive;
 
 	public static int GetActive()
 	{
-		return physicsActive;
+		return entitiesActive;
 	}
 
 	public virtual void Awake()
 	{
-		physicsActive++;
+		entitiesActive++;
 		_coords = new ChunkCoords(transform.position);
 		EntityNetwork.AddEntity(this, _coords);
 
@@ -57,7 +57,7 @@ public class Entity : MonoBehaviour
 			if (IsInPhysicsRange())
 			{
 				if (!disabled) return;
-				physicsActive++;
+				entitiesActive++;
 				disabled = false;
 				gameObject.SetActive(true);
 				PhysicsReEnabled();
@@ -65,9 +65,9 @@ public class Entity : MonoBehaviour
 			else
 			{
 				if (disabled) return;
-				physicsActive--;
+				entitiesActive--;
 				disabled = true;
-				vel = Rb.velocity;
+				vel = Rb == null ? vel : (Vector3)Rb.velocity;
 				disableTime = Time.time;
 				gameObject.SetActive(!ShouldDisableObjectOnDistance);
 			}
@@ -89,9 +89,9 @@ public class Entity : MonoBehaviour
 		return CameraCtrl.IsCoordInPhysicsRange(_coords);
 	}
 
-	public void SetAllActivity(bool active)
+	public virtual void SetAllActivity(bool active)
 	{
-		if (active == _isActive || !ShouldDisablePhysicsOnDistance) return;
+		if (active == _isActive || !ShouldDisableObjectOnDistance) return;
 
 		_isActive = active;
 
@@ -181,5 +181,6 @@ public enum EntityType
 {
 	Entity,
 	Asteroid,
-	Shuttle
+	Shuttle,
+	Nebula
 }

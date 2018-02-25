@@ -46,11 +46,11 @@ public class ChunkFiller : MonoBehaviour
 		List<ChunkCoords> coords = GetChunkFillList(center);
 		if (batchOrder == null || !(bool)batchOrder)
 		{
-			AsteroidGenerator.InstantFillChunks(coords);
+			EntityGenerator.InstantFillChunks(coords);
 		}
 		else
 		{
-			StartCoroutine(AsteroidGenerator.ChunkBatchOrder(coords));
+			StartCoroutine(EntityGenerator.ChunkBatchOrder(coords));
 		}
 	}
 
