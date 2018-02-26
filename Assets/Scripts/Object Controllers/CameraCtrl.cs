@@ -103,7 +103,7 @@ public class CameraCtrl : MonoBehaviour
 			if (Shuttle.IsDrilling)
 			{
 				//gradually zoom in
-				_currentSize = Mathf.MoveTowards(_currentSize, MinCamSize / 2f, CamDrillZoomSpeed * Cnsts.TIME_SPEED);
+				_currentSize = Mathf.MoveTowards(_currentSize, MinCamSize / 2f, CamDrillZoomSpeed);
 			}
 			else
 			{
@@ -113,7 +113,7 @@ public class CameraCtrl : MonoBehaviour
 				float zoomDifference = targetSize - _currentSize;
 				float zoomDifferenceAbs = zoomDifference > 0 ? zoomDifference : -zoomDifference;
 				float camZoomSpeedModifier = zoomDifferenceAbs > 1 && zoomDifference > 0 ? 1f : zoomDifferenceAbs;
-				_currentSize = Mathf.MoveTowards(_currentSize, targetSize, CamZoomSpeed * camZoomSpeedModifier * Cnsts.TIME_SPEED);
+				_currentSize = Mathf.MoveTowards(_currentSize, targetSize, CamZoomSpeed * camZoomSpeedModifier);
 			}
 		}
 		//sets the camera size on the camera component

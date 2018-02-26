@@ -31,11 +31,11 @@ public class NebulaSetup : Entity
 	[HideInInspector]
 	public Component thrusterRef;
 
-	private bool completedSetup = false;
-
 	public override void Awake()
 	{
 		base.Awake();
+
+		needsInit = true;
 	}
 
 	private void Start()
@@ -71,7 +71,7 @@ public class NebulaSetup : Entity
 		}
 
 		ScriptComponents.Add(this);
-		completedSetup = true;
+		initialised = true;
 	}
 
 	//This will determine where to set up more particle systems and create them in those positions
@@ -128,6 +128,7 @@ public class NebulaSetup : Entity
 			newNebula.SetThrusterReference(thrusterRef);
 			newNebula.transform.position = ChunkCoords.GetCenterCell(c);
 			newNebula.shouldExpand = false;
+			EntityGenerator.FillChunk(c, true);
 		}
 	}
 
@@ -186,7 +187,7 @@ public class NebulaSetup : Entity
 	{
 		base.SetAllActivity(active);
 
-		if (completedSetup)
+		if (initialised)
 		{
 			gameObject.SetActive(active);
 		}

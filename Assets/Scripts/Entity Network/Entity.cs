@@ -13,6 +13,8 @@ public class Entity : MonoBehaviour
 	private bool disabled = false;
 	private Vector3 vel;
 	private float disableTime;
+	protected bool needsInit = false;
+	protected bool initialised = false;
 
 	//drill related
 	public bool canDrill;
@@ -91,6 +93,8 @@ public class Entity : MonoBehaviour
 
 	public virtual void SetAllActivity(bool active)
 	{
+		if (needsInit && !initialised) return;
+
 		if (active == _isActive || !ShouldDisableObjectOnDistance) return;
 
 		_isActive = active;
@@ -173,7 +177,7 @@ public class Entity : MonoBehaviour
 
 	public virtual void PhysicsReEnabled()
 	{
-		transform.position += vel * (Time.time - disableTime) / 60f * Cnsts.TIME_SPEED;
+
 	}
 }
 

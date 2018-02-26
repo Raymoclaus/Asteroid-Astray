@@ -136,7 +136,6 @@ public class Asteroid : Entity, IDrillableObject
 
 	public override void PhysicsReEnabled()
 	{
-		base.PhysicsReEnabled();
 		RandomMovement();
 	}
 }

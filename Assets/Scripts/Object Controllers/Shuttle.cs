@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Collections.Generic;
 
 public class Shuttle : Entity
 {
@@ -56,6 +57,12 @@ public class Shuttle : Entity
 			return speedCheck;
 		}
 	}
+	//automatically move towards nearby asteroids and drill them
+	private bool autoPilot;
+	//efficiency with the searching algorithm used by the auto pilot
+	private float autoPilotTimer;
+	//transform for the auto pilot to follow
+	private Transform followTarget;
 	#endregion
 
 	public override void Awake()
@@ -80,30 +87,49 @@ public class Shuttle : Entity
 		_rot.z = transform.eulerAngles.z;
 
 		//get rotation input
-		float cursorAngle = InputHandler.GetLookDirection(transform.position);
+		float lookDirection = InputHandler.GetLookDirection(transform.position);
 			
 		//if no rotation input has been given then use the same as last frame
-		if (float.IsPositiveInfinity(cursorAngle)) cursorAngle = _lastLookDirection;
+		if (float.IsPositiveInfinity(lookDirection)) lookDirection = _lastLookDirection;
+
+		//automatically look for the nearest asteroid
+		if (autoPilot)
+		{
+			if (Time.time - autoPilotTimer > 1f || followTarget == null)
+			{
+				SearchForNearestAsteroid();
+			}
+
+			lookDirection = Vector2.Angle(Vector2.up, followTarget.position - transform.position);
+			if (followTarget.position.x < transform.position.x)
+			{
+				lookDirection = 180f + (180f - lookDirection);
+			}
+		}
 			
 		//update last look direction (mostly for joystick use)
-		_lastLookDirection = cursorAngle;
+		_lastLookDirection = lookDirection;
 
 		//determine how quickly to rotate
 		//rotMod controls how smoothly the rotation happens
-		float rotMod = Mathf.Abs((360f - _rot.z) - cursorAngle);
+		float rotMod = Mathf.Abs((360f - _rot.z) - lookDirection);
 		if (rotMod > 180f)
 		{
 			rotMod = Mathf.Abs(rotMod - 360f);
 		}
 		rotMod /= 180f;
 		rotMod = Mathf.Pow(rotMod, 0.8f);
-		SetRot(Mathf.MoveTowardsAngle(_rot.z, -cursorAngle, MaxRotSpeed * rotMod * Cnsts.TIME_SPEED));
+		SetRot(Mathf.MoveTowardsAngle(_rot.z, -lookDirection, MaxRotSpeed * rotMod * Cnsts.TIME_SPEED));
 
 		//get movement input
 		_accel.y += Mathf.Clamp01(InputHandler.GetInput("MoveVertical")) * EngineStrength;
 		if (!IsDrilling)
 		{
 			_accel.x += InputHandler.GetInput("MoveHorizontal") * EngineStrength;
+		}
+		if (autoPilot)
+		{
+			_accel = Vector2.up * EngineStrength;
 		}
 		float magnitude = _accel.magnitude;
 
@@ -192,6 +218,30 @@ public class Shuttle : Entity
 		}
 	}
 
+	private void SearchForNearestAsteroid()
+	{
+		autoPilotTimer = Time.time;
+
+		List<Entity> asteroids = new List<Entity>();
+		int searchRange = 1;
+		while (asteroids.Count == 0)
+		{
+			asteroids = EntityNetwork.GetEntitiesInRange(_coords, searchRange, EntityType.Asteroid);
+			searchRange++;
+		}
+
+		float shortestDist = float.PositiveInfinity;
+		foreach (Entity e in asteroids)
+		{
+			float dist = Vector2.Distance(transform.position, e.transform.position);
+			if (dist < shortestDist || float.IsPositiveInfinity(shortestDist))
+			{
+				shortestDist = dist;
+				followTarget = e.transform;
+			}
+		}
+	}
+
 	private void SetRot(float newRot)
 	{
 		_rot.z = ((newRot % 360f) + 360f) % 360f;
@@ -211,5 +261,10 @@ public class Shuttle : Entity
 		{
 			return InputHandler.IsHoldingBack() ? 0f : _vel.magnitude;
 		}
+	}
+
+	public void AutoPilotSwitch(bool isOn)
+	{
+		autoPilot = isOn;
 	}
 }

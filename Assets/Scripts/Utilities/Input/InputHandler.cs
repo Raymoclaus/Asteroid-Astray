@@ -52,7 +52,7 @@ public class InputHandler : MonoBehaviour
 
 		if (prevMode != _mode)
 		{
-			Debug.Log("Input mode set to: " + _mode);
+			Debug.LogWarning("Input mode set to: " + _mode);
 		}
 	}
 

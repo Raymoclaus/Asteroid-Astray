@@ -56,20 +56,34 @@ public static class EntityNetwork
 	}
 
 	/// Returns a list of all entities located in cells within range of the given coordinates
-	public static List<Entity> GetEntitiesInRange(ChunkCoords center, int range)
+	public static List<Entity> GetEntitiesInRange(ChunkCoords center, int range, EntityType? type = null)
 	{
 		List<ChunkCoords> coordsInRange = GetCoordsInRange(center, range);
 		//declare a list to be filled and reserve some room
-		return GetEntitiesAtCoords(coordsInRange);
+		return GetEntitiesAtCoords(coordsInRange, type);
 	}
 
-	public static List<Entity> GetEntitiesAtCoords(List<ChunkCoords> coordsList)
+	public static List<Entity> GetEntitiesAtCoords(List<ChunkCoords> coordsList, EntityType? type = null)
 	{
 		List<Entity> entitiesInCoords = new List<Entity>(CellReserve * coordsList.Count);
+		EntityType filter = type ?? EntityType.Entity;
 		//loop through coordinates list and grab all entities at each coordinate
 		foreach (ChunkCoords coord in coordsList)
 		{
-			entitiesInCoords.AddRange(Chunk(coord));
+			if (type == null)
+			{
+				entitiesInCoords.AddRange(Chunk(coord));
+			}
+			else
+			{
+				foreach (Entity e in Chunk(coord))
+				{
+					if (e.GetEntityType() == filter)
+					{
+						entitiesInCoords.Add(e);
+					}
+				}
+			}
 		}
 		return entitiesInCoords;
 	}
@@ -110,7 +124,7 @@ public static class EntityNetwork
 
 		if (!cc.IsValid())
 		{
-			Debug.Log("Coordinates to add entity to are invalid.");
+			Debug.LogWarning("Coordinates to add entity to are invalid.");
 			return false;
 		}
 
@@ -132,13 +146,13 @@ public static class EntityNetwork
 		ChunkCoords cc = e.GetCoords();
 		if (!cc.IsValid())
 		{
-			Debug.Log("Removal coordinates are invalid.");
+			Debug.LogWarning("Removal coordinates are invalid.");
 			return false;
 		}
 
 		if (type != null && e.GetEntityType() != (EntityType) type)
 		{
-			Debug.Log("EntityType value given does not match entity's type");
+			Debug.LogWarning("EntityType value given does not match entity's type");
 			return false;
 		}
 
@@ -153,7 +167,7 @@ public static class EntityNetwork
 			return true;
 		}
 
-		Debug.Log("Entity not found at removal coordinates.");
+		Debug.LogWarning("Entity not found at removal coordinates.");
 		return false;
 	}
 
@@ -162,7 +176,7 @@ public static class EntityNetwork
 	{
 		if (!RemoveEntity(e))
 		{
-			Debug.Log("Entity: " + e + " could not be removed.");
+			Debug.LogWarning("Entity: " + e + " could not be removed.");
 			return false;
 		}
 
@@ -214,18 +228,18 @@ public static class EntityNetwork
 	{
 		if (!destChunk.IsValid())
 		{
-			Debug.Log("Destination coordinates are invalid.");
+			Debug.LogWarning("Destination coordinates are invalid.");
 			return false;
 		}
 
 		if (RemoveEntity(e)) return AddEntity(e, destChunk);
 		
-		//recursive search for entity if removal coordinates are incorrect or if entity was not found at its coordinates
-		ChunkCoords found = StartRecursiveSearch(e);
-		//RecursiveSearch will return ChunkCoordinates.Invalid if it was not found anywhere in the network
+		//search for entity if removal coordinates are incorrect or if entity was not found at its coordinates
+		ChunkCoords found = StartFullSearch(e);
+		//search will return ChunkCoordinates.Invalid if it was not found anywhere in the network
 		if (found == ChunkCoords.Invalid)
 		{
-			Debug.Log("Entity failed to reposition on grid.");
+			Debug.LogWarning("Entity failed to reposition on grid.");
 			return false;
 		}
 
@@ -254,19 +268,38 @@ public static class EntityNetwork
 
 	#endregion
 
-	/// Begins a recursive search and outputs some debug information
-	private static ChunkCoords StartRecursiveSearch(Entity e)
+	/// Begins a search and outputs some debug information
+	private static ChunkCoords StartFullSearch(Entity e)
 	{
-		Debug.Log("Starting recursive search for: " + e);
+		Debug.LogWarning("Starting full search for: " + e);
+		ChunkCoords search = ChunkCoords.Zero;
 		FunctionTimer timer = new FunctionTimer();
-		ChunkCoords result = RecursiveSearch(e, ChunkCoords.Zero);
-		Debug.Log("Recursive search for: " + e + " completed in " + timer.Log() + " seconds.");
+		foreach (List<List<List<Entity>>> dir in _grid)
+		{
+			foreach (List<List<Entity>> col in dir)
+			{
+				foreach (List<Entity> chunk in col)
+				{
+					foreach (Entity ent in chunk)
+					{
+						if (ent == e)
+						{
+							return search;
+						}
+					}
+					search.Y++;
+				}
+				search.X++;
+			}
+			search.Direction++;
+		}
+		ChunkCoords result = FullSearch(e, ChunkCoords.Zero);
+		Debug.LogWarning("Full search for: " + e + " completed in " + timer.Log() + " seconds.");
 		return result;
 	}
-
-	/// Recursively search the network for a given entity
+	
 	/// This is slow so keep this for emergencies if you lose an entity
-	private static ChunkCoords RecursiveSearch(Entity e, ChunkCoords search)
+	private static ChunkCoords FullSearch(Entity e, ChunkCoords search)
 	{
 		if (ConfirmLocation(e, search))
 		{
@@ -287,13 +320,13 @@ public static class EntityNetwork
 				//if every element has been checked, return invalid coordinates
 				if ((int) search.Direction >= _grid.Count)
 				{
-					Debug.Log("Entity not found in grid.");
+					Debug.LogWarning("Entity not found in grid.");
 					return ChunkCoords.Invalid;
 				}
 			}
 		}
 
-		return RecursiveSearch(e, search);
+		return FullSearch(e, search);
 	}
 
 	/// Returns whether a given chunk is valid and exists in the network

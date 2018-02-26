@@ -15,7 +15,7 @@ public static class EntityGenerator
 	private static List<ChunkCoords> chunkBatches = new List<ChunkCoords>(100);
 	#endregion
 
-	public static void FillChunk(ChunkCoords cc)
+	public static void FillChunk(ChunkCoords cc, bool? excludePriority = null)
 	{
 		//don't bother if the given coordinates are not valid
 		if (!cc.IsValid()) return;
@@ -27,7 +27,7 @@ public static class EntityGenerator
 		Column(cc)[cc.Y] = true;
 
 		//look through the space priority entities and check if one may spawn
-		List<SpawnableEntity> toSpawn = ChooseEntitiesToSpawn();
+		List<SpawnableEntity> toSpawn = ChooseEntitiesToSpawn(excludePriority);
 
 		//determine area to spawn in
 		Vector2Pair range = ChunkCoords.GetCellArea(cc);
@@ -55,18 +55,22 @@ public static class EntityGenerator
 		}
 	}
 
-	private static List<SpawnableEntity> ChooseEntitiesToSpawn()
+	private static List<SpawnableEntity> ChooseEntitiesToSpawn(bool? excludePriority = null)
 	{
+		bool noPriority = excludePriority ?? false;
 		List<SpawnableEntity> list = new List<SpawnableEntity>();
 		float chance = Random.value;
-		foreach (SpawnableEntity e in prefabs.spacePriorityEntities)
+		if (!noPriority)
 		{
-			if (e.ignore) continue;
-
-			if (e.rarity >= chance)
+			foreach (SpawnableEntity e in prefabs.spacePriorityEntities)
 			{
-				list.Add(e);
-				break;
+				if (e.ignore) continue;
+
+				if (e.rarity >= chance)
+				{
+					list.Add(e);
+					break;
+				}
 			}
 		}
 
@@ -103,8 +107,9 @@ public static class EntityGenerator
 		{
 			yield break;
 		}
-		while (chunkBatches.Count > 0)
+		while (true)
 		{
+			if (chunkBatches.Count == 0) yield return null;
 			for (int i = 0; i < Mathf.Round(Cnsts.TIME_SPEED) && chunkBatches.Count > 0; i++)
 			{
 				FillChunk(chunkBatches[0]);
@@ -126,7 +131,7 @@ public static class EntityGenerator
 		//add more columns until enough exist to make the given coordinates valid
 		if (Direction(cc).Capacity <= cc.X)
 		{
-			Debug.Log("Row capacity breached.");
+			Debug.LogWarning("Row capacity breached.");
 			Direction(cc).Capacity = cc.X + 1;
 		}
 
@@ -138,7 +143,7 @@ public static class EntityGenerator
 		//add more rows until the column is large enough to make the given coordinates valid
 		if (Column(cc).Capacity <= cc.Y)
 		{
-			Debug.Log("Column capacity breached.");
+			Debug.LogWarning("Column capacity breached.");
 			Column(cc).Capacity = cc.Y + 1;
 		}
 
