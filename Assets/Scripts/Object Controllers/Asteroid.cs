@@ -27,12 +27,16 @@ public class Asteroid : Entity, IDrillableObject
 
 	public override void Awake()
 	{
+		needsInit = true;
+
 		base.Awake();
 		//pick a random sprite from given list of sprites
 		SprRend.sprite = Shapes[Random.Range(0, Shapes.Length)];
 		RandomMovement();
 		//start health at max value
 		Health = MaxHealth;
+
+		initialised = true;
 	}
 
 	private void RandomMovement()

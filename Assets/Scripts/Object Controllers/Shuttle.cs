@@ -65,6 +65,14 @@ public class Shuttle : Entity
 	private Transform followTarget;
 	#endregion
 
+	#region Sound Stuff
+	[SerializeField]
+	private AudioClip collectResourceSound;
+	private float resourceCollectedTime;
+	private float resourceCollectedPitch = 1f;
+	private float resourceCollectedPitchIncreaseAmount = 0.2f;
+	#endregion
+
 	public override void Awake()
 	{
 		base.Awake();
@@ -216,6 +224,26 @@ public class Shuttle : Entity
 			//set rotation
 			transform.eulerAngles = _rot;
 		}
+	}
+
+	public void CollectResources(ResourceDrop r)
+	{
+		//record resource collection
+		PlayerPrefs.SetInt("ResourceCounter", PlayerPrefs.GetInt("ResourceCounter") + 1);
+
+		//increase pitch of sound for successive resource collection, reset after a break
+		if (Time.time - resourceCollectedTime < 1f)
+		{
+			resourceCollectedPitch += resourceCollectedPitchIncreaseAmount;
+		}
+		else
+		{
+			resourceCollectedPitch = 1f;
+		}
+		resourceCollectedTime = Time.time;
+		//play resource collect sound
+		AudioManager.PlaySFX(collectResourceSound, transform.position, transform, pitch: resourceCollectedPitch);
+		
 	}
 
 	private void SearchForNearestAsteroid()

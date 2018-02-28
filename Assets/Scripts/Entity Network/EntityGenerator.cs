@@ -13,6 +13,8 @@ public static class EntityGenerator
 	private static Dictionary<string, GameObject> holders = new Dictionary<string, GameObject>();
 	//chunks to fill in batches
 	private static List<ChunkCoords> chunkBatches = new List<ChunkCoords>(100);
+	//minimum amount of chunks to fill per batch
+	private static int minChunkBatchFill = 5;
 	#endregion
 
 	public static void FillChunk(ChunkCoords cc, bool? excludePriority = null)
@@ -110,7 +112,7 @@ public static class EntityGenerator
 		while (true)
 		{
 			if (chunkBatches.Count == 0) yield return null;
-			for (int i = 0; i < Mathf.Round(Cnsts.TIME_SPEED) && chunkBatches.Count > 0; i++)
+			for (int i = 0; i < (int)Mathf.Max(Cnsts.TIME_SPEED * Cnsts.TIME_SPEED, minChunkBatchFill) && chunkBatches.Count > 0; i++)
 			{
 				FillChunk(chunkBatches[0]);
 				chunkBatches.RemoveAt(0);

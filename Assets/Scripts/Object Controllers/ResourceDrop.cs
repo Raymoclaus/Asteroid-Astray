@@ -57,7 +57,7 @@ public class ResourceDrop : MonoBehaviour
 			ps.transform.parent = null;
 			ParticleSystem.MainModule main = ps.main;
 			main.loop = false;
-			PlayerPrefs.SetInt("ResourceCounter", PlayerPrefs.GetInt("ResourceCounter") + 1);
+			Shuttle.singleton.CollectResources(this);
 			Destroy(gameObject);
 			return;
 		}

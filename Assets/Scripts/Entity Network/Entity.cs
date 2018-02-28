@@ -70,7 +70,6 @@ public class Entity : MonoBehaviour
 				entitiesActive--;
 				disabled = true;
 				vel = Rb == null ? vel : (Vector3)Rb.velocity;
-				disableTime = Time.time;
 				gameObject.SetActive(!ShouldDisableObjectOnDistance);
 			}
 		}
