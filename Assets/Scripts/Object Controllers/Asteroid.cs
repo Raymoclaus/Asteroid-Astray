@@ -25,6 +25,11 @@ public class Asteroid : Entity, IDrillableObject
 	private float Health;
 	#endregion
 
+	#region Audio
+	public AudioClip[] shatterSounds;
+	public Vector2 shatterPitchRange;
+	#endregion
+
 	public override void Awake()
 	{
 		needsInit = true;
@@ -60,6 +65,9 @@ public class Asteroid : Entity, IDrillableObject
 				Transform fx = Instantiate(destructionParticleEffect);
 				fx.position = transform.position;
 			}
+
+			//sound effect
+			AudioManager.PlaySFX(shatterSounds[Random.Range(0, shatterSounds.Length)], transform.position, pitch: Random.Range(shatterPitchRange.x, shatterPitchRange.y));
 
 			//drop resources
 			for (int i = 0; i < Random.Range(1, 4); i++)

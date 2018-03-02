@@ -30,6 +30,7 @@ public class AudioManager : MonoBehaviour
 		src.outputAudioMixerGroup = singleton.sfxMixer;
 		src.volume = volume;
 		src.pitch = pitch;
+		src.spatialBlend = 1f;
 		src.Play();
 		singleton.StartCoroutine(DestroySelf(obj, clip.length));
 	}

@@ -12,6 +12,12 @@ public class DrillBit : MonoBehaviour
 	private bool firstHit = false;
 	public List<ParticleSystem> DrillSparks;
 	public float sparkSizeModifier = 20f;
+
+	public AudioSource drillSoundSource;
+	public Vector2 drillPitchRange;
+	public float pitchModifier = 0.1f;
+	public float maxVolume = 1f;
+	public float volumeIncrease = 0.1f;
 	
 	void Start ()
 	{
@@ -44,6 +50,10 @@ public class DrillBit : MonoBehaviour
 		}
 		//bigger effects for more damage
 		ResizeParticleSystem(damage * sparkSizeModifier);
+
+		//adjust sound
+		drillSoundSource.volume = Mathf.MoveTowards(drillSoundSource.volume, maxVolume, maxVolume * volumeIncrease);
+		drillSoundSource.pitch = Mathf.MoveTowards(drillPitchRange.x, drillPitchRange.y, damage * pitchModifier);
 	}
 
 	public void StartDrilling(IDrillableObject newTarget)
@@ -52,6 +62,9 @@ public class DrillBit : MonoBehaviour
 		isDrilling = true;
 		drillTarget = newTarget;
 		firstHit = true;
+
+		drillSoundSource.volume = 0f;
+		drillSoundSource.Play();
 	}
 
 	public void StopDrilling()
@@ -60,6 +73,9 @@ public class DrillBit : MonoBehaviour
 		isDrilling = false;
 		drillTarget.StopDrilling();
 		drillTarget = null;
+
+		drillSoundSource.volume = 0f;
+		drillSoundSource.Stop();
 	}
 
 	private void TriggerParticleEffects(bool start)
