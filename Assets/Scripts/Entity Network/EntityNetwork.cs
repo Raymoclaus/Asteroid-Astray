@@ -117,10 +117,7 @@ public static class EntityNetwork
 	public static bool AddEntity(Entity e, ChunkCoords cc)
 	{
 		//check if grid has been created yet
-		if (!gridCreated)
-		{
-			CreateGrid();
-		}
+		CreateGrid();
 
 		if (!cc.IsValid())
 		{
@@ -150,7 +147,7 @@ public static class EntityNetwork
 			return false;
 		}
 
-		if (type != null && e.GetEntityType() != (EntityType) type)
+		if (type != null && e.GetEntityType() != type)
 		{
 			Debug.LogWarning("EntityType value given does not match entity's type");
 			return false;
@@ -263,6 +260,7 @@ public static class EntityNetwork
 
 	public static List<List<List<Entity>>> Direction(ChunkCoords cc)
 	{
+		CreateGrid();
 		return _grid[(int) cc.Direction];
 	}
 

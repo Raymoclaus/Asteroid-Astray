@@ -26,26 +26,13 @@ public class NebulaSetup : Entity
 	public int minSystemSize = 4;
 	public int maxSystemSize = 8;
 	//when expanding, it won't expand into space that already contains nebula. This will prevent accidental infinite loops
-	private int failLimit = 20;
+	private const int FAIL_LIMIT = 20;
 
 	[HideInInspector]
 	public Component thrusterRef;
 
-	public override void Awake()
-	{
-		base.Awake();
-
-		needsInit = true;
-	}
-
 	private void Start()
 	{
-		//destroy self if a nebula already exists in current coordinates
-		if (EntityNetwork.ContainsType(GetEntityType(), _coords))
-		{
-			DestroySelf();
-		}
-
 		//get references
 		systems = systems.Length == 0 ? GetComponentsInChildren<ParticleSystem>() : systems;
 		thrusterRef = thrusterRef == null ? FindObjectOfType<ThrusterController>().thrusterCol : thrusterRef;
@@ -72,6 +59,16 @@ public class NebulaSetup : Entity
 
 		ScriptComponents.Add(this);
 		initialised = true;
+		RepositionInNetwork();
+	}
+
+	private void Update()
+	{
+		//destroy self if a nebula already exists in current coordinates
+		if (EntityNetwork.ContainsType(GetEntityType(), _coords))
+		{
+			DestroySelf();
+		}
 	}
 
 	//This will determine where to set up more particle systems and create them in those positions
@@ -84,7 +81,7 @@ public class NebulaSetup : Entity
 		int count = 1;
 		int failCount = 0;
 
-		while (count < size && failCount < failLimit)
+		while (count < size && failCount < FAIL_LIMIT)
 		{
 			c = filled[Random.Range(0, filled.Count)];
 			//pick a random adjacent coordinate
@@ -108,11 +105,6 @@ public class NebulaSetup : Entity
 					alreadyExists = true;
 					break;
 				}
-			}
-			//this will check for nebula groups separate from the current one
-			if (EntityNetwork.ContainsType(GetEntityType(), c))
-			{
-				alreadyExists = true;
 			}
 			//if new coordinates have already been filled with nebula then pick a new coordinate
 			if (alreadyExists)
@@ -181,16 +173,6 @@ public class NebulaSetup : Entity
 	public void SetThrusterReference(Component col)
 	{
 		thrusterRef = col;
-	}
-
-	public override void SetAllActivity(bool active)
-	{
-		base.SetAllActivity(active);
-
-		if (initialised)
-		{
-			gameObject.SetActive(active);
-		}
 	}
 
 	public override EntityType GetEntityType()

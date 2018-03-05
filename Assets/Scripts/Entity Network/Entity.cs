@@ -9,11 +9,12 @@ public class Entity : MonoBehaviour
 	public Rigidbody2D Rb;
 	public bool ShouldDisablePhysicsOnDistance = true;
 	public bool ShouldDisableObjectOnDistance = true;
+	public bool ShouldDisableGameObjectOnShortDistance = true;
 	private bool _isActive = true;
 	private bool disabled = false;
 	private Vector3 vel;
 	private float disableTime;
-	protected bool needsInit = false;
+	protected bool needsInit = true;
 	protected bool initialised = false;
 
 	//drill related
@@ -53,6 +54,9 @@ public class Entity : MonoBehaviour
 		ChunkCoords newCc = new ChunkCoords(transform.position);
 		if (newCc != _coords)
 			EntityNetwork.Reposition(this, newCc);
+
+		if (needsInit && !initialised) return;
+
 		SetAllActivity(IsInView());
 		if (ShouldDisablePhysicsOnDistance)
 		{
@@ -90,22 +94,12 @@ public class Entity : MonoBehaviour
 		return CameraCtrl.IsCoordInPhysicsRange(_coords);
 	}
 
-	public virtual void SetAllActivity(bool active)
+	public void SetAllActivity(bool active)
 	{
+		if (active == _isActive || !ShouldDisableObjectOnDistance) return;
 		if (needsInit && !initialised) return;
 
-		if (active == _isActive || !ShouldDisableObjectOnDistance) return;
-
 		_isActive = active;
-
-		//enable/disable all relevant components
-		foreach (MonoBehaviour script in ScriptComponents)
-		{
-			if (script != null)
-			{
-				script.enabled = active;
-			}
-		}
 
 		if (Rend != null)
 		{
@@ -125,6 +119,20 @@ public class Entity : MonoBehaviour
 		if (Rb != null)
 		{
 			Rb.bodyType = active ? RigidbodyType2D.Dynamic : Rb.bodyType;
+		}
+
+		if (ShouldDisableGameObjectOnShortDistance)
+		{
+			gameObject.SetActive(active);
+		}
+
+		//enable/disable all relevant components
+		foreach (MonoBehaviour script in ScriptComponents)
+		{
+			if (script != null)
+			{
+				script.enabled = active;
+			}
 		}
 	}
 

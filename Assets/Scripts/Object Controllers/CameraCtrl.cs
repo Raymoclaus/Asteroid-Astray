@@ -161,15 +161,6 @@ public class CameraCtrl : MonoBehaviour
 
 	public static bool IsCoordInView(ChunkCoords coord)
 	{
-		//foreach (ChunkCoords c in camCtrl._coordsInView)
-		//{
-		//	if (coord == c)
-		//	{
-		//		return true;
-		//	}
-		//}
-		//return false;
-
 		return ChunkCoords.MaxDistance(coord, camCtrl.Coords) <= EntityViewRange + RangeModifier;
 	}
 
