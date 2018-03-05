@@ -5,6 +5,8 @@ using UnityEngine.UI;
 public class PhysicsActiveViewer : MonoBehaviour
 {
 	private Text txt;
+	private int currentCount;
+	private string display = "Physics Active: {0}";
 
 	private void Awake()
 	{
@@ -13,6 +15,11 @@ public class PhysicsActiveViewer : MonoBehaviour
 
 	private void Update()
 	{
-		txt.text = string.Format("Physics Active: {0}", Entity.GetActive());
+		int count = Entity.GetActive();
+		if (count != currentCount)
+		{
+			txt.text = string.Format(display, count);
+			currentCount = count;
+		}
 	}
 }

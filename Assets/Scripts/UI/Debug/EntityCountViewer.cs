@@ -5,6 +5,8 @@ using UnityEngine.UI;
 public class EntityCountViewer : MonoBehaviour
 {
 	private Text txt;
+	private int currentCount;
+	private string display = "Entity Count: {0}";
 
 	private void Awake()
 	{
@@ -13,6 +15,11 @@ public class EntityCountViewer : MonoBehaviour
 
 	private void Update()
 	{
-		txt.text = string.Format("Entity Count: {0}", EntityNetwork.GetEntityCount());
+		int count = EntityNetwork.GetEntityCount();
+		if (count != currentCount)
+		{
+			txt.text = string.Format(display, count);
+			currentCount = count;
+		}
 	}
 }

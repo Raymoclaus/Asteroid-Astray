@@ -46,7 +46,7 @@ public class DrillBit : MonoBehaviour
 		//else send the damage to the drill target
 		else
 		{
-			drillTarget.TakeDrillDamage(damage * Cnsts.TIME_SPEED);
+			drillTarget.TakeDrillDamage(damage);
 		}
 		//bigger effects for more damage
 		ResizeParticleSystem(damage * sparkSizeModifier);

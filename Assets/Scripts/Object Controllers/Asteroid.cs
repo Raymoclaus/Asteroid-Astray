@@ -47,12 +47,12 @@ public class Asteroid : Entity, IDrillableObject
 	private void RandomMovement()
 	{
 		//picks a random speed to spin at within a given range with chance favoring lower values
-		Rb.AddTorque((Mathf.Pow(Random.Range(0f, 2f), 2f) * SpinSpeedRange - SpinSpeedRange) * Cnsts.TIME_SPEED);
+		Rb.AddTorque((Mathf.Pow(Random.Range(0f, 2f), 2f) * SpinSpeedRange - SpinSpeedRange));
 		//picks a random direction and velocity within a given range with chance favoring lower values
 		Rb.velocity = new Vector2(
 			Mathf.Sin(Random.value * 2f * Mathf.PI),
 			Mathf.Cos(Random.value * 2f * Mathf.PI))
-			* (Mathf.Pow(Random.Range(0f, 2f), 2f) * VelocityRange - VelocityRange) * Cnsts.TIME_SPEED;
+			* (Mathf.Pow(Random.Range(0f, 2f), 2f) * VelocityRange - VelocityRange);
 	}
 
 	private void DestroySelf(bool explode)

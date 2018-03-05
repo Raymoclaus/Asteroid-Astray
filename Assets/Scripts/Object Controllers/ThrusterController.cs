@@ -4,7 +4,8 @@ using UnityEngine;
 
 public class ThrusterController : MonoBehaviour
 {
-	public ParticleSystem[] systems;
+	public ParticleSystem[] thrusterFire;
+	public ParticleSystem[] smokeTrails;
 	public Shuttle shuttle;
 	public float baseSpeed = 1f;
 	public float baseTrailWidth = 0.04f;
@@ -33,16 +34,17 @@ public class ThrusterController : MonoBehaviour
 	private void Update()
 	{
 		shuttleMag = shuttle._vel.magnitude;
-		SetSystemsValues();
+		SetThrusterFireValues();
 		SetThrusterForceValues();
+		SetSmokeTrailState();
 	}
 
-	private void SetSystemsValues()
+	private void SetThrusterFireValues()
 	{
 		float speed = baseSpeed * shuttleMag * speedMod;
 		float trailWidth = baseTrailWidth * speed / baseSpeed;
 
-		foreach (ParticleSystem ps in systems)
+		foreach (ParticleSystem ps in thrusterFire)
 		{
 			ParticleSystem.VelocityOverLifetimeModule volMod = ps.velocityOverLifetime;
 			volMod.speedModifierMultiplier = speed;
@@ -58,6 +60,29 @@ public class ThrusterController : MonoBehaviour
 		if (thrusterArea != null)
 		{
 			thrusterArea.forceMagnitude = shuttleMag * thrusterStrengthMod;
+		}
+	}
+
+	private void SetSmokeTrailState()
+	{
+		bool active = shuttle._accel != Vector2.zero;
+
+		foreach (ParticleSystem ps in smokeTrails)
+		{
+			if (active)
+			{
+				if (!ps.isEmitting)
+				{
+					ps.Play();
+				}
+			}
+			else
+			{
+				if (ps.isEmitting)
+				{
+					ps.Stop();
+				}
+			}
 		}
 	}
 }

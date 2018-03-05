@@ -29,7 +29,7 @@ public class Shuttle : Entity
 	//the rotation that the shuttle should be at
 	public Vector3 _rot;
 	//force of acceleration via the shuttle
-	private Vector2 _accel;
+	public Vector2 _accel;
 	//store last look direction, useful for joysticks
 	private float _lastLookDirection;
 	//return how far over the speed limit the shuttle's velocity is
@@ -39,7 +39,7 @@ public class Shuttle : Entity
 		{
 			Vector2 vel = Rb.velocity;
 			float sqrMag = vel.sqrMagnitude;
-			float spdLimit = SpeedLimit * SpeedLimit * Cnsts.TIME_SPEED;
+			float spdLimit = SpeedLimit * SpeedLimit;
 
 			//formula for ellipsoid, determines if velocity is within range
 			//for reference: https://www.maa.org/external_archive/joma/Volume8/Kalman/General.html
@@ -127,8 +127,10 @@ public class Shuttle : Entity
 		}
 		rotMod /= 180f;
 		rotMod = Mathf.Pow(rotMod, 0.8f);
-		SetRot(Mathf.MoveTowardsAngle(_rot.z, -lookDirection, MaxRotSpeed * rotMod * Cnsts.TIME_SPEED));
+		SetRot(Mathf.MoveTowardsAngle(_rot.z, -lookDirection, MaxRotSpeed * rotMod));
 
+		//reset acceleration
+		_accel = Vector2.zero;
 		//get movement input
 		_accel.y += Mathf.Clamp01(InputHandler.GetInput("MoveVertical")) * EngineStrength;
 		if (!IsDrilling)
@@ -178,9 +180,7 @@ public class Shuttle : Entity
 			decelerationModifier *= checkSpeed;
 		}
 
-		Vector3 addForce = _accel * Cnsts.TIME_SPEED;
-		//reset acceleration
-		_accel = Vector2.zero;
+		Vector3 addForce = _accel;
 
 		if (IsDrilling)
 		{
@@ -220,7 +220,7 @@ public class Shuttle : Entity
 			Rb.drag = Mathf.MoveTowards(
 				Rb.drag,
 				Deceleration * decelerationModifier,
-				Cnsts.TIME_SPEED * decelerationEffectiveness);
+				decelerationEffectiveness);
 			//set rotation
 			transform.eulerAngles = _rot;
 		}
@@ -250,8 +250,9 @@ public class Shuttle : Entity
 	{
 		autoPilotTimer = Time.time;
 
-		List<Entity> asteroids = new List<Entity>();
 		int searchRange = 1;
+		List<Entity> asteroids = EntityNetwork.GetEntitiesInRange(_coords, searchRange, EntityType.Asteroid);
+
 		while (asteroids.Count == 0)
 		{
 			asteroids = EntityNetwork.GetEntitiesInRange(_coords, searchRange, EntityType.Asteroid);

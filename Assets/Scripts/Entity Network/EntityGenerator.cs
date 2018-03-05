@@ -112,7 +112,7 @@ public static class EntityGenerator
 		while (true)
 		{
 			if (chunkBatches.Count == 0) yield return null;
-			for (int i = 0; i < (int)Mathf.Max(Cnsts.TIME_SPEED * Cnsts.TIME_SPEED, minChunkBatchFill) && chunkBatches.Count > 0; i++)
+			for (int i = 0; i < minChunkBatchFill && chunkBatches.Count > 0; i++)
 			{
 				FillChunk(chunkBatches[0]);
 				chunkBatches.RemoveAt(0);
