@@ -347,32 +347,6 @@ public static class EntityNetwork
 		return true;
 	}
 
-	public static IEnumerator RoutineCheckup()
-	{
-		int i = 0;
-		int j = 0;
-		ChunkCoords c;
-		int count = 0;
-		while (true)
-		{
-			for (count = 0; count < ENTITY_CHECKUP_NUMBER && i < occupiedCoords.Count; count++)
-			{
-				i++;
-				if (i >= occupiedCoords.Count)
-				{
-					i = 0;
-				}
-
-				c = occupiedCoords[i];
-				for (j = 0; j < Chunk(c).Count; j++)
-				{
-					Chunk(c)[j].RepositionInNetwork();
-				}
-			}
-			yield return null;
-		}
-	}
-
 	private static ChunkCoords Next(ChunkCoords c)
 	{
 		if (c.X < Column(c).Count - 1)

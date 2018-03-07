@@ -21,14 +21,16 @@ public class CameraCtrl : MonoBehaviour
 	public float CamSizeModifier = 5f;
 	private Vector2 _prevPos;
 	public ChunkCoords Coords;
-	private const int EntityViewRange = 1;
+	public const int EntityViewRange = 1;
 	private List<ChunkCoords> _coordsInView = new List<ChunkCoords>(16);
 
 	//roughly gets the range of network grid cells that the camera can see
-	private static int RangeModifier
+	public static int RangeModifier
 	{
 		get { return (int)((_currentSize - camCtrl.MinCamSize) / 5f); }
 	}
+
+	public int TotalViewRange { get { return EntityViewRange + RangeModifier; } }
 
 	public ChunkFiller CFiller;
 
@@ -156,6 +158,21 @@ public class CameraCtrl : MonoBehaviour
 		foreach (Entity e in nowInView)
 		{
 			e.SetAllActivity(true);
+		}
+
+		CheckPhysicsRange(center);
+	}
+
+	private void CheckPhysicsRange(ChunkCoords center)
+	{
+		List<Entity> physicsRange = EntityNetwork.GetEntitiesInRange(center, Cnsts.MAX_PHYSICS_RANGE);
+
+		foreach(Entity e in physicsRange)
+		{
+			if (!e.gameObject.activeSelf)
+			{
+				e.RepositionInNetwork();
+			}
 		}
 	}
 

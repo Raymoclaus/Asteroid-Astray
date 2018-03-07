@@ -4,6 +4,7 @@ using UnityEngine;
 public class Entity : MonoBehaviour
 {
 	[Header("Entity Fields")]
+	[SerializeField]
 	protected ChunkCoords _coords;
 	public Collider2D Col;
 	public Rigidbody2D Rb;
@@ -66,6 +67,10 @@ public class Entity : MonoBehaviour
 				entitiesActive++;
 				disabled = false;
 				gameObject.SetActive(true);
+				if (Rb != null)
+				{
+					Rb.simulated = true;
+				}
 				PhysicsReEnabled();
 			}
 			else
@@ -74,6 +79,10 @@ public class Entity : MonoBehaviour
 				entitiesActive--;
 				disabled = true;
 				vel = Rb == null ? vel : (Vector3)Rb.velocity;
+				if (Rb != null)
+				{
+					Rb.simulated = !ShouldDisablePhysicsOnDistance;
+				}
 				gameObject.SetActive(!ShouldDisableObjectOnDistance);
 			}
 		}
@@ -109,16 +118,6 @@ public class Entity : MonoBehaviour
 		if (Anim != null)
 		{
 			Anim.enabled = active;
-		}
-
-		if (Col != null)
-		{
-			Col.enabled = active;
-		}
-
-		if (Rb != null)
-		{
-			Rb.bodyType = active ? RigidbodyType2D.Dynamic : Rb.bodyType;
 		}
 
 		if (ShouldDisableGameObjectOnShortDistance)
