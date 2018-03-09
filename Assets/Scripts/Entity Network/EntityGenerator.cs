@@ -101,14 +101,8 @@ public static class EntityGenerator
 		}
 	}
 
-	public static IEnumerator ChunkBatchOrder(List<ChunkCoords> coords)
+	public static IEnumerator ChunkBatchOrder()
 	{
-		bool executing = chunkBatches.Count > 0;
-		chunkBatches.AddRange(coords);
-		if (executing)
-		{
-			yield break;
-		}
 		while (true)
 		{
 			if (chunkBatches.Count == 0) yield return null;
@@ -119,6 +113,11 @@ public static class EntityGenerator
 			}
 			yield return null;
 		}
+	}
+
+	public static void EnqueueBatchOrder(List<ChunkCoords> coords)
+	{
+		chunkBatches.AddRange(coords);
 	}
 
 	/// Increases capacity of the fill trigger list to accomodate given coordinates

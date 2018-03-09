@@ -50,7 +50,7 @@ public class ChunkFiller : MonoBehaviour
 		}
 		else
 		{
-			StartCoroutine(EntityGenerator.ChunkBatchOrder(coords));
+			EntityGenerator.EnqueueBatchOrder(coords);
 		}
 	}
 

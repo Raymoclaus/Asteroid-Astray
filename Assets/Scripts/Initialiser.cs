@@ -12,5 +12,6 @@ public class Initialiser : MonoBehaviour
 
 		EntityGenerator.SetPrefabs(prefabs);
 		EntityGenerator.FillTriggerList();
+		StartCoroutine(EntityGenerator.ChunkBatchOrder());
 	}
 }
