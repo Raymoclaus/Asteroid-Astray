@@ -1,6 +1,7 @@
-﻿using System.Collections;
+﻿using System.Threading;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Collections;
 
 public struct CosmicItem
 {
@@ -21,13 +22,13 @@ public struct CosmicItem
 public class SceneryController : MonoBehaviour
 {
 	private List<List<List<List<CosmicItem>>>> items;
-	private const int reserveSize = 200;
+	private const int reserveSize = 100;
 	private const int largeDistance = 500;
 	private const int directions = 4;
 	private List<Sprite> types = new List<Sprite>();
 	private int ViewDistance { get { return CameraCtrl.camCtrl.TotalViewRange; } }
 
-	private const int poolSize = 1800;
+	private const int poolSize = 900;
 	private Queue<GameObject> pool = new Queue<GameObject>(poolSize);
 	private Queue<GameObject> active = new Queue<GameObject>(poolSize);
 	private Queue<SpriteRenderer> rendPool = new Queue<SpriteRenderer>(poolSize);
@@ -53,6 +54,10 @@ public class SceneryController : MonoBehaviour
 	public int colorMin = 0;
 	[Range(0, 255)]
 	public int colorMax = 255;
+	public float hazeRange = 150f;
+	public float hazePower = 2f;
+	public float hazeOpacity = 3f;
+
 
 	private void Awake()
 	{
@@ -61,7 +66,7 @@ public class SceneryController : MonoBehaviour
 		sceneryHolder.gameObject.layer = backgroundLayer;
 		backgroundLayer = LayerMask.NameToLayer("BackgroundImage");
 		FillPool();
-		CreateStarSystems();
+		StartCoroutine(CreateStarSystems());
 	}
 
 	private void Update()
@@ -160,45 +165,72 @@ public class SceneryController : MonoBehaviour
 		}
 	}
 
-	private void CreateStarSystems()
+	private IEnumerator CreateStarSystems()
 	{
+		Color32[][] textures = new Color32[variety][];
 		Vector2Int starNumRange = new Vector2Int((int)Mathf.Pow(2, starPowerRange.x), (int)Mathf.Pow(2, starPowerRange.y));
+		Thread[] threads = new Thread[variety];
+		System.Random rnd = new System.Random();
 		//create textures
 		for (int i = 0; i < variety; i++)
 		{
-			StartCoroutine(GenerateTexture(starNumRange));
+			threads[i] = new Thread(() => GenerateTexture(starNumRange, out textures[i], rnd));
+			threads[i].Start();
+		}
+
+		while(CheckThreadsRunning(threads))
+		{
+			yield return null;
+		}
+
+		for (int i = 0; i < variety; i++)
+		{
+			if (textures[i] == null) continue;
+			Texture2D tex = new Texture2D(textureSize.x, textureSize.y, TextureFormat.RGBA32, false);
+			tex.SetPixels32(textures[i]);
+			tex.Apply();
+			types.Add(Sprite.Create(tex, new Rect(Vector2.zero, new Vector2(tex.width, tex.height)), Vector2.one / 2f));
 		}
 	}
 
-	private IEnumerator GenerateTexture(Vector2Int starNumRange)
+	private bool CheckThreadsRunning(Thread[] threads)
 	{
-		float power = Random.Range(starPowerRange.x, starPowerRange.y);
-		int numStars = Random.Range(starNumRange.x, starNumRange.y);
+		foreach (Thread t in threads)
+		{
+			if (t.ThreadState == ThreadState.Running)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private void GenerateTexture(Vector2Int starNumRange, out Color32[] tex, System.Random rnd)
+	{
+		tex = new Color32[textureSize.x * textureSize.y];
+		float power = (float)rnd.NextDouble() * (starPowerRange.y - starPowerRange.x) + starPowerRange.x;
+		int numStars = (int)((float)rnd.NextDouble() * (starNumRange.y - starNumRange.x) + starNumRange.x);
 		float padding = (numStars - starNumRange.x) / (starNumRange.y - starNumRange.x) * (texturePaddingRange.y - texturePaddingRange.x) + texturePaddingRange.x;
+		float[] biasDirections = new float[(int)Mathf.Floor((float)rnd.NextDouble() * 4)];
+
+		for (int i = 0; i < biasDirections.Length; i++)
+		{
+			biasDirections[i] = (float)rnd.NextDouble() * Mathf.PI * 2f;
+		}
 
 		Star[] stars = new Star[numStars];
 		for (int i = 0; i < stars.Length; i++)
 		{
-			stars[i] = new Star(textureSize, padding, starSizeRange, power, colorMin, colorMax);
+			stars[i] = new Star(textureSize, padding, starSizeRange, power, colorMin, colorMax, rnd, biasDirections);
 		}
 
-		Texture2D tex = new Texture2D(textureSize.x, textureSize.y, TextureFormat.RGBA32, false);
-		for (int i = 0; i < tex.width; i++)
+		for (int i = 0; i < textureSize.x; i++)
 		{
-			for (int j = 0; j < tex.height; j++)
+			for (int j = 0; j < textureSize.y; j++)
 			{
-				tex.SetPixel(i, j, GetColorOfPixel(i, j, stars));
+				tex[i * textureSize.y + j] = GetColorOfPixel(i, j, stars);
 			}
-
-			//if (i % textureSize.y / 60 == 0)
-			//{
-			//	yield return null;
-			//}
 		}
-		tex.Apply();
-		types.Add(Sprite.Create(tex, new Rect(new Vector2(0f, 0f), new Vector2(tex.width, tex.height)), Vector2.one / 2f));
-
-		yield return null;
 	}
 
 	private Color32 GetColorOfPixel(int x, int y, Star[] stars)
@@ -206,23 +238,37 @@ public class SceneryController : MonoBehaviour
 		float r = 0;
 		float b = 0;
 		float alpha = 0;
+
 		for (int i = 0; i < stars.Length; i++)
 		{
 			Vector2 sp = stars[i].pos;
 			Vector2 riseRun = new Vector2(Mathf.Abs(sp.y - y), Mathf.Abs(sp.x - x));
+
 			float distance = riseRun.x * riseRun.y + Mathf.Max(riseRun.x, riseRun.y);
 			if (distance < stars[i].size)
 			{
-				alpha += Mathf.Pow(1 - (distance / stars[i].size), 4f);
-				r += stars[i].color.r * alpha;
-				b += stars[i].color.b * alpha;
+				float delta = Mathf.Pow(1 - (distance / stars[i].size), 4f);
+				alpha += delta;
+				r += stars[i].color.r * delta;
+				b += stars[i].color.b * delta;
+			}
+
+			float hazeDist = Mathf.Sqrt(riseRun.x * riseRun.x + riseRun.y * riseRun.y);
+			if (hazeDist < hazeRange)
+			{
+				float delta = Mathf.Pow(1f - (hazeDist / hazeRange), hazePower);
+				alpha += hazeOpacity / 255f * delta;
+				r += hazeOpacity * delta;
+				b += hazeOpacity * delta;
 			}
 		}
+
 		r = Mathf.Clamp(r, 0f, 255f);
 		b = Mathf.Clamp(b, 0f, 255f);
 		alpha = Mathf.Clamp01(alpha) * 255f;
+		float g = Mathf.Min(r, b) * 0.9f;
 
-		return new Color32((byte)r, (byte)(Mathf.Min(r, b)), (byte)b, (byte)alpha);
+		return new Color32((byte)r, (byte)g, (byte)b, (byte)alpha);
 	}
 
 	class Star
@@ -231,16 +277,61 @@ public class SceneryController : MonoBehaviour
 		public Color color;
 		public float size;
 
-		public Star(Vector2Int textureSize, float padding, Vector2 sizeRange, float power, int colorMin, int colorMax)
+		public Star(Vector2Int textureSize, float padding, Vector2 sizeRange, float power, int colorMin, int colorMax, System.Random rnd, float[] biasDirections)
 		{
 			Vector2 boundsSize = new Vector2(textureSize.x / 2 * padding, textureSize.y / 2 * padding);
-			size = Mathf.Pow(Random.value, power) * (sizeRange.y - sizeRange.x) + sizeRange.x;
-			color = new Color(Random.Range(colorMin, colorMax), 0f, Random.Range(colorMin, colorMax), 255f);
+			size = Mathf.Pow((float)rnd.NextDouble(), power) * (sizeRange.y - sizeRange.x) + sizeRange.x;
+			color = new Color((float)rnd.NextDouble() * (colorMax - colorMin) + colorMin, 0f, (float)rnd.NextDouble() * (colorMax - colorMin) + colorMin, 255f);
 
-			float randomDirection = Random.Range(0, Mathf.PI * 2f);
+			float randomDirection;
+			int count = 0;
+			do
+			{
+				randomDirection = (float)rnd.NextDouble() * Mathf.PI * 2f;
+				count++;
+			} while (!NearBiasDirections(biasDirections, randomDirection) && count < 3);
+
 			Vector2 direction = new Vector2(Mathf.Sin(randomDirection), Mathf.Cos(randomDirection));
-			float distance = Random.value * Mathf.Sqrt(boundsSize.x * boundsSize.x + boundsSize.y * boundsSize.y);
+			float distance = (float)rnd.NextDouble();
+			if (NearBiasDirections(biasDirections, randomDirection))
+			{
+				distance = Mathf.Pow(distance, 0.8f);
+			}
+			distance *= Mathf.Min(boundsSize.x, boundsSize.y);
 			pos = direction * distance + new Vector2(textureSize.x / 2, textureSize.y / 2);
+		}
+
+		private float AngleDifference(float a, float b)
+		{
+			while (a < 0f || b < 0f)
+			{
+				a += Mathf.PI * 2f;
+				b += Mathf.PI * 2f;
+			}
+			a = a % (Mathf.PI * 2f);
+			b = b % (Mathf.PI * 2f);
+			float delta = Mathf.Abs(a - b);
+			if (delta > Mathf.PI)
+			{
+				var temp = Mathf.Max(a, b) - Mathf.PI * 2f;
+				return Mathf.Abs(temp - Mathf.Min(a, b));
+			}
+			else
+			{
+				return delta;
+			}
+		}
+
+		private bool NearBiasDirections(float[] biasDirections, float value)
+		{
+			for (int i = 0; i < biasDirections.Length; i++)
+			{
+				if (AngleDifference(biasDirections[i], value) < Mathf.PI / 12f)
+				{
+					return true;
+				}
+			}
+			return false;
 		}
 	}
 

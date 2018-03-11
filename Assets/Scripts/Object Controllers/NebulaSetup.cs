@@ -65,7 +65,7 @@ public class NebulaSetup : Entity
 	private void Update()
 	{
 		//destroy self if a nebula already exists in current coordinates
-		if (EntityNetwork.ContainsType(GetEntityType(), _coords))
+		if (EntityNetwork.ContainsType(GetEntityType(), _coords, this))
 		{
 			DestroySelf();
 		}

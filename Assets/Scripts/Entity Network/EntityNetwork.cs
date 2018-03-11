@@ -385,11 +385,11 @@ public static class EntityNetwork
 		return false;
 	}
 
-	public static bool ContainsType(EntityType type, ChunkCoords c)
+	public static bool ContainsType(EntityType type, ChunkCoords c, Entity entToExclude)
 	{
 		foreach (Entity e in Chunk(c))
 		{
-			if (e.GetEntityType() == type)
+			if (e.GetEntityType() == type && e != entToExclude)
 			{
 				return true;
 			}
