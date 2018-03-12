@@ -28,11 +28,13 @@ public class SceneryController : MonoBehaviour
 	private List<Sprite> types = new List<Sprite>();
 	private int ViewDistance { get { return CameraCtrl.camCtrl.TotalViewRange; } }
 
-	private const int poolSize = 900;
+	private const int poolSize = 2500;
 	private Queue<GameObject> pool = new Queue<GameObject>(poolSize);
 	private Queue<GameObject> active = new Queue<GameObject>(poolSize);
+	private Queue<GameObject> transitionActive = new Queue<GameObject>(poolSize);
 	private Queue<SpriteRenderer> rendPool = new Queue<SpriteRenderer>(poolSize);
 	private Queue<SpriteRenderer> rendActive = new Queue<SpriteRenderer>(poolSize);
+	private Queue<SpriteRenderer> rendTransitionActive = new Queue<SpriteRenderer>(poolSize);
 
 	private ChunkCoords currentCoords = ChunkCoords.Invalid;
 	private List<ChunkCoords> oldCoords = new List<ChunkCoords>();
@@ -40,6 +42,7 @@ public class SceneryController : MonoBehaviour
 	public Vector2 scaleRange = new Vector2(1f, 4f);
 	private Transform sceneryHolder;
 	private int backgroundLayer;
+	public Color transparentColor;
 
 	[Header("Texture Variables")]
 	public int variety = 10;
@@ -84,13 +87,11 @@ public class SceneryController : MonoBehaviour
 
 	private void CoordsChanged(ChunkCoords newCoords)
 	{
-		//return all active objects to the pool
+		//send all active objects to the transition pool
 		for (int i = active.Count - 1; i >= 0; i--)
 		{
-			GameObject obj = active.Dequeue();
-			obj.SetActive(false);
-			pool.Enqueue(obj);
-			rendPool.Enqueue(rendActive.Dequeue());
+			transitionActive.Enqueue(active.Dequeue());
+			rendTransitionActive.Enqueue(rendActive.Dequeue());
 		}
 
 		//activate or create new items to fill in the scenery
@@ -108,17 +109,38 @@ public class SceneryController : MonoBehaviour
 
 	private void SetUpScenery(ChunkCoords c)
 	{
+		bool transparent = EntityNetwork.ContainsType(EntityType.Nebula, c, null);
+
 		foreach(CosmicItem item in Chunk(c))
 		{
-			GameObject obj = pool.Dequeue();
+			GameObject obj;
+			SpriteRenderer rend;
+			if (transitionActive.Count > 0)
+			{
+				obj = transitionActive.Dequeue();
+				rend = rendTransitionActive.Dequeue();
+			}
+			else
+			{
+				obj = pool.Dequeue();
+				rend = rendPool.Dequeue();
+				obj.SetActive(true);
+			}
 			active.Enqueue(obj);
 			obj.transform.position = item.pos;
-			SpriteRenderer rend = rendPool.Dequeue();
 			rend.sprite = types[item.type];
+			rend.color = transparent ? transparentColor : Color.white;
 			rendActive.Enqueue(rend);
 			obj.transform.localScale = Vector2.one * (float)item.size;
 			obj.transform.eulerAngles = Vector3.forward * item.rotation * 45f;
-			obj.SetActive(true);
+		}
+
+		while (transitionActive.Count > 0)
+		{
+			GameObject obj = transitionActive.Dequeue();
+			obj.SetActive(false);
+			pool.Enqueue(obj);
+			rendPool.Enqueue(rendTransitionActive.Dequeue());
 		}
 	}
 
