@@ -88,6 +88,14 @@ public class Shuttle : Entity
 		CalculateForces();
 	}
 
+	private void FixedUpdate()
+	{
+		if (!IsDrilling && Rb.constraints != RigidbodyConstraints2D.FreezeAll)
+		{
+			Rb.AddForce(_accel);
+		}
+	}
+
 	//Checks for input related to movement and calculates acceleration
 	private void GetMovementInput()
 	{
@@ -206,12 +214,6 @@ public class Shuttle : Entity
 			if (Rb.constraints == RigidbodyConstraints2D.FreezeAll)
 			{
 				Rb.velocity = _vel;
-			}
-			//otherwise just add force as normal
-			else
-			{
-				//apply acceleration
-				Rb.AddForce(addForce);
 			}
 			_vel = Rb.velocity;
 			//keep constraints unfrozen

@@ -190,7 +190,7 @@ public class SceneryController : MonoBehaviour
 	private IEnumerator CreateStarSystems()
 	{
 		Color32[][] textures = new Color32[variety][];
-		Vector2Int starNumRange = new Vector2Int((int)Mathf.Pow(2, starPowerRange.x), (int)Mathf.Pow(2, starPowerRange.y));
+		Vector2Int starNumRange = new Vector2Int((int)Mathf.Pow(2f, starPowerRange.x), (int)Mathf.Pow(2f, starPowerRange.y));
 		Thread[] threads = new Thread[variety];
 		System.Random rnd = new System.Random();
 		//create textures
