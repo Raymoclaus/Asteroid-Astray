@@ -232,6 +232,7 @@ public class SceneryController : MonoBehaviour
 		tex = new Color32[textureSize.x * textureSize.y];
 		float power = (float)rnd.NextDouble() * (starPowerRange.y - starPowerRange.x) + starPowerRange.x;
 		int numStars = (int)((float)rnd.NextDouble() * (starNumRange.y - starNumRange.x) + starNumRange.x);
+		Debug.Log(numStars);
 		float padding = (numStars - starNumRange.x) / (starNumRange.y - starNumRange.x) * (texturePaddingRange.y - texturePaddingRange.x) + texturePaddingRange.x;
 		float[] biasDirections = new float[(int)Mathf.Floor((float)rnd.NextDouble() * 4)];
 

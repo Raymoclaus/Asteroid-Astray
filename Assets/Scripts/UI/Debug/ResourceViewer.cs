@@ -6,7 +6,6 @@ public class ResourceViewer : MonoBehaviour
 {
 	private Text counter;
 	private int currentCount;
-	private string display = "ResourceCounter";
 
 	private void Awake()
 	{
@@ -15,11 +14,14 @@ public class ResourceViewer : MonoBehaviour
 
 	private void Update()
 	{
-		int count = PlayerPrefs.GetInt(display);
-		if (count != currentCount)
+		if (Shuttle.singleton.inventory.inventory.Count > 0)
 		{
-			counter.text = count.ToString();
-			currentCount = count;
+			int count = Shuttle.singleton.inventory.Count(Item.Type.Stone);
+			if (count != currentCount)
+			{
+				counter.text = count.ToString();
+				currentCount = count;
+			}
 		}
 	}
 }

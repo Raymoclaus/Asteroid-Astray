@@ -13,6 +13,9 @@ public class ResourceDrop : MonoBehaviour
 	public float delay = 0.5f;
 	private float spawnTime;
 	public ParticleSystem ps;
+	private int rarity = 1;
+	public Color[] rarityColors;
+	public SpriteRenderer rend;
 
 	private void Start()
 	{
@@ -25,6 +28,9 @@ public class ResourceDrop : MonoBehaviour
 		startVelocity *= startSpeed;
 
 		spawnTime = Time.time;
+
+		rarity = Random.Range(0, rarityColors.Length);
+		rend.color = rarityColors[rarity];
 	}
 
 	private void Update()
