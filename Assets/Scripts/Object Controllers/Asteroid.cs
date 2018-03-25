@@ -5,8 +5,6 @@ public class Asteroid : Entity, IDrillableObject
 
 	#region Fields
 	[Header("Asteroid Fields")]
-	[Tooltip("List of available sprites to choose from.")]
-	public Sprite[] Shapes;
 	[Tooltip("Reference to the sprite renderer of the asteroid.")]
 	public SpriteRenderer SprRend;
 	[Tooltip("Reference to the asteroid destruction particle effect prefab.")]
@@ -23,6 +21,9 @@ public class Asteroid : Entity, IDrillableObject
 	public float MaxHealth = 150f;
 	//current health value between 0 and MaxHealth
 	private float Health;
+	//reference to all the point arrays needed for polygon colliders
+	[SerializeField]
+	private Sprite[] shapes, largeVariants, smallerVariants, debris;
 	#endregion
 
 	#region Audio
@@ -33,9 +34,12 @@ public class Asteroid : Entity, IDrillableObject
 	public override void Awake()
 	{
 		base.Awake();
+
 		//pick a random sprite from given list of sprites
-		SprRend.sprite = Shapes[Random.Range(0, Shapes.Length)];
+		SprRend.sprite = shapes[Random.Range(0, shapes.Length)];
+
 		RandomMovement();
+
 		//start health at max value
 		Health = MaxHealth;
 

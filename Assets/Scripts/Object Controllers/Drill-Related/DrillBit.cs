@@ -12,6 +12,7 @@ public class DrillBit : MonoBehaviour
 	private bool firstHit = false;
 	public List<ParticleSystem> DrillSparks;
 	public float sparkSizeModifier = 20f;
+	public Animator drillAnim;
 
 	public AudioSource drillSoundSource;
 	public Vector2 drillPitchRange;
@@ -65,6 +66,8 @@ public class DrillBit : MonoBehaviour
 
 		drillSoundSource.volume = 0f;
 		drillSoundSource.Play();
+
+		drillAnim.SetBool("Drilling", true);
 	}
 
 	public void StopDrilling()
@@ -76,6 +79,8 @@ public class DrillBit : MonoBehaviour
 
 		drillSoundSource.volume = 0f;
 		drillSoundSource.Stop();
+
+		drillAnim.SetBool("Drilling", false);
 	}
 
 	private void TriggerParticleEffects(bool start)

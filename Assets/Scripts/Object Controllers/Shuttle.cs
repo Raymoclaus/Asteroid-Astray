@@ -71,7 +71,6 @@ public class Shuttle : Entity
 	private float resourceCollectedTime;
 	private float resourceCollectedPitch = 1f;
 	private float resourceCollectedPitchIncreaseAmount = 0.2f;
-	private int inventorySize = 10;
 	public Inventory inventory;
 	#endregion
 

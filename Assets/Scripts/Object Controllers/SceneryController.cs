@@ -37,7 +37,6 @@ public class SceneryController : MonoBehaviour
 	private Queue<SpriteRenderer> rendTransitionActive = new Queue<SpriteRenderer>(poolSize);
 
 	private ChunkCoords currentCoords = ChunkCoords.Invalid;
-	private List<ChunkCoords> oldCoords = new List<ChunkCoords>();
 	public Vector2Int cosmicDensity = new Vector2Int(10, 100);
 	public Vector2 scaleRange = new Vector2(1f, 4f);
 	private Transform sceneryHolder;
@@ -232,7 +231,10 @@ public class SceneryController : MonoBehaviour
 		tex = new Color32[textureSize.x * textureSize.y];
 		float power = (float)rnd.NextDouble() * (starPowerRange.y - starPowerRange.x) + starPowerRange.x;
 		int numStars = (int)((float)rnd.NextDouble() * (starNumRange.y - starNumRange.x) + starNumRange.x);
-		Debug.Log(numStars);
+		if (numStars < 32)
+		{
+			Debug.Log(numStars);
+		}
 		float padding = (numStars - starNumRange.x) / (starNumRange.y - starNumRange.x) * (texturePaddingRange.y - texturePaddingRange.x) + texturePaddingRange.x;
 		float[] biasDirections = new float[(int)Mathf.Floor((float)rnd.NextDouble() * 4)];
 
