@@ -71,7 +71,7 @@ public class Shuttle : Entity
 	private float resourceCollectedTime;
 	private float resourceCollectedPitch = 1f;
 	private float resourceCollectedPitchIncreaseAmount = 0.2f;
-	public Inventory inventory;
+	public Inventory storage;
 	#endregion
 
 	public override void Awake()
@@ -231,7 +231,7 @@ public class Shuttle : Entity
 
 	public void CollectResources(ResourceDrop r)
 	{
-		inventory.AddItem(Item.Type.Stone);
+		storage.AddItem(Item.Type.Stone);
 
 		//increase pitch of sound for successive resource collection, reset after a break
 		if (Time.time - resourceCollectedTime < 1f)
@@ -297,5 +297,10 @@ public class Shuttle : Entity
 	public void AutoPilotSwitch(bool isOn)
 	{
 		autoPilot = isOn;
+	}
+
+	public void StoreInShip()
+	{
+		ShipInventory.Store(storage.inventory);
 	}
 }

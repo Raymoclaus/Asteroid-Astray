@@ -6,13 +6,18 @@ public class Inventory : MonoBehaviour
 {
 	public int size = 10;
 	public List<ItemStack> inventory = new List<ItemStack>();
+	private bool initialised = false;
 
-	private void Awake()
+	protected virtual void Awake()
 	{
+		if (initialised) return;
+
 		while (inventory.Count < size)
 		{
 			inventory.Add(new ItemStack(Item.Type.Blank, 0));
 		}
+
+		initialised = true;
 	}
 
 	public int ContainsItem(Item.Type type)
@@ -49,7 +54,6 @@ public class Inventory : MonoBehaviour
 			if (num <= 0) return 0;
 		}
 		num = SetBlank(type, num, inv);
-
 		return num;
 	}
 

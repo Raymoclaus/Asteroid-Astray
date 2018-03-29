@@ -9,7 +9,7 @@ public class ShipInventory : Inventory
 	public const string SHIP_SLOT_TYPE = "ShipSlot{0}Type";
 	public const string SHIP_SLOT_AMOUNT = "ShipSlot{0}Amount";
 
-	private void Awake()
+	protected override void Awake()
 	{
 		if (singleton == null)
 		{
@@ -26,7 +26,7 @@ public class ShipInventory : Inventory
 
 	public void Save()
 	{
-		PlayerPrefs.GetInt(SHIP_INVENTORY_SIZE, size);
+		PlayerPrefs.SetInt(SHIP_INVENTORY_SIZE, size);
 		for (int i = 0; i < size; i++)
 		{
 			PlayerPrefs.SetInt(string.Format(SHIP_SLOT_TYPE, i), (int)inventory[i].GetItemType());
@@ -36,13 +36,21 @@ public class ShipInventory : Inventory
 
 	public void Load()
 	{
-		size = PlayerPrefs.GetInt(SHIP_INVENTORY_SIZE);
+		int savedSize = PlayerPrefs.GetInt(SHIP_INVENTORY_SIZE);
+		size = savedSize != 0 ? savedSize : 50;
+		base.Awake();
 
-		for (int i = 0; i < size; i++)
+		for (int i = 0; i < savedSize; i++)
 		{
 			int type = PlayerPrefs.GetInt(string.Format(SHIP_SLOT_TYPE, i));
 			int amount = PlayerPrefs.GetInt(string.Format(SHIP_SLOT_AMOUNT, i));
 			inventory[i] = new ItemStack((Item.Type)type, amount);
 		}
+	}
+
+	public static void Store(List<ItemStack> items)
+	{
+		singleton.AddItems(items);
+		singleton.Save();
 	}
 }

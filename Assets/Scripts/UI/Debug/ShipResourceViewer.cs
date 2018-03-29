@@ -2,7 +2,7 @@
 using UnityEngine;
 
 [RequireComponent(typeof(Text))]
-public class ResourceViewer : MonoBehaviour
+public class ShipResourceViewer : MonoBehaviour
 {
 	private Text counter;
 	private int currentCount;
@@ -14,9 +14,9 @@ public class ResourceViewer : MonoBehaviour
 
 	private void Update()
 	{
-		if (Shuttle.singleton.storage.inventory.Count > 0)
+		if (ShipInventory.singleton.inventory.Count > 0)
 		{
-			int count = Shuttle.singleton.storage.Count(Item.Type.Stone);
+			int count = ShipInventory.singleton.Count(Item.Type.Stone);
 			if (count != currentCount)
 			{
 				counter.text = count.ToString();

@@ -2,6 +2,14 @@
 
 public class Asteroid : Entity, IDrillableObject
 {
+	[System.Serializable]
+	private struct ColliderInfo
+	{
+		public int type;
+		public Vector2 size;
+		public Vector2 offset;
+		public float rotation;
+	}
 
 	#region Fields
 	[Header("Asteroid Fields")]
@@ -21,9 +29,14 @@ public class Asteroid : Entity, IDrillableObject
 	public float MaxHealth = 150f;
 	//current health value between 0 and MaxHealth
 	private float Health;
-	//reference to all the point arrays needed for polygon colliders
+	//reference to all the sprites
+	public Sprite[] normalVariants, largeVariants, smallerVariants, debris;
+	//collection of info about the colliders the large asteroids should use
 	[SerializeField]
-	private Sprite[] shapes, largeVariants, smallerVariants, debris;
+	private ColliderInfo[] largeInfo;
+	//chance that an asteroid will be larger than normal
+	[SerializeField]
+	private float largeChance = 0.01f;
 	#endregion
 
 	#region Audio
@@ -35,8 +48,37 @@ public class Asteroid : Entity, IDrillableObject
 	{
 		base.Awake();
 
-		//pick a random sprite from given list of sprites
-		SprRend.sprite = shapes[Random.Range(0, shapes.Length)];
+		//choose size of asteroid then choose a random sprite
+		if (Random.value <= largeChance)
+		{
+			int choose = Random.Range(0, largeVariants.Length);
+			SprRend.sprite = largeVariants[choose];
+			//set unique collider to match large shape
+			ColliderInfo colInfo = largeInfo[choose];
+			switch (colInfo.type)
+			{
+				//circle collider
+				default:
+				case 0:
+					((CircleCollider2D)Col).radius = colInfo.size.x;
+					break;
+				//capsule collider
+				case 1:
+					GameObject obj = Col.gameObject;
+					Destroy(Col);
+					CapsuleCollider2D newCol = obj.AddComponent<CapsuleCollider2D>();
+					newCol.size = colInfo.size;
+					newCol.offset = colInfo.offset;
+					obj.transform.localEulerAngles = Vector3.forward * colInfo.rotation;
+					Col = newCol;
+					break;
+			}
+			Rb.mass *= 4f;
+		}
+		else
+		{
+			SprRend.sprite = normalVariants[Random.Range(0, normalVariants.Length)];
+		}
 
 		RandomMovement();
 

@@ -30,8 +30,11 @@ public class ItemStack
 
 	public void SetAmount(int value)
 	{
-		amount = value % Item.StackLimit(type);
-		if (amount <= 0)
+		if (value > 0)
+		{
+			amount = value % Item.StackLimit(type);
+		}
+		else
 		{
 			amount = 0;
 			type = Item.Type.Blank;
@@ -60,5 +63,10 @@ public class ItemStack
 			type = Item.Type.Blank;
 		}
 		return true;
+	}
+
+	public override string ToString()
+	{
+		return string.Format("{0}x {1}", amount, type.ToString());
 	}
 }
