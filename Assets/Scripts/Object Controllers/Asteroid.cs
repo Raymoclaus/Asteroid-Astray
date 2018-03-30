@@ -15,8 +15,6 @@ public class Asteroid : Entity, IDrillableObject
 	[Header("Asteroid Fields")]
 	[Tooltip("Reference to the sprite renderer of the asteroid.")]
 	public SpriteRenderer SprRend;
-	[Tooltip("Reference to the asteroid destruction particle effect prefab.")]
-	public Transform destructionParticleEffect;
 	//for testing resource drop
 	public ResourceDrop resource;
 	[Tooltip("Reference to the shake effect script on the sprite.")]
@@ -30,13 +28,17 @@ public class Asteroid : Entity, IDrillableObject
 	//current health value between 0 and MaxHealth
 	private float Health;
 	//reference to all the sprites
-	public Sprite[] normalVariants, largeVariants, smallerVariants, debris;
+	public LoadedResources loadRes;
 	//collection of info about the colliders the large asteroids should use
 	[SerializeField]
 	private ColliderInfo[] largeInfo;
 	//chance that an asteroid will be larger than normal
 	[SerializeField]
 	private float largeChance = 0.01f;
+	//keeps track of size type and ID in that size type
+	private Vector2Int id = Vector2Int.zero;
+	//the amount of debris created when destroyed
+	public Vector2Int debrisAmount = new Vector2Int(3, 10);
 	#endregion
 
 	#region Audio
@@ -49,12 +51,15 @@ public class Asteroid : Entity, IDrillableObject
 		base.Awake();
 
 		//choose size of asteroid then choose a random sprite
-		if (Random.value <= largeChance)
+		id.x = Random.value <= largeChance ? 0 : 1;
+		id.y = Random.Range(0, loadRes.asteroidSprites[id.x].collection.Length);
+		SprRend.sprite = loadRes.asteroidSprites[id.x].collection[id.y].sprites[0];
+
+		//if a large asteroid is chosen then adjust collider to fit the shape
+		if (id.x == 0)
 		{
-			int choose = Random.Range(0, largeVariants.Length);
-			SprRend.sprite = largeVariants[choose];
 			//set unique collider to match large shape
-			ColliderInfo colInfo = largeInfo[choose];
+			ColliderInfo colInfo = largeInfo[id.y];
 			switch (colInfo.type)
 			{
 				//circle collider
@@ -74,10 +79,7 @@ public class Asteroid : Entity, IDrillableObject
 					break;
 			}
 			Rb.mass *= 4f;
-		}
-		else
-		{
-			SprRend.sprite = normalVariants[Random.Range(0, normalVariants.Length)];
+			MaxHealth *= 4f;
 		}
 
 		RandomMovement();
@@ -104,10 +106,13 @@ public class Asteroid : Entity, IDrillableObject
 		if (explode)
 		{
 			//particle effect
-			if (destructionParticleEffect != null)
+			for (int i = 0; i < Random.Range(debrisAmount.x, debrisAmount.y); i++)
 			{
-				Transform fx = Instantiate(destructionParticleEffect);
-				fx.position = transform.position;
+				int randomChoose = Random.Range(0, loadRes.debris.Length);
+				if (randomChoose < loadRes.debris.Length)
+				{
+					ParticleGenerator.GenerateParticle(loadRes.debris[randomChoose], transform.position, shrink: false, speed: 3f, slowDown: true, lifeTime: 1.5f);
+				}
 			}
 
 			//sound effect
@@ -124,9 +129,33 @@ public class Asteroid : Entity, IDrillableObject
 		base.DestroySelf();
 	}
 
+	private void UpdateSprite()
+	{
+		if (Health <= 0f) return;
+
+		int delta = (int)((1f - (Health / MaxHealth)) * 3.06f);
+		SprRend.sprite = GetCurrentSpriteSettings()[delta];
+	}
+
+	private NestedSpriteArray[] GetAllSprites()
+	{
+		return loadRes.asteroidSprites;
+	}
+
+	private SpriteArray[] GetSpriteCategory()
+	{
+		return GetAllSprites()[id.x].collection;
+	}
+
+	private Sprite[] GetCurrentSpriteSettings()
+	{
+		return GetSpriteCategory()[id.y].sprites;
+	}
+
 	// If health is below zero, this will destroy itself
 	private bool CheckHealth()
 	{
+		UpdateSprite();
 		if (Health > 0f) return false;
 		DestroySelf(true);
 		return true;

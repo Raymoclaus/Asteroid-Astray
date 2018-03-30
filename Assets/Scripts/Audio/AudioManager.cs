@@ -32,12 +32,16 @@ public class AudioManager : MonoBehaviour
 		src.pitch = pitch;
 		src.spatialBlend = 1f;
 		src.Play();
-		singleton.StartCoroutine(DestroySelf(obj, clip.length));
+		singleton.StartCoroutine(Lifetime(obj, clip.length));
 	}
 
-	private static IEnumerator DestroySelf(GameObject obj, float time)
+	private static IEnumerator Lifetime(GameObject obj, float time)
 	{
-		yield return new WaitForSeconds(time);
+		while (time > 0f)
+		{
+			time -= Time.deltaTime;
+			yield return null;
+		}
 		Destroy(obj);
 	}
 }
