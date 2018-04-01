@@ -244,7 +244,7 @@ public class Shuttle : Entity
 		}
 		resourceCollectedTime = Time.time;
 		//play resource collect sound
-		AudioManager.PlaySFX(collectResourceSound, CameraCtrl.camCtrl.transform.position, transform, pitch: resourceCollectedPitch);
+		AudioManager.PlaySFX(collectResourceSound, transform.position, transform, pitch: resourceCollectedPitch);
 		
 	}
 

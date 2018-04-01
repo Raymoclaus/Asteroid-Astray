@@ -29,12 +29,9 @@ public class SceneryController : MonoBehaviour
 	private int ViewDistance { get { return CameraCtrl.camCtrl.TotalViewRange; } }
 
 	private const int poolSize = 2500;
-	private Queue<GameObject> pool = new Queue<GameObject>(poolSize);
-	private Queue<GameObject> active = new Queue<GameObject>(poolSize);
-	private Queue<GameObject> transitionActive = new Queue<GameObject>(poolSize);
-	private Queue<SpriteRenderer> rendPool = new Queue<SpriteRenderer>(poolSize);
-	private Queue<SpriteRenderer> rendActive = new Queue<SpriteRenderer>(poolSize);
-	private Queue<SpriteRenderer> rendTransitionActive = new Queue<SpriteRenderer>(poolSize);
+	private Queue<SpriteRenderer> pool = new Queue<SpriteRenderer>(poolSize);
+	private Queue<SpriteRenderer> active = new Queue<SpriteRenderer>(poolSize);
+	private Queue<SpriteRenderer> transitionActive = new Queue<SpriteRenderer>(poolSize);
 
 	private ChunkCoords currentCoords = ChunkCoords.Invalid;
 	public Vector2Int cosmicDensity = new Vector2Int(10, 100);
@@ -63,12 +60,17 @@ public class SceneryController : MonoBehaviour
 
 	private void Awake()
 	{
-		ReserveListCapacity();
+		backgroundLayer = LayerMask.NameToLayer("BackgroundImage");
 		sceneryHolder = new GameObject("Scenery Holder").transform;
 		sceneryHolder.gameObject.layer = backgroundLayer;
-		backgroundLayer = LayerMask.NameToLayer("BackgroundImage");
+		ReserveListCapacity();
 		FillPool();
+	}
+
+	public void StartTextureGeneration(GameObject button)
+	{
 		StartCoroutine(CreateStarSystems());
+		Destroy(button);
 	}
 
 	private void Update()
@@ -90,7 +92,6 @@ public class SceneryController : MonoBehaviour
 		for (int i = active.Count - 1; i >= 0; i--)
 		{
 			transitionActive.Enqueue(active.Dequeue());
-			rendTransitionActive.Enqueue(rendActive.Dequeue());
 		}
 
 		//activate or create new items to fill in the scenery
@@ -114,32 +115,32 @@ public class SceneryController : MonoBehaviour
 		{
 			GameObject obj;
 			SpriteRenderer rend;
+
 			if (transitionActive.Count > 0)
 			{
-				obj = transitionActive.Dequeue();
-				rend = rendTransitionActive.Dequeue();
+				rend = transitionActive.Dequeue();
+				obj = rend.gameObject;
 			}
 			else
 			{
-				obj = pool.Dequeue();
-				rend = rendPool.Dequeue();
+				rend = pool.Dequeue();
+				obj = rend.gameObject;
 				obj.SetActive(true);
 			}
-			active.Enqueue(obj);
+
 			obj.transform.position = item.pos;
 			rend.sprite = types[item.type];
 			rend.color = transparent ? transparentColor : Color.white;
-			rendActive.Enqueue(rend);
+			active.Enqueue(rend);
 			obj.transform.localScale = Vector2.one * (float)item.size;
 			obj.transform.eulerAngles = Vector3.forward * item.rotation * 45f;
 		}
 
 		while (transitionActive.Count > 0)
 		{
-			GameObject obj = transitionActive.Dequeue();
-			obj.SetActive(false);
-			pool.Enqueue(obj);
-			rendPool.Enqueue(rendTransitionActive.Dequeue());
+			SpriteRenderer rend = transitionActive.Dequeue();
+			rend.gameObject.SetActive(false);
+			pool.Enqueue(rend);
 		}
 	}
 
@@ -179,10 +180,9 @@ public class SceneryController : MonoBehaviour
 			obj.transform.parent = sceneryHolder;
 			obj.layer = backgroundLayer;
 			obj.SetActive(false);
-			pool.Enqueue(obj);
 
 			SpriteRenderer rend = obj.AddComponent<SpriteRenderer>();
-			rendPool.Enqueue(rend);
+			pool.Enqueue(rend);
 		}
 	}
 
@@ -191,15 +191,18 @@ public class SceneryController : MonoBehaviour
 		Color32[][] textures = new Color32[variety][];
 		Vector2Int starNumRange = new Vector2Int((int)Mathf.Pow(2f, starPowerRange.x), (int)Mathf.Pow(2f, starPowerRange.y));
 		Thread[] threads = new Thread[variety];
-		System.Random rnd = new System.Random();
 		//create textures
 		for (int i = 0; i < variety; i++)
 		{
-			threads[i] = new Thread(() => GenerateTexture(starNumRange, out textures[i], rnd));
+			threads[i] = new Thread(() => GenerateTexture(starNumRange, out textures[i], new System.Random()))
+			{
+				Priority = System.Threading.ThreadPriority.Lowest,
+				IsBackground = false
+			};
 			threads[i].Start();
 		}
 
-		while(CheckThreadsRunning(threads))
+		while (CheckThreadsRunning(threads))
 		{
 			yield return null;
 		}

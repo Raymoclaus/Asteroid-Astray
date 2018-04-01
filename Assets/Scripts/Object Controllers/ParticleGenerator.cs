@@ -1,9 +1,14 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class ParticleGenerator : MonoBehaviour
 {
 	public static ParticleGenerator singleton;
+
+	private Queue<SpriteRenderer> pool = new Queue<SpriteRenderer>(poolReserve);
+	private List<SpriteRenderer> active = new List<SpriteRenderer>(poolReserve);
+	private const int poolReserve = 300;
 
 	private void Awake()
 	{
@@ -16,47 +21,92 @@ public class ParticleGenerator : MonoBehaviour
 		{
 			Destroy(gameObject);
 		}
+
+		SetUpPoolReserve();
 	}
 
-	public static void GenerateParticle(Sprite spr, Vector3 position, Transform parent = null, bool shrink = true, bool fade = true, float lifeTime = 1f, float? speed = null, bool slowDown = false)
+	public static void GenerateParticle(
+		Sprite spr, Vector3 position, Transform parent = null, bool shrink = true, bool fadeOut = true,
+		float lifeTime = 1f, float speed = 0f, bool slowDown = false, float rotationDeg = 0f, float rotationSpeed = 0f,
+		float size = 1f, bool rotationDecay = false, float alpha = 1f, Color? tint = null, float fadeIn = 0f)
 	{
-		GameObject obj = new GameObject(spr.name);
-		obj.transform.position = position;
-		obj.transform.parent = parent;
-		SpriteRenderer rend = obj.AddComponent<SpriteRenderer>();
+		SpriteRenderer rend = singleton.pool.Dequeue();
+		singleton.active.Add(rend);
 		rend.sprite = spr;
-		singleton.StartCoroutine(Lifetime(obj, lifeTime, shrink, fade, speed, slowDown));
+		Color tintFix = tint == null ? Color.white : (Color)tint;
+		rend.color = tintFix;
+		GameObject obj = rend.gameObject;
+		obj.SetActive(true);
+		obj.transform.position = position;
+		obj.transform.eulerAngles = Vector3.forward * rotationDeg;
+		obj.transform.localScale = Vector2.one * size;
+		obj.transform.parent = parent == null ? singleton.transform : parent;
+		singleton.StartCoroutine(Lifetime(rend, lifeTime, shrink, fadeOut, speed, slowDown, rotationSpeed, rotationDecay, alpha, tintFix, fadeIn));
 	}
 
-	private static IEnumerator Lifetime(GameObject obj, float time, bool shrink, bool fade, float? speed, bool slowDown)
+	private static IEnumerator Lifetime(
+		SpriteRenderer rend, float time, bool shrink, bool fadeOut, float originalSpeed,
+		bool slowDown, float originalRotationSpeed, bool rotationDecay, float alpha, Color tint,
+		float fadeIn)
 	{
-		SpriteRenderer rend = fade ? obj.GetComponent<SpriteRenderer>() : null;
-		float originalTime = time;
-		float randomDir = Random.value * Mathf.PI * 2f;
-		float originalSpeed = speed == null ? Random.value : Random.value * (float)speed;
 		float spd = originalSpeed;
+		float rotSpd = originalRotationSpeed;
+		float originalTime = time;
+
+		float randomDir = Random.value * Mathf.PI * 2f;
 		Vector3 direction = new Vector3(Mathf.Sin(randomDir), Mathf.Cos(randomDir));
+
 		while (time > 0f)
 		{
 			float delta = Mathf.Pow(time / originalTime, 0.75f);
 			time -= Time.deltaTime;
+
 			if (shrink)
 			{
-				obj.transform.localScale = Vector3.one * delta;
+				rend.transform.localScale = Vector3.one * delta;
 			}
-			if (fade)
+
+			Color c = tint;
+			if (originalTime - time < fadeIn)
 			{
-				Color c = Color.white;
-				c.a = delta;
-				rend.color = c;
+				c.a = alpha * (originalTime - time) / fadeIn;
 			}
+			else if (fadeOut)
+			{
+				c.a = alpha * delta;
+			}
+			rend.color = c;
+
 			if (slowDown)
 			{
 				spd = originalSpeed * delta;
 			}
-			obj.transform.position += direction * spd * Time.deltaTime;
+
+			if (rotationDecay)
+			{
+				rotSpd = originalRotationSpeed * delta;
+			}
+
+			rend.transform.eulerAngles += Vector3.forward * rotSpd;
+			rend.transform.position += direction * spd * Time.deltaTime;
 			yield return null;
 		}
-		Destroy(obj);
+
+		rend.gameObject.SetActive(false);
+		rend.transform.parent = singleton.transform;
+		singleton.active.Remove(rend);
+		singleton.pool.Enqueue(rend);
+	}
+
+	private void SetUpPoolReserve()
+	{
+		for (int i = 0; i < poolReserve; i++)
+		{
+			GameObject go = new GameObject();
+			go.SetActive(false);
+			go.transform.parent = transform;
+			SpriteRenderer rend = go.AddComponent<SpriteRenderer>();
+			pool.Enqueue(rend);
+		}
 	}
 }

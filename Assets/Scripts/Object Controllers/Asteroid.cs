@@ -39,6 +39,8 @@ public class Asteroid : Entity, IDrillableObject
 	private Vector2Int id = Vector2Int.zero;
 	//the amount of debris created when destroyed
 	public Vector2Int debrisAmount = new Vector2Int(3, 10);
+	[SerializeField]
+	private float drillDebrisChance = 0.05f, drillDustChance = 0.2f;
 	#endregion
 
 	#region Audio
@@ -108,15 +110,13 @@ public class Asteroid : Entity, IDrillableObject
 			//particle effect
 			for (int i = 0; i < Random.Range(debrisAmount.x, debrisAmount.y); i++)
 			{
-				int randomChoose = Random.Range(0, loadRes.debris.Length);
-				if (randomChoose < loadRes.debris.Length)
-				{
-					ParticleGenerator.GenerateParticle(loadRes.debris[randomChoose], transform.position, shrink: false, speed: 3f, slowDown: true, lifeTime: 1.5f);
-				}
+				CreateDebris(transform.position);
+				CreateDust(transform.position);
 			}
 
 			//sound effect
-			AudioManager.PlaySFX(shatterSounds[Random.Range(0, shatterSounds.Length)], transform.position, pitch: Random.Range(shatterPitchRange.x, shatterPitchRange.y));
+			AudioManager.PlaySFX(shatterSounds[Random.Range(0, shatterSounds.Length)], transform.position,
+				pitch: Random.Range(shatterPitchRange.x, shatterPitchRange.y), volume: 0.25f, parent: Shuttle.singleton.transform);
 
 			//drop resources
 			for (int i = 0; i < Random.Range(1, 4); i++)
@@ -127,6 +127,29 @@ public class Asteroid : Entity, IDrillableObject
 		}
 
 		base.DestroySelf();
+	}
+
+	private void CreateDebris(Vector2 pos)
+	{
+		int randomChoose = Random.Range(0, loadRes.debris.Length);
+		if (randomChoose < loadRes.debris.Length)
+		{
+			ParticleGenerator.GenerateParticle(
+				loadRes.debris[randomChoose], pos, shrink: false, speed: Random.value * 3f, slowDown: true,
+				lifeTime: 1.5f, rotationDeg: Random.value * 360f, rotationSpeed: Random.value * 3f);
+		}
+	}
+
+	private void CreateDust(Vector2 pos)
+	{
+		int randomChoose = Random.Range(0, loadRes.dust.Length);
+		if (randomChoose < loadRes.dust.Length)
+		{
+			ParticleGenerator.GenerateParticle(
+				loadRes.dust[randomChoose], pos, shrink: false, speed: Random.value * 0.5f, slowDown: true,
+				lifeTime: Random.value * 3f + 2f, rotationDeg: Random.value * 360f, rotationSpeed: Random.value * 0.5f, size: Mathf.Pow(Random.value, 2f), alpha: Random.value * 0.1f,
+				fadeIn: Random.value + 0.5f);
+		}
 	}
 
 	private void UpdateSprite()
@@ -162,12 +185,20 @@ public class Asteroid : Entity, IDrillableObject
 	}
 
 	//take the damage and if health drops to 0 then signal that this asteroid will be destroyed
-	public bool TakeDrillDamage(float damage)
+	public bool TakeDrillDamage(float damage, Vector2 drillPos)
 	{
 		//take damage
 		Health -= damage;
 		//calculate shake intensity. Gets more intense the less health it has
 		ShakeFX.SetIntensity(damage / MaxHealth * (3f - (Health / MaxHealth * 2f)));
+		if (Random.value < drillDebrisChance)
+		{
+			CreateDebris(drillPos);
+		}
+		if (Random.value < drillDustChance)
+		{
+			CreateDust(drillPos);
+		}
 		return CheckHealth();
 	}
 

@@ -7,6 +7,9 @@ public class LoadedResources : MonoBehaviour
 
 	//asteroid debris
 	public Sprite[] debris;
+
+	//asteroid dust
+	public Sprite[] dust;
 }
 
 [System.Serializable]
