@@ -6,7 +6,7 @@ public class Entity : MonoBehaviour
 	[Header("Entity Fields")]
 	[SerializeField]
 	protected ChunkCoords _coords;
-	public Collider2D Col;
+	public Collider2D[] Col;
 	public Rigidbody2D Rb;
 	public bool ShouldDisablePhysicsOnDistance = true;
 	public bool ShouldDisableObjectOnDistance = true;

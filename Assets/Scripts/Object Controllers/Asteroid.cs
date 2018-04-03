@@ -67,17 +67,17 @@ public class Asteroid : Entity, IDrillableObject
 				//circle collider
 				default:
 				case 0:
-					((CircleCollider2D)Col).radius = colInfo.size.x;
+					((CircleCollider2D)Col[0]).radius = colInfo.size.x;
 					break;
 				//capsule collider
 				case 1:
-					GameObject obj = Col.gameObject;
-					Destroy(Col);
+					GameObject obj = Col[0].gameObject;
+					Destroy(Col[0]);
 					CapsuleCollider2D newCol = obj.AddComponent<CapsuleCollider2D>();
 					newCol.size = colInfo.size;
 					newCol.offset = colInfo.offset;
 					obj.transform.localEulerAngles = Vector3.forward * colInfo.rotation;
-					Col = newCol;
+					Col[0] = newCol;
 					break;
 			}
 			Rb.mass *= 4f;

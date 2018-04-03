@@ -8,7 +8,12 @@ public class ShipEntryPanel : MonoBehaviour
 	{
 		if (Input.GetKeyDown(KeyCode.Escape))
 		{
-			gameObject.SetActive(false);
+			ClosePanel();
 		}
+	}
+
+	public void ClosePanel()
+	{
+		gameObject.SetActive(false);
 	}
 }
