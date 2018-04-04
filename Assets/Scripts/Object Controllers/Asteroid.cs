@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class Asteroid : Entity, IDrillableObject
+public class Asteroid : Entity, IDrillableObject, IDamageable
 {
 	[System.Serializable]
 	private struct ColliderInfo
@@ -184,22 +184,32 @@ public class Asteroid : Entity, IDrillableObject
 		return true;
 	}
 
-	//take the damage and if health drops to 0 then signal that this asteroid will be destroyed
-	public bool TakeDrillDamage(float damage, Vector2 drillPos)
+	public bool TakeDamage(float damage, Vector2 damagePos)
 	{
 		//take damage
 		Health -= damage;
-		//calculate shake intensity. Gets more intense the less health it has
-		ShakeFX.SetIntensity(damage / MaxHealth * (3f - (Health / MaxHealth * 2f)));
+
+		//particle effects
 		if (Random.value < drillDebrisChance)
 		{
-			CreateDebris(drillPos);
+			CreateDebris(damagePos);
 		}
 		if (Random.value < drillDustChance)
 		{
-			CreateDust(drillPos);
+			CreateDust(damagePos);
 		}
+
 		return CheckHealth();
+	}
+
+	//take the damage and if health drops to 0 then signal that this asteroid will be destroyed
+	public bool TakeDrillDamage(float damage, Vector2 drillPos)
+	{
+		bool takeDamage = TakeDamage(damage, drillPos);
+		//calculate shake intensity. Gets more intense the less health it has
+		ShakeFX.SetIntensity(damage / MaxHealth * (3f - (Health / MaxHealth * 2f)));
+
+		return takeDamage;
 	}
 
 	public void StartDrilling()
@@ -221,6 +231,12 @@ public class Asteroid : Entity, IDrillableObject
 				otherDrill.StartDrilling(this);
 			}
 		}
+
+		if (otherLayer == layerProjectile)
+		{
+			IProjectile projectile = other.GetComponent<IProjectile>();
+			projectile.Hit(this);
+		}
 	}
 
 	public void OnTriggerExit2D(Collider2D other)
@@ -236,6 +252,8 @@ public class Asteroid : Entity, IDrillableObject
 				otherDrill.StopDrilling();
 			}
 		}
+
+
 	}
 
 	public void StopDrilling()

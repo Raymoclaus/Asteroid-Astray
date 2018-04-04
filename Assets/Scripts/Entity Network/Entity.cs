@@ -18,10 +18,13 @@ public class Entity : MonoBehaviour
 	protected bool needsInit = true;
 	protected bool initialised = false;
 
+	//related layers
+	private static bool layersSet;
+	protected static int layerDrill, layerProjectile;
+
 	//drill related
 	public bool canDrill;
 	private DrillBit drill;
-	protected LayerMask layerDrill;
 	public bool IsDrilling { get { return drill == null ? false : drill.IsDrilling; } }
 
 	//components to disable/enable
@@ -41,8 +44,7 @@ public class Entity : MonoBehaviour
 		entitiesActive++;
 		_coords = new ChunkCoords(transform.position);
 		EntityNetwork.AddEntity(this, _coords);
-
-		layerDrill = LayerMask.NameToLayer("Drill");
+		GetLayers();
 	}
 
 	public virtual void LateUpdate()
@@ -184,6 +186,16 @@ public class Entity : MonoBehaviour
 	public virtual void PhysicsReEnabled()
 	{
 
+	}
+
+	private void GetLayers()
+	{
+		if (layersSet) return;
+
+		layerDrill = LayerMask.NameToLayer("Drill");
+		layerProjectile = LayerMask.NameToLayer("Projectile");
+
+		layersSet = true;
 	}
 }
 
