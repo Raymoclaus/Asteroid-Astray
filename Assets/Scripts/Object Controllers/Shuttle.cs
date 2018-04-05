@@ -112,7 +112,7 @@ public class Shuttle : Entity
 		//automatically look for the nearest asteroid
 		if (autoPilot)
 		{
-			if (Time.time - autoPilotTimer > 1f || followTarget == null)
+			if (Time.time - autoPilotTimer > 0f || followTarget == null)
 			{
 				SearchForNearestAsteroid();
 			}
@@ -122,6 +122,8 @@ public class Shuttle : Entity
 			{
 				lookDirection = 180f + (180f - lookDirection);
 			}
+
+			lookDirection = AdjustForMomentum(lookDirection);
 		}
 			
 		//update last look direction (mostly for joystick use)
@@ -227,6 +229,31 @@ public class Shuttle : Entity
 			//set rotation
 			transform.eulerAngles = _rot;
 		}
+	}
+
+	private float AdjustForMomentum(float lookDir)
+	{
+		float ld = lookDir, rot = 360f - _rot.z;
+
+		float difference = ld - rot;
+		if (difference > 180f)
+		{
+			difference -= 360f;
+		}
+		else if (difference < -180f)
+		{
+			difference += 360f;
+		}
+
+		float delta = 1f - Mathf.Abs(difference) / 180f;
+
+		ld += difference * delta;
+		while (ld < 0f)
+		{
+			ld += 360f;
+		}
+
+		return ld;
 	}
 
 	public void CollectResources(ResourceDrop r)
