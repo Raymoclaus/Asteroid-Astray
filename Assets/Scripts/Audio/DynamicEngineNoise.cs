@@ -17,6 +17,6 @@ public class DynamicEngineNoise : MonoBehaviour
 
 	private void Update()
 	{
-		source.pitch = Mathf.Lerp(pitchRange.x, pitchRange.y, Shuttle.singleton._vel.magnitude * pitchMultiplier);
+		source.pitch = Mathf.Lerp(pitchRange.x, pitchRange.y, Shuttle.singleton.velocity.magnitude * pitchMultiplier);
 	}
 }

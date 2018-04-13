@@ -118,18 +118,57 @@ public class Inventory : MonoBehaviour
 		return true;
 	}
 
-	public int Count(Item.Type? filter = null)
+	public int Count(Item.Type? filter = null, int minRarity = 0, int maxRarity = Item.MAX_RARITY)
 	{
 		int count = 0;
 		bool fltr = filter != null;
+
 		if ((Item.Type)filter == Item.Type.Blank) return 0;
 
 		foreach (ItemStack stack in inventory)
 		{
 			if (fltr && stack.GetItemType() != (Item.Type)filter) continue;
+			int rarity = Item.TypeRarity(stack.GetItemType());
+			if (rarity < minRarity && rarity > maxRarity) continue;
 
 			count += stack.GetAmount();
 		}
 		return count;
+	}
+
+	public int[] CountRarities()
+	{
+		int[] counts = new int[Item.MAX_RARITY + 1];
+
+		foreach (ItemStack stack in inventory)
+		{
+			int rarity = Item.TypeRarity(stack.GetItemType());
+			counts[rarity] += stack.GetAmount();
+		}
+
+		return counts;
+	}
+
+	public void RemoveByRarity(int rarity, int amount)
+	{
+		for (int i = 0; i < inventory.Count; i++)
+		{
+			if (Item.TypeRarity(inventory[i].GetItemType()) == rarity)
+			{
+				int stackAmount = inventory[i].GetAmount();
+				if (stackAmount > 0)
+				{
+					inventory[i].SetAmount(stackAmount - amount);
+					amount -= stackAmount - inventory[i].GetAmount();
+				}
+			}
+
+			if (amount <= 0) return;
+		}
+
+		if (amount > 0)
+		{
+			Debug.Log(string.Format("Unable to remove {0} items with {1} rarity.", amount, rarity));
+		}
 	}
 }

@@ -11,7 +11,7 @@ public class Entity : MonoBehaviour
 	public bool ShouldDisablePhysicsOnDistance = true;
 	public bool ShouldDisableObjectOnDistance = true;
 	public bool ShouldDisableGameObjectOnShortDistance = true;
-	private bool _isActive = true;
+	public bool isActive = true;
 	private bool disabled = false;
 	private Vector3 vel;
 	private float disableTime;
@@ -20,7 +20,7 @@ public class Entity : MonoBehaviour
 
 	//related layers
 	private static bool layersSet;
-	protected static int layerDrill, layerProjectile;
+	protected static int layerDrill, layerProjectile, layerSolid;
 
 	//drill related
 	public bool canDrill;
@@ -29,8 +29,7 @@ public class Entity : MonoBehaviour
 
 	//components to disable/enable
 	public List<MonoBehaviour> ScriptComponents;
-	public Renderer Rend;
-	public Animator Anim;
+	public Renderer[] rends;
 
 	private static int entitiesActive;
 
@@ -107,19 +106,17 @@ public class Entity : MonoBehaviour
 
 	public void SetAllActivity(bool active)
 	{
-		if (active == _isActive || !ShouldDisableObjectOnDistance) return;
+		if (active == isActive || !ShouldDisableObjectOnDistance) return;
 		if (needsInit && !initialised) return;
 
-		_isActive = active;
+		isActive = active;
 
-		if (Rend != null)
+		foreach (Renderer r in rends)
 		{
-			Rend.enabled = active;
-		}
-
-		if (Anim != null)
-		{
-			Anim.enabled = active;
+			if (r != null)
+			{
+				r.enabled = active;
+			}
 		}
 
 		if (ShouldDisableGameObjectOnShortDistance)
@@ -194,6 +191,7 @@ public class Entity : MonoBehaviour
 
 		layerDrill = LayerMask.NameToLayer("Drill");
 		layerProjectile = LayerMask.NameToLayer("Projectile");
+		layerSolid = LayerMask.NameToLayer("Solid");
 
 		layersSet = true;
 	}

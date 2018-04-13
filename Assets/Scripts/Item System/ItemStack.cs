@@ -2,9 +2,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
 public class ItemStack
 {
+	[SerializeField]
 	private Item.Type type;
+	[SerializeField]
 	private int amount;
 
 	public ItemStack(Item.Type type, int num)

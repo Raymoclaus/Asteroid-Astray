@@ -8,7 +8,7 @@ public class ParticleGenerator : MonoBehaviour
 
 	private Queue<SpriteRenderer> pool = new Queue<SpriteRenderer>(poolReserve);
 	private List<SpriteRenderer> active = new List<SpriteRenderer>(poolReserve);
-	private const int poolReserve = 300;
+	private const int poolReserve = 1000;
 
 	private void Awake()
 	{

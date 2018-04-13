@@ -1,14 +1,13 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-public static class Item
+﻿public static class Item
 {
 	public enum Type
 	{
 		Blank,
-		Stone
+		Stone,
+		Corvorite
 	}
+
+	public const int MAX_RARITY = 10;
 
 	public static int TypeRarity(Type type)
 	{
@@ -16,6 +15,7 @@ public static class Item
 		{
 			case Type.Blank: return 0;
 			case Type.Stone: return 1;
+			case Type.Corvorite: return 5;
 
 			default: return 1;
 		}
@@ -26,7 +26,8 @@ public static class Item
 		switch (type)
 		{
 			case Type.Blank: return 0;
-			case Type.Stone: return 99;
+			case Type.Stone: return 100;
+			case Type.Corvorite: return 5;
 
 			default: return 99;
 		}

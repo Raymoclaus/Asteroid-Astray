@@ -59,7 +59,10 @@ public class DrillBit : MonoBehaviour
 
 	public void StartDrilling(IDrillableObject newTarget)
 	{
-		TriggerParticleEffects(true);
+		if (!parent.isActive)
+		{
+			TriggerParticleEffects(true);
+		}
 		isDrilling = true;
 		drillTarget = newTarget;
 		firstHit = true;

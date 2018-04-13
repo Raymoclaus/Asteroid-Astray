@@ -92,7 +92,7 @@ public class CameraCtrl : MonoBehaviour
 	{
 		if (TargetToFollow != null)
 		{
-			transform.position = TargetToFollow.position + TargetToFollow.forward * -10f;
+			transform.position = TargetToFollow.position + TargetToFollow.forward * -0.4f;
 		}
 	}
 

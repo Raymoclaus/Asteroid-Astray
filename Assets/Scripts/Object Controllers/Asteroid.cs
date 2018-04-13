@@ -131,6 +131,8 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 
 	private void CreateDebris(Vector2 pos)
 	{
+		if (!isActive) return;
+
 		int randomChoose = Random.Range(0, loadRes.debris.Length);
 		if (randomChoose < loadRes.debris.Length)
 		{
@@ -142,6 +144,8 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 
 	private void CreateDust(Vector2 pos)
 	{
+		if (!isActive) return;
+
 		int randomChoose = Random.Range(0, loadRes.dust.Length);
 		if (randomChoose < loadRes.dust.Length)
 		{
@@ -252,8 +256,6 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 				otherDrill.StopDrilling();
 			}
 		}
-
-
 	}
 
 	public void StopDrilling()

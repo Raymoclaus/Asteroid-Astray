@@ -17,7 +17,8 @@ public class Shuttle : Entity
 	public float Deceleration = 1f;
 	[Tooltip("If speed is higher than this limit then deceleration is increased to compensate.")]
 	public float SpeedLimit = 3f;
-	[Tooltip("When drilling, this is multiplied with the speed limit to allow for faster boost after drilling completes.")]
+	[Tooltip("When drilling, this is multiplied with the speed limit to allow for faster boost after drilling" +
+		" completes.")]
 	public float DrillBoost = 2f;
 	[Tooltip("Controls how quickly the shuttle can rotate.")]
 	public float MaxRotSpeed = 10f;
@@ -25,9 +26,9 @@ public class Shuttle : Entity
 	[Range(0f, 1f)]
 	public float decelerationEffectiveness = 0.01f;
 	//used as a temporary storage for rigidbody velocity when the constraints are frozen
-	public Vector3 _vel;
+	public Vector3 velocity;
 	//the rotation that the shuttle should be at
-	public Vector3 _rot;
+	public Vector3 rot;
 	//force of acceleration via the shuttle
 	public Vector2 _accel;
 	//store last look direction, useful for joysticks
@@ -45,7 +46,7 @@ public class Shuttle : Entity
 			//for reference: https://www.maa.org/external_archive/joma/Volume8/Kalman/General.html
 			//slightly modified for use with square magnitude for better efficiency
 			//half and full would normally be squared
-			float rotAngle = Mathf.Deg2Rad * _rot.z;
+			float rotAngle = Mathf.Deg2Rad * rot.z;
 			float a = vel.x * Mathf.Cos(rotAngle) + vel.y * Mathf.Sin(rotAngle);
 			float b = vel.x * Mathf.Sin(rotAngle) - vel.y * Mathf.Cos(rotAngle);
 			//speed limit is halved for sideways movement
@@ -91,17 +92,14 @@ public class Shuttle : Entity
 
 	private void FixedUpdate()
 	{
-		if (!IsDrilling && Rb.constraints != RigidbodyConstraints2D.FreezeAll)
-		{
-			Rb.AddForce(_accel);
-		}
+		Rb.AddForce(_accel);
 	}
 
 	//Checks for input related to movement and calculates acceleration
 	private void GetMovementInput()
 	{
 		//update rotation variable with transform's current rotation
-		_rot.z = transform.eulerAngles.z;
+		rot.z = transform.eulerAngles.z;
 
 		//get rotation input
 		float lookDirection = InputHandler.GetLookDirection(transform.position);
@@ -131,23 +129,23 @@ public class Shuttle : Entity
 
 		//determine how quickly to rotate
 		//rotMod controls how smoothly the rotation happens
-		float rotMod = Mathf.Abs((360f - _rot.z) - lookDirection);
+		float rotMod = Mathf.Abs((360f - rot.z) - lookDirection);
 		if (rotMod > 180f)
 		{
 			rotMod = Mathf.Abs(rotMod - 360f);
 		}
 		rotMod /= 180f;
 		rotMod = Mathf.Pow(rotMod, 0.8f);
-		SetRot(Mathf.MoveTowardsAngle(_rot.z, -lookDirection, MaxRotSpeed * rotMod));
+		SetRot(Mathf.MoveTowardsAngle(rot.z, -lookDirection, MaxRotSpeed * rotMod));
 
 		//reset acceleration
 		_accel = Vector2.zero;
 		//get movement input
 		_accel.y += Mathf.Clamp01(InputHandler.GetInput("MoveVertical")) * EngineStrength;
-		if (!IsDrilling)
-		{
-			_accel.x += InputHandler.GetInput("MoveHorizontal") * EngineStrength;
-		}
+		//if (!IsDrilling)
+		//{
+		//	_accel.x += InputHandler.GetInput("MoveHorizontal") * EngineStrength;
+		//}
 		if (autoPilot)
 		{
 			_accel = Vector2.up * EngineStrength;
@@ -167,8 +165,8 @@ public class Shuttle : Entity
 				accelAngle = 180f + (180f - accelAngle);
 			}
 			Vector2 shuttleDir;
-			shuttleDir.x = Mathf.Sin(Mathf.Deg2Rad * (360f - _rot.z + accelAngle));
-			shuttleDir.y = Mathf.Cos(Mathf.Deg2Rad * (360f - _rot.z + accelAngle));
+			shuttleDir.x = Mathf.Sin(Mathf.Deg2Rad * (360f - rot.z + accelAngle));
+			shuttleDir.y = Mathf.Cos(Mathf.Deg2Rad * (360f - rot.z + accelAngle));
 			_accel = shuttleDir;
 		}
 
@@ -198,17 +196,17 @@ public class Shuttle : Entity
 			//freeze constraints
 			Rb.constraints = RigidbodyConstraints2D.FreezeAll;
 			//add potential velocity
-			_vel += addForce / 10f;
+			velocity += addForce / 10f;
 			//apply a continuous slowdown effect
-			_vel = Vector3.MoveTowards(_vel, Vector3.zero, 0.1f);
+			velocity = Vector3.MoveTowards(velocity, Vector3.zero, 0.1f);
 			//calculate how powerful the drill can be
 			float drillSpeedModifier = SpeedLimit * DrillBoost;
 			drillSpeedModifier *= drillSpeedModifier;
 			//set an upper limit so that the drill speed doesn't go too extreme
-			if (_vel.sqrMagnitude > drillSpeedModifier)
+			if (velocity.sqrMagnitude > drillSpeedModifier)
 			{
-				_vel.Normalize();
-				_vel *= Mathf.Sqrt(drillSpeedModifier);
+				velocity.Normalize();
+				velocity *= Mathf.Sqrt(drillSpeedModifier);
 			}
 		}
 		else
@@ -216,9 +214,9 @@ public class Shuttle : Entity
 			//if just recently finished drilling then this will allow the shuttle to get its velocity back instantly
 			if (Rb.constraints == RigidbodyConstraints2D.FreezeAll)
 			{
-				Rb.velocity = _vel;
+				Rb.velocity = velocity;
 			}
-			_vel = Rb.velocity;
+			velocity = Rb.velocity;
 			//keep constraints unfrozen
 			Rb.constraints = RigidbodyConstraints2D.None | RigidbodyConstraints2D.FreezeRotation;
 			//apply deceleration
@@ -227,15 +225,15 @@ public class Shuttle : Entity
 				Deceleration * decelerationModifier,
 				decelerationEffectiveness);
 			//set rotation
-			transform.eulerAngles = _rot;
+			transform.eulerAngles = rot;
 		}
 	}
 
 	private float AdjustForMomentum(float lookDir)
 	{
-		float ld = lookDir, rot = 360f - _rot.z;
+		float ld = lookDir, rt = 360f - rot.z;
 
-		float difference = ld - rot;
+		float difference = ld - rt;
 		if (difference > 180f)
 		{
 			difference -= 360f;
@@ -302,7 +300,7 @@ public class Shuttle : Entity
 
 	private void SetRot(float newRot)
 	{
-		_rot.z = ((newRot % 360f) + 360f) % 360f;
+		rot.z = ((newRot % 360f) + 360f) % 360f;
 	}
 	
 	public override EntityType GetEntityType() {
@@ -311,13 +309,13 @@ public class Shuttle : Entity
 
 	public override float DrillDamageQuery(bool firstHit)
 	{
-		if (firstHit && _vel.magnitude >= SpeedLimit + 0.5f)
+		if (firstHit && velocity.magnitude >= SpeedLimit + 0.5f)
 		{
-			return InputHandler.IsHoldingBack() ? 0f : _vel.magnitude * 50f;
+			return InputHandler.IsHoldingBack() ? 0f : velocity.magnitude * 50f;
 		}
 		else
 		{
-			return InputHandler.IsHoldingBack() ? 0f : _vel.magnitude;
+			return InputHandler.IsHoldingBack() ? 0f : velocity.magnitude;
 		}
 	}
 

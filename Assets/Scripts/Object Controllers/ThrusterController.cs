@@ -19,7 +19,7 @@ public class ThrusterController : MonoBehaviour
 	{
 		get
 		{
-			return -new Vector3(Mathf.Sin(Mathf.Deg2Rad * -shuttle._rot.z), Mathf.Cos(Mathf.Deg2Rad * -shuttle._rot.z), 0f) * thrusterStrengthMod * shuttleMag;
+			return -new Vector3(Mathf.Sin(Mathf.Deg2Rad * -shuttle.rot.z), Mathf.Cos(Mathf.Deg2Rad * -shuttle.rot.z), 0f) * thrusterStrengthMod * shuttleMag;
 		}
 	}
 
@@ -33,7 +33,7 @@ public class ThrusterController : MonoBehaviour
 
 	private void Update()
 	{
-		shuttleMag = shuttle._vel.magnitude;
+		shuttleMag = shuttle.velocity.magnitude;
 		SetThrusterFireValues();
 		SetThrusterForceValues();
 		SetSmokeTrailState();
