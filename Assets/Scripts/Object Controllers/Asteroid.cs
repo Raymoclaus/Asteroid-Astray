@@ -138,7 +138,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		{
 			ParticleGenerator.GenerateParticle(
 				loadRes.debris[randomChoose], pos, shrink: false, speed: Random.value * 3f, slowDown: true,
-				lifeTime: 1.5f, rotationDeg: Random.value * 360f, rotationSpeed: Random.value * 3f);
+				lifeTime: 1.5f, rotationDeg: Random.value * 360f, rotationSpeed: Random.value * 3f, sortingLayer: SprRend.sortingLayerID);
 		}
 	}
 
@@ -151,8 +151,9 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		{
 			ParticleGenerator.GenerateParticle(
 				loadRes.dust[randomChoose], pos, shrink: false, speed: Random.value * 0.5f, slowDown: true,
-				lifeTime: Random.value * 3f + 2f, rotationDeg: Random.value * 360f, rotationSpeed: Random.value * 0.5f, size: Mathf.Pow(Random.value, 2f), alpha: Random.value * 0.1f,
-				fadeIn: Random.value + 0.5f);
+				lifeTime: Random.value * 3f + 2f, rotationDeg: Random.value * 360f,
+				rotationSpeed: Random.value * 0.5f, size: Mathf.Pow(Random.value, 2f), alpha: Random.value * 0.1f,
+				fadeIn: Random.value + 0.5f, sortingLayer: SprRend.sortingLayerID);
 		}
 	}
 

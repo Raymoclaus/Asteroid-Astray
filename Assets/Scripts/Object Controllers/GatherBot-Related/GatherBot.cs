@@ -46,6 +46,12 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	private float maxSway = 45;
 	private float distanceCheck = 10f;
 
+	//scanning variables
+	[SerializeField]
+	private ExpandingCircle scanningBeam;
+	private float scanTimer, scanDuration = 3f;
+	private bool scanStarted;
+
 	private void Start()
 	{
 		state = AIState.Spawning;
@@ -98,9 +104,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 	private void Spawning()
 	{
-		targetEntity = Shuttle.singleton;
-		//Vector2 targetPos = hive.transform.position + Vector3.down * 2f;
-		Vector2 targetPos = targetEntity.transform.position;
+		Vector2 targetPos = hive.transform.position + Vector3.down * 2f;
 		float distLeft = Vector2.Distance(transform.position, targetPos);
 		if (distLeft > 1f)
 		{
@@ -110,14 +114,33 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		}
 		else
 		{
-			//state = AIState.Scanning;
+			state = AIState.Scanning;
 		}
 
 	}
 
 	private void Scanning()
 	{
+		if (Rb.velocity.sqrMagnitude < Mathf.Epsilon)
+		{
+			if (!scanStarted)
+			{
+				StartCoroutine(ScanRings());
+				scanStarted = true;
+			}
+			else
+			{
+				scanTimer += Time.deltaTime;
+			}
 
+			if (scanTimer >= scanDuration)
+			{
+				scanTimer = 0f;
+				scanStarted = false;
+
+				//choose state
+			}
+		}
 	}
 
 	private void Gathering()
@@ -298,6 +321,22 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 				decelEffectiveness);
 			transform.eulerAngles = Vector3.forward * -rot;
 		}
+	}
+
+	private IEnumerator ScanRings()
+	{
+		WaitForSeconds wfs = new WaitForSeconds(0.5f);
+		System.Action a = () =>
+		{
+			ExpandingCircle scan = Instantiate(scanningBeam);
+			scan.lifeTime = scanDuration;
+			scan.transform.position = transform.position;
+		};
+		a();
+		yield return wfs;
+		a();
+		yield return wfs;
+		a();
 	}
 
 	private float CheckSpeed()

@@ -27,12 +27,14 @@ public class ParticleGenerator : MonoBehaviour
 
 	public static void GenerateParticle(
 		Sprite spr, Vector3 position, Transform parent = null, bool shrink = true, bool fadeOut = true,
-		float lifeTime = 1f, float speed = 0f, bool slowDown = false, float rotationDeg = 0f, float rotationSpeed = 0f,
-		float size = 1f, bool rotationDecay = false, float alpha = 1f, Color? tint = null, float fadeIn = 0f)
+		float lifeTime = 1f, float speed = 0f, bool slowDown = false, float rotationDeg = 0f,
+		float rotationSpeed = 0f, float size = 1f, bool rotationDecay = false, float alpha = 1f, Color? tint = null,
+		float fadeIn = 0f, int sortingLayer = 0)
 	{
 		SpriteRenderer rend = singleton.pool.Dequeue();
 		singleton.active.Add(rend);
 		rend.sprite = spr;
+		rend.sortingLayerID = sortingLayer;
 		Color tintFix = tint == null ? Color.white : (Color)tint;
 		rend.color = tintFix;
 		GameObject obj = rend.gameObject;
@@ -45,9 +47,8 @@ public class ParticleGenerator : MonoBehaviour
 	}
 
 	private static IEnumerator Lifetime(
-		SpriteRenderer rend, float time, bool shrink, bool fadeOut, float originalSpeed,
-		bool slowDown, float originalRotationSpeed, bool rotationDecay, float alpha, Color tint,
-		float fadeIn)
+		SpriteRenderer rend, float time, bool shrink, bool fadeOut, float originalSpeed, bool slowDown,
+		float originalRotationSpeed, bool rotationDecay, float alpha, Color tint, float fadeIn)
 	{
 		float spd = originalSpeed;
 		float rotSpd = originalRotationSpeed;
