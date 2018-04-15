@@ -88,29 +88,69 @@ public static class EntityNetwork
 		return entitiesInCoords;
 	}
 
-	public static List<ChunkCoords> GetCoordsInRange(ChunkCoords center, int range)
+	public static List<ChunkCoords> GetCoordsInRange(ChunkCoords center, int range,
+		List<ChunkCoords> coordsInRange = null)
 	{
 		int r = range + 2;
-		List<ChunkCoords> coordsInRange = new List<ChunkCoords>(r * r);
-		ChunkCoords cc = center;
+		coordsInRange = coordsInRange == null ? new List<ChunkCoords>(r * r) : coordsInRange;
+		//loop through surrounding chunks
+		for (int i = 0; i <= range; i++)
+		{
+			GetCoordsOnRangeBorder(center, i, coordsInRange);
+		}
+
+		return coordsInRange;
+	}
+
+	public static List<ChunkCoords> GetCoordsOnRangeBorder(ChunkCoords center, int range,
+		List<ChunkCoords> coords = null)
+	{
+		int r = range * 8;
+		coords = coords == null ? new List<ChunkCoords>(r) : coords;
+		ChunkCoords c = center;
 		//loop through surrounding chunks
 		for (int i = -range; i <= range; i++)
 		{
-			cc.X = center.X + i;
+			c.X = center.X + i;
 			for (int j = -range; j <= range; j++)
 			{
-				cc.Y = center.Y + j;
+				if (Math.Abs(i) != range && Math.Abs(j) != range) continue;
+
+				c.Y = center.Y + j;
 				//validate will adjust for edge cases
-				ChunkCoords validCc = cc;
+				ChunkCoords validCc = c;
 				validCc.Validate();
 				if (ChunkExists(validCc))
 				{
-					coordsInRange.Add(validCc);
+					coords.Add(validCc);
 				}
 			}
 		}
 
-		return coordsInRange;
+		return coords;
+	}
+
+	public static int CountInRange(ChunkCoords center, int range)
+	{
+		int count = 0;
+		ChunkCoords c = center;
+		//loop through surrounding chunks
+		for (int i = -range; i <= range; i++)
+		{
+			c.X = center.X + i;
+			for (int j = -range; j <= range; j++)
+			{
+				c.Y = center.Y + j;
+				//validate will adjust for edge cases
+				ChunkCoords validCc = c;
+				validCc.Validate();
+				if (ChunkExists(validCc))
+				{
+					count += Chunk(validCc).Count;
+				}
+			}
+		}
+		return count;
 	}
 
 	/// Adds a given entity to the list at given coordinates
@@ -220,7 +260,8 @@ public static class EntityNetwork
 	}
 
 	/// Removes an entity from its position in the network and replaces it and the given destination
-	/// This will mostly be used by entities themselves as they are responsible for determining their place in the network
+	/// This will mostly be used by entities themselves as they are responsible for determining their place in the
+	/// network
 	public static bool Reposition(Entity e, ChunkCoords destChunk)
 	{
 		if (!destChunk.IsValid())
@@ -336,7 +377,8 @@ public static class EntityNetwork
 			return false;
 		}
 
-		//if the quadrant doesn't have x amount of columns or that column doesn't have y amount of cells, the chunk doesn't exist
+		//if the quadrant doesn't have x amount of columns or that column doesn't have y amount of cells,
+		//the chunk doesn't exist
 		if ((int) cc.Direction >= _grid.Count
 		    || cc.X >= Direction(cc).Count
 		    || cc.Y >= Column(cc).Count)

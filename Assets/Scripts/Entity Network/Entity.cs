@@ -180,6 +180,12 @@ public class Entity : MonoBehaviour
 		return 1f;
 	}
 
+	//This should be overridden. Called by a drill to alert the entity that the drilling has completed
+	public virtual void DrillComplete()
+	{
+
+	}
+
 	public virtual void PhysicsReEnabled()
 	{
 

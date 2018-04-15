@@ -278,7 +278,7 @@ public class Shuttle : Entity
 		autoPilotTimer = Time.time;
 
 		int searchRange = 1;
-		List<Entity> asteroids = EntityNetwork.GetEntitiesInRange(_coords, searchRange, EntityType.Asteroid);
+		List<Entity> asteroids = new List<Entity>();
 
 		while (asteroids.Count == 0)
 		{
