@@ -35,12 +35,13 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	//chance that an asteroid will be larger than normal
 	[SerializeField]
 	private float largeChance = 0.01f;
+	private bool isLarge;
 	//keeps track of size type and ID in that size type
 	private Vector2Int id = Vector2Int.zero;
 	//the amount of debris created when destroyed
 	public Vector2Int debrisAmount = new Vector2Int(3, 10);
 	[SerializeField]
-	private float drillDebrisChance = 0.05f, drillDustChance = 0.2f;
+	private float drillDebrisChance = 0.05f, drillDustChance = 0.2f; 
 	#endregion
 
 	#region Audio
@@ -62,6 +63,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		{
 			//set unique collider to match large shape
 			ColliderInfo colInfo = largeInfo[id.y];
+			isLarge = true;
 			switch (colInfo.type)
 			{
 				//circle collider
@@ -103,7 +105,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 			* (Mathf.Pow(Random.Range(0f, 2f), 2f) * VelocityRange - VelocityRange);
 	}
 
-	private void DestroySelf(bool explode)
+	private void DestroySelf(bool explode, Entity destroyer, int dropModifier = 0)
 	{
 		if (explode)
 		{
@@ -119,10 +121,12 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 				pitch: Random.Range(shatterPitchRange.x, shatterPitchRange.y), volume: 0.25f, parent: Shuttle.singleton.transform);
 
 			//drop resources
-			for (int i = 0; i < Random.Range(1, 4); i++)
+			int minDrop = isLarge ? 4 : 1;
+			for (int i = 0; i < Random.Range(minDrop, minDrop + dropModifier + 1); i++)
 			{
-				Transform drop = Instantiate(resource).transform;
-				drop.position = transform.position;
+				ResourceDrop drop = Instantiate(resource);
+				drop.Create(destroyer);
+				drop.transform.position = transform.position;
 			}
 		}
 
@@ -180,16 +184,22 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		return GetSpriteCategory()[id.y].sprites;
 	}
 
-	// If health is below zero, this will destroy itself
-	private bool CheckHealth()
+	public override bool OnExitPhysicsRange()
 	{
-		UpdateSprite();
-		if (Health > 0f) return false;
-		DestroySelf(true);
+		Rb.velocity = Rb.velocity * -1f;
 		return true;
 	}
 
-	public bool TakeDamage(float damage, Vector2 damagePos)
+	// If health is below zero, this will destroy itself
+	private bool CheckHealth(Entity destroyer, int dropModifier = 0)
+	{
+		UpdateSprite();
+		if (Health > 0f) return false;
+		DestroySelf(true, destroyer, dropModifier);
+		return true;
+	}
+
+	public bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer, int dropModifier = 0)
 	{
 		//take damage
 		Health -= damage;
@@ -204,13 +214,13 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 			CreateDust(damagePos);
 		}
 
-		return CheckHealth();
+		return CheckHealth(destroyer, dropModifier);
 	}
 
 	//take the damage and if health drops to 0 then signal that this asteroid will be destroyed
-	public bool TakeDrillDamage(float damage, Vector2 drillPos)
+	public bool TakeDrillDamage(float damage, Vector2 drillPos, Entity destroyer, int dropModifier = 0)
 	{
-		bool takeDamage = TakeDamage(damage, drillPos);
+		bool takeDamage = TakeDamage(damage, drillPos, destroyer, dropModifier);
 		//calculate shake intensity. Gets more intense the less health it has
 		ShakeFX.SetIntensity(damage / MaxHealth * (3f - (Health / MaxHealth * 2f)));
 
@@ -230,7 +240,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		if (otherLayer == layerDrill)
 		{
 			DrillBit otherDrill = other.GetComponentInParent<DrillBit>();
-			if (otherDrill.CanDrill)
+			if (otherDrill.CanDrill && !IsDrilling && otherDrill.Verify(this))
 			{
 				StartDrilling();
 				otherDrill.StartDrilling(this);

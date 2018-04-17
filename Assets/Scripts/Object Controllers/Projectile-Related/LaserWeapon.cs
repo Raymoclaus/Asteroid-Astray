@@ -18,6 +18,8 @@ public class LaserWeapon : MonoBehaviour
 	private float cooldown = 0.5f;
 	[SerializeField]
 	private Collider2D[] parentColliders;
+	[SerializeField]
+	private Entity parent;
 
 
 	private void Awake()
@@ -46,7 +48,7 @@ public class LaserWeapon : MonoBehaviour
 			LaserBlast blast = pool[pool.Count - 1];
 			pool.RemoveAt(pool.Count - 1);
 			blast.Shoot(weapon.position, transform.rotation, weapon.GetChild(0).position - weapon.position,
-				laserTarget.position - weapon.position, pool, weapon, parentColliders);
+				laserTarget.position - weapon.position, pool, weapon, parentColliders, parent);
 		}
 	}
 

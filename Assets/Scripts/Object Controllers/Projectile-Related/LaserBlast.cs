@@ -25,8 +25,10 @@ public class LaserBlast : MonoBehaviour, IProjectile
 	private float convergeAngle = 1f;
 	[SerializeField]
 	private ParticleSystem particleTrail;
+	private Entity parent;
 
-	public void Shoot(Vector2 startPos, Quaternion startRot, Vector2 startingDir, Vector2 followDir, List<LaserBlast> p, Transform wep, Collider2D[] exclude)
+	public void Shoot(Vector2 startPos, Quaternion startRot, Vector2 startingDir, Vector2 followDir,
+		List<LaserBlast> p, Transform wep, Collider2D[] exclude, Entity shooter)
 	{
 		transform.position = startPos;
 		transform.rotation = startRot;
@@ -42,6 +44,7 @@ public class LaserBlast : MonoBehaviour, IProjectile
 		particleTrail.Play();
 		particleTrail.transform.parent = transform;
 		particleTrail.transform.localPosition = Vector3.zero;
+		parent = shooter;
 
 		gameObject.SetActive(true);
 	}
@@ -117,7 +120,7 @@ public class LaserBlast : MonoBehaviour, IProjectile
 			damageCalc *= angle;
 		}
 
-		obj.TakeDamage(damageCalc, transform.position);
+		obj.TakeDamage(damageCalc, transform.position, parent);
 
 		Dissipate();
 	}

@@ -1,4 +1,4 @@
-﻿using System.Collections;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -46,7 +46,7 @@ public class Inventory : MonoBehaviour
 				int difference = Item.StackLimit(type) - stack.GetAmount();
 				if (difference > 0)
 				{
-					int add = num % (difference + 1);
+					int add = Math.Min(num, difference);
 					num -= add;
 					stack.AddAmount(add);
 				}
@@ -64,8 +64,7 @@ public class Inventory : MonoBehaviour
 		{
 			if (stack.GetItemType() == Item.Type.Blank)
 			{
-				int limit = Item.StackLimit(type);
-				int add = num % (limit + 1);
+				int add = Math.Min(num, Item.StackLimit(type));
 				num -= add;
 				stack.SetItemType(type);
 				stack.AddAmount(add);
@@ -80,6 +79,7 @@ public class Inventory : MonoBehaviour
 	{
 		for (int i = 0; i < items.Count; i++)
 		{
+			if (items[i].GetItemType() == Item.Type.Blank) continue;
 			items[i].SetAmount(AddItem(items[i].GetItemType(), items[i].GetAmount()));
 		}
 		return items;
@@ -87,17 +87,17 @@ public class Inventory : MonoBehaviour
 
 	public bool RemoveItem(Item.Type type, int num = 1)
 	{
-		if (num <= 0) return false;
+		if (num <= 0) return true;
 
-		foreach (ItemStack stack in inventory)
+		for (int i = inventory.Count - 1; i >= 0; i--)
 		{
-			if (stack.GetItemType() == type)
+			if (inventory[i].GetItemType() == type)
 			{
-				if (stack.GetAmount() < num) return false;
-
-				stack.RemoveAmount(num);
-				return true;
+				int amount = inventory[i].GetAmount();
+				int leftover = inventory[i].RemoveAmount(num);
+				num -= amount - leftover;
 			}
+			if (num <= 0) return true;
 		}
 
 		return false;
@@ -118,16 +118,16 @@ public class Inventory : MonoBehaviour
 		return true;
 	}
 
-	public int Count(Item.Type? filter = null, int minRarity = 0, int maxRarity = Item.MAX_RARITY)
+	public int Count(Item.Type? include = null, int minRarity = 0, int maxRarity = Item.MAX_RARITY)
 	{
 		int count = 0;
-		bool fltr = filter != null;
+		bool fltr = include != null;
 
-		if ((Item.Type)filter == Item.Type.Blank) return 0;
+		if (include == Item.Type.Blank) return 0;
 
 		foreach (ItemStack stack in inventory)
 		{
-			if (fltr && stack.GetItemType() != (Item.Type)filter) continue;
+			if (fltr && stack.GetItemType() != include) continue;
 			int rarity = Item.TypeRarity(stack.GetItemType());
 			if (rarity < minRarity && rarity > maxRarity) continue;
 
@@ -136,12 +136,14 @@ public class Inventory : MonoBehaviour
 		return count;
 	}
 
-	public int[] CountRarities()
+	public int[] CountRarities(Item.Type? exclude = null)
 	{
 		int[] counts = new int[Item.MAX_RARITY + 1];
+		bool fltr = exclude != null;
 
 		foreach (ItemStack stack in inventory)
 		{
+			if (fltr && stack.GetItemType() == exclude) continue;
 			int rarity = Item.TypeRarity(stack.GetItemType());
 			counts[rarity] += stack.GetAmount();
 		}
@@ -149,11 +151,16 @@ public class Inventory : MonoBehaviour
 		return counts;
 	}
 
-	public void RemoveByRarity(int rarity, int amount)
+	public void RemoveByRarity(int rarity, int amount, Item.Type? exclude = null)
 	{
-		for (int i = 0; i < inventory.Count; i++)
+		bool fltr = exclude != null;
+
+		for (int i = inventory.Count - 1; i >= 0; i--)
 		{
-			if (Item.TypeRarity(inventory[i].GetItemType()) == rarity)
+			Item.Type type = inventory[i].GetItemType();
+			if (type == exclude) continue;
+
+			if (Item.TypeRarity(type) == rarity)
 			{
 				int stackAmount = inventory[i].GetAmount();
 				if (stackAmount > 0)

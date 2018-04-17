@@ -47,7 +47,7 @@ public class DrillBit : MonoBehaviour
 		//else send the damage to the drill target
 		else
 		{
-			if (drillTarget.TakeDrillDamage(damage, transform.position))
+			if (drillTarget.TakeDrillDamage(damage, transform.position, parent))
 			{
 				parent.DrillComplete();
 			}
@@ -62,7 +62,7 @@ public class DrillBit : MonoBehaviour
 
 	public void StartDrilling(IDrillableObject newTarget)
 	{
-		if (!parent.isActive)
+		if (parent.isActive)
 		{
 			TriggerParticleEffects(true);
 		}
@@ -87,6 +87,11 @@ public class DrillBit : MonoBehaviour
 		drillSoundSource.Stop();
 
 		drillAnim.SetBool("Drilling", false);
+	}
+
+	public bool Verify(Entity target)
+	{
+		return parent.VerifyTarget(target);
 	}
 
 	private void TriggerParticleEffects(bool start)

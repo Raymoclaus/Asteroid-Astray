@@ -56,16 +56,17 @@ public class ItemStack
 		return true;
 	}
 
-	public bool RemoveAmount(int num)
+	public int RemoveAmount(int num)
 	{
-		if (num > amount || num <= 0) return false;
+		if (num < 0) return amount;
 
 		amount -= num;
-		if (amount == 0)
+		if (amount <= 0)
 		{
+			amount = 0;
 			type = Item.Type.Blank;
 		}
-		return true;
+		return amount;
 	}
 
 	public override string ToString()

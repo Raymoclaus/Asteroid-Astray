@@ -12,7 +12,7 @@ public class Entity : MonoBehaviour
 	public bool ShouldDisableObjectOnDistance = true;
 	public bool ShouldDisableGameObjectOnShortDistance = true;
 	public bool isActive = true;
-	private bool disabled = false;
+	public bool disabled = false;
 	private Vector3 vel;
 	private float disableTime;
 	protected bool needsInit = true;
@@ -24,7 +24,7 @@ public class Entity : MonoBehaviour
 
 	//drill related
 	public bool canDrill;
-	private DrillBit drill;
+	protected DrillBit drill;
 	public bool IsDrilling { get { return drill == null ? false : drill.IsDrilling; } }
 
 	//components to disable/enable
@@ -54,8 +54,12 @@ public class Entity : MonoBehaviour
 	public void RepositionInNetwork()
 	{
 		ChunkCoords newCc = new ChunkCoords(transform.position);
+		bool repositioned = false;
 		if (newCc != _coords)
+		{ 
 			EntityNetwork.Reposition(this, newCc);
+			repositioned = true;
+		}
 
 		if (needsInit && !initialised) return;
 
@@ -77,6 +81,7 @@ public class Entity : MonoBehaviour
 			else
 			{
 				if (disabled) return;
+				if (repositioned && OnExitPhysicsRange()) return;
 				entitiesActive--;
 				disabled = true;
 				vel = Rb == null ? vel : (Vector3)Rb.velocity;
@@ -87,6 +92,11 @@ public class Entity : MonoBehaviour
 				gameObject.SetActive(!ShouldDisableObjectOnDistance);
 			}
 		}
+	}
+
+	public virtual bool OnExitPhysicsRange()
+	{
+		return false;
 	}
 
 	public void SetCoordinates(ChunkCoords newCc)
@@ -132,6 +142,11 @@ public class Entity : MonoBehaviour
 				script.enabled = active;
 			}
 		}
+	}
+
+	public virtual void CollectResources(ResourceDrop r)
+	{
+
 	}
 
 	public virtual EntityType GetEntityType()
@@ -184,6 +199,12 @@ public class Entity : MonoBehaviour
 	public virtual void DrillComplete()
 	{
 
+	}
+
+	//some entities might want to avoid drilling other entities by accident, override to verify target
+	public virtual bool VerifyTarget(Entity target)
+	{
+		return true;
 	}
 
 	public virtual void PhysicsReEnabled()

@@ -31,6 +31,8 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	private ShakeEffect shakeFX;
 	[SerializeField]
 	private ExpandingCircle scanningBeam;
+	[SerializeField]
+	private Inventory storage;
 
 	//fields
 	[SerializeField]
@@ -47,7 +49,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	private Vector2 velocity;
 	private float maxSway = 45;
 	private float distanceCheck = 10f;
-	private Entity targetEntity;
+	public Entity targetEntity;
 
 	//scanning variables
 	private float scanTimer, scanDuration = 3f;
@@ -58,6 +60,10 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	private float searchTimer, searchInterval = 0.3f;
 	private int drillCount, drillLimit = 3;
 	private List<Entity> surroundingEntities;
+	private IDrillableObject drillableTarget;
+	[SerializeField]
+	private int storageCapacity = 10;
+	private int itemsCollected;
 
 	//exploring variables
 	private bool waitingForHiveDirection = true;
@@ -65,7 +71,6 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 	private void Start()
 	{
-		state = AIState.Spawning;
 		transform.eulerAngles = Vector3.forward * -rot;
 		initialised = true;
 	}
@@ -120,7 +125,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		{
 			if (Rb.velocity.sqrMagnitude < Mathf.Epsilon)
 			{
-				state = AIState.Exploring;
+				StartExploring();
 				gameObject.layer = layerSolid;
 				foreach (Collider2D col in Col)
 				{
@@ -128,7 +133,6 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 				}
 			}
 		}
-
 	}
 
 	private void Scanning()
@@ -180,12 +184,23 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		{
 			SearchForNearestAsteroid();
 		}
-
 		Vector2 targetPos = targetEntity.transform.position;
-		float expectedAngle = DetermineDirection(targetPos);
-		expectedAngle = AdjustForMomentum(expectedAngle);
-		float speedMod = 1f - RotateTo(expectedAngle);
-		DetermineAcceleration(speedMod);
+		if (targetEntity.disabled)
+		{
+			GoToLocation(targetPos, false, 1f, true);
+			float distLeft = Vector2.Distance(transform.position, targetPos);
+			if (distLeft <= 1f)
+			{
+				if (drillableTarget.TakeDrillDamage(DrillDamageQuery(false), drill.transform.position, this))
+				{
+					DrillComplete();
+				}
+			}
+		}
+		else
+		{
+			GoToLocation(targetPos, false, 0f, true);
+		}
 	}
 
 	private void Exploring()
@@ -201,7 +216,13 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 	private void Storing()
 	{
-
+		targetEntity = hive;
+		if (GoToLocation(targetEntity.transform.position, true, 2f, false))
+		{
+			hive.Store(storage.inventory, this);
+			itemsCollected = 0;
+			StartExploring();
+		}
 	}
 
 	private void Suspicious()
@@ -221,14 +242,18 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 	#endregion
 
-	private bool GoToLocation(Vector2 targetPos)
+	private bool GoToLocation(Vector2 targetPos, bool avoidObstacles = true, float distLimit = 1f, bool adjustForMomentum = false)
 	{
 		float distLeft = Vector2.Distance(transform.position, targetPos);
-		if (distLeft > 1f)
+		if (distLeft > distLimit)
 		{
-			float expectedAngle = DetermineDirection(targetPos, true);
+			float expectedAngle = DetermineDirection(targetPos, avoidObstacles);
+			if (adjustForMomentum)
+			{
+				expectedAngle = AdjustForMomentum(expectedAngle);
+			}
 			float speedMod = 1f - RotateTo(expectedAngle);
-			DetermineAcceleration(speedMod, distLeft);
+			DetermineAcceleration(speedMod, distLeft, distLimit);
 			return false;
 		}
 		return true;
@@ -242,16 +267,9 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 	public ChunkCoords GetIntendedCoords()
 	{
-		if (state == AIState.Exploring)
+		if (state == AIState.Exploring && !waitingForHiveDirection)
 		{
-			if (waitingForHiveDirection)
-			{
-				return _coords;
-			}
-			else
-			{
-				return new ChunkCoords(targetLocation);
-			}
+			return new ChunkCoords(targetLocation);
 		}
 		else
 		{
@@ -270,7 +288,8 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 			for (int i = 0; i < surroundingEntities.Count; i++)
 			{
-				if (surroundingEntities[i].GetEntityType() != EntityType.Asteroid)
+				if (surroundingEntities[i].GetEntityType() != EntityType.Asteroid
+					|| !hive.VerifyGatheringTarget(this, surroundingEntities[i]))
 				{
 					surroundingEntities.RemoveAt(i);
 					i--;
@@ -288,6 +307,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			{
 				shortestDist = dist;
 				targetEntity = e;
+				drillableTarget = targetEntity.GetComponent<IDrillableObject>();
 			}
 		}
 
@@ -319,13 +339,13 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		return ld;
 	}
 
-	private void DetermineAcceleration(float speedMod, float? distLeft = null)
+	private void DetermineAcceleration(float speedMod, float? distLeft = null, float distLimit = 1f)
 	{
 		if (distLeft != null)
 		{
-			if (distLeft < 3f)
+			if (distLeft < distLimit)
 			{
-				speedMod *= (float)distLeft / 3f;
+				speedMod *= (float)distLeft / distLimit;
 			}
 		}
 		float mag = engineStrength * speedMod;
@@ -501,14 +521,14 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	public void Create(BotHive botHive, float MaxHP)
 	{
 		hive = botHive;
-		state = AIState.Scanning;
+		state = AIState.Spawning;
 		maxHealth = MaxHP;
 		currentHealth = maxHealth;
 	}
 
-	public bool TakeDrillDamage(float drillDmg, Vector2 drillPos)
+	public bool TakeDrillDamage(float drillDmg, Vector2 drillPos, Entity destroyer, int dropModifier = 0)
 	{
-		return TakeDamage(drillDmg, drillPos);
+		return TakeDamage(drillDmg, drillPos, destroyer, dropModifier);
 	}
 
 	public void StartDrilling()
@@ -530,7 +550,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		if (otherLayer == layerDrill)
 		{
 			DrillBit otherDrill = other.GetComponentInParent<DrillBit>();
-			if (otherDrill.CanDrill)
+			if (otherDrill.CanDrill && !IsDrilling)
 			{
 				StartDrilling();
 				otherDrill.StartDrilling(this);
@@ -559,7 +579,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		}
 	}
 
-	public bool TakeDamage(float damage, Vector2 damagePos)
+	public bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer, int dropModifier = 0)
 	{
 		currentHealth -= damage;
 
@@ -568,13 +588,28 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 	public override void DrillComplete()
 	{
+		bool hiveOrders = hive.SplitUpGatheringUnits(this);
 		drillCount++;
-		if (drillCount >= drillLimit)
+
+		if (drillCount < drillLimit && !hiveOrders) return;
+
+		drillCount = 0;
+		targetEntity = null;
+		drillableTarget = null;
+		if (hiveOrders)
 		{
-			drillCount = 0;
-			state = AIState.Scanning;
-			canDrill = false;
+			StartExploring();
 		}
+		else
+		{
+			state = AIState.Scanning;
+		}
+		canDrill = false;
+	}
+
+	public override bool VerifyTarget(Entity target)
+	{
+		return target == targetEntity;
 	}
 
 	private bool CheckHealth()
@@ -585,5 +620,22 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	public override float DrillDamageQuery(bool firstHit)
 	{
 		return speedLimit;
+	}
+
+	public override void CollectResources(ResourceDrop r)
+	{
+		storage.AddItem(Item.Type.Stone);
+		itemsCollected++;
+		if (itemsCollected >= storageCapacity)
+		{
+			state = AIState.Storing;
+		}
+	}
+
+	private void StartExploring()
+	{
+		state = AIState.Exploring;
+		waitingForHiveDirection = true;
+		hive.AssignUnoccupiedCoords(this);
 	}
 }

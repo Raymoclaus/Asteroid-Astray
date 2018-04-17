@@ -254,7 +254,7 @@ public class Shuttle : Entity
 		return ld;
 	}
 
-	public void CollectResources(ResourceDrop r)
+	public override void CollectResources(ResourceDrop r)
 	{
 		storage.AddItem(Item.Type.Stone);
 

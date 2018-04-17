@@ -21,8 +21,8 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 	private float currentHealth;
 	private List<GatherBot> childBots = new List<GatherBot>();
 	[SerializeField]
-	private int minInitialBotCount = 2, maxBotCount = 4, minLeftoverResources = 1, botCreationCost = 3,
-		botUpgradeCost = 2, maxInitialUpgrades = 1;
+	private int minInitialBotCount = 2, maxBotCount = 4, minLeftoverResources = 1, botCreationCost = 2,
+		botUpgradeCost = 4, maxInitialUpgrades = 0;
 	private int resourceCount, toBeSpent;
 	private bool dormant;
 	private int needToCreate, needToUpgrade;
@@ -30,6 +30,7 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 
 	private void Start()
 	{
+		currentHealth = maxHealth;
 		resourceCount = UnityEngine.Random.Range(
 			minLeftoverResources + botCreationCost * minInitialBotCount,
 			minLeftoverResources + (botCreationCost + botUpgradeCost * maxInitialUpgrades) * maxBotCount + 1);
@@ -46,8 +47,8 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 		int tooMuch = Math.Max(0, creationCount + childBots.Count - maxBotCount);
 		creationCount -= tooMuch;
 		usable -= creationCount * botCreationCost;
-		int upgradeCount = usable / botUpgradeCost;
-		tooMuch = Math.Max(0, upgradeCount - creationCount * maxInitialUpgrades + (b == null ? 0 : 1));
+		int upgradeCount = childBots.Count + creationCount < maxBotCount ? 0 : usable / botUpgradeCost;
+		tooMuch = Math.Max(0, upgradeCount - (creationCount * maxInitialUpgrades + (b == null ? 0 : 1)));
 		upgradeCount -= tooMuch;
 		usable -= upgradeCount * botUpgradeCost;
 
@@ -85,13 +86,10 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 		{
 			GatherBot newBot = CreateBot();
 			needToCreate--;
-			toBeSpent -= botCreationCost;
 			for (int i = 0; i < maxInitialUpgrades && needToUpgrade > 0; i++)
 			{
-				//newBot.Upgrade();
+				UpgradeBot(newBot);
 				needToUpgrade--;
-				resourceCount -= botUpgradeCost;
-				toBeSpent -= botUpgradeCost;
 			}
 
 			yield return timeBetweenCreation;
@@ -103,6 +101,8 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 		if (resourceCount < botCreationCost + minLeftoverResources) return null;
 		
 		resourceCount -= botCreationCost;
+		toBeSpent -= botCreationCost;
+		inventory.RemoveItem(Item.Type.Corvorite, botCreationCost);
 		GatherBot bot = Instantiate(botPrefab);
 		bot.transform.position = transform.position;
 		bot.Create(this, botBaseHP);
@@ -112,6 +112,14 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 			AssignUnoccupiedCoords(bot);
 		}).Start();
 		return bot;
+	}
+
+	private void UpgradeBot(GatherBot bot)
+	{
+		//newBot.Upgrade();
+		resourceCount -= botUpgradeCost;
+		toBeSpent -= botUpgradeCost;
+		inventory.RemoveItem(Item.Type.Corvorite, botUpgradeCost);
 	}
 
 	public void AssignUnoccupiedCoords(GatherBot b)
@@ -165,6 +173,31 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 		b.HiveOrders(pos);
 	}
 
+	public bool SplitUpGatheringUnits(GatherBot b)
+	{
+		foreach (GatherBot bot in childBots)
+		{
+			//don't check self
+			if (b == bot) continue;
+			//two bots should gather in different locations to avoid overcrowding
+			if (b.GetIntendedCoords() == bot.GetIntendedCoords()) return true;
+		}
+		return false;
+	}
+
+	public bool VerifyGatheringTarget(GatherBot b, Entity e = null)
+	{
+		e = e == null ? b.targetEntity : e;
+		foreach (GatherBot bot in childBots)
+		{
+			//don't check self
+			if (b == bot) continue;
+			//two bots shouldn't gather from the same target
+			if (e == bot.targetEntity) return false;
+		}
+		return true;
+	}
+
 	public void Store(List<ItemStack> items, GatherBot b)
 	{
 		inventory.Store(items);
@@ -179,7 +212,7 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 		if (otherLayer == layerDrill)
 		{
 			DrillBit otherDrill = other.GetComponentInParent<DrillBit>();
-			if (otherDrill.CanDrill)
+			if (otherDrill.CanDrill && !IsDrilling)
 			{
 				StartDrilling();
 				otherDrill.StartDrilling(this);
@@ -208,9 +241,9 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 		}
 	}
 
-	public bool TakeDrillDamage(float drillDmg, Vector2 drillPos)
+	public bool TakeDrillDamage(float drillDmg, Vector2 drillPos, Entity destroyer, int dropModifier = 0)
 	{
-		return TakeDamage(drillDmg, drillPos);
+		return TakeDamage(drillDmg, drillPos, destroyer, dropModifier);
 	}
 
 	public void StartDrilling()
@@ -225,7 +258,7 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 		shakeFX.Stop();
 	}
 
-	public bool TakeDamage(float damage, Vector2 damagePos)
+	public bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer, int dropModifier = 0)
 	{
 		currentHealth -= damage;
 

@@ -2,7 +2,7 @@
 
 public interface IDrillableObject
 {
-	bool TakeDrillDamage(float drillDmg, Vector2 drillPos);
+	bool TakeDrillDamage(float drillDmg, Vector2 drillPos, Entity destroyer, int dropModifier = 0);
 	void StartDrilling();
 	void StopDrilling();
 	void OnTriggerEnter2D(Collider2D other);

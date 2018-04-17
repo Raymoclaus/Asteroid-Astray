@@ -4,7 +4,7 @@
 public class ResourceDrop : MonoBehaviour
 {
 	[HideInInspector]
-	public Transform follow;
+	public Entity follow;
 	private Vector2 velocity;
 	private Vector2 startVelocity;
 	public float startSpeed = 0.1f;
@@ -19,7 +19,6 @@ public class ResourceDrop : MonoBehaviour
 
 	private void Start()
 	{
-		follow = Shuttle.singleton.transform;
 		ps = ps ?? transform.GetChild(0).GetComponent<ParticleSystem>();
 
 		//pick a random direction to move in
@@ -44,7 +43,7 @@ public class ResourceDrop : MonoBehaviour
 		else
 		{
 			//gain speed towards the follow target
-			Vector2 direction = follow.position - transform.position;
+			Vector2 direction = follow.transform.position - transform.position;
 			direction.Normalize();
 			speedIncrement += speedGain;
 			direction *= speedIncrement;
@@ -55,7 +54,8 @@ public class ResourceDrop : MonoBehaviour
 		transform.position += (Vector3)velocity;
 
 		//check if close enough to collect
-		if (Vector2.Distance(transform.position, follow.position) < velocity.magnitude && aliveTime > delay)
+		if (Vector2.Distance(transform.position, follow.transform.position) < velocity.magnitude
+			&& aliveTime > delay)
 		{
 			//send messsage to follow target to collect resource
 
@@ -63,9 +63,14 @@ public class ResourceDrop : MonoBehaviour
 			ps.transform.parent = null;
 			ParticleSystem.MainModule main = ps.main;
 			main.loop = false;
-			Shuttle.singleton.CollectResources(this);
+			follow.CollectResources(this);
 			Destroy(gameObject);
 			return;
 		}
+	}
+
+	public void Create(Entity target)
+	{
+		follow = target;
 	}
 }

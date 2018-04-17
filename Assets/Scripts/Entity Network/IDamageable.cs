@@ -4,5 +4,5 @@ using UnityEngine;
 
 public interface IDamageable
 {
-	bool TakeDamage(float damage, Vector2 damagePos);
+	bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer, int dropModifier = 0);
 }
