@@ -60,7 +60,7 @@ public class ResourceDrop : MonoBehaviour
 			//send messsage to follow target to collect resource
 
 			//destroy self
-			ps.transform.parent = null;
+			ps.transform.parent = transform.parent;
 			ParticleSystem.MainModule main = ps.main;
 			main.loop = false;
 			follow.CollectResources(this);

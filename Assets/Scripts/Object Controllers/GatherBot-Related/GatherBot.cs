@@ -170,6 +170,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 				}
 				else
 				{
+					hive.MarkCoordAsEmpty(_coords);
 					state = AIState.Exploring;
 					waitingForHiveDirection = true;
 					hive.AssignUnoccupiedCoords(this);
@@ -505,6 +506,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			ExpandingCircle scan = Instantiate(scanningBeam);
 			scan.lifeTime = scanDuration;
 			scan.transform.position = transform.position;
+			scan.transform.parent = ParticleGenerator.singleton.transform;
 		};
 		a();
 		yield return wfs;

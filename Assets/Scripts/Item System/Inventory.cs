@@ -153,8 +153,6 @@ public class Inventory : MonoBehaviour
 
 	public void RemoveByRarity(int rarity, int amount, Item.Type? exclude = null)
 	{
-		bool fltr = exclude != null;
-
 		for (int i = inventory.Count - 1; i >= 0; i--)
 		{
 			Item.Type type = inventory[i].GetItemType();

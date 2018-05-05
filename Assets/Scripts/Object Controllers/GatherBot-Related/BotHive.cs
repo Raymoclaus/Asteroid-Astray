@@ -27,6 +27,9 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 	private bool dormant;
 	private int needToCreate, needToUpgrade;
 	private WaitForSeconds timeBetweenCreation = new WaitForSeconds(5f);
+	private List<ChunkCoords> emptyCoords = new List<ChunkCoords>();
+	private List<GTime> emptyCoordTimes = new List<GTime>();
+	private float emptyCoordWaitTime = 300f;
 
 	private void Start()
 	{
@@ -67,7 +70,6 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 
 		if (startCreationProcess)
 		{
-			Debug.Log(needToCreate);
 			StartCoroutine(CreationProcess(b));
 		}
 	}
@@ -124,7 +126,8 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 
 	public void AssignUnoccupiedCoords(GatherBot b)
 	{
-		List<ChunkCoords> occupiedCoords = new List<ChunkCoords>();
+		CheckEmptyMarkedCoords();
+		List<ChunkCoords> occupiedCoords = new List<ChunkCoords>(emptyCoords);
 
 		foreach (GatherBot bot in childBots)
 		{
@@ -268,5 +271,29 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 	private bool CheckHealth()
 	{
 		return currentHealth <= 0f;
+	}
+
+	public void MarkCoordAsEmpty(ChunkCoords c)
+	{
+		emptyCoords.Add(c);
+		emptyCoordTimes.Add(TimeManager.GameTime);
+	}
+
+	private void CheckEmptyMarkedCoords()
+	{
+		GTime currentTime = TimeManager.GameTime;
+		for (int i = 0; i < emptyCoordTimes.Count; i++)
+		{
+			if (GTime.SecondsBetween(emptyCoordTimes[i], currentTime) > emptyCoordWaitTime)
+			{
+				emptyCoords.RemoveAt(i);
+				emptyCoordTimes.RemoveAt(i);
+				i--;
+			}
+			else
+			{
+				return;
+			}
+		}
 	}
 }

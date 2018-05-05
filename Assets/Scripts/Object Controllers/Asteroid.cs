@@ -127,6 +127,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 				ResourceDrop drop = Instantiate(resource);
 				drop.Create(destroyer);
 				drop.transform.position = transform.position;
+				drop.transform.parent = ParticleGenerator.singleton.transform;
 			}
 		}
 

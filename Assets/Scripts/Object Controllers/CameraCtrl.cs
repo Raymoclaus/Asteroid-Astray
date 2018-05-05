@@ -6,8 +6,7 @@ public class CameraCtrl : MonoBehaviour
 	public Camera Cam;
 	public static CameraCtrl camCtrl;
 	public Transform TargetToFollow;
-	public Shuttle Shuttle;
-	public Transform ShuttleTransform;
+	public Entity followTarget;
 	public float MinCamSize = 2f;
 	private static float _currentSize;
 
@@ -19,7 +18,9 @@ public class CameraCtrl : MonoBehaviour
 	public float CamZoomSpeed = 0.05f;
 	public float CamDrillZoomSpeed = 0.002f;
 	public float CamSizeModifier = 5f;
-	private Vector2 _prevPos;
+	private Vector2 _prevPos, aheadVector;
+	[SerializeField]
+	private float distanceAhead = 0.5f, moveAheadSpeed = 0.2f;
 	public ChunkCoords Coords;
 	public const int EntityViewRange = 1;
 	private List<ChunkCoords> _coordsInView = new List<ChunkCoords>(16);
@@ -55,6 +56,9 @@ public class CameraCtrl : MonoBehaviour
 		GetEntitiesInView(Coords);
 		//start camera size at minimum size
 		_currentSize = MinCamSize;
+		//camera position starts ahead of the target
+		aheadVector = new Vector2(Mathf.Sin(-TargetToFollow.eulerAngles.z * Mathf.Deg2Rad),
+			Mathf.Cos(-TargetToFollow.eulerAngles.z * Mathf.Deg2Rad)) * distanceAhead;
 	}
 
 	private void Update()
@@ -87,36 +91,36 @@ public class CameraCtrl : MonoBehaviour
 		GetEntitiesInView(newCoords);
 	}
 
-	/// Sets position to be just above the target
+	/// Sets position to be just above and ahead of the target
 	private void FollowTarget()
 	{
 		if (TargetToFollow != null)
 		{
-			transform.position = TargetToFollow.position + TargetToFollow.forward * -0.4f;
+			Vector2 aheadTarget = new Vector2(Mathf.Sin(-TargetToFollow.eulerAngles.z * Mathf.Deg2Rad),
+				Mathf.Cos(-TargetToFollow.eulerAngles.z * Mathf.Deg2Rad)) * distanceAhead;
+			float difference = Vector2.Distance(aheadTarget, aheadVector) / distanceAhead / 2f;
+			aheadVector = Vector2.MoveTowards(aheadVector, aheadTarget, difference * distanceAhead * moveAheadSpeed);
+			transform.position = TargetToFollow.position + (Vector3)aheadVector + TargetToFollow.forward * -0.4f;
 		}
 	}
 
 	/// Zooms out based on the shuttles speed.
 	private void AdjustSize()
 	{
-		//only zooms the camera out if the target the camera is following is the shuttle
-		if (TargetToFollow == ShuttleTransform && Shuttle != null)
+		if (followTarget.IsDrilling)
 		{
-			if (Shuttle.IsDrilling)
-			{
-				//gradually zoom in
-				_currentSize = Mathf.MoveTowards(_currentSize, MinCamSize / 2f, CamDrillZoomSpeed);
-			}
-			else
-			{
-				//calculates the zoom level the camera should be at
-				float targetSize = Shuttle.Rb.velocity.magnitude * CamSizeModifier + MinCamSize;
-				//calculation to determine how quickly the camera zoom needs to change
-				float zoomDifference = targetSize - _currentSize;
-				float zoomDifferenceAbs = zoomDifference > 0 ? zoomDifference : -zoomDifference;
-				float camZoomSpeedModifier = zoomDifferenceAbs > 1 && zoomDifference > 0 ? 1f : zoomDifferenceAbs;
-				_currentSize = Mathf.MoveTowards(_currentSize, targetSize, CamZoomSpeed * camZoomSpeedModifier);
-			}
+			//gradually zoom in
+			_currentSize = Mathf.MoveTowards(_currentSize, MinCamSize / 2f, CamDrillZoomSpeed);
+		}
+		else
+		{
+			//calculates the zoom level the camera should be at
+			float targetSize = followTarget.Rb.velocity.magnitude * CamSizeModifier + MinCamSize;
+			//calculation to determine how quickly the camera zoom needs to change
+			float zoomDifference = targetSize - _currentSize;
+			float zoomDifferenceAbs = zoomDifference > 0 ? zoomDifference : -zoomDifference;
+			float camZoomSpeedModifier = zoomDifferenceAbs > 1 && zoomDifference > 0 ? 1f : zoomDifferenceAbs;
+			_currentSize = Mathf.MoveTowards(_currentSize, targetSize, CamZoomSpeed * camZoomSpeedModifier);
 		}
 		//sets the camera size on the camera component
 		Cam.orthographicSize = _currentSize;

@@ -11,6 +11,7 @@ public class AudioManager : MonoBehaviour
 	private Queue<AudioSource> pool = new Queue<AudioSource>(poolReserve);
 	private List<AudioSource> active = new List<AudioSource>(poolReserve);
 	private const int poolReserve = 30;
+	private const float MIN_DISTANCE = 1f / 3f, MAX_DISTANCE = 50f;
 
 	private void Awake()
 	{
@@ -22,6 +23,7 @@ public class AudioManager : MonoBehaviour
 		else
 		{
 			Destroy(gameObject);
+			return;
 		}
 
 		SetUpPoolReserve();
@@ -65,6 +67,8 @@ public class AudioManager : MonoBehaviour
 			AudioSource src = go.AddComponent<AudioSource>();
 			src.outputAudioMixerGroup = sfxMixer;
 			src.spatialBlend = 1f;
+			src.minDistance = MIN_DISTANCE;
+			src.maxDistance = MAX_DISTANCE;
 			pool.Enqueue(src);
 		}
 	}
