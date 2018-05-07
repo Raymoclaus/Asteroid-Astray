@@ -56,8 +56,7 @@ public class NebulaSetup : Entity
 			Expansion();
 			shouldExpand = false;
 		}
-
-		ScriptComponents.Add(this);
+		
 		initialised = true;
 		RepositionInNetwork();
 	}

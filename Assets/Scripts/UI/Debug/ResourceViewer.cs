@@ -14,7 +14,7 @@ public class ResourceViewer : MonoBehaviour
 
 	private void Update()
 	{
-		if (Shuttle.singleton.storage.inventory.Count > 0)
+		if (Shuttle.singleton != null && Shuttle.singleton.storage.inventory.Count > 0)
 		{
 			int count = Shuttle.singleton.storage.Count(Item.Type.Stone);
 			if (count != currentCount)

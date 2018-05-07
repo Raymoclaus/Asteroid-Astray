@@ -212,6 +212,32 @@ public struct ChunkCoords
 		return this;
 	}
 
+	/// Converts valid coordinates into unsigned X, Y coordinates.
+	/// The result will usually be considered 'invalid' by IsValid()
+	public ChunkCoords ConvertToSignedCoords()
+	{
+		//make sure the coordinates are valid
+		if (!IsValid())
+		{
+			Validate();
+		}
+		//convert coordinates into signed X, Y values
+		switch (Direction)
+		{
+			case Quadrant.UpperLeft:
+				X = -X - 1;
+				break;
+			case Quadrant.LowerLeft:
+				X = -X - 1;
+				Y = -Y - 1;
+				break;
+			case Quadrant.LowerRight:
+				Y = -Y - 1;
+				break;
+		}
+		return this;
+	}
+
 	/// Returns the distance between two coordinates. (Diagonal distance is treated the same as axis distance)
 	public static int MaxDistance(ChunkCoords cc1, ChunkCoords cc2)
 	{

@@ -13,11 +13,11 @@ public static class EntityGenerator
 	private static Dictionary<string, GameObject> holders = new Dictionary<string, GameObject>();
 	//chunks to fill in batches
 	private static List<ChunkCoords> chunkBatches = new List<ChunkCoords>(100);
-	//minimum amount of chunks to fill per batch
-	private static int minChunkBatchFill = 5;
+	//maximum amount of chunks to fill per frame
+	private static int maxChunkBatchFill = 2;
 	#endregion
 
-	public static void FillChunk(ChunkCoords cc, bool? excludePriority = null)
+	public static void FillChunk(ChunkCoords cc, bool excludePriority = false)
 	{
 		//don't bother if the given coordinates are not valid
 		if (!cc.IsValid()) return;
@@ -57,12 +57,11 @@ public static class EntityGenerator
 		}
 	}
 
-	private static List<SpawnableEntity> ChooseEntitiesToSpawn(bool? excludePriority = null)
+	private static List<SpawnableEntity> ChooseEntitiesToSpawn(bool excludePriority = false)
 	{
-		bool noPriority = excludePriority ?? false;
 		List<SpawnableEntity> list = new List<SpawnableEntity>();
 		float chance = Random.value;
-		if (!noPriority)
+		if (!excludePriority)
 		{
 			foreach (SpawnableEntity e in prefabs.spacePriorityEntities)
 			{
@@ -106,7 +105,7 @@ public static class EntityGenerator
 		while (true)
 		{
 			if (chunkBatches.Count == 0) yield return null;
-			for (int i = 0; i < minChunkBatchFill && chunkBatches.Count > 0; i++)
+			for (int i = 0; i < maxChunkBatchFill && chunkBatches.Count > 0; i++)
 			{
 				FillChunk(chunkBatches[0]);
 				chunkBatches.RemoveAt(0);
@@ -155,7 +154,7 @@ public static class EntityGenerator
 	}
 
 	/// Fills up the list of fill triggers
-	public static void FillTriggerList()
+	public static IEnumerator FillTriggerList(System.Action a)
 	{
 		for (int dir = 0; dir < EntityNetwork.QuadrantNumber; dir++)
 		{
@@ -168,7 +167,9 @@ public static class EntityGenerator
 					_wasFilled[dir][x].Add(false);
 				}
 			}
+			yield return null;
 		}
+		a();
 	}
 
 	/// Removes and destroys all asteroids in the entity network then sets all fill triggers to false
@@ -193,7 +194,7 @@ public static class EntityGenerator
 		}
 	}
 
-	public static void SetPrefabs(EntityPrefabController prf)
+	public static IEnumerator SetPrefabs(EntityPrefabController prf, System.Action a)
 	{
 		prefabs = prf;
 		//sort the space priority entities by lowest rarity to highest
@@ -212,16 +213,19 @@ public static class EntityGenerator
 				i++;
 			}
 		}
+		yield return null;
 
 		foreach (SpawnableEntity e in list)
 		{
 			holders.Add(e.name, new GameObject(e.name));
 		}
+		yield return null;
 
 		foreach (SpawnableEntity e in prefabs.spawnableEntities)
 		{
 			holders.Add(e.name, new GameObject(e.name));
 		}
+		a();
 	}
 
 	#region Convenient short-hand methods for accessing the grid

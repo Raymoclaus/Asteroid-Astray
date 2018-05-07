@@ -107,6 +107,7 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 		inventory.RemoveItem(Item.Type.Corvorite, botCreationCost);
 		GatherBot bot = Instantiate(botPrefab);
 		bot.transform.position = transform.position;
+		bot.transform.parent = transform.parent;
 		bot.Create(this, botBaseHP);
 		childBots.Add(bot);
 		new Thread(() =>

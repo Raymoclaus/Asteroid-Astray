@@ -19,7 +19,7 @@ public class ButtonPrompt : MonoBehaviour
 		promptUI.SetActive(prompts.Count > 0);
 
 		//check next prompt in list
-		if (Input.GetKeyDown(KeyCode.Q))
+		if (Input.GetKeyDown(KeyCode.Q) && prompts.Count > 1)
 		{
 			IPromptRespone pr = prompts[0];
 			prompts.RemoveAt(0);

@@ -32,9 +32,9 @@ public static class EntityNetwork
 	#endregion
 
 	/// Constructs and reserves a large amount of space for the grid
-	public static void CreateGrid()
+	public static IEnumerator CreateGrid(Action a)
 	{
-		if (gridCreated) return;
+		if (gridCreated) yield break;
 
 		//reserve space in each direction
 		//takes ~1.5 seconds for 1000 * 1000 * 10
@@ -50,9 +50,11 @@ public static class EntityNetwork
 					//no actual entities are created yet
 				}
 			}
+			yield return null;
 		}
 
 		gridCreated = true;
+		a();
 	}
 
 	/// Returns a list of all entities located in cells within range of the given coordinates
@@ -156,9 +158,6 @@ public static class EntityNetwork
 	/// Adds a given entity to the list at given coordinates
 	public static bool AddEntity(Entity e, ChunkCoords cc)
 	{
-		//check if grid has been created yet
-		CreateGrid();
-
 		if (!cc.IsValid())
 		{
 			Debug.LogWarning("Coordinates to add entity to are invalid.");
@@ -301,7 +300,6 @@ public static class EntityNetwork
 
 	public static List<List<List<Entity>>> Direction(ChunkCoords cc)
 	{
-		CreateGrid();
 		return _grid[(int) cc.Direction];
 	}
 

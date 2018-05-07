@@ -164,9 +164,15 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 
 	private void UpdateSprite()
 	{
-		if (Health <= 0f) return;
+		if (Health <= 0f)
+		{
+			ParticleGenerator.GenerateParticle(GetCurrentSpriteSettings()[GetCurrentSpriteSettings().Length - 1],
+				transform.position, shrink: false, fadeOut: false, lifeTime: 0.05f,
+				rotationDeg: transform.eulerAngles.z, sortingLayer: SprRend.sortingLayerID);
+			return;
+		}
 
-		int delta = (int)((1f - (Health / MaxHealth)) * 3.06f);
+		int delta = (int)((1f - (Health / MaxHealth)) * GetCurrentSpriteSettings().Length - 1);
 		SprRend.sprite = GetCurrentSpriteSettings()[delta];
 	}
 

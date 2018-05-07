@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Collections;
+using CielaSpike;
 
 public struct CosmicItem
 {
@@ -21,26 +22,32 @@ public struct CosmicItem
 
 public class SceneryController : MonoBehaviour
 {
+	public static SceneryController singleton;
+	private bool singletonChecked;
+
 	private List<List<List<List<CosmicItem>>>> items;
 	private const int reserveSize = 100;
 	private const int largeDistance = 500;
 	private const int directions = 4;
 	private List<Sprite> types = new List<Sprite>();
-	private int ViewDistance { get { return CameraCtrl.camCtrl.TotalViewRange; } }
+	private int ViewDistance { get { return Mathf.CeilToInt(BgCameraController.bgCam.cam.fieldOfView); } }
 
-	private const int poolSize = 2500;
+	private const int poolSize = 10000;
 	private Queue<SpriteRenderer> pool = new Queue<SpriteRenderer>(poolSize);
 	private Queue<SpriteRenderer> active = new Queue<SpriteRenderer>(poolSize);
 	private Queue<SpriteRenderer> transitionActive = new Queue<SpriteRenderer>(poolSize);
 
 	private ChunkCoords currentCoords = ChunkCoords.Invalid;
 	public Vector2Int cosmicDensity = new Vector2Int(10, 100);
+	public float perlinStretchModifier = 1f;
+	public float starMinDistance = 400f, starDistanceRange = 200f;
 	public Vector2 scaleRange = new Vector2(1f, 4f);
 	private Transform sceneryHolder;
 	private int backgroundLayer;
 	public Color transparentColor;
 
 	[Header("Texture Variables")]
+	private bool texturesGenerated;
 	public int variety = 10;
 	public Vector2Int textureSize = new Vector2Int(256, 256);
 	[Tooltip("Size of each individual star.")]
@@ -57,9 +64,28 @@ public class SceneryController : MonoBehaviour
 	public float hazePower = 2f;
 	public float hazeOpacity = 3f;
 
-
 	private void Awake()
 	{
+		InitialSetup();
+	}
+
+	private void InitialSetup()
+	{
+		if (singletonChecked) return;
+
+		singletonChecked = true;
+
+		if (singleton == null)
+		{
+			singleton = this;
+			DontDestroyOnLoad(gameObject);
+		}
+		else
+		{
+			Destroy(gameObject);
+			return;
+		}
+
 		backgroundLayer = LayerMask.NameToLayer("BackgroundImage");
 		sceneryHolder = new GameObject("Scenery Holder").transform;
 		sceneryHolder.gameObject.layer = backgroundLayer;
@@ -67,15 +93,10 @@ public class SceneryController : MonoBehaviour
 		FillPool();
 	}
 
-	public void StartTextureGeneration(GameObject button)
-	{
-		StartCoroutine(CreateStarSystems());
-		Destroy(button);
-	}
-
 	private void Update()
 	{
-		if (types.Count >= 10)
+		transform.position = Camera.main.transform.position;
+		if (types.Count >= variety)
 		{
 			ChunkCoords newCoords = new ChunkCoords(transform.position);
 			if (newCoords != currentCoords)
@@ -123,6 +144,10 @@ public class SceneryController : MonoBehaviour
 			}
 			else
 			{
+				if (pool.Count < 1)
+				{
+					FillPool();
+				}
 				rend = pool.Dequeue();
 				obj = rend.gameObject;
 				obj.SetActive(true);
@@ -130,7 +155,10 @@ public class SceneryController : MonoBehaviour
 
 			obj.transform.position = item.pos;
 			rend.sprite = types[item.type];
-			rend.color = transparent ? transparentColor : Color.white;
+			//Color col = transparent ? transparentColor : Color.white;
+			Color col = Color.white;
+			col.a *= (1f - (item.pos.z - starMinDistance) / starDistanceRange) * 0.9f + 0.1f;
+			rend.color = col;
 			active.Enqueue(rend);
 			obj.transform.localScale = Vector2.one * (float)item.size;
 			obj.transform.eulerAngles = Vector3.forward * item.rotation * 45f;
@@ -146,11 +174,20 @@ public class SceneryController : MonoBehaviour
 
 	private void FillChunk(ChunkCoords c)
 	{
-		for (int i = 0; i < Random.Range(cosmicDensity.x, cosmicDensity.y); i++)
+		ChunkCoords signedCoords = c;
+		signedCoords.ConvertToSignedCoords();
+		float amount = Mathf.PerlinNoise(c.X * perlinStretchModifier, c.Y * perlinStretchModifier);
+
+		float min = Mathf.Min(cosmicDensity.x, cosmicDensity.y);
+		float max = Mathf.Max(cosmicDensity.x, cosmicDensity.y);
+		amount = amount * (max - min) + min;
+		for (int i = 0; i < (int)amount; i++)
 		{
 			Vector2Pair area = ChunkCoords.GetCellArea(c);
-			Vector3 spawnPos = new Vector3(Random.Range(area.A.x, area.B.x), Random.Range(area.A.y, area.B.y), (1f - Mathf.Pow(Random.value, 6f)) * 100f + 500f);
-			CosmicItem newItem = new CosmicItem((byte)Random.Range(0, types.Count), spawnPos, Random.Range(scaleRange.x, scaleRange.y), (byte)Random.Range(0, 8));
+			Vector3 spawnPos = new Vector3(Random.Range(area.A.x, area.B.x), Random.Range(area.A.y, area.B.y),
+				(1f - Mathf.Pow(Random.value, 6f * (max / amount))) * starDistanceRange + starMinDistance);
+			CosmicItem newItem = new CosmicItem((byte)Random.Range(0, types.Count), spawnPos,
+				Random.Range(scaleRange.x, scaleRange.y), (byte)Random.Range(0, 8));
 			Chunk(c).Add(newItem);
 		}
 	}
@@ -186,52 +223,55 @@ public class SceneryController : MonoBehaviour
 		}
 	}
 
-	private IEnumerator CreateStarSystems()
+	public static IEnumerator CreateStarSystems(System.Action a)
 	{
-		Color32[][] textures = new Color32[variety][];
-		Vector2Int starNumRange = new Vector2Int((int)Mathf.Pow(2f, starPowerRange.x), (int)Mathf.Pow(2f, starPowerRange.y));
-		Thread[] threads = new Thread[variety];
-		//create textures
-		for (int i = 0; i < variety; i++)
-		{
-			threads[i] = new Thread(() => GenerateTexture(starNumRange, out textures[i], new System.Random()))
-			{
-				Priority = System.Threading.ThreadPriority.Lowest,
-				IsBackground = false
-			};
-			threads[i].Start();
-		}
+		yield return null;
 
-		while (CheckThreadsRunning(threads))
+		//ensure this class is setup properly first
+		singleton.InitialSetup();
+		SceneryController sc = singleton;
+
+		//if textures have already been generated then don't worry about making more
+		if (sc.texturesGenerated) yield break;
+		sc.texturesGenerated = true;
+		
+		//determine min/max amount of stars per texture
+		Vector2Int starNumRange = new Vector2Int((int)Mathf.Pow(2f, sc.starPowerRange.x),
+			(int)Mathf.Pow(2f, sc.starPowerRange.y));
+
+		int worker, expected;
+		ThreadPool.GetMinThreads(out worker, out expected);
+		expected = 0;
+		worker = Mathf.Max(1, worker - 2);
+
+		//wait until texture generation is done
+		while (sc.types.Count < sc.variety)
 		{
+			//check if workers are finished working
+			int difference = 0;
+			if (sc.types.Count > expected)
+			{
+				difference = sc.types.Count - expected;
+				worker += difference;
+				expected = sc.types.Count;
+				Debug.Log(sc.types.Count);
+			}
+
+			//use available workers to generate textures
+			for (; worker > 0; worker--)
+			{
+				sc.StartCoroutineAsync(sc.GenerateTexture(starNumRange, new System.Random()));
+			}
 			yield return null;
 		}
 
-		for (int i = 0; i < variety; i++)
-		{
-			if (textures[i] == null) continue;
-			Texture2D tex = new Texture2D(textureSize.x, textureSize.y, TextureFormat.RGBA32, false);
-			tex.SetPixels32(textures[i]);
-			tex.Apply();
-			types.Add(Sprite.Create(tex, new Rect(Vector2.zero, new Vector2(tex.width, tex.height)), Vector2.one / 2f));
-		}
+		//run mandatory action, probably to signal that it's finished
+		a();
 	}
 
-	private bool CheckThreadsRunning(Thread[] threads)
+	private IEnumerator GenerateTexture(Vector2Int starNumRange, System.Random rnd)
 	{
-		foreach (Thread t in threads)
-		{
-			if (t.ThreadState == ThreadState.Running)
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private void GenerateTexture(Vector2Int starNumRange, out Color32[] tex, System.Random rnd)
-	{
-		tex = new Color32[textureSize.x * textureSize.y];
+		Color32[] tex = new Color32[textureSize.x * textureSize.y];
 		float power = (float)rnd.NextDouble() * (starPowerRange.y - starPowerRange.x) + starPowerRange.x;
 		int numStars = (int)((float)rnd.NextDouble() * (starNumRange.y - starNumRange.x) + starNumRange.x);
 		if (numStars < 32)
@@ -259,6 +299,12 @@ public class SceneryController : MonoBehaviour
 				tex[i * textureSize.y + j] = GetColorOfPixel(i, j, stars);
 			}
 		}
+
+		yield return Ninja.JumpToUnity;
+		Texture2D t = new Texture2D(textureSize.x, textureSize.y, TextureFormat.RGBA32, false);
+		t.SetPixels32(tex);
+		t.Apply();
+		types.Add(Sprite.Create(t, new Rect(Vector2.zero, new Vector2(textureSize.x, textureSize.y)), Vector2.one / 2f));
 	}
 
 	private Color32 GetColorOfPixel(int x, int y, Star[] stars)
@@ -323,7 +369,7 @@ public class SceneryController : MonoBehaviour
 			float distance = (float)rnd.NextDouble();
 			if (NearBiasDirections(biasDirections, randomDirection))
 			{
-				distance = Mathf.Pow(distance, 0.8f);
+				distance = Mathf.Pow(distance, 0.5f);
 			}
 			distance *= Mathf.Min(boundsSize.x, boundsSize.y);
 			pos = direction * distance + new Vector2(textureSize.x / 2, textureSize.y / 2);
@@ -354,7 +400,7 @@ public class SceneryController : MonoBehaviour
 		{
 			for (int i = 0; i < biasDirections.Length; i++)
 			{
-				if (AngleDifference(biasDirections[i], value) < Mathf.PI / 12f)
+				if (AngleDifference(biasDirections[i], value) < Mathf.PI / 24f)
 				{
 					return true;
 				}

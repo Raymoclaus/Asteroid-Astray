@@ -110,7 +110,9 @@ public class CameraCtrl : MonoBehaviour
 		if (followTarget.IsDrilling)
 		{
 			//gradually zoom in
-			_currentSize = Mathf.MoveTowards(_currentSize, MinCamSize / 2f, CamDrillZoomSpeed);
+			float difference = Mathf.Abs(_currentSize - MinCamSize / 2f);
+			float zoomSpeedModifier = Mathf.Min(1f, difference);
+			_currentSize = Mathf.MoveTowards(_currentSize, MinCamSize / 2f, CamDrillZoomSpeed * zoomSpeedModifier);
 		}
 		else
 		{
