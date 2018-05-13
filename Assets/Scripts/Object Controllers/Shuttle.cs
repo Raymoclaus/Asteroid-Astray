@@ -98,6 +98,9 @@ public class Shuttle : Entity
 	//Checks for input related to movement and calculates acceleration
 	private void GetMovementInput()
 	{
+		//used for artificially adjusting speed, used by the auto pilot only
+		float speedMod = 1f;
+
 		//update rotation variable with transform's current rotation
 		rot.z = transform.eulerAngles.z;
 
@@ -122,6 +125,10 @@ public class Shuttle : Entity
 			}
 
 			lookDirection = AdjustForMomentum(lookDirection);
+			if (!IsDrilling)
+			{
+				speedMod *= 1f - Mathf.Abs(lookDirection - (360f - rot.z)) / 180f;
+			}
 		}
 			
 		//update last look direction (mostly for joystick use)
@@ -175,7 +182,7 @@ public class Shuttle : Entity
 		{
 			magnitude = topSpeed;
 		}
-		_accel *= magnitude;
+		_accel *= magnitude * speedMod;
 	}
 
 	//use calculated rotation and speed to determine where to move to

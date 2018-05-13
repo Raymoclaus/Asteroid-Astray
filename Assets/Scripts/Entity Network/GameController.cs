@@ -31,34 +31,43 @@ public class GameController : MonoBehaviour
 		}
 
 		loadingUI.SetActive(true);
-		
-		StartCoroutine(SceneryController.CreateStarSystems(() =>
-		{
-			starsGenerated = true;
-			Ready();
-		}));
-		
+
 		StartCoroutine(EntityNetwork.CreateGrid(() =>
 		{
 			gridCreated = true;
 			Ready();
 		}));
 
-		StartCoroutine(EntityGenerator.FillTriggerList(() =>
+		StartCoroutine(SceneryController.CreateStarSystems(() =>
 		{
-			triggerListFilled = true;
-			Ready();
-		}));
-
-		StartCoroutine(EntityGenerator.SetPrefabs(prefabs, () =>
-		{
-			entityPrefabsReady = true;
+			starsGenerated = true;
 			Ready();
 		}));
 	}
 
 	private void Ready()
 	{
+		if (starsGenerated)
+		{
+			if (!triggerListFilled)
+			{
+				StartCoroutine(EntityGenerator.FillTriggerList(() =>
+				{
+					triggerListFilled = true;
+					Ready();
+				}));
+			}
+
+			if (!entityPrefabsReady)
+			{
+				StartCoroutine(EntityGenerator.SetPrefabs(prefabs, () =>
+				{
+					entityPrefabsReady = true;
+					Ready();
+				}));
+			}
+		}
+
 		if (gridCreated && triggerListFilled && entityPrefabsReady)
 		{
 			StartCoroutine(EntityGenerator.ChunkBatchOrder());

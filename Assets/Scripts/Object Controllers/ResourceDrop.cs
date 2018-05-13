@@ -7,7 +7,7 @@ public class ResourceDrop : MonoBehaviour
 	public Entity follow;
 	private Vector2 velocity;
 	private Vector2 startVelocity;
-	public float startSpeed = 0.1f;
+	public float startSpeed = 0.1f, speedDecay = 0.01f;
 	public float speedGain = 0.001f;
 	private float speedIncrement;
 	public float delay = 0.5f;
@@ -25,11 +25,13 @@ public class ResourceDrop : MonoBehaviour
 		startVelocity = new Vector2(Random.value * 2f - 1f, Random.value * 2f - 1f);
 		startVelocity.Normalize();
 		startVelocity *= startSpeed;
+		velocity = startVelocity;
 
 		spawnTime = Time.time;
 
-		rarity = Random.Range(0, rarityColors.Length);
-		rend.color = rarityColors[rarity];
+		//rarity = Random.Range(1, rarityColors.Length);
+		rarity = 1;
+		rend.color = rarityColors[rarity - 1];
 	}
 
 	private void Update()
@@ -38,7 +40,7 @@ public class ResourceDrop : MonoBehaviour
 
 		if (aliveTime < delay)
 		{
-			velocity = Vector2.Lerp(startVelocity, Vector2.zero, aliveTime / delay);
+			velocity *= speedDecay;
 		}
 		else
 		{

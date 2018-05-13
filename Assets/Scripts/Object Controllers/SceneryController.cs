@@ -95,6 +95,11 @@ public class SceneryController : MonoBehaviour
 
 	private void Update()
 	{
+		CheckCoords();
+	}
+
+	private void CheckCoords()
+	{
 		transform.position = Camera.main.transform.position;
 		if (types.Count >= variety)
 		{
@@ -130,7 +135,7 @@ public class SceneryController : MonoBehaviour
 
 	private void SetUpScenery(ChunkCoords c)
 	{
-		bool transparent = EntityNetwork.ContainsType(EntityType.Nebula, c, null);
+		//bool transparent = EntityNetwork.ContainsType(EntityType.Nebula, c, null);
 
 		foreach(CosmicItem item in Chunk(c))
 		{
@@ -185,7 +190,7 @@ public class SceneryController : MonoBehaviour
 		{
 			Vector2Pair area = ChunkCoords.GetCellArea(c);
 			Vector3 spawnPos = new Vector3(Random.Range(area.A.x, area.B.x), Random.Range(area.A.y, area.B.y),
-				(1f - Mathf.Pow(Random.value, 6f * (max / amount))) * starDistanceRange + starMinDistance);
+				(1f - Mathf.Pow(Random.value, 7f * (max / amount))) * starDistanceRange + starMinDistance);
 			CosmicItem newItem = new CosmicItem((byte)Random.Range(0, types.Count), spawnPos,
 				Random.Range(scaleRange.x, scaleRange.y), (byte)Random.Range(0, 8));
 			Chunk(c).Add(newItem);
@@ -254,7 +259,6 @@ public class SceneryController : MonoBehaviour
 				difference = sc.types.Count - expected;
 				worker += difference;
 				expected = sc.types.Count;
-				Debug.Log(sc.types.Count);
 			}
 
 			//use available workers to generate textures
@@ -264,6 +268,9 @@ public class SceneryController : MonoBehaviour
 			}
 			yield return null;
 		}
+
+		//fill background with new textures
+		sc.CheckCoords(); 
 
 		//run mandatory action, probably to signal that it's finished
 		a();
