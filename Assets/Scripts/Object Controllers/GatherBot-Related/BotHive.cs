@@ -297,4 +297,9 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 			}
 		}
 	}
+
+	public Vector2 GetPosition()
+	{
+		return transform.position;
+	}
 }

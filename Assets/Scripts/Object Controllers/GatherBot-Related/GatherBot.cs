@@ -640,4 +640,9 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		waitingForHiveDirection = true;
 		hive.AssignUnoccupiedCoords(this);
 	}
+
+	public Vector2 GetPosition()
+	{
+		return transform.position;
+	}
 }

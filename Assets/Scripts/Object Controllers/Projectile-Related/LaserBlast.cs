@@ -11,9 +11,10 @@ public class LaserBlast : MonoBehaviour, IProjectile
 	private Transform weapon;
 	private const int maxRange = 10;
 	[SerializeField]
-	private float speed = 10f;
+	private float startSpeed = 5f, minSpeed = 1f, maxSpeed = 10f, boostTime = 0.5f, convergeStrength = 1f;
+	private float boostCounter = 0f;
 	private Vector2 direction, forward, convergePoint;
-	public float inwardMomentumMultiplier = 2f;
+	public float inwardMomentumMultiplier = 5f;
 	private static int solidLayer;
 	private static bool setLayers;
 	private Vector2 vel;
@@ -22,17 +23,21 @@ public class LaserBlast : MonoBehaviour, IProjectile
 	private float damage = 200f;
 	private bool converged;
 	[SerializeField]
-	private float convergeAngle = 1f;
-	[SerializeField]
 	private ParticleSystem particleTrail;
 	private Entity parent;
+	[SerializeField]
+	private Sprite boostedBullet, notBoostedBullet;
+	[SerializeField]
+	private SpriteRenderer sprRend;
+	[SerializeField]
+	private GameObject sonicBoom, weakHit, strongHit;
 
 	public void Shoot(Vector2 startPos, Quaternion startRot, Vector2 startingDir, Vector2 followDir,
 		List<LaserBlast> p, Transform wep, Collider2D[] exclude, Entity shooter)
 	{
 		transform.position = startPos;
 		transform.rotation = startRot;
-		vel = startingDir * speed;
+		vel = startingDir * startSpeed;
 		followDir.Normalize();
 		direction = followDir * inwardMomentumMultiplier;
 		pool = p;
@@ -85,18 +90,27 @@ public class LaserBlast : MonoBehaviour, IProjectile
 
 	private void SetVelocity()
 	{
-		if (Vector2.Angle(vel, direction) > convergeAngle && !converged)
+		if (boostCounter <= boostTime && !converged)
 		{
-			vel += direction * Time.deltaTime * 60f;
+			float sp = Mathf.Lerp(startSpeed, minSpeed, boostCounter / boostTime);
+			boostCounter += Time.deltaTime;
+
+			vel += direction * Time.deltaTime * 60f * convergeStrength;
 			vel.Normalize();
-			vel *= speed;
+			vel *= sp;
 		}
 		else
 		{
-			vel = forward * speed;
+			vel = forward * maxSpeed;
 			if (!converged)
 			{
 				convergePoint = transform.position;
+				sprRend.sprite = boostedBullet;
+				float angle = Vector2.SignedAngle(Vector2.up, vel);
+				transform.eulerAngles = Vector3.forward * angle;
+				GameObject sBoom = Instantiate(sonicBoom, ParticleGenerator.singleton.transform);
+				sBoom.transform.position = transform.position;
+				sBoom.transform.eulerAngles = Vector3.forward * angle;
 			}
 			converged = true;
 		}
@@ -120,8 +134,12 @@ public class LaserBlast : MonoBehaviour, IProjectile
 			damageCalc *= angle;
 		}
 
-		obj.TakeDamage(damageCalc, transform.position, parent);
+		float dirToObject = Vector2.SignedAngle(Vector2.up, obj.GetPosition() - (Vector2)transform.position);
+		GameObject hitFX = Instantiate(damageCalc >= damage * 0.9f ? strongHit : weakHit);
+		hitFX.transform.position = transform.position;
+		hitFX.transform.eulerAngles = Vector3.forward * (dirToObject + 180f);
 
+		obj.TakeDamage(damageCalc, transform.position, parent);
 		Dissipate();
 	}
 
@@ -130,6 +148,8 @@ public class LaserBlast : MonoBehaviour, IProjectile
 		DelayedAction.Go(() => particleTrail.Stop());
 		particleTrail.transform.parent = transform.parent;
 		pool.Add(this);
+		sprRend.sprite = notBoostedBullet;
+		boostCounter = 0f;
 		gameObject.SetActive(false);
 	}
 }

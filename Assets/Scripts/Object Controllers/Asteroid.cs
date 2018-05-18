@@ -206,6 +206,11 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		return true;
 	}
 
+	public Vector2 GetPosition()
+	{
+		return transform.position;
+	}
+
 	public bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer, int dropModifier = 0)
 	{
 		//take damage

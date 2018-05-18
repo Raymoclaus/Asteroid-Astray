@@ -66,6 +66,14 @@ public class Shuttle : Entity
 	private Transform followTarget;
 	#endregion
 
+	#region Attachments
+	// Laser 1
+	[SerializeField]
+	private bool laser1Attached = false;
+	[SerializeField]
+	private GameObject laser1Obj;
+	#endregion
+
 	#region Sound Stuff
 	[SerializeField]
 	private AudioClip collectResourceSound;
@@ -335,4 +343,14 @@ public class Shuttle : Entity
 	{
 		ShipInventory.Store(storage.inventory);
 	}
+
+	#region Attach/Detach Methods
+
+	public void AttachDetachLaser1(bool attach)
+	{
+		laser1Obj.SetActive(attach);
+		laser1Attached = attach;
+	}
+
+	#endregion
 }
