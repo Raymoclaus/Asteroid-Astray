@@ -37,8 +37,10 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	//fields
 	[SerializeField]
 	private AIState state;
-	private float maxHealth = 500f;
+	private float maxHealth = 2000f;
 	private float currentHealth;
+	[HideInInspector]
+	public int upgradeLevel;
 
 	//movement variables
 	private Vector2 accel;
@@ -69,6 +71,9 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	private bool waitingForHiveDirection = true;
 	public Vector2 targetLocation;
 
+	//combat variables
+	private bool beingDrilled;
+
 	private void Start()
 	{
 		transform.eulerAngles = Vector3.forward * -rot;
@@ -78,6 +83,11 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	private void Update()
 	{
 		accel = Vector2.zero;
+
+		if (beingDrilled)
+		{
+			return;
+		}
 
 		switch (state)
 		{
@@ -243,7 +253,8 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 	#endregion
 
-	private bool GoToLocation(Vector2 targetPos, bool avoidObstacles = true, float distLimit = 1f, bool adjustForMomentum = false)
+	private bool GoToLocation(Vector2 targetPos, bool avoidObstacles = true, float distLimit = 1f,
+		bool adjustForMomentum = false)
 	{
 		float distLeft = Vector2.Distance(transform.position, targetPos);
 		if (distLeft > distLimit)
@@ -254,7 +265,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 				expectedAngle = AdjustForMomentum(expectedAngle);
 			}
 			float speedMod = 1f - RotateTo(expectedAngle);
-			DetermineAcceleration(speedMod, distLeft, distLimit);
+			DetermineAcceleration(expectedAngle, speedMod, distLeft, distLimit);
 			return false;
 		}
 		return true;
@@ -340,7 +351,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		return ld;
 	}
 
-	private void DetermineAcceleration(float speedMod, float? distLeft = null, float distLimit = 1f)
+	private void DetermineAcceleration(float expectedAngle, float speedMod, float? distLeft = null, float distLimit = 1f)
 	{
 		if (distLeft != null)
 		{
@@ -351,7 +362,8 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		}
 		float mag = engineStrength * speedMod;
 		float topAccel = Mathf.Min(engineStrength, speedLimit);
-		accel = transform.up * Mathf.Min(mag, topAccel);
+		accel = new Vector2(Mathf.Sin(Mathf.Deg2Rad * expectedAngle), Mathf.Cos(Mathf.Deg2Rad * expectedAngle))
+			* Mathf.Min(mag, topAccel);
 	}
 
 	private float RotateTo(float angle)
@@ -536,12 +548,19 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	public void StartDrilling()
 	{
 		Rb.constraints = RigidbodyConstraints2D.FreezeAll;
+		beingDrilled = true;
+		if (IsDrilling)
+		{
+			drill.StopDrilling();
+			drill.drillTarget.StopDrilling();
+		}
 		shakeFX.Begin();
 	}
 
 	public void StopDrilling()
 	{
 		Rb.constraints = RigidbodyConstraints2D.None;
+		beingDrilled = false;
 		shakeFX.Stop();
 	}
 
@@ -552,7 +571,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		if (otherLayer == layerDrill)
 		{
 			DrillBit otherDrill = other.GetComponentInParent<DrillBit>();
-			if (otherDrill.CanDrill && !IsDrilling)
+			if (otherDrill.CanDrill && otherDrill.drillTarget == null && otherDrill.Verify(this))
 			{
 				StartDrilling();
 				otherDrill.StartDrilling(this);
@@ -576,6 +595,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 			if ((Entity)otherDrill.drillTarget == this)
 			{
+				StopDrilling();
 				otherDrill.StopDrilling();
 			}
 		}
@@ -584,8 +604,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	public bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer, int dropModifier = 0)
 	{
 		currentHealth -= damage;
-
-		return CheckHealth();
+		return CheckHealth(destroyer, dropModifier);
 	}
 
 	public override void DrillComplete()
@@ -614,8 +633,14 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		return target == targetEntity;
 	}
 
-	private bool CheckHealth()
+	private bool CheckHealth(Entity destroyer, int dropModifier)
 	{
+		if (currentHealth > 0f) return false;
+		if (IsDrilling)
+		{
+			drill.drillTarget.StopDrilling();
+		}
+		DestroySelf();
 		return currentHealth <= 0f;
 	}
 

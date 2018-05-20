@@ -344,6 +344,11 @@ public class Shuttle : Entity
 		ShipInventory.Store(storage.inventory);
 	}
 
+	public override bool VerifyTarget(Entity target)
+	{
+		return _accel != Vector2.zero;
+	}
+
 	#region Attach/Detach Methods
 
 	public void AttachDetachLaser1(bool attach)

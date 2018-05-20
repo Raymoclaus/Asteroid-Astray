@@ -252,7 +252,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		if (otherLayer == layerDrill)
 		{
 			DrillBit otherDrill = other.GetComponentInParent<DrillBit>();
-			if (otherDrill.CanDrill && !IsDrilling && otherDrill.Verify(this))
+			if (otherDrill.CanDrill && otherDrill.drillTarget == null && otherDrill.Verify(this))
 			{
 				StartDrilling();
 				otherDrill.StartDrilling(this);
@@ -276,6 +276,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 
 			if ((Entity)otherDrill.drillTarget == this)
 			{
+				StopDrilling();
 				otherDrill.StopDrilling();
 			}
 		}

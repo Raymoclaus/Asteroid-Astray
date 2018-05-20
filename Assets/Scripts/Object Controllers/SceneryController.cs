@@ -100,7 +100,7 @@ public class SceneryController : MonoBehaviour
 
 	private void CheckCoords()
 	{
-		transform.position = Camera.main.transform.position;
+		transform.position = BgCameraController.bgCam.transform.position;
 		if (types.Count >= variety)
 		{
 			ChunkCoords newCoords = new ChunkCoords(transform.position);

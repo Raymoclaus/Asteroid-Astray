@@ -38,7 +38,7 @@ public class ResourceDrop : MonoBehaviour
 	{
 		float aliveTime = Time.time - spawnTime;
 
-		if (aliveTime < delay)
+		if (aliveTime < delay || follow == null)
 		{
 			velocity *= speedDecay;
 		}
