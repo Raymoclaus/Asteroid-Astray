@@ -26,11 +26,17 @@ public class LaserBlast : MonoBehaviour, IProjectile
 	private ParticleSystem particleTrail;
 	private Entity parent;
 	[SerializeField]
-	private Sprite boostedBullet, notBoostedBullet;
+	private Sprite boostedBullet;
+	[SerializeField]
+	private Sprite notBoostedBullet;
 	[SerializeField]
 	private SpriteRenderer sprRend;
 	[SerializeField]
-	private GameObject sonicBoom, weakHit, strongHit;
+	private GameObject sonicBoom;
+	[SerializeField]
+	private GameObject weakHit;
+	[SerializeField]
+	private GameObject strongHit;
 
 	public void Shoot(Vector2 startPos, Quaternion startRot, Vector2 startingDir, Vector2 followDir,
 		List<LaserBlast> p, Transform wep, Collider2D[] exclude, Entity shooter)

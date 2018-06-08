@@ -73,7 +73,10 @@ public class DrillBit : MonoBehaviour
 		drillSoundSource.volume = 0f;
 		drillSoundSource.Play();
 
-		drillAnim.SetBool("Drilling", true);
+		if (drillAnim != null)
+		{
+			drillAnim.SetBool("Drilling", true);
+		}
 	}
 
 	public void StopDrilling()
@@ -86,7 +89,10 @@ public class DrillBit : MonoBehaviour
 		drillSoundSource.volume = 0f;
 		drillSoundSource.Stop();
 
-		drillAnim.SetBool("Drilling", false);
+		if (drillAnim != null)
+		{
+			drillAnim.SetBool("Drilling", false);
+		}
 	}
 
 	public bool Verify(Entity target)
