@@ -33,6 +33,8 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	private ExpandingCircle scanningBeam;
 	[SerializeField]
 	private Inventory storage;
+	[SerializeField]
+	private Animator anim;
 
 	//fields
 	[SerializeField]
@@ -177,6 +179,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 				{
 					state = AIState.Gathering;
 					canDrill = true;
+					anim.SetTrigger("DrillOut");
 				}
 				else
 				{
@@ -184,6 +187,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 					state = AIState.Exploring;
 					waitingForHiveDirection = true;
 					hive.AssignUnoccupiedCoords(this);
+					anim.SetTrigger("Idle");
 				}
 			}
 		}
@@ -656,6 +660,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		if (itemsCollected >= storageCapacity)
 		{
 			state = AIState.Storing;
+			anim.SetTrigger("Idle");
 		}
 	}
 

@@ -29,7 +29,8 @@ public static class EntityGenerator
 		Column(cc)[cc.Y] = true;
 
 		//look through the space priority entities and check if one may spawn
-		List<SpawnableEntity> toSpawn = ChooseEntitiesToSpawn(excludePriority);
+		List<SpawnableEntity> toSpawn = ChooseEntitiesToSpawn(
+			ChunkCoords.GetCenterCell(cc).magnitude, excludePriority);
 
 		//determine area to spawn in
 		Vector2Pair range = ChunkCoords.GetCellArea(cc);
@@ -57,7 +58,7 @@ public static class EntityGenerator
 		}
 	}
 
-	private static List<SpawnableEntity> ChooseEntitiesToSpawn(bool excludePriority = false)
+	private static List<SpawnableEntity> ChooseEntitiesToSpawn(float distance, bool excludePriority = false)
 	{
 		List<SpawnableEntity> list = new List<SpawnableEntity>();
 		float chance = Random.value;
@@ -67,7 +68,7 @@ public static class EntityGenerator
 			{
 				if (e.ignore) continue;
 
-				if (e.rarity >= chance)
+				if (e.GetChance(distance) >= chance)
 				{
 					list.Add(e);
 					break;
@@ -83,7 +84,7 @@ public static class EntityGenerator
 		{
 			if (e.ignore) continue;
 
-			if (e.rarity >= chance)
+			if (e.GetChance(distance) >= chance)
 			{
 				list.Add(e);
 			}

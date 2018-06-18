@@ -40,6 +40,7 @@ public class SceneryController : MonoBehaviour
 	private ChunkCoords currentCoords = ChunkCoords.Invalid;
 	public Vector2Int cosmicDensity = new Vector2Int(10, 100);
 	public float perlinStretchModifier = 1f;
+	private Vector2 perlinOffset;
 	public float starMinDistance = 400f, starDistanceRange = 200f;
 	public Vector2 scaleRange = new Vector2(1f, 4f);
 	private Transform sceneryHolder;
@@ -91,6 +92,7 @@ public class SceneryController : MonoBehaviour
 		sceneryHolder.gameObject.layer = backgroundLayer;
 		ReserveListCapacity();
 		FillPool();
+		perlinOffset = new Vector2(Random.value, Random.value);
 	}
 
 	private void Update()
@@ -181,7 +183,8 @@ public class SceneryController : MonoBehaviour
 	{
 		ChunkCoords signedCoords = c;
 		signedCoords.ConvertToSignedCoords();
-		float amount = Mathf.PerlinNoise(c.X * perlinStretchModifier, c.Y * perlinStretchModifier);
+		float amount = Mathf.PerlinNoise(c.X * perlinStretchModifier + perlinOffset.x,
+			c.Y * perlinStretchModifier + perlinOffset.y);
 
 		float min = Mathf.Min(cosmicDensity.x, cosmicDensity.y);
 		float max = Mathf.Max(cosmicDensity.x, cosmicDensity.y);
