@@ -43,6 +43,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	private float currentHealth;
 	[HideInInspector]
 	public int upgradeLevel;
+	public int dockID = -1;
 
 	//movement variables
 	private Vector2 accel;
@@ -58,7 +59,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	//scanning variables
 	private float scanTimer, scanDuration = 3f;
 	private bool scanStarted;
-	private int entitiesScanned;
+	private List<Entity> entitiesScanned = new List<Entity>();
 
 	//gathering variables
 	private float searchTimer, searchInterval = 0.3f;
@@ -68,13 +69,23 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	[SerializeField]
 	private int storageCapacity = 10;
 	private int itemsCollected;
+	private bool waitingForResources;
 
 	//exploring variables
 	private bool waitingForHiveDirection = true;
 	public Vector2 targetLocation;
 
+	//suspicious variables
+	private float suspiciousChaseRange = Mathf.Sqrt(2f) * Cnsts.CHUNK_SIZE * 1.5f;
+	private float intenseScanDuration = 4f;
+	private float intenseScanTimer = 0f;
+	private float intenseScanRange = 3f;
+	private List<Entity> nearbySuspects = new List<Entity>();
+
 	//combat variables
 	private bool beingDrilled;
+	private List<Entity> threats = new List<Entity>();
+	private float chaseRange = Mathf.Sqrt(2f) * Cnsts.CHUNK_SIZE * 2.5f;
 
 	private void Start()
 	{
@@ -132,7 +143,8 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 	private void Spawning()
 	{
-		Vector2 targetPos = hive.transform.position + Vector3.down * 2f;
+		Transform dock = hive.GetDock(this);
+		Vector2 targetPos = dock.position + dock.up * 1.5f;
 		if (GoToLocation(targetPos))
 		{
 			if (Rb.velocity.sqrMagnitude < Mathf.Epsilon)
@@ -158,10 +170,11 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 					StartCoroutine(ScanRings());
 				}
 				scanStarted = true;
-				entitiesScanned = 0;
+				entitiesScanned.Clear();
 				new Thread(() =>
 				{
-					entitiesScanned = EntityNetwork.CountInRange(_coords, 1);
+					entitiesScanned = EntityNetwork.GetEntitiesInRange(_coords, 1,
+						exclusions: new List<Entity> { this });
 				}).Start();
 			}
 			else
@@ -173,9 +186,24 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			{
 				scanTimer = 0f;
 				scanStarted = false;
+				//look for the first unusual entity in the scan
+				foreach (Entity e in entitiesScanned)
+				{
+					if (IsSuspicious(e))
+					{
+						nearbySuspects.Add(e);
+					}
+				}
+
+				if (nearbySuspects.Count > 0)
+				{
+					state = AIState.Suspicious;
+					anim.SetTrigger("Idle");
+					return;
+				}
 
 				//choose state
-				if (entitiesScanned >= 10)
+				if (entitiesScanned.Count >= 10)
 				{
 					state = AIState.Gathering;
 					canDrill = true;
@@ -184,9 +212,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 				else
 				{
 					hive.MarkCoordAsEmpty(_coords);
-					state = AIState.Exploring;
-					waitingForHiveDirection = true;
-					hive.AssignUnoccupiedCoords(this);
+					StartExploring();
 					anim.SetTrigger("Idle");
 				}
 			}
@@ -195,6 +221,8 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 	private void Gathering()
 	{
+		if (waitingForResources) return;
+
 		if (Time.time - searchTimer > searchInterval || targetEntity == null)
 		{
 			SearchForNearestAsteroid();
@@ -231,18 +259,74 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 	private void Storing()
 	{
-		targetEntity = hive;
-		if (GoToLocation(targetEntity.transform.position, true, 2f, false))
+		//go back to hive
+		Transform dock = hive.GetDock(this);
+		Vector2 targetPos = dock.position + dock.up * 2f;
+		if (GoToLocation(targetPos, true, 2f, false))
 		{
+			//store inventory in hive once close enough to hive
 			hive.Store(storage.inventory, this);
 			itemsCollected = 0;
+			//return to exploring
 			StartExploring();
 		}
 	}
 
 	private void Suspicious()
 	{
+		if (nearbySuspects.Count == 0)
+		{
+			StartExploring();
+			return;
+		}
+		targetEntity = nearbySuspects[0];
+		//if target is too far away then return to exploring
+		if (targetEntity == null ||
+			Vector2.Distance(targetEntity.transform.position, transform.position) > suspiciousChaseRange)
+		{
+			intenseScanTimer = 0f;
+			nearbySuspects.RemoveAt(0);
+			return;
+		}
 
+		//follow entity
+		GoToLocation(targetEntity.transform.position, true, 2f, true);
+		if (Vector2.Distance(transform.position, targetEntity.transform.position) > intenseScanRange)
+		{
+			//scan entity if close enough
+			intenseScanTimer += Time.deltaTime;
+			if (intenseScanTimer >= intenseScanDuration)
+			{
+				//scan complete
+				intenseScanTimer = 0f;
+				//assess threat level and make a decision
+				int threatLevel = EvaluateScan(targetEntity.ReturnScan());
+				switch (threatLevel)
+				{
+					//attack alone
+					case 0:
+						threats.Add(targetEntity);
+						state = AIState.Attacking;
+						nearbySuspects.Clear();
+						break;
+					//signal for help
+					case 1:
+						state = AIState.Signalling;
+						nearbySuspects.Clear();
+						break;
+					//escape
+					case 2:
+						hive.MarkCoordAsEmpty(targetEntity.GetCoords());
+						StartExploring();
+						nearbySuspects.Clear();
+						break;
+					//ignore
+					case 3:
+						nearbySuspects.RemoveAt(0);
+						break;
+				}
+			}
+		}
 	}
 
 	private void Signalling()
@@ -332,7 +416,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 	private float AdjustForMomentum(float lookDir)
 	{
-		float ld = lookDir, rt = rot;
+		float ld = lookDir, rt = Vector2.Angle(Vector2.up, velocity);
 
 		float difference = ld - rt;
 		if (difference > 180f)
@@ -422,39 +506,31 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		}
 
 		float change = 0f;
+		bool facingWall = FacingWall(hits);
 
 		for (int i = 0; i < hits.Length; i++)
 		{
+			if (facingWall && i != 1) continue;
+
 			RaycastHit2D hit = hits[i];
 
 			if (hit.collider != null && !IsTarget(hit))
 			{
 				accel *= hit.fraction;
 				float delta = 1f - hit.fraction;
-				if (hit.rigidbody != null)
+				switch (i)
 				{
-					switch (i)
-					{
-						case 0:
-							change += maxSway * delta;
-							break;
-						case 1:
-							Vector2 normal = hit.normal;
-							float normalAngle = Vector2.Angle(Vector2.up, normal);
-							bool moveRight = Mathf.MoveTowardsAngle(angleTo, normalAngle, 1f) > angleTo;
-							if (moveRight)
-							{
-								change += maxSway * delta * 2f;
-							}
-							else
-							{
-								change -= maxSway * delta * 2f;
-							}
-							break;
-						case 2:
-							change -= maxSway * delta;
-							break;
-					}
+					case 0:
+						change += maxSway * delta;
+						break;
+					case 1:
+						float obstacleAngle = Vector2.Angle(Vector2.up,
+							hit.collider.transform.position - transform.position);
+						change += Mathf.MoveTowardsAngle(angleTo, obstacleAngle, -maxSway * delta * 2f) - angleTo;
+						break;
+					case 2:
+						change -= maxSway * delta;
+						break;
 				}
 			}
 		}
@@ -463,6 +539,47 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			+ new Vector2(Mathf.Sin(Mathf.Deg2Rad * (angleTo + change)), Mathf.Cos(Mathf.Deg2Rad * (angleTo + change))), Color.red);
 
 		return angleTo + change;
+	}
+
+	private bool FacingWall(RaycastHit2D[] hits)
+	{
+		//look at all the objects being seen by the raycasts
+		//if there are any duplicates then assume it is a wall
+		List<GameObject> obstacles = new List<GameObject>();
+		foreach (RaycastHit2D hit in hits)
+		{
+			if (hit.collider != null)
+			{
+				foreach (GameObject obstacle in obstacles)
+				{
+					if (hit.collider.gameObject == obstacle)
+					{
+						return true;
+					}
+				}
+				obstacles.Add(hit.collider.gameObject);
+			}
+		}
+		return false;
+	}
+
+	private bool IsSuspicious(Entity e)
+	{
+		EntityType type = e.GetEntityType();
+		if (type == EntityType.Shuttle)
+		{
+			return true;
+		}
+		if (type == EntityType.BotHive)
+		{
+			return e != hive;
+		}
+		if (type == EntityType.GatherBot)
+		{
+			return !hive.IsSibling(e);
+		}
+
+		return false;
 	}
 
 	private bool IsTarget(RaycastHit2D hit)
@@ -536,12 +653,13 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		return velocity.magnitude / speedLimit;
 	}
 
-	public void Create(BotHive botHive, float MaxHP)
+	public void Create(BotHive botHive, float MaxHP, int dockingID)
 	{
 		hive = botHive;
 		state = AIState.Spawning;
 		maxHealth = MaxHP;
 		currentHealth = maxHealth;
+		dockID = dockingID;
 	}
 
 	public bool TakeDrillDamage(float drillDmg, Vector2 drillPos, Entity destroyer, int dropModifier = 0)
@@ -613,11 +731,13 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 	public override void DrillComplete()
 	{
+		waitingForResources = true;
 		bool hiveOrders = hive.SplitUpGatheringUnits(this);
 		drillCount++;
 
 		if (drillCount < drillLimit && !hiveOrders) return;
 
+		waitingForResources = false;
 		drillCount = 0;
 		targetEntity = null;
 		drillableTarget = null;
@@ -648,6 +768,12 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		return currentHealth <= 0f;
 	}
 
+	public override void DestroySelf()
+	{
+		hive.BotDestroyed(this);
+		base.DestroySelf();
+	}
+
 	public override float DrillDamageQuery(bool firstHit)
 	{
 		return speedLimit;
@@ -662,6 +788,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			state = AIState.Storing;
 			anim.SetTrigger("Idle");
 		}
+		waitingForResources = false;
 	}
 
 	private void StartExploring()
@@ -674,5 +801,16 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	public Vector2 GetPosition()
 	{
 		return transform.position;
+	}
+
+	public override EntityType GetEntityType()
+	{
+		return EntityType.GatherBot;
+	}
+
+	//codes: 0 = attack alone, 1 = signal for help, 2 = escape, 3 = ignore
+	private int EvaluateScan(Scan sc)
+	{
+		return 3;
 	}
 }

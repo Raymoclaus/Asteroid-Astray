@@ -58,14 +58,16 @@ public static class EntityNetwork
 	}
 
 	/// Returns a list of all entities located in cells within range of the given coordinates
-	public static List<Entity> GetEntitiesInRange(ChunkCoords center, int range, EntityType? type = null)
+	public static List<Entity> GetEntitiesInRange(ChunkCoords center, int range, EntityType? type = null,
+		List<Entity> exclusions = null)
 	{
 		List<ChunkCoords> coordsInRange = GetCoordsInRange(center, range);
 		//declare a list to be filled and reserve some room
-		return GetEntitiesAtCoords(coordsInRange, type);
+		return GetEntitiesAtCoords(coordsInRange, type, exclusions);
 	}
 
-	public static List<Entity> GetEntitiesAtCoords(List<ChunkCoords> coordsList, EntityType? type = null)
+	public static List<Entity> GetEntitiesAtCoords(List<ChunkCoords> coordsList, EntityType? type = null,
+		List<Entity> exclusions = null)
 	{
 		List<Entity> entitiesInCoords = new List<Entity>(CellReserve * coordsList.Count);
 		EntityType filter = type ?? EntityType.Entity;
@@ -80,7 +82,7 @@ public static class EntityNetwork
 			{
 				foreach (Entity e in Chunk(coord))
 				{
-					if (e.GetEntityType() == filter)
+					if (e.GetEntityType() == filter && !EntityIsInSet(e, exclusions))
 					{
 						entitiesInCoords.Add(e);
 					}
@@ -88,6 +90,18 @@ public static class EntityNetwork
 			}
 		}
 		return entitiesInCoords;
+	}
+
+	private static bool EntityIsInSet(Entity e, List<Entity> set)
+	{
+		foreach (Entity entity in set)
+		{
+			if (entity == e)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public static List<ChunkCoords> GetCoordsInRange(ChunkCoords center, int range,

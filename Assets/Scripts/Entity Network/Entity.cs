@@ -222,6 +222,11 @@ public class Entity : MonoBehaviour
 
 		layersSet = true;
 	}
+
+	public virtual Scan ReturnScan()
+	{
+		return new Scan(GetEntityType(), 1f, 1);
+	}
 }
 
 public enum EntityType
@@ -229,5 +234,7 @@ public enum EntityType
 	Entity,
 	Asteroid,
 	Shuttle,
-	Nebula
+	Nebula,
+	BotHive,
+	GatherBot
 }

@@ -14,14 +14,18 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 	private ShakeEffect shakeFX;
 	[SerializeField]
 	private HiveInventory inventory;
+	[SerializeField]
+	private Transform dockHolder;
+	private Transform[] docks;
 
 	//fields
 	[SerializeField]
 	private float maxHealth = 10000f, botBaseHP = 500f;
 	private float currentHealth;
 	private List<GatherBot> childBots = new List<GatherBot>();
+	private bool[] occupiedDocks;
 	[SerializeField]
-	private int minInitialBotCount = 2, maxBotCount = 4, minLeftoverResources = 1, botCreationCost = 2,
+	private int minInitialBotCount = 2, maxBotCount = 3, minLeftoverResources = 1, botCreationCost = 2,
 		botUpgradeCost = 4, maxInitialUpgrades = 0;
 	private int resourceCount, toBeSpent;
 	private bool dormant;
@@ -33,6 +37,12 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 
 	private void Start()
 	{
+		occupiedDocks = new bool[maxBotCount];
+		docks = new Transform[dockHolder.childCount];
+		for (int i = 0; i < dockHolder.childCount; i++)
+		{
+			docks[i] = dockHolder.GetChild(i);
+		}
 		currentHealth = maxHealth;
 		resourceCount = UnityEngine.Random.Range(
 			minLeftoverResources + botCreationCost * minInitialBotCount,
@@ -106,9 +116,12 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 		toBeSpent -= botCreationCost;
 		inventory.RemoveItem(Item.Type.Corvorite, botCreationCost);
 		GatherBot bot = Instantiate(botPrefab);
-		bot.transform.position = transform.position;
+		int availableDockID = GetAvailableDockID();
+		bot.Create(this, botBaseHP, availableDockID);
+		occupiedDocks[availableDockID] = true;
+		bot.transform.position = docks[availableDockID].position;
+		bot.transform.rotation = docks[availableDockID].rotation;
 		bot.transform.parent = transform.parent;
-		bot.Create(this, botBaseHP);
 		childBots.Add(bot);
 		new Thread(() =>
 		{
@@ -123,6 +136,20 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 		resourceCount -= botUpgradeCost;
 		toBeSpent -= botUpgradeCost;
 		inventory.RemoveItem(Item.Type.Corvorite, botUpgradeCost);
+	}
+
+	private int GetAvailableDockID()
+	{
+		for (int i = 0; i < occupiedDocks.Length; i++)
+		{
+			if (!occupiedDocks[i]) return i;
+		}
+		return -1;
+	}
+
+	public Transform GetDock(GatherBot bot)
+	{
+		return docks[bot.dockID];
 	}
 
 	public void AssignUnoccupiedCoords(GatherBot b)
@@ -200,6 +227,11 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 			if (e == bot.targetEntity) return false;
 		}
 		return true;
+	}
+
+	public void BotDestroyed(GatherBot bot)
+	{
+		occupiedDocks[bot.dockID] = false;
 	}
 
 	public void Store(List<ItemStack> items, GatherBot b)
@@ -301,5 +333,19 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 	public Vector2 GetPosition()
 	{
 		return transform.position;
+	}
+
+	public bool IsSibling(Entity e)
+	{
+		foreach (Entity ent in childBots)
+		{
+			if (e == ent) return true;
+		}
+		return false;
+	}
+
+	public override EntityType GetEntityType()
+	{
+		return EntityType.BotHive;
 	}
 }
