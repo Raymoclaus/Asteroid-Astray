@@ -67,11 +67,11 @@ public class Shuttle : Entity
 	#endregion
 
 	#region Attachments
-	// Laser 1
+	// Laser Weapon
 	[SerializeField]
-	private bool laser1Attached = false;
+	private bool laserAttached = false;
 	[SerializeField]
-	private GameObject laser1Obj;
+	private GameObject laserObj;
 	#endregion
 
 	#region Sound Stuff
@@ -344,7 +344,7 @@ public class Shuttle : Entity
 		ShipInventory.Store(storage.inventory);
 	}
 
-	public override bool VerifyTarget(Entity target)
+	public override bool VerifyDrillTarget(Entity target)
 	{
 		return _accel != Vector2.zero;
 	}
@@ -353,8 +353,8 @@ public class Shuttle : Entity
 
 	public void AttachDetachLaser1(bool attach)
 	{
-		laser1Obj.SetActive(attach);
-		laser1Attached = attach;
+		laserObj.SetActive(attach);
+		laserAttached = attach;
 	}
 
 	#endregion

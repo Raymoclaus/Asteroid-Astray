@@ -22,7 +22,8 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 	[SerializeField]
 	private float maxHealth = 10000f, botBaseHP = 500f;
 	private float currentHealth;
-	private List<GatherBot> childBots = new List<GatherBot>();
+	[HideInInspector]
+	public List<GatherBot> childBots = new List<GatherBot>();
 	private bool[] occupiedDocks;
 	[SerializeField]
 	private int minInitialBotCount = 2, maxBotCount = 3, minLeftoverResources = 1, botCreationCost = 2,

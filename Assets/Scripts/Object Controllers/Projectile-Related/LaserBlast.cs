@@ -9,16 +9,14 @@ public class LaserBlast : MonoBehaviour, IProjectile
 	private Rigidbody2D rb;
 	private List<LaserBlast> pool;
 	private Transform weapon;
-	private const int maxRange = 10;
+	private Vector2 firingPos;
+	private float maxRange = 10f;
 	[SerializeField]
 	private float startSpeed = 5f, minSpeed = 1f, maxSpeed = 10f, boostTime = 0.5f, convergeStrength = 1f;
 	private float boostCounter = 0f;
 	private Vector2 direction, forward, convergePoint;
 	public float inwardMomentumMultiplier = 5f;
-	private static int solidLayer;
-	private static bool setLayers;
 	private Vector2 vel;
-	private Collider2D[] excludedColliders;
 	[SerializeField]
 	private float damage = 200f;
 	private bool converged;
@@ -39,8 +37,9 @@ public class LaserBlast : MonoBehaviour, IProjectile
 	private GameObject strongHit;
 
 	public void Shoot(Vector2 startPos, Quaternion startRot, Vector2 startingDir, Vector2 followDir,
-		List<LaserBlast> p, Transform wep, Collider2D[] exclude, Entity shooter)
+		List<LaserBlast> p, Transform wep, Entity shooter)
 	{
+		firingPos = startPos;
 		transform.position = startPos;
 		transform.rotation = startRot;
 		vel = startingDir * startSpeed;
@@ -49,7 +48,6 @@ public class LaserBlast : MonoBehaviour, IProjectile
 		pool = p;
 		weapon = wep;
 		forward = weapon.up;
-		excludedColliders = exclude;
 		converged = false;
 		particleTrail.gameObject.SetActive(true);
 		particleTrail.Play();
@@ -60,38 +58,17 @@ public class LaserBlast : MonoBehaviour, IProjectile
 		gameObject.SetActive(true);
 	}
 
-	private void Awake()
+	private void Update()
 	{
-		GetLayers();
-	}
-
-	private void GetLayers()
-	{
-		if (setLayers) return;
-		solidLayer = LayerMask.NameToLayer("Solid");
-		setLayers = true;
+		if (Vector2.Distance(transform.position, firingPos) > maxRange)
+		{
+			Dissipate();
+		}
 	}
 
 	private void FixedUpdate()
 	{
-		if (Vector2.Distance(transform.position, weapon.position) > maxRange)
-		{
-			Dissipate();
-		}
-
 		SetVelocity();
-	}
-
-	private bool CollisionIsValid(Collider2D collision)
-	{
-		if (collision.gameObject.layer != solidLayer) return false;
-
-		foreach (Collider2D col in excludedColliders)
-		{
-			if (col == collision) return false;
-		}
-
-		return true;
 	}
 
 	private void SetVelocity()
@@ -157,5 +134,10 @@ public class LaserBlast : MonoBehaviour, IProjectile
 		sprRend.sprite = notBoostedBullet;
 		boostCounter = 0f;
 		gameObject.SetActive(false);
+	}
+
+	public Entity GetShooter()
+	{
+		return parent;
 	}
 }

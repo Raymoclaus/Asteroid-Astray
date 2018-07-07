@@ -97,7 +97,7 @@ public class DrillBit : MonoBehaviour
 
 	public bool Verify(Entity target)
 	{
-		return parent.VerifyTarget(target);
+		return parent.VerifyDrillTarget(target);
 	}
 
 	private void TriggerParticleEffects(bool start)

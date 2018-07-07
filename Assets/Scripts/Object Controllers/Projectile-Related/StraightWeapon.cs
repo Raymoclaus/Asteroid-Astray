@@ -1,24 +1,27 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-public class LaserWeapon : MonoBehaviour
+public class StraightWeapon : MonoBehaviour
 {
 	[SerializeField]
 	private Transform[] weapons;
-	[SerializeField]
-	private Transform laserTarget;
 	private Transform blastPoolHolder;
 	[SerializeField]
-	private LaserBlast blastPrefab;
-	private const int poolReserve = 20;
-	private List<LaserBlast> pool = new List<LaserBlast>(poolReserve);
+	private StraightBlast blastPrefab;
+	private const int poolReserve = 50;
+	private List<StraightBlast> pool = new List<StraightBlast>(poolReserve);
 	private float timer = 0f;
 	[SerializeField]
-	private float cooldown = 0.5f, recoil = 1f, stoppingForce = 0.2f;
+	private bool alternatingFire = true;
+	private int nextWeaponCounter = 0;
+	[SerializeField]
+	private float cooldown = 0.5f, recoil = 1f;
 	[SerializeField]
 	private Entity parent;
 	[SerializeField]
 	private GameObject muzzleFlash;
+	[SerializeField]
+	private float muzzleFlashAngle = 45f;
 
 
 	private void Awake()
@@ -43,7 +46,7 @@ public class LaserWeapon : MonoBehaviour
 		}
 	}
 
-	private void Fire()
+	public void Fire()
 	{
 		if (timer <= 0f)
 		{
@@ -55,25 +58,29 @@ public class LaserWeapon : MonoBehaviour
 
 		if (parent.Rb != null)
 		{
-			parent.Rb.velocity *= stoppingForce;
 			Vector2 dir = new Vector2(Mathf.Sin(angle), Mathf.Cos(angle));
 			dir.Normalize();
 			parent.Rb.AddForce(-dir * recoil);
-		}
+		} 
 
 		bool flipMuzzleFlash = true;
-		foreach (Transform weapon in weapons)
+		for (int i = alternatingFire ? nextWeaponCounter : 0; i < weapons.Length; i++)
 		{
-			LaserBlast blast = pool[pool.Count - 1];
+			StraightBlast blast = pool[pool.Count - 1];
 			pool.RemoveAt(pool.Count - 1);
-			blast.Shoot(weapon.position, transform.rotation, weapon.GetChild(0).position - weapon.position,
-				laserTarget.position - weapon.position, pool, weapon, parent);
+			blast.Shoot(weapons[i].position, transform.rotation, pool, weapons[i], parent);
 			//muzzle flash
 			GameObject muzFlash = Instantiate(muzzleFlash);
-			muzFlash.transform.position = weapon.position;
-			muzFlash.transform.eulerAngles = Vector3.forward * -angle * Mathf.Rad2Deg;
+			muzFlash.transform.position = weapons[i].position;
+			muzFlash.transform.eulerAngles = Vector3.forward * (-angle + muzzleFlashAngle) * Mathf.Rad2Deg;
 			muzFlash.GetComponent<SpriteRenderer>().flipX = flipMuzzleFlash;
 			flipMuzzleFlash = !flipMuzzleFlash;
+
+			if (alternatingFire)
+			{
+				nextWeaponCounter = (nextWeaponCounter + 1) % weapons.Length;
+				break;
+			}
 		}
 	}
 
@@ -81,7 +88,7 @@ public class LaserWeapon : MonoBehaviour
 	{
 		for (int i = 0; i < poolReserve; i++)
 		{
-			LaserBlast newObj = Instantiate(blastPrefab, blastPoolHolder);
+			StraightBlast newObj = Instantiate(blastPrefab, blastPoolHolder);
 			newObj.gameObject.SetActive(false);
 			pool.Add(newObj);
 		}

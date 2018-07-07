@@ -202,7 +202,7 @@ public class Entity : MonoBehaviour
 	}
 
 	//some entities might want to avoid drilling other entities by accident, override to verify target
-	public virtual bool VerifyTarget(Entity target)
+	public virtual bool VerifyDrillTarget(Entity target)
 	{
 		return true;
 	}

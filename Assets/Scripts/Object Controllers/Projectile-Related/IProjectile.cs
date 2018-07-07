@@ -4,7 +4,6 @@ using UnityEngine;
 
 public interface IProjectile
 {
-	void Shoot(Vector2 startPos, Quaternion startRot, Vector2 startingDir, Vector2 followDir, List<LaserBlast> p,
-		Transform wep, Collider2D[] exclude, Entity parent);
 	void Hit(IDamageable obj);
+	Entity GetShooter();
 }
