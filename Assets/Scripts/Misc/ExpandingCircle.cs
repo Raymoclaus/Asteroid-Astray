@@ -6,12 +6,12 @@ using UnityEngine;
 public class ExpandingCircle : MonoBehaviour
 {
 	private LineRenderer lr;
-	private const int edges = 360;
-	[SerializeField]
-	private float maxRadius = 3f;
+	public float maxRadius = 3f;
+	public float arcSize = 360f;
+	public float rot = 0f;
 	private float currentTimer;
 	public float lifeTime = 3f;
-	private List<Vector3> points = new List<Vector3>(edges);
+	private List<Vector3> points;
 	private Vector2 origin;
 	public Color startColor, endColor;
 
@@ -45,7 +45,7 @@ public class ExpandingCircle : MonoBehaviour
 	{
 		for (int i = 0; i < lr.positionCount; i++)
 		{
-			float angle = (float)i / edges * Mathf.PI * 2f;
+			float angle = (i / 360f) * Mathf.PI * 2f + rot - arcSize / 2f;
 			Vector2 pos = origin + new Vector2(Mathf.Sin(angle), Mathf.Cos(angle)) * r;
 			lr.SetPosition(i, pos);
 		}
@@ -53,8 +53,9 @@ public class ExpandingCircle : MonoBehaviour
 
 	private void FillPoints()
 	{
-		lr.positionCount = edges;
-		for (int i = 0; i < edges; i++)
+		points = new List<Vector3>((int)arcSize);
+		lr.positionCount = (int)arcSize;
+		for (int i = 0; i < (int)arcSize; i++)
 		{
 			points.Add(Vector2.zero);
 		}

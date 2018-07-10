@@ -66,7 +66,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	private List<Entity> entitiesScanned = new List<Entity>();
 
 	//gathering variables
-	private float searchTimer, searchInterval = 0.3f;
+	private float searchTimer, scanInterval = 0.3f;
 	private int drillCount, drillLimit = 3;
 	private List<Entity> surroundingEntities;
 	private IDrillableObject drillableTarget;
@@ -96,6 +96,10 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	private float orbitSpeed = 1f;
 	[SerializeField]
 	private float firingRange = 5f;
+
+	//signalling variables
+	private float signalTimer;
+	private bool respondingToSignal;
 
 	private void Start()
 	{
@@ -236,7 +240,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	{
 		if (waitingForResources) return;
 
-		if (Time.time - searchTimer > searchInterval || targetEntity == null)
+		if (Time.time - searchTimer > scanInterval || targetEntity == null)
 		{
 			SearchForNearestAsteroid();
 		}
@@ -327,6 +331,12 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 						threats.Add(targetEntity);
 						state = AIState.Signalling;
 						nearbySuspects.Clear();
+						foreach (GatherBot sibling in hive.childBots)
+						{
+							if (sibling == this) continue;
+							StartCoroutine(ScanRings(-Vector2.SignedAngle(transform.position, sibling.transform.position), 30f));
+						}
+						signalTimer = scanDuration;
 						break;
 					//escape
 					case 2:
@@ -345,12 +355,22 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 	private void Signalling()
 	{
-
+		signalTimer -= Time.deltaTime;
+		if (signalTimer <= 0f)
+		{
+			foreach (GatherBot sibling in hive.childBots)
+			{
+				sibling.respondingToSignal = true;
+				sibling.threats = threats;
+				sibling.StartEmergencyAttack();
+			}
+		}
 	}
 
 	private void Attacking()
 	{
-		if (threats[0] == null || Vector2.Distance(transform.position, threats[0].transform.position) > chaseRange)
+		//TODO: make sure distant signalled bots don't instantly remove threat
+		if (threats[0] == null || (Vector2.Distance(transform.position, threats[0].transform.position) > chaseRange && !respondingToSignal))
 		{
 			threats.RemoveAt(0);
 			if (threats.Count == 0)
@@ -364,9 +384,12 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 		foreach (GatherBot sibling in hive.childBots)
 		{
-			if (Vector2.Distance(ChunkCoords.GetCenterCell(_coords), ChunkCoords.GetCenterCell(sibling._coords))
+			if (sibling.state == AIState.Attacking) continue;
+
+			if (Vector2.Distance(transform.position, sibling.transform.position)
 				< Cnsts.CHUNK_SIZE)
 			{
+				StartCoroutine(ScanRings(-Vector2.SignedAngle(transform.position, sibling.transform.position), 30f));
 				sibling.threats = threats;
 				sibling.StartEmergencyAttack();
 			}
@@ -378,6 +401,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			distanceFromTarget > firingRange ? null : (Vector2?)targetEntity.transform.position);
 		if (distanceFromTarget <= firingRange)
 		{
+			respondingToSignal = false;
 			straightWeapon.Fire();
 		}
 		
@@ -707,13 +731,15 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		}
 	}
 
-	private IEnumerator ScanRings()
+	private IEnumerator ScanRings(float angle = 0f, float arcSize = 360f)
 	{
 		WaitForSeconds wfs = new WaitForSeconds(0.5f);
 		System.Action a = () =>
 		{
 			ExpandingCircle scan = Instantiate(scanningBeam);
 			scan.lifeTime = scanDuration;
+			scan.rot = angle;
+			scan.arcSize = arcSize;
 			scan.transform.position = transform.position;
 			scan.transform.parent = ParticleGenerator.singleton.transform;
 		};
@@ -897,6 +923,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			anim.SetBool("Drilling", false);
 		}
 		state = AIState.Attacking;
+		nearbySuspects.Clear();
 	}
 
 	private void StartAttacking()
@@ -918,6 +945,6 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	//codes: 0 = attack alone, 1 = signal for help, 2 = escape, 3 = ignore
 	private int EvaluateScan(Scan sc)
 	{
-		return 0;
+		return 1;
 	}
 }
