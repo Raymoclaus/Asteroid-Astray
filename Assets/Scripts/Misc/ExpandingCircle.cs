@@ -17,6 +17,7 @@ public class ExpandingCircle : MonoBehaviour
 
 	private void Start()
 	{
+		arcSize = Mathf.Clamp(arcSize, 0f, 360f);
 		lr = GetComponent<LineRenderer>();
 		for (int i = 0; i < lr.colorGradient.colorKeys.Length; i++)
 		{
@@ -55,7 +56,7 @@ public class ExpandingCircle : MonoBehaviour
 	{
 		points = new List<Vector3>((int)arcSize);
 		lr.positionCount = (int)arcSize;
-		for (int i = 0; i < (int)arcSize; i++)
+		for (int i = 0; i <= (int)arcSize; i++)
 		{
 			points.Add(Vector2.zero);
 		}

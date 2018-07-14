@@ -173,7 +173,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		}
 
 		int delta = (int)((1f - (Health / MaxHealth)) * GetCurrentSpriteSettings().Length - 1);
-		Mathf.Clamp(delta, 0, GetCurrentSpriteSettings().Length - 1);
+		delta = Mathf.Clamp(delta, 0, GetCurrentSpriteSettings().Length - 1);
 		SprRend.sprite = GetCurrentSpriteSettings()[delta];
 	}
 

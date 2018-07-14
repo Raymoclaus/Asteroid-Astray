@@ -2,7 +2,6 @@
 using System.Threading;
 using System;
 using UnityEngine;
-using System.Collections;
 
 [RequireComponent(typeof(HiveInventory))]
 public class BotHive : Entity, IDrillableObject, IDamageable
@@ -31,7 +30,6 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 	private int resourceCount, toBeSpent;
 	private bool dormant;
 	private int needToCreate, needToUpgrade;
-	private WaitForSeconds timeBetweenCreation = new WaitForSeconds(5f);
 	private List<ChunkCoords> emptyCoords = new List<ChunkCoords>();
 	private List<GTime> emptyCoordTimes = new List<GTime>();
 	private float emptyCoordWaitTime = 300f;
@@ -81,11 +79,11 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 
 		if (startCreationProcess)
 		{
-			StartCoroutine(CreationProcess(b));
+			CreationProcess(b);
 		}
 	}
 
-	private IEnumerator CreationProcess(GatherBot b = null)
+	private void CreationProcess(GatherBot b = null)
 	{
 		//if (b != null && needToUpgrade > 0)
 		//{
@@ -104,8 +102,6 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 				UpgradeBot(newBot);
 				needToUpgrade--;
 			}
-
-			yield return timeBetweenCreation;
 		}
 	}
 

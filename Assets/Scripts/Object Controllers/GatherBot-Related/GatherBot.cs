@@ -334,7 +334,13 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 						foreach (GatherBot sibling in hive.childBots)
 						{
 							if (sibling == this) continue;
-							StartCoroutine(ScanRings(-Vector2.SignedAngle(transform.position, sibling.transform.position), 30f));
+							float scanAngle = Vector2.Angle(
+								Vector2.up, sibling.transform.position - transform.position);
+							if (sibling.transform.position.x < transform.position.x)
+							{
+								scanAngle = 180f + (180f - scanAngle);
+							}
+							StartCoroutine(ScanRings(scanAngle, 30f));
 						}
 						signalTimer = scanDuration;
 						break;
@@ -370,7 +376,8 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	private void Attacking()
 	{
 		//TODO: make sure distant signalled bots don't instantly remove threat
-		if (threats[0] == null || (Vector2.Distance(transform.position, threats[0].transform.position) > chaseRange && !respondingToSignal))
+		if (threats[0] == null || 
+			(Vector2.Distance(transform.position, threats[0].transform.position) > chaseRange && !respondingToSignal))
 		{
 			threats.RemoveAt(0);
 			if (threats.Count == 0)
@@ -389,7 +396,12 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			if (Vector2.Distance(transform.position, sibling.transform.position)
 				< Cnsts.CHUNK_SIZE)
 			{
-				StartCoroutine(ScanRings(-Vector2.SignedAngle(transform.position, sibling.transform.position), 30f));
+				float scanAngle = Vector2.Angle(Vector2.up, sibling.transform.position - transform.position);
+				if (sibling.transform.position.x < transform.position.x)
+				{
+					scanAngle = 180f + (180f - scanAngle);
+				}
+				StartCoroutine(ScanRings(scanAngle, 30f));
 				sibling.threats = threats;
 				sibling.StartEmergencyAttack();
 			}
@@ -402,7 +414,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		if (distanceFromTarget <= firingRange)
 		{
 			respondingToSignal = false;
-			straightWeapon.Fire();
+			straightWeapon.Fire(targetEntity.transform.position);
 		}
 		
 	}
@@ -918,11 +930,11 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 		if (drillableTarget != null)
 		{
-			canDrill = false;
 			drillableTarget.TakeDrillDamage(0, drill.transform.position, this);
-			anim.SetBool("Drilling", false);
 		}
-		state = AIState.Attacking;
+		canDrill = false;
+		anim.SetBool("Drilling", false);
+		StartAttacking();
 		nearbySuspects.Clear();
 	}
 

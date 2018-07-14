@@ -24,6 +24,7 @@ public class LaserWeapon : MonoBehaviour
 	private void Awake()
 	{
 		blastPoolHolder = new GameObject("Blast Pool Holder").transform;
+		blastPoolHolder.parent = ParticleGenerator.singleton.transform;
 		FillPool();
 	}
 
@@ -85,5 +86,10 @@ public class LaserWeapon : MonoBehaviour
 			newObj.gameObject.SetActive(false);
 			pool.Add(newObj);
 		}
+	}
+
+	private void OnDestroy()
+	{
+		Destroy(blastPoolHolder);
 	}
 }

@@ -15,18 +15,20 @@ public class StraightWeapon : MonoBehaviour
 	private bool alternatingFire = true;
 	private int nextWeaponCounter = 0;
 	[SerializeField]
-	private float cooldown = 0.5f, recoil = 1f;
+	private float cooldown = 0.5f, recoil = 10f;
 	[SerializeField]
 	private Entity parent;
 	[SerializeField]
 	private GameObject muzzleFlash;
 	[SerializeField]
 	private float muzzleFlashAngle = 45f;
+	private float aimThreshold = 16f;
 
 
 	private void Awake()
 	{
 		blastPoolHolder = new GameObject("Blast Pool Holder").transform;
+		blastPoolHolder.parent = ParticleGenerator.singleton.transform;
 		FillPool();
 	}
 
@@ -46,7 +48,7 @@ public class StraightWeapon : MonoBehaviour
 		}
 	}
 
-	public void Fire()
+	public void Fire(Vector2? aim = null)
 	{
 		if (timer <= 0f)
 		{
@@ -54,7 +56,23 @@ public class StraightWeapon : MonoBehaviour
 		}
 		else return;
 
-		float angle = Mathf.Deg2Rad * -parent.transform.eulerAngles.z;
+		float angle = -parent.transform.eulerAngles.z;
+
+		if (aim != null)
+		{
+			Vector2 aimPos = (Vector2)aim;
+			float aimAngle = Vector2.Angle(Vector2.up, aimPos - (Vector2)transform.position);
+			if (aimPos.x < transform.position.x)
+			{
+				aimAngle = 180f + (180f - aimAngle);
+			}
+			if (Mathf.Abs(Mathf.DeltaAngle(angle, aimAngle)) < aimThreshold)
+			{
+				angle = aimAngle;
+			}
+		}
+
+		angle *= Mathf.Deg2Rad;
 
 		if (parent.Rb != null)
 		{
@@ -68,11 +86,13 @@ public class StraightWeapon : MonoBehaviour
 		{
 			StraightBlast blast = pool[pool.Count - 1];
 			pool.RemoveAt(pool.Count - 1);
-			blast.Shoot(weapons[i].position, transform.rotation, pool, weapons[i], parent);
+			blast.Shoot(weapons[i].position, Quaternion.Euler(Vector3.forward * -angle * Mathf.Rad2Deg),
+				pool, parent);
 			//muzzle flash
 			GameObject muzFlash = Instantiate(muzzleFlash);
+			muzFlash.transform.parent = transform;
 			muzFlash.transform.position = weapons[i].position;
-			muzFlash.transform.eulerAngles = Vector3.forward * (-angle + muzzleFlashAngle) * Mathf.Rad2Deg;
+			muzFlash.transform.localEulerAngles = Vector3.forward * muzzleFlashAngle;
 			muzFlash.GetComponent<SpriteRenderer>().flipX = flipMuzzleFlash;
 			flipMuzzleFlash = !flipMuzzleFlash;
 
@@ -92,5 +112,10 @@ public class StraightWeapon : MonoBehaviour
 			newObj.gameObject.SetActive(false);
 			pool.Add(newObj);
 		}
+	}
+
+	private void OnDestroy()
+	{
+		Destroy(blastPoolHolder);
 	}
 }

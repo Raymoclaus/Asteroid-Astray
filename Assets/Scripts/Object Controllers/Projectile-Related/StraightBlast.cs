@@ -8,7 +8,6 @@ public class StraightBlast : MonoBehaviour, IProjectile
 	[SerializeField]
 	private Rigidbody2D rb;
 	private List<StraightBlast> pool;
-	private Transform weapon;
 	private Vector2 firingPos;
 	private float maxRange = 10f;
 	private float speed = 5f;
@@ -17,7 +16,7 @@ public class StraightBlast : MonoBehaviour, IProjectile
 	private Entity parent;
 	private GameObject impactEffect;
 
-	public void Shoot(Vector2 startPos, Quaternion startRot, List<StraightBlast> p, Transform wep, Entity shooter)
+	public void Shoot(Vector2 startPos, Quaternion startRot, List<StraightBlast> p, Entity shooter)
 	{
 		firingPos = startPos;
 		transform.position = startPos;
@@ -25,7 +24,6 @@ public class StraightBlast : MonoBehaviour, IProjectile
 		gameObject.SetActive(true);
 		rb.velocity = transform.up * speed;
 		pool = p;
-		weapon = wep;
 		parent = shooter;
 
 	}
