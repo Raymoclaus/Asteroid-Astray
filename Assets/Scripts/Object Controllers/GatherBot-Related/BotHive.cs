@@ -2,6 +2,7 @@
 using System.Threading;
 using System;
 using UnityEngine;
+using System.Collections;
 
 [RequireComponent(typeof(HiveInventory))]
 public class BotHive : Entity, IDrillableObject, IDamageable
@@ -16,6 +17,8 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 	[SerializeField]
 	private Transform dockHolder;
 	private Transform[] docks;
+	[SerializeField]
+	private Animator[] dockAnims;
 
 	//fields
 	[SerializeField]
@@ -85,27 +88,27 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 
 	private void CreationProcess(GatherBot b = null)
 	{
-		//if (b != null && needToUpgrade > 0)
-		//{
-		//	b.Upgrade();
-		//	needToUpgrade--;
-		//  toBeSpent -= botUpgradeCost;
-		//  resourceCount -= botUpgradeCost;
-		//}
+		if (b != null && needToUpgrade > 0)
+		{
+			UpgradeBot(b);
+			needToUpgrade--;
+		}
 
 		while (needToCreate > 0)
 		{
-			GatherBot newBot = CreateBot();
+			int dockID = GetAvailableDockID();
+			GatherBot newBot = CreateBot(dockID);
 			needToCreate--;
 			for (int i = 0; i < maxInitialUpgrades && needToUpgrade > 0; i++)
 			{
 				UpgradeBot(newBot);
 				needToUpgrade--;
 			}
+			dockAnims[dockID].SetTrigger("Spawn1");
 		}
 	}
 
-	private GatherBot CreateBot()
+	private GatherBot CreateBot(int dockID)
 	{
 		if (resourceCount < botCreationCost + minLeftoverResources) return null;
 		
@@ -113,11 +116,11 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 		toBeSpent -= botCreationCost;
 		inventory.RemoveItem(Item.Type.Corvorite, botCreationCost);
 		GatherBot bot = Instantiate(botPrefab);
-		int availableDockID = GetAvailableDockID();
-		bot.Create(this, botBaseHP, availableDockID);
-		occupiedDocks[availableDockID] = true;
-		bot.transform.position = docks[availableDockID].position;
-		bot.transform.rotation = docks[availableDockID].rotation;
+		bot.gameObject.SetActive(false);
+		bot.Create(this, botBaseHP, dockID);
+		occupiedDocks[dockID] = true;
+		bot.transform.position = docks[dockID].position;
+		bot.transform.rotation = docks[dockID].rotation;
 		bot.transform.parent = transform.parent;
 		childBots.Add(bot);
 		new Thread(() =>
@@ -129,10 +132,23 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 
 	private void UpgradeBot(GatherBot bot)
 	{
-		//newBot.Upgrade();
+		//bot.Upgrade();
 		resourceCount -= botUpgradeCost;
 		toBeSpent -= botUpgradeCost;
 		inventory.RemoveItem(Item.Type.Corvorite, botUpgradeCost);
+	}
+
+	public IEnumerator ActivateBot(int ID)
+	{
+		yield return null;
+		foreach (GatherBot bot in childBots)
+		{
+			if (bot.dockID == ID)
+			{
+				bot.gameObject.SetActive(true);
+				yield break;
+			}
+		}
 	}
 
 	private int GetAvailableDockID()

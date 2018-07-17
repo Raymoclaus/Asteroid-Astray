@@ -105,21 +105,21 @@ public static class EntityNetwork
 	}
 
 	public static List<ChunkCoords> GetCoordsInRange(ChunkCoords center, int range,
-		List<ChunkCoords> coordsInRange = null)
+		List<ChunkCoords> coordsInRange = null, bool ignoreLackOfExistence = false)
 	{
 		int r = range + 2;
 		coordsInRange = coordsInRange == null ? new List<ChunkCoords>(r * r) : coordsInRange;
 		//loop through surrounding chunks
 		for (int i = 0; i <= range; i++)
 		{
-			GetCoordsOnRangeBorder(center, i, coordsInRange);
+			GetCoordsOnRangeBorder(center, i, coordsInRange, ignoreLackOfExistence);
 		}
 
 		return coordsInRange;
 	}
 
 	public static List<ChunkCoords> GetCoordsOnRangeBorder(ChunkCoords center, int range,
-		List<ChunkCoords> coords = null)
+		List<ChunkCoords> coords = null, bool ignoreLackOfExistence = false)
 	{
 		int r = range * 8;
 		coords = coords == null ? new List<ChunkCoords>(r) : coords;
@@ -136,6 +136,11 @@ public static class EntityNetwork
 				//validate will adjust for edge cases
 				ChunkCoords validCc = c;
 				validCc.Validate();
+				if (ignoreLackOfExistence)
+				{
+					coords.Add(validCc);
+					continue;
+				}
 				if (ChunkExists(validCc))
 				{
 					coords.Add(validCc);

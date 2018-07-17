@@ -54,7 +54,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	[SerializeField]
 	private float engineStrength = 1f, speedLimit = 2f, deceleration = 2f, decelEffectiveness = 0.01f,
 		rotationSpeed = 3f;
-	private float rot = 180f;
+	private float rot;
 	private Vector2 velocity;
 	private float maxSway = 45;
 	private float distanceCheck = 10f;
@@ -64,6 +64,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	private float scanTimer, scanDuration = 3f;
 	private bool scanStarted;
 	private List<Entity> entitiesScanned = new List<Entity>();
+	private bool isIdle = true;
 
 	//gathering variables
 	private float searchTimer, scanInterval = 0.3f;
@@ -103,7 +104,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 	private void Start()
 	{
-		transform.eulerAngles = Vector3.forward * -rot;
+		rot = transform.eulerAngles.z;
 		initialised = true;
 	}
 
@@ -161,17 +162,12 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	private void Spawning()
 	{
 		Transform dock = hive.GetDock(this);
-		Vector2 targetPos = dock.position + dock.up * 1.5f;
+		Vector2 targetPos = dock.position - dock.up * 1.5f;
 		if (GoToLocation(targetPos))
 		{
 			if (Rb.velocity.sqrMagnitude < Mathf.Epsilon)
 			{
-				StartExploring();
-				gameObject.layer = layerSolid;
-				foreach (Collider2D col in Col)
-				{
-					col.gameObject.layer = layerSolid;
-				}
+				StartExploring(true);
 			}
 		}
 	}
@@ -215,7 +211,11 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 				if (nearbySuspects.Count > 0)
 				{
 					state = AIState.Suspicious;
-					anim.SetTrigger("Idle");
+					if (!isIdle)
+					{
+						anim.SetTrigger("Idle");
+						isIdle = true;
+					}
 					return;
 				}
 
@@ -225,12 +225,17 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 					state = AIState.Gathering;
 					canDrill = true;
 					anim.SetTrigger("DrillOut");
+					isIdle = false;
 				}
 				else
 				{
 					hive.MarkCoordAsEmpty(_coords);
 					StartExploring();
-					anim.SetTrigger("Idle");
+					if (!isIdle)
+					{
+						anim.SetTrigger("Idle");
+						isIdle = true;
+					}
 				}
 			}
 		}
@@ -384,6 +389,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			{
 				state = AIState.Collecting;
 				anim.SetTrigger("Idle");
+				isIdle = true;
 				return;
 			}
 		}
@@ -466,7 +472,8 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 	public ChunkCoords GetIntendedCoords()
 	{
-		if (state == AIState.Exploring && !waitingForHiveDirection)
+		if ((state == AIState.Exploring && !waitingForHiveDirection) ||
+			(state == AIState.Spawning && !waitingForHiveDirection))
 		{
 			return new ChunkCoords(targetLocation);
 		}
@@ -913,35 +920,36 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		{
 			state = AIState.Storing;
 			anim.SetTrigger("Idle");
+			isIdle = true;
 		}
 		waitingForResources = false;
 	}
 
-	private void StartExploring()
+	private void StartExploring(bool hasDirections = false)
 	{
 		state = AIState.Exploring;
-		waitingForHiveDirection = true;
-		hive.AssignUnoccupiedCoords(this);
+		if (!hasDirections)
+		{
+			waitingForHiveDirection = true;
+			hive.AssignUnoccupiedCoords(this);
+		}
 	}
 
 	private void StartEmergencyAttack()
 	{
 		if (state == AIState.Attacking) return;
 
-		if (drillableTarget != null)
-		{
-			drillableTarget.TakeDrillDamage(0, drill.transform.position, this);
-		}
 		canDrill = false;
-		anim.SetBool("Drilling", false);
-		StartAttacking();
-		nearbySuspects.Clear();
-	}
-
-	private void StartAttacking()
-	{
 		state = AIState.Attacking;
 		anim.SetTrigger("GunOut");
+		isIdle = false;
+		nearbySuspects.Clear();
+
+		if (drillableTarget != null)
+		{
+			drill.StopDrilling();
+			anim.SetBool("Drilling", false);
+		}
 	}
 
 	public Vector2 GetPosition()

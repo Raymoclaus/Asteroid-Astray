@@ -126,7 +126,8 @@ public class SceneryController : MonoBehaviour
 		}
 
 		//activate or create new items to fill in the scenery
-		foreach (ChunkCoords c in EntityNetwork.GetCoordsInRange(newCoords, ViewDistance))
+		foreach (ChunkCoords c in
+			EntityNetwork.GetCoordsInRange(newCoords, ViewDistance, ignoreLackOfExistence: true))
 		{
 			//create new cosmic items
 			if (Chunk(c).Count == 0)

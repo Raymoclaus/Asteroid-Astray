@@ -90,6 +90,6 @@ public class LaserWeapon : MonoBehaviour
 
 	private void OnDestroy()
 	{
-		Destroy(blastPoolHolder);
+		Destroy(blastPoolHolder.gameObject);
 	}
 }
