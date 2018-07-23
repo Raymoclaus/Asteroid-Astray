@@ -36,6 +36,7 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 	private List<ChunkCoords> emptyCoords = new List<ChunkCoords>();
 	private List<GTime> emptyCoordTimes = new List<GTime>();
 	private float emptyCoordWaitTime = 300f;
+	public WaitForSeconds maintenanceTime = new WaitForSeconds(3f);
 
 	private void Start()
 	{
@@ -104,8 +105,13 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 				UpgradeBot(newBot);
 				needToUpgrade--;
 			}
-			dockAnims[dockID].SetTrigger("Spawn1");
+			BuildBot(dockID);
 		}
+	}
+
+	public void BuildBot(int dockID)
+	{
+		dockAnims[dockID].SetTrigger("Spawn1");
 	}
 
 	private GatherBot CreateBot(int dockID)
@@ -249,6 +255,8 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 
 	public void Store(List<ItemStack> items, GatherBot b)
 	{
+		b.gameObject.SetActive(false);
+		dockAnims[b.dockID].SetTrigger("Dismantle1");
 		inventory.Store(items);
 		resourceCount = inventory.Count(Item.Type.Corvorite);
 		SpendResources(b);

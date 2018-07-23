@@ -4,9 +4,9 @@ using System;
 
 public static class DelayedAction
 {
-	public static IEnumerator Go(Action a, float? time = null)
+	public static IEnumerator Go(Action a, WaitForSeconds time = null)
 	{
-		yield return time == null || time == 0f ? null : new WaitForSeconds((float)time);
+		yield return time;
 		a();
 	}
 }

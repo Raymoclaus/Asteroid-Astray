@@ -11,4 +11,9 @@ public class BotHiveDock : MonoBehaviour
 	{
 		StartCoroutine(hive.ActivateBot(ID));
 	}
+
+	public void StartMaintenanceTimer()
+	{
+		StartCoroutine(DelayedAction.Go(() => hive.BuildBot(ID), hive.maintenanceTime));
+	}
 }

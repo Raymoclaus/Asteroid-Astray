@@ -83,8 +83,11 @@ public class DrillBit : MonoBehaviour
 	{
 		TriggerParticleEffects(false);
 		isDrilling = false;
-		drillTarget.StopDrilling();
-		drillTarget = null;
+		if (drillTarget != null)
+		{
+			drillTarget.StopDrilling();
+			drillTarget = null;
+		}
 
 		drillSoundSource.volume = 0f;
 		drillSoundSource.Stop();

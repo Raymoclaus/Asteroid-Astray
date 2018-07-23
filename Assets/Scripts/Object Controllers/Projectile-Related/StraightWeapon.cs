@@ -116,6 +116,7 @@ public class StraightWeapon : MonoBehaviour
 
 	private void OnDestroy()
 	{
+		if (blastPoolHolder == null) return;
 		Destroy(blastPoolHolder.gameObject);
 	}
 }

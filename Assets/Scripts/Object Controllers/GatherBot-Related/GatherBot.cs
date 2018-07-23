@@ -80,6 +80,13 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	private bool waitingForHiveDirection = true;
 	public Vector2 targetLocation;
 
+	//storing variables
+	private float minDistance = 1f;
+	private float dockDistance = 1.5f;
+	private bool disassembling = false;
+	private float rotToDockSpeed = 100f;
+	private float moveToDockSpeed = 1f;
+
 	//suspicious variables
 	private float suspiciousChaseRange = 7f;
 	private float intenseScanDuration = 4f;
@@ -162,7 +169,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	private void Spawning()
 	{
 		Transform dock = hive.GetDock(this);
-		Vector2 targetPos = dock.position - dock.up * 1.5f;
+		Vector2 targetPos = dock.position - dock.up * dockDistance;
 		if (GoToLocation(targetPos))
 		{
 			if (Rb.velocity.sqrMagnitude < Mathf.Epsilon)
@@ -281,17 +288,39 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 	private void Storing()
 	{
-		//go back to hive
+		//move towards disassembly point
 		Transform dock = hive.GetDock(this);
-		Vector2 targetPos = dock.position + dock.up * 2f;
-		if (GoToLocation(targetPos, true, 2f, false))
+		if (disassembling)
 		{
-			//store inventory in hive once close enough to hive
-			hive.Store(storage.inventory, this);
-			itemsCollected = 0;
-			//return to exploring
-			StartExploring();
+			rot = Mathf.MoveTowardsAngle(rot, dock.eulerAngles.z, rotToDockSpeed * Time.deltaTime);
+			if (rot == dock.eulerAngles.z)
+			{
+				transform.position = Vector2.MoveTowards(
+					transform.position, dock.position, moveToDockSpeed * Time.deltaTime);
+				if (Vector2.Distance(transform.position, dock.position) < 0.01f)
+				{
+					//start disassembly animation
+					transform.position = dock.position;
+					hive.Store(storage.inventory, this);
+					itemsCollected = 0;
+					state = AIState.Spawning;
+					disassembling = false;
+				}
+			}
+			return;
 		}
+
+		//start disassembling process if close enough to hive dock
+		Vector2 targetPos = dock.position - dock.up * dockDistance;
+		float distanceFromDockEntry = Vector2.Distance(transform.position, targetPos);
+		if (distanceFromDockEntry < minDistance)
+		{
+			disassembling = true;
+			return;
+		}
+
+		//go back to hive
+		GoToLocation(targetPos, true, minDistance, false);
 	}
 
 	private void Suspicious()

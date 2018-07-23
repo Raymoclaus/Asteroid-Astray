@@ -128,7 +128,7 @@ public class LaserBlast : MonoBehaviour, IProjectile
 
 	private void Dissipate()
 	{
-		DelayedAction.Go(() => particleTrail.Stop());
+		StartCoroutine(DelayedAction.Go(() => particleTrail.Stop()));
 		particleTrail.transform.parent = transform.parent;
 		pool.Add(this);
 		sprRend.sprite = notBoostedBullet;

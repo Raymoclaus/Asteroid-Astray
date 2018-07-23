@@ -237,6 +237,8 @@ public class SceneryController : MonoBehaviour
 
 	public static IEnumerator CreateStarSystems(System.Action a)
 	{
+		yield return null;
+
 		//ensure this class is setup properly first
 		SceneryController sc = singleton;
 		sc.InitialSetup();
