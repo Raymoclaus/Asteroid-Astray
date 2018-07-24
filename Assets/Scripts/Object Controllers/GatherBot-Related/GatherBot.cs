@@ -88,7 +88,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	private float moveToDockSpeed = 1f;
 
 	//suspicious variables
-	private float suspiciousChaseRange = 7f;
+	private float suspiciousChaseRange = 8f;
 	private float intenseScanDuration = 4f;
 	private float intenseScanTimer = 0f;
 	private float intenseScanRange = 1.5f;
@@ -97,11 +97,11 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	//combat variables
 	private bool beingDrilled;
 	private List<Entity> threats = new List<Entity>();
-	private float chaseRange = 14f;
+	private float chaseRange = 16f;
 	[SerializeField]
-	private float orbitRange = 1.5f;
+	private float orbitRange = 1.75f;
 	[SerializeField]
-	private float orbitSpeed = 1f;
+	private float orbitSpeed = 0.6f;
 	[SerializeField]
 	private float firingRange = 5f;
 
@@ -341,7 +341,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		}
 
 		//follow entity
-		GoToLocation(targetEntity.transform.position, true, intenseScanRange, true);
+		GoToLocation(targetEntity.transform.position, true, intenseScanRange, true, targetEntity.transform.position);
 		if (Vector2.Distance(transform.position, targetEntity.transform.position) <= intenseScanRange)
 		{
 			//scan entity if close enough
@@ -374,7 +374,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 							{
 								scanAngle = 180f + (180f - scanAngle);
 							}
-							StartCoroutine(ScanRings(scanAngle, 30f));
+							StartCoroutine(ScanRings(scanAngle, 30f, false));
 						}
 						signalTimer = scanDuration;
 						break;
@@ -436,7 +436,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 				{
 					scanAngle = 180f + (180f - scanAngle);
 				}
-				StartCoroutine(ScanRings(scanAngle, 30f));
+				StartCoroutine(ScanRings(scanAngle, 30f, false));
 				sibling.threats = threats;
 				sibling.StartEmergencyAttack();
 			}
@@ -444,8 +444,8 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		targetEntity = threats[0];
 		float orbitAngle = Mathf.PI * 2f / hive.childBots.Count * dockID + Time.time * orbitSpeed;
 		Vector3 targetPos = new Vector2(Mathf.Sin(orbitAngle), Mathf.Cos(orbitAngle)) * orbitRange;
-		GoToLocation(targetEntity.transform.position + targetPos, distanceFromTarget > firingRange, 0f, true,
-			distanceFromTarget > firingRange ? null : (Vector2?)targetEntity.transform.position);
+		GoToLocation(targetEntity.transform.position + targetPos, distanceFromTarget > firingRange, 0.2f, true,
+			distanceFromTarget > firingRange ? null : (Vector2?)targetEntity.transform.position - transform.right);
 		if (distanceFromTarget <= firingRange)
 		{
 			respondingToSignal = false;
@@ -465,6 +465,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		bool adjustForMomentum = false, Vector2? lookPos = null)
 	{
 		float distLeft = Vector2.Distance(transform.position, targetPos);
+		float rotTo = 0f;
 		if (distLeft > distLimit)
 		{
 			float expectedAngle = DetermineDirection(targetPos, avoidObstacles);
@@ -472,25 +473,25 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			{
 				expectedAngle = AdjustForMomentum(expectedAngle);
 			}
-			float rotTo = 0f;
 			if (lookPos == null)
 			{
 				rotTo = RotateTo(expectedAngle);
 			}
-			else
-			{
-				float lookAngle = Vector2.Angle(Vector2.up, targetEntity.transform.position - transform.position);
-				if (targetEntity.transform.position.x < transform.position.x)
-				{
-					lookAngle = 180f + (180f - lookAngle);
-				}
-				rotTo = RotateTo(lookAngle);
-			}
 			float speedMod = 1f - rotTo;
 			DetermineAcceleration(expectedAngle, speedMod, distLeft, distLimit);
-			return false;
 		}
-		return true;
+
+		if (lookPos != null)
+		{
+			float lookAngle = Vector2.Angle(Vector2.up, targetEntity.transform.position - transform.position);
+			if (targetEntity.transform.position.x < transform.position.x)
+			{
+				lookAngle = 180f + (180f - lookAngle);
+			}
+			rotTo = RotateTo(lookAngle);
+		}
+
+		return distLeft <= distLimit;
 	}
 
 	public void HiveOrders(Vector2 pos)
@@ -705,19 +706,14 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 	private bool IsSuspicious(Entity e)
 	{
+		//ignore if too far away
+		if (Vector2.Distance(transform.position, e.transform.position) > suspiciousChaseRange) return false;
+
+		//determine suspect based on entity type
 		EntityType type = e.GetEntityType();
-		if (type == EntityType.Shuttle)
-		{
-			return true;
-		}
-		if (type == EntityType.BotHive)
-		{
-			return e != hive;
-		}
-		if (type == EntityType.GatherBot)
-		{
-			return !IsSibling(e);
-		}
+		if (type == EntityType.Shuttle) return true;
+		if (type == EntityType.BotHive) return e != hive;
+		if (type == EntityType.GatherBot) return !IsSibling(e);
 
 		return false;
 	}
@@ -779,7 +775,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		}
 	}
 
-	private IEnumerator ScanRings(float angle = 0f, float arcSize = 360f)
+	private IEnumerator ScanRings(float angle = 0f, float arcSize = 360f, bool loop = true)
 	{
 		WaitForSeconds wfs = new WaitForSeconds(0.5f);
 		System.Action a = () =>
@@ -788,6 +784,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			scan.lifeTime = scanDuration;
 			scan.rot = angle;
 			scan.arcSize = arcSize;
+			scan.loop = loop;
 			scan.transform.position = transform.position;
 			scan.transform.parent = ParticleGenerator.singleton.transform;
 		};

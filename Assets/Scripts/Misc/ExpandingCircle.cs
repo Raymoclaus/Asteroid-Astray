@@ -14,11 +14,13 @@ public class ExpandingCircle : MonoBehaviour
 	private List<Vector3> points;
 	private Vector2 origin;
 	public Color startColor, endColor;
+	public bool loop = true;
 
 	private void Start()
 	{
 		arcSize = Mathf.Clamp(arcSize, 0f, 360f);
 		lr = GetComponent<LineRenderer>();
+		lr.loop = loop;
 		for (int i = 0; i < lr.colorGradient.colorKeys.Length; i++)
 		{
 			lr.colorGradient.colorKeys[i].color = startColor;
