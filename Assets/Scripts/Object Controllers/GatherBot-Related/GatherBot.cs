@@ -367,6 +367,10 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 						nearbySuspects.Clear();
 						foreach (GatherBot sibling in hive.childBots)
 						{
+							if (sibling == null)
+							{
+								hive.childBots.Remove(sibling);
+							}
 							if (sibling == this) continue;
 							float scanAngle = Vector2.Angle(
 								Vector2.up, sibling.transform.position - transform.position);
@@ -374,7 +378,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 							{
 								scanAngle = 180f + (180f - scanAngle);
 							}
-							StartCoroutine(ScanRings(scanAngle, 30f, false));
+							StartCoroutine(ScanRings(scanAngle, 30f, false, 0.3f));
 						}
 						signalTimer = scanDuration;
 						break;
@@ -436,7 +440,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 				{
 					scanAngle = 180f + (180f - scanAngle);
 				}
-				StartCoroutine(ScanRings(scanAngle, 30f, false));
+				StartCoroutine(ScanRings(scanAngle, 30f, false, 0.3f));
 				sibling.threats = threats;
 				sibling.StartEmergencyAttack();
 			}
@@ -706,6 +710,8 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 	private bool IsSuspicious(Entity e)
 	{
+		if (e == null) return false;
+
 		//ignore if too far away
 		if (Vector2.Distance(transform.position, e.transform.position) > suspiciousChaseRange) return false;
 
@@ -775,9 +781,9 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		}
 	}
 
-	private IEnumerator ScanRings(float angle = 0f, float arcSize = 360f, bool loop = true)
+	private IEnumerator ScanRings(float angle = 0f, float arcSize = 360f, bool loop = true, float frequency = 0.5f)
 	{
-		WaitForSeconds wfs = new WaitForSeconds(0.5f);
+		WaitForSeconds wfs = new WaitForSeconds(frequency);
 		System.Action a = () =>
 		{
 			ExpandingCircle scan = Instantiate(scanningBeam);
@@ -821,7 +827,10 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		if (IsDrilling)
 		{
 			drill.StopDrilling();
-			drill.drillTarget.StopDrilling();
+			if (drill.drillTarget != null)
+			{
+				drill.drillTarget.StopDrilling();
+			}
 		}
 		shakeFX.Begin();
 	}
@@ -846,16 +855,6 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 				otherDrill.StartDrilling(this);
 			}
 		}
-
-		if (otherLayer == layerProjectile)
-		{
-			IProjectile projectile = other.GetComponent<IProjectile>();
-			//cannot be hit by projectiles from self or siblings
-			if (!IsSibling(projectile.GetShooter()))
-			{
-				projectile.Hit(this);
-			}
-		}
 	}
 
 	public void OnTriggerExit2D(Collider2D other)
@@ -870,6 +869,25 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			{
 				StopDrilling();
 				otherDrill.StopDrilling();
+			}
+		}
+	}
+
+	public void OnCollisionEnter2D(Collision2D collision)
+	{
+		Collider2D other = collision.collider;
+		int otherLayer = other.gameObject.layer;
+		ContactPoint2D[] contacts = new ContactPoint2D[1];
+		collision.GetContacts(contacts);
+		Vector2 contactPoint = contacts[0].point;
+
+		if (otherLayer == layerProjectile)
+		{
+			IProjectile projectile = other.GetComponent<IProjectile>();
+			//cannot be hit by projectiles from self or siblings
+			if (!IsSibling(projectile.GetShooter()))
+			{
+				projectile.Hit(this, contactPoint);
 			}
 		}
 	}

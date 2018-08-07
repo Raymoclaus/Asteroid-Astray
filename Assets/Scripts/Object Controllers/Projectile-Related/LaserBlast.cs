@@ -5,6 +5,8 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D))]
 public class LaserBlast : MonoBehaviour, IProjectile
 {
+	private int sharedID = -1;
+	private LaserWeapon weaponSystem;
 	[SerializeField]
 	private Rigidbody2D rb;
 	private List<LaserBlast> pool;
@@ -19,6 +21,8 @@ public class LaserBlast : MonoBehaviour, IProjectile
 	private Vector2 vel;
 	[SerializeField]
 	private float damage = 200f;
+	[SerializeField]
+	private float damageReductionBeforeConverge = 0.2f;
 	private bool converged;
 	[SerializeField]
 	private ParticleSystem particleTrail;
@@ -30,14 +34,12 @@ public class LaserBlast : MonoBehaviour, IProjectile
 	[SerializeField]
 	private SpriteRenderer sprRend;
 	[SerializeField]
-	private GameObject sonicBoom;
-	[SerializeField]
 	private GameObject weakHit;
 	[SerializeField]
 	private GameObject strongHit;
 
 	public void Shoot(Vector2 startPos, Quaternion startRot, Vector2 startingDir, Vector2 followDir,
-		List<LaserBlast> p, Transform wep, Entity shooter)
+		List<LaserBlast> p, Transform wep, Entity shooter, int ID, LaserWeapon wepSystem)
 	{
 		firingPos = startPos;
 		transform.position = startPos;
@@ -54,6 +56,8 @@ public class LaserBlast : MonoBehaviour, IProjectile
 		particleTrail.transform.parent = transform;
 		particleTrail.transform.localPosition = Vector3.zero;
 		parent = shooter;
+		sharedID = ID;
+		weaponSystem = wepSystem;
 
 		gameObject.SetActive(true);
 	}
@@ -91,9 +95,8 @@ public class LaserBlast : MonoBehaviour, IProjectile
 				sprRend.sprite = boostedBullet;
 				float angle = Vector2.SignedAngle(Vector2.up, vel);
 				transform.eulerAngles = Vector3.forward * angle;
-				GameObject sBoom = Instantiate(sonicBoom, ParticleGenerator.singleton.transform);
-				sBoom.transform.position = transform.position;
-				sBoom.transform.eulerAngles = Vector3.forward * angle;
+				//signal weapon system to create sonic boom effects
+				weaponSystem.LaserConvergeEffect(sharedID, convergePoint, angle);
 			}
 			converged = true;
 		}
@@ -101,28 +104,21 @@ public class LaserBlast : MonoBehaviour, IProjectile
 		rb.velocity = vel;
 	}
 
-	public void Hit(IDamageable obj)
+	public void Hit(IDamageable obj, Vector2 contactPoint)
 	{
 		float damageCalc = damage;
 
-		if (converged)
+		if (!converged)
 		{
-			float dist = Mathf.Max(3f, Vector2.Distance(convergePoint, transform.position) * 3f) / 3f;
-			damageCalc /= dist;
-		}
-		else
-		{
-			float angle = 1f - (Vector2.Angle(vel, direction) / 60f);
-			angle *= angle;
-			damageCalc *= angle;
+			damageCalc *= damageReductionBeforeConverge;
 		}
 
-		float dirToObject = Vector2.SignedAngle(Vector2.up, obj.GetPosition() - (Vector2)transform.position);
+		float dirToObject = Vector2.SignedAngle(Vector2.up, obj.GetPosition() - contactPoint);
 		GameObject hitFX = Instantiate(damageCalc >= damage * 0.9f ? strongHit : weakHit);
-		hitFX.transform.position = transform.position;
+		hitFX.transform.position = contactPoint;
 		hitFX.transform.eulerAngles = Vector3.forward * (dirToObject + 180f);
 
-		obj.TakeDamage(damageCalc, transform.position, parent);
+		obj.TakeDamage(damageCalc, contactPoint, parent);
 		Dissipate();
 	}
 

@@ -41,12 +41,16 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	//the amount of debris created when destroyed
 	public Vector2Int debrisAmount = new Vector2Int(3, 10);
 	[SerializeField]
-	private float drillDebrisChance = 0.05f, drillDustChance = 0.2f; 
+	private float drillDebrisChance = 0.05f, drillDustChance = 0.2f;
+	private int collisionDustMultiplier = 3;
 	#endregion
 
 	#region Audio
 	public AudioClip[] shatterSounds;
 	public Vector2 shatterPitchRange;
+	[SerializeField]
+	private AudioClip[] collisionSounds;
+	float collisionVolumeDampenEffect = 0.25f;
 	#endregion
 
 	public override void Awake()
@@ -113,7 +117,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 			for (int i = 0; i < Random.Range(debrisAmount.x, debrisAmount.y); i++)
 			{
 				CreateDebris(transform.position);
-				CreateDust(transform.position);
+				CreateDust(transform.position, alpha: 0.3f);
 			}
 
 			//sound effect
@@ -147,18 +151,20 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		}
 	}
 
-	private void CreateDust(Vector2 pos)
+	private void CreateDust(Vector2 pos, int amount = 1, float alpha = 0.1f)
 	{
 		if (!isActive) return;
-
-		int randomChoose = Random.Range(0, loadRes.dust.Length);
-		if (randomChoose < loadRes.dust.Length)
+		for (int i = 0; i < amount; i++)
 		{
-			ParticleGenerator.GenerateParticle(
-				loadRes.dust[randomChoose], pos, shrink: false, speed: Random.value * 0.5f, slowDown: true,
-				lifeTime: Random.value * 3f + 2f, rotationDeg: Random.value * 360f,
-				rotationSpeed: Random.value * 0.5f, size: Mathf.Pow(Random.value, 2f), alpha: Random.value * 0.1f,
-				fadeIn: Random.value + 0.5f, sortingLayer: SprRend.sortingLayerID);
+			int randomChoose = Random.Range(0, loadRes.dust.Length);
+			if (randomChoose < loadRes.dust.Length)
+			{
+				ParticleGenerator.GenerateParticle(
+					loadRes.dust[randomChoose], pos, shrink: false, speed: Random.value * 0.5f, slowDown: true,
+					lifeTime: Random.value * 3f + 2f, rotationDeg: Random.value * 360f,
+					rotationSpeed: Random.value * 0.5f, size: 0.3f + Mathf.Pow(Random.value, 2f) * 0.7f, alpha: alpha,
+					fadeIn: Random.value + 0.5f, sortingLayer: SprRend.sortingLayerID, growthOverLifetime: 2f);
+			}
 		}
 	}
 
@@ -194,7 +200,9 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 
 	public override bool OnExitPhysicsRange()
 	{
-		Rb.velocity = Rb.velocity * -1f;
+		Vector2 newDir = -Rb.velocity;
+		newDir.Normalize();
+		Rb.velocity = newDir * VelocityRange;
 		return true;
 	}
 
@@ -224,7 +232,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		}
 		if (Random.value < drillDustChance)
 		{
-			CreateDust(damagePos);
+			CreateDust(damagePos, alpha: Random.value * 0.1f);
 		}
 
 		return CheckHealth(destroyer, dropModifier);
@@ -259,12 +267,6 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 				otherDrill.StartDrilling(this);
 			}
 		}
-
-		if (otherLayer == layerProjectile)
-		{
-			IProjectile projectile = other.GetComponent<IProjectile>();
-			projectile.Hit(this);
-		}
 	}
 
 	public void OnTriggerExit2D(Collider2D other)
@@ -298,5 +300,44 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	public override void PhysicsReEnabled()
 	{
 		RandomMovement();
+	}
+
+	private void OnCollisionEnter2D(Collision2D collision)
+	{
+		Collider2D other = collision.collider;
+		int otherLayer = other.gameObject.layer;
+		ContactPoint2D[] contacts = new ContactPoint2D[1];
+		collision.GetContacts(contacts);
+		Vector2 contactPoint = contacts[0].point;
+
+		if (otherLayer == layerProjectile)
+		{
+			IProjectile projectile = other.GetComponent<IProjectile>();
+			projectile.Hit(this, contactPoint);
+		}
+
+		float collisionStrength = collision.relativeVelocity.magnitude;
+		float collisionVolume = collisionStrength * collisionVolumeDampenEffect;
+		if (collisionVolume < 0.05f
+			|| Vector2.Distance(transform.position, CameraCtrl.camCtrl.transform.position) > 10f)
+			return;
+
+		//must play at least 1 sound effect
+		int count = 0;
+		while (count == 0)
+		{
+			foreach (AudioClip clip in collisionSounds)
+			{
+				if (Random.value > 0.5f)
+				{
+					count++;
+					AudioManager.PlaySFX(clip, contactPoint, null, collisionVolume,
+						0.9f + Random.value * 0.2f);
+				}
+			}
+		}
+
+		//dust particle effect
+		CreateDust(contactPoint, (int)collisionStrength * collisionDustMultiplier, 0.1f + Random.value * 0.2f);
 	}
 }

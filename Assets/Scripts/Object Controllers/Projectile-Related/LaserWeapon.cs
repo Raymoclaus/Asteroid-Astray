@@ -19,7 +19,13 @@ public class LaserWeapon : MonoBehaviour
 	private Entity parent;
 	[SerializeField]
 	private GameObject muzzleFlash;
-
+	[SerializeField]
+	private AudioClip shootSound;
+	[SerializeField]
+	private GameObject sonicBoom;
+	[SerializeField]
+	private AudioClip sonicBoomSound;
+	private List<int> projectileIDs = new List<int>();
 
 	private void Awake()
 	{
@@ -49,6 +55,7 @@ public class LaserWeapon : MonoBehaviour
 		if (timer <= 0f)
 		{
 			timer = cooldown;
+			AudioManager.PlaySFX(shootSound, transform.position, transform, 0.7f);
 		}
 		else return;
 
@@ -68,7 +75,7 @@ public class LaserWeapon : MonoBehaviour
 			LaserBlast blast = pool[pool.Count - 1];
 			pool.RemoveAt(pool.Count - 1);
 			blast.Shoot(weapon.position, transform.rotation, weapon.GetChild(0).position - weapon.position,
-				laserTarget.position - weapon.position, pool, weapon, parent);
+				laserTarget.position - weapon.position, pool, weapon, parent, (int)Time.time, this);
 			//muzzle flash
 			GameObject muzFlash = Instantiate(muzzleFlash);
 			muzFlash.transform.position = weapon.position;
@@ -92,5 +99,25 @@ public class LaserWeapon : MonoBehaviour
 	{
 		if (blastPoolHolder == null) return;
 		Destroy(blastPoolHolder.gameObject);
+	}
+
+	public void LaserConvergeEffect(int ID, Vector2 position, float angle)
+	{
+		for (int i = 0; i < projectileIDs.Count; i++)
+		{
+			if (projectileIDs[i] == ID)
+			{
+				projectileIDs.RemoveAt(i);
+				return;
+			}
+		}
+		projectileIDs.Clear();
+		projectileIDs.Add(ID);
+		//sonic boom particle effect
+		GameObject sBoom = Instantiate(sonicBoom, ParticleGenerator.singleton.transform);
+		sBoom.transform.position = position;
+		sBoom.transform.eulerAngles = Vector3.forward * angle;
+		//play sonic boom sound
+		AudioManager.PlaySFX(sonicBoomSound, transform.position);
 	}
 }

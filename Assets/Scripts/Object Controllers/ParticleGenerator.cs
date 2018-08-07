@@ -6,9 +6,9 @@ public class ParticleGenerator : MonoBehaviour
 {
 	public static ParticleGenerator singleton;
 
+	private const int poolReserve = 2000;
 	private Queue<SpriteRenderer> pool = new Queue<SpriteRenderer>(poolReserve);
 	private List<SpriteRenderer> active = new List<SpriteRenderer>(poolReserve);
-	private const int poolReserve = 1000;
 
 	private void Awake()
 	{
@@ -29,7 +29,7 @@ public class ParticleGenerator : MonoBehaviour
 		Sprite spr, Vector3 position, Transform parent = null, bool shrink = true, bool fadeOut = true,
 		float lifeTime = 1f, float speed = 0f, bool slowDown = false, float rotationDeg = 0f,
 		float rotationSpeed = 0f, float size = 1f, bool rotationDecay = false, float alpha = 1f, Color? tint = null,
-		float fadeIn = 0f, int sortingLayer = 0)
+		float fadeIn = 0f, int sortingLayer = 0, float growthOverLifetime = 1f)
 	{
 		SpriteRenderer rend = singleton.pool.Dequeue();
 		singleton.active.Add(rend);
@@ -43,16 +43,19 @@ public class ParticleGenerator : MonoBehaviour
 		obj.transform.eulerAngles = Vector3.forward * rotationDeg;
 		obj.transform.localScale = Vector2.one * size;
 		obj.transform.parent = parent == null ? singleton.transform : parent;
-		singleton.StartCoroutine(Lifetime(rend, lifeTime, shrink, fadeOut, speed, slowDown, rotationSpeed, rotationDecay, alpha, tintFix, fadeIn));
+		singleton.StartCoroutine(Lifetime(rend, lifeTime, shrink, fadeOut, speed, slowDown, rotationSpeed,
+			rotationDecay, alpha, tintFix, fadeIn, growthOverLifetime));
 	}
 
 	private static IEnumerator Lifetime(
 		SpriteRenderer rend, float time, bool shrink, bool fadeOut, float originalSpeed, bool slowDown,
-		float originalRotationSpeed, bool rotationDecay, float alpha, Color tint, float fadeIn)
+		float originalRotationSpeed, bool rotationDecay, float alpha, Color tint, float fadeIn,
+		float growthOverLifetime)
 	{
 		float spd = originalSpeed;
 		float rotSpd = originalRotationSpeed;
 		float originalTime = time;
+		Vector3 originalSize = rend.transform.localScale;
 
 		float randomDir = Random.value * Mathf.PI * 2f;
 		Vector3 direction = new Vector3(Mathf.Sin(randomDir), Mathf.Cos(randomDir));
@@ -64,7 +67,11 @@ public class ParticleGenerator : MonoBehaviour
 
 			if (shrink)
 			{
-				rend.transform.localScale = Vector3.one * delta;
+				rend.transform.localScale = originalSize * delta;
+			}
+			else
+			{
+				rend.transform.localScale = originalSize * growthOverLifetime * (1f - delta);
 			}
 
 			Color c = tint;

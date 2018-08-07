@@ -275,12 +275,6 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 				otherDrill.StartDrilling(this);
 			}
 		}
-
-		if (otherLayer == layerProjectile)
-		{
-			IProjectile projectile = other.GetComponent<IProjectile>();
-			projectile.Hit(this);
-		}
 	}
 
 	public void OnTriggerExit2D(Collider2D other)
@@ -295,6 +289,21 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 			{
 				otherDrill.StopDrilling();
 			}
+		}
+	}
+
+	public void OnCollisionEnter2D(Collision2D collision)
+	{
+		Collider2D other = collision.collider;
+		int otherLayer = other.gameObject.layer;
+		ContactPoint2D[] contacts = new ContactPoint2D[1];
+		collision.GetContacts(contacts);
+		Vector2 contactPoint = contacts[0].point;
+
+		if (otherLayer == layerProjectile)
+		{
+			IProjectile projectile = other.GetComponent<IProjectile>();
+			projectile.Hit(this, contactPoint);
 		}
 	}
 

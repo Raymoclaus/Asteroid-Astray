@@ -4,6 +4,6 @@ using UnityEngine;
 
 public interface IProjectile
 {
-	void Hit(IDamageable obj);
+	void Hit(IDamageable obj, Vector2 contactPoint);
 	Entity GetShooter();
 }

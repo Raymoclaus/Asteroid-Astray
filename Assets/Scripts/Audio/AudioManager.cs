@@ -8,10 +8,10 @@ public class AudioManager : MonoBehaviour
 	public static AudioManager singleton;
 	public AudioMixerGroup musicMixer, sfxMixer;
 
+	private const int poolReserve = 400;
 	private Queue<AudioSource> pool = new Queue<AudioSource>(poolReserve);
 	private List<AudioSource> active = new List<AudioSource>(poolReserve);
-	private const int poolReserve = 30;
-	private const float MIN_DISTANCE = 1f / 3f, MAX_DISTANCE = 50f;
+	private const float MIN_DISTANCE = 1f / 3f, MAX_DISTANCE = 30f;
 
 	private void Awake()
 	{
@@ -29,7 +29,8 @@ public class AudioManager : MonoBehaviour
 		SetUpPoolReserve();
 	}
 
-	public static void PlaySFX(AudioClip clip, Vector3 position, Transform parent = null, float volume = 1f, float pitch = 1f)
+	public static void PlaySFX(AudioClip clip, Vector3 position, Transform parent = null, float volume = 1f,
+		float pitch = 1f)
 	{
 		AudioSource src = singleton.pool.Dequeue();
 		singleton.active.Add(src);

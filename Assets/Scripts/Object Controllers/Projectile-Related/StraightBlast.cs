@@ -42,9 +42,9 @@ public class StraightBlast : MonoBehaviour, IProjectile
 		gameObject.SetActive(false);
 	}
 
-	public void Hit(IDamageable obj)
+	public void Hit(IDamageable obj, Vector2 contactPoint)
 	{
-		obj.TakeDamage(damage, transform.position, parent);
+		obj.TakeDamage(damage, contactPoint, parent);
 		Dissipate();
 	}
 

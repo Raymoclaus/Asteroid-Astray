@@ -94,6 +94,8 @@ public static class EntityNetwork
 
 	private static bool EntityIsInSet(Entity e, List<Entity> set)
 	{
+		if (set == null) return false;
+
 		foreach (Entity entity in set)
 		{
 			if (entity == e)

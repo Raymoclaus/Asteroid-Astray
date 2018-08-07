@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-public class Shuttle : Entity
+public class Shuttle : Entity, IDamageable
 {
 	#region Fields
 	//singleton reference because there will only be one and many scripts may need access to this
@@ -68,10 +68,10 @@ public class Shuttle : Entity
 
 	#region Attachments
 	// Laser Weapon
-	[SerializeField]
-	private bool laserAttached = false;
-	[SerializeField]
-	private GameObject laserObj;
+	//[SerializeField]
+	//private bool laserAttached = false;
+	//[SerializeField]
+	//private GameObject laserWeaponObj;
 	#endregion
 
 	#region Sound Stuff
@@ -349,13 +349,38 @@ public class Shuttle : Entity
 		return _accel != Vector2.zero;
 	}
 
+	public void OnCollisionEnter2D(Collision2D collision)
+	{
+		Collider2D other = collision.collider;
+		int otherLayer = other.gameObject.layer;
+		ContactPoint2D[] contacts = new ContactPoint2D[1];
+		collision.GetContacts(contacts);
+		Vector2 contactPoint = contacts[0].point;
+
+		if (otherLayer == layerProjectile)
+		{
+			IProjectile projectile = other.GetComponent<IProjectile>();
+			projectile.Hit(this, contactPoint);
+		}
+	}
+
+	public bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer, int dropModifier = 0)
+	{
+		return false;
+	}
+
+	public Vector2 GetPosition()
+	{
+		return transform.position;
+	}
+
 	#region Attach/Detach Methods
 
-	public void AttachDetachLaser1(bool attach)
-	{
-		laserObj.SetActive(attach);
-		laserAttached = attach;
-	}
+	//public void AttachDetachLaser1(bool attach)
+	//{
+	//	laserObj.SetActive(attach);
+	//	laserAttached = attach;
+	//}
 
 	#endregion
 }
