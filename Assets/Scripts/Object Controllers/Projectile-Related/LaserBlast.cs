@@ -37,6 +37,10 @@ public class LaserBlast : MonoBehaviour, IProjectile
 	private GameObject weakHit;
 	[SerializeField]
 	private GameObject strongHit;
+	[SerializeField]
+	private AudioClip strongHitSound;
+	[SerializeField]
+	private AudioClip weakHitSound;
 
 	public void Shoot(Vector2 startPos, Quaternion startRot, Vector2 startingDir, Vector2 followDir,
 		List<LaserBlast> p, Transform wep, Entity shooter, int ID, LaserWeapon wepSystem)
@@ -106,19 +110,25 @@ public class LaserBlast : MonoBehaviour, IProjectile
 
 	public void Hit(IDamageable obj, Vector2 contactPoint)
 	{
+		//calculate damage
 		float damageCalc = damage;
-
 		if (!converged)
 		{
 			damageCalc *= damageReductionBeforeConverge;
 		}
 
+		//create explosion effect based on damage dealt
+		bool isStrongHit = damageCalc >= damage * 0.9f;
 		float dirToObject = Vector2.SignedAngle(Vector2.up, obj.GetPosition() - contactPoint);
-		GameObject hitFX = Instantiate(damageCalc >= damage * 0.9f ? strongHit : weakHit);
+		GameObject hitFX = Instantiate(isStrongHit ? strongHit : weakHit);
 		hitFX.transform.position = contactPoint;
 		hitFX.transform.eulerAngles = Vector3.forward * (dirToObject + 180f);
-
+		//play sound effect
+		AudioManager.PlaySFX(isStrongHit ? strongHitSound : weakHitSound, contactPoint,
+			pitch: Random.value * 0.2f + 0.9f);
+		//report damage calculation to the object taking the damage
 		obj.TakeDamage(damageCalc, contactPoint, parent);
+		//destroy projectile
 		Dissipate();
 	}
 
