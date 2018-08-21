@@ -26,10 +26,10 @@ public class ParticleGenerator : MonoBehaviour
 	}
 
 	public static void GenerateParticle(
-		Sprite spr, Vector3 position, Transform parent = null, bool shrink = true, bool fadeOut = true,
-		float lifeTime = 1f, float speed = 0f, bool slowDown = false, float rotationDeg = 0f,
-		float rotationSpeed = 0f, float size = 1f, bool rotationDecay = false, float alpha = 1f, Color? tint = null,
-		float fadeIn = 0f, int sortingLayer = 0, float growthOverLifetime = 1f)
+		Sprite spr, Vector3 position, Transform parent = null, bool fadeOut = true, float lifeTime = 1f,
+		float speed = 0f, bool slowDown = false, float rotationDeg = 0f, float rotationSpeed = 0f, float size = 1f,
+		bool rotationDecay = false, float alpha = 1f, Color? tint = null, float fadeIn = 0f, int sortingLayer = 0,
+		float growthOverLifetime = 1f)
 	{
 		SpriteRenderer rend = singleton.pool.Dequeue();
 		singleton.active.Add(rend);
@@ -43,37 +43,34 @@ public class ParticleGenerator : MonoBehaviour
 		obj.transform.eulerAngles = Vector3.forward * rotationDeg;
 		obj.transform.localScale = Vector2.one * size;
 		obj.transform.parent = parent == null ? singleton.transform : parent;
-		singleton.StartCoroutine(Lifetime(rend, lifeTime, shrink, fadeOut, speed, slowDown, rotationSpeed,
+		singleton.StartCoroutine(Lifetime(rend, lifeTime, fadeOut, speed, slowDown, rotationSpeed,
 			rotationDecay, alpha, tintFix, fadeIn, growthOverLifetime));
 	}
 
 	private static IEnumerator Lifetime(
-		SpriteRenderer rend, float time, bool shrink, bool fadeOut, float originalSpeed, bool slowDown,
+		SpriteRenderer rend, float time, bool fadeOut, float originalSpeed, bool slowDown,
 		float originalRotationSpeed, bool rotationDecay, float alpha, Color tint, float fadeIn,
 		float growthOverLifetime)
 	{
+		//record original values
 		float spd = originalSpeed;
 		float rotSpd = originalRotationSpeed;
 		float originalTime = time;
 		Vector3 originalSize = rend.transform.localScale;
-
+		Vector3 targetSize = originalSize * growthOverLifetime;
+		//initialise random values
 		float randomDir = Random.value * Mathf.PI * 2f;
 		Vector3 direction = new Vector3(Mathf.Sin(randomDir), Mathf.Cos(randomDir));
 
+		//loop for particle's lifetime
 		while (time > 0f)
 		{
+			//decrease time
 			float delta = Mathf.Pow(time / originalTime, 0.75f);
 			time -= Time.deltaTime;
-
-			if (shrink)
-			{
-				rend.transform.localScale = originalSize * delta;
-			}
-			else
-			{
-				rend.transform.localScale = originalSize * growthOverLifetime * (1f - delta);
-			}
-
+			//adjust size
+			rend.transform.localScale = Vector3.Lerp(originalSize, targetSize, 1f - delta);
+			//adjust colour
 			Color c = tint;
 			if (originalTime - time < fadeIn)
 			{
@@ -84,7 +81,7 @@ public class ParticleGenerator : MonoBehaviour
 				c.a = alpha * delta;
 			}
 			rend.color = c;
-
+			//adjust speed
 			if (slowDown)
 			{
 				spd = originalSpeed * delta;
@@ -94,12 +91,14 @@ public class ParticleGenerator : MonoBehaviour
 			{
 				rotSpd = originalRotationSpeed * delta;
 			}
-
-			rend.transform.eulerAngles += Vector3.forward * rotSpd;
+			//adjust rotation
+			rend.transform.eulerAngles += Vector3.forward * rotSpd * Time.deltaTime * 60f;
+			//adjust position
 			rend.transform.position += direction * spd * Time.deltaTime;
 			yield return null;
 		}
 
+		//disable object and return to pool
 		rend.gameObject.SetActive(false);
 		rend.transform.parent = singleton.transform;
 		singleton.active.Remove(rend);

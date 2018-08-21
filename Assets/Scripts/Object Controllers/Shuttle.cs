@@ -10,6 +10,8 @@ public class Shuttle : Entity, IDamageable
 	[Header("Required references")]
 	[Tooltip("Requires reference to the SpriteRenderer of the shuttle.")]
 	public SpriteRenderer SprRend;
+	[Tooltip("Requires reference to the Animator of the shuttle's transform.")]
+	public Animator shuttleAnimator;
 	[Header("Movement related")]
 	[Tooltip("Rate of speed accumulation when moving forward.")]
 	public float EngineStrength = 3f;
@@ -20,6 +22,8 @@ public class Shuttle : Entity, IDamageable
 	[Tooltip("When drilling, this is multiplied with the speed limit to allow for faster boost after drilling" +
 		" completes.")]
 	public float DrillBoost = 2f;
+	[SerializeField]
+	private float drillDamageMultiplier = 0.5f;
 	[Tooltip("Controls how quickly the shuttle can rotate.")]
 	public float MaxRotSpeed = 10f;
 	[Tooltip("Controls how effective the shuttle's deceleration mechanism is.")]
@@ -30,7 +34,7 @@ public class Shuttle : Entity, IDamageable
 	//the rotation that the shuttle should be at
 	public Vector3 rot;
 	//force of acceleration via the shuttle
-	public Vector2 _accel;
+	public Vector2 accel;
 	//store last look direction, useful for joysticks
 	private float _lastLookDirection;
 	//return how far over the speed limit the shuttle's velocity is
@@ -64,7 +68,37 @@ public class Shuttle : Entity, IDamageable
 	private float autoPilotTimer;
 	//transform for the auto pilot to follow
 	private Transform followTarget;
-	#endregion
+	//used to adjust speed temporarily
+	private float speedMultiplier = 1f;
+	#region Boost
+	//whether boost capability is available
+	[SerializeField]
+	private bool boostAvailable = true;
+	//how long a boost can last
+	[SerializeField]
+	private float boostCapacity = 1f;
+	//represents how much boost is currently available
+	private float boostLevel;
+	//how much a boost affects speed
+	[SerializeField]
+	private float boostMultiplier = 2f;
+	//how long it takes before boost fuel begins recharging
+	[SerializeField]
+	private float boostRechargeTime = 2f;
+	private float rechargeTimer;
+	//how quickly the boost fuel recharges
+	[SerializeField]
+	private float rechargeSpeed = 1f;
+	//how much boosting ignores existing momentum
+	[SerializeField]
+	private float boostCounterVelocity = 0.1f;
+	//whether the shuttle is boosting or not
+	private bool isBoosting = false;
+	//reference to sonic boom animation
+	[SerializeField]
+	private GameObject sonicBoomBoostEffect;
+	#endregion Boost
+	#endregion Fields
 
 	#region Attachments
 	// Laser Weapon
@@ -86,7 +120,6 @@ public class Shuttle : Entity, IDamageable
 	public override void Awake()
 	{
 		base.Awake();
-
 		singleton = this;
 	}
 
@@ -100,21 +133,20 @@ public class Shuttle : Entity, IDamageable
 
 	private void FixedUpdate()
 	{
-		Rb.AddForce(_accel);
+		Rb.AddForce(accel);
 	}
 
 	//Checks for input related to movement and calculates acceleration
 	private void GetMovementInput()
 	{
+		//Check if the player is attempting to boost
+		if (!autoPilot) Boost(Input.GetKey(KeyCode.Space));
 		//used for artificially adjusting speed, used by the auto pilot only
 		float speedMod = 1f;
-
 		//update rotation variable with transform's current rotation
 		rot.z = transform.eulerAngles.z;
-
 		//get rotation input
 		float lookDirection = InputHandler.GetLookDirection(transform.position);
-			
 		//if no rotation input has been given then use the same as last frame
 		if (float.IsPositiveInfinity(lookDirection)) lookDirection = _lastLookDirection;
 
@@ -136,6 +168,21 @@ public class Shuttle : Entity, IDamageable
 			if (!IsDrilling)
 			{
 				speedMod *= 1f - Mathf.Abs(lookDirection - (360f - rot.z)) / 180f;
+				if (!isBoosting)
+				{
+					Boost(speedMod > 0.9f && GetBoostRemaining() > 0.5f);
+				}
+				else
+				{
+					float boostThreshold = Mathf.MoveTowards(0f, 1f,
+						(Vector2.Distance(transform.position, followTarget.position)) / 2f) * 0.9f;
+					boostThreshold = Mathf.Max(boostThreshold, 0.5f);
+					Boost(speedMod > boostThreshold);
+				}
+			}
+			else
+			{
+				Boost(isBoosting);
 			}
 		}
 			
@@ -151,46 +198,43 @@ public class Shuttle : Entity, IDamageable
 		}
 		rotMod /= 180f;
 		rotMod = Mathf.Pow(rotMod, 0.8f);
-		SetRot(Mathf.MoveTowardsAngle(rot.z, -lookDirection, MaxRotSpeed * rotMod));
+		SetRot(Mathf.MoveTowardsAngle(rot.z, -lookDirection, MaxRotSpeed * rotMod * Time.deltaTime * 60f));
 
 		//reset acceleration
-		_accel = Vector2.zero;
+		accel = Vector2.zero;
 		//get movement input
-		_accel.y += Mathf.Clamp01(InputHandler.GetInput("MoveVertical")) * EngineStrength;
-		//if (!IsDrilling)
-		//{
-		//	_accel.x += InputHandler.GetInput("MoveHorizontal") * EngineStrength;
-		//}
+		accel.y += Mathf.Clamp01(InputHandler.GetInput("MoveVertical")) * EngineStrength * speedMultiplier;
+
 		if (autoPilot)
 		{
-			_accel = Vector2.up * EngineStrength;
+			accel = Vector2.up * EngineStrength * speedMultiplier;
 		}
-		float magnitude = _accel.magnitude;
+		float magnitude = accel.magnitude;
 
 		//if no acceleration then ignore the rest
-		if (Mathf.Approximately(_accel.x, 0f) && Mathf.Approximately(_accel.y, 0f)) return;
+		if (Mathf.Approximately(accel.x, 0f) && Mathf.Approximately(accel.y, 0f)) return;
 			
 		//if using a joystick then don't affect direction because it doesn't feel intuitive
 		if (InputHandler.GetMode() == InputHandler.InputMode.Keyboard)
 		{
 			//rotate forward acceleration direction to be based on the direction the shuttle is facing
-			float accelAngle = Vector2.Angle(Vector2.up, _accel);
-			if (_accel.x < 0)
+			float accelAngle = Vector2.Angle(Vector2.up, accel);
+			if (accel.x < 0)
 			{
 				accelAngle = 180f + (180f - accelAngle);
 			}
 			Vector2 shuttleDir;
 			shuttleDir.x = Mathf.Sin(Mathf.Deg2Rad * (360f - rot.z + accelAngle));
 			shuttleDir.y = Mathf.Cos(Mathf.Deg2Rad * (360f - rot.z + accelAngle));
-			_accel = shuttleDir;
+			accel = shuttleDir;
 		}
 
-		float topSpeed = Mathf.Min(EngineStrength, SpeedLimit);
+		float topSpeed = Mathf.Min(EngineStrength, SpeedLimit) * speedMultiplier;
 		if (magnitude > topSpeed)
 		{
 			magnitude = topSpeed;
 		}
-		_accel *= magnitude * speedMod;
+		accel *= magnitude * speedMod;
 	}
 
 	//use calculated rotation and speed to determine where to move to
@@ -204,7 +248,7 @@ public class Shuttle : Entity, IDamageable
 			decelerationModifier *= checkSpeed;
 		}
 
-		Vector3 addForce = _accel;
+		Vector3 addForce = accel;
 
 		if (IsDrilling)
 		{
@@ -215,7 +259,7 @@ public class Shuttle : Entity, IDamageable
 			//apply a continuous slowdown effect
 			velocity = Vector3.MoveTowards(velocity, Vector3.zero, 0.1f);
 			//calculate how powerful the drill can be
-			float drillSpeedModifier = SpeedLimit * DrillBoost;
+			float drillSpeedModifier = SpeedLimit * speedMultiplier * DrillBoost;
 			drillSpeedModifier *= drillSpeedModifier;
 			//set an upper limit so that the drill speed doesn't go too extreme
 			if (velocity.sqrMagnitude > drillSpeedModifier)
@@ -324,13 +368,15 @@ public class Shuttle : Entity, IDamageable
 
 	public override float DrillDamageQuery(bool firstHit)
 	{
+		if (InputHandler.IsHoldingBack()) return 0f;
+
 		if (firstHit && velocity.magnitude >= SpeedLimit + 0.5f)
 		{
-			return InputHandler.IsHoldingBack() ? 0f : velocity.magnitude * 50f;
+			return velocity.magnitude * 50f * drillDamageMultiplier;
 		}
 		else
 		{
-			return InputHandler.IsHoldingBack() ? 0f : velocity.magnitude;
+			return velocity.magnitude * drillDamageMultiplier;
 		}
 	}
 
@@ -346,7 +392,7 @@ public class Shuttle : Entity, IDamageable
 
 	public override bool VerifyDrillTarget(Entity target)
 	{
-		return _accel != Vector2.zero;
+		return accel != Vector2.zero;
 	}
 
 	public void OnCollisionEnter2D(Collision2D collision)
@@ -366,12 +412,78 @@ public class Shuttle : Entity, IDamageable
 
 	public bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer, int dropModifier = 0)
 	{
+		if (destroyer != this)
+		{
+			//take damage
+		}
 		return false;
 	}
 
 	public Vector2 GetPosition()
 	{
 		return transform.position;
+	}
+
+	private void Boost(bool input)
+	{
+		if (boostAvailable && input && boostLevel < boostCapacity && !Pause.IsPaused)
+		{
+			if (!isBoosting)
+			{
+				speedMultiplier *= boostMultiplier;
+				if (sonicBoomBoostEffect != null && !IsDrilling)
+				{
+					Rb.velocity = transform.up;
+					shuttleAnimator.SetBool("IsBoosting", true);
+					Transform effect = Instantiate(sonicBoomBoostEffect).transform;
+					effect.parent = ParticleGenerator.singleton.transform;
+					effect.position = transform.position;
+					Vector3 effectRotation = effect.eulerAngles;
+					effectRotation += transform.eulerAngles;
+					effect.eulerAngles = effectRotation;
+				}
+			}
+			isBoosting = true;
+			rechargeTimer = 0f;
+			boostLevel += Time.deltaTime;
+			if (IsDrilling)
+			{
+				velocity.Normalize();
+				velocity *= SpeedLimit * speedMultiplier * DrillBoost;
+			}
+			else
+			{
+				Vector3 rbVel = Rb.velocity;
+				rbVel = Vector3.Lerp(rbVel, transform.up, boostCounterVelocity);
+				rbVel.Normalize();
+				rbVel *= SpeedLimit * speedMultiplier;
+				Rb.velocity = rbVel;
+			}
+		}
+		else
+		{
+			if (isBoosting)
+			{
+				speedMultiplier /= boostMultiplier;
+				shuttleAnimator.SetBool("IsBoosting", false);
+			}
+			isBoosting = false;
+			rechargeTimer += Time.deltaTime;
+			if (rechargeTimer >= boostRechargeTime)
+			{
+				boostLevel = Mathf.Max(boostLevel - Time.deltaTime * rechargeSpeed, 0f);
+			}
+		}
+	}
+
+	public float GetBoostRemaining()
+	{
+		return (boostCapacity - boostLevel) / boostCapacity;
+	}
+
+	public override bool CanFireLaser()
+	{
+		return !isBoosting;
 	}
 
 	#region Attach/Detach Methods

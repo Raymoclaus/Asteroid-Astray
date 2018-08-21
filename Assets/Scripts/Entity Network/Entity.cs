@@ -227,6 +227,11 @@ public class Entity : MonoBehaviour
 	{
 		return new Scan(GetEntityType(), 1f, 1);
 	}
+
+	public virtual bool CanFireLaser()
+	{
+		return false;
+	}
 }
 
 public enum EntityType

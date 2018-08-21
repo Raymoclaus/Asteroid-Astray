@@ -251,6 +251,7 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 	public void BotDestroyed(GatherBot bot)
 	{
 		occupiedDocks[bot.dockID] = false;
+		childBots.Remove(bot);
 	}
 
 	public void Store(List<ItemStack> items, GatherBot b)
@@ -328,12 +329,35 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 	{
 		currentHealth -= damage;
 
-		return CheckHealth();
+		return CheckHealth(destroyer, dropModifier);
 	}
 
-	private bool CheckHealth()
+	private bool CheckHealth(Entity destroyer, int dropModifier = 0)
 	{
+		if (currentHealth > 0f) return false;
+		DestroySelf(true, destroyer, dropModifier);
 		return currentHealth <= 0f;
+	}
+
+	private void DestroySelf(bool explode, Entity destroyer, int dropModifier = 0)
+	{
+		if (explode)
+		{
+			//particle effects
+
+			//sound effects
+
+			//drop resources
+
+		}
+
+		//self destruct all child bots
+		for (int i = childBots.Count - 1; i >= 0; i--)
+		{
+			childBots[i].DestroySelf(explode);
+		}
+
+		base.DestroySelf();
 	}
 
 	public void MarkCoordAsEmpty(ChunkCoords c)

@@ -146,8 +146,9 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		if (randomChoose < loadRes.debris.Length)
 		{
 			ParticleGenerator.GenerateParticle(
-				loadRes.debris[randomChoose], pos, shrink: false, speed: Random.value * 3f, slowDown: true,
-				lifeTime: 1.5f, rotationDeg: Random.value * 360f, rotationSpeed: Random.value * 3f, sortingLayer: SprRend.sortingLayerID);
+				loadRes.debris[randomChoose], pos, speed: Random.value * 3f, slowDown: true, lifeTime: 1.5f,
+				rotationDeg: Random.value * 360f, rotationSpeed: Random.value * 3f,
+				sortingLayer: SprRend.sortingLayerID);
 		}
 	}
 
@@ -160,7 +161,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 			if (randomChoose < loadRes.dust.Length)
 			{
 				ParticleGenerator.GenerateParticle(
-					loadRes.dust[randomChoose], pos, shrink: false, speed: Random.value * 0.5f, slowDown: true,
+					loadRes.dust[randomChoose], pos, speed: Random.value * 0.5f, slowDown: true,
 					lifeTime: Random.value * 3f + 2f, rotationDeg: Random.value * 360f,
 					rotationSpeed: Random.value * 0.5f, size: 0.3f + Mathf.Pow(Random.value, 2f) * 0.7f, alpha: alpha,
 					fadeIn: Random.value + 0.5f, sortingLayer: SprRend.sortingLayerID, growthOverLifetime: 2f);
@@ -173,7 +174,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		if (Health <= 0f)
 		{
 			ParticleGenerator.GenerateParticle(GetCurrentSpriteSettings()[GetCurrentSpriteSettings().Length - 1],
-				transform.position, shrink: false, fadeOut: false, lifeTime: 0.05f,
+				transform.position, fadeOut: false, lifeTime: 0.05f,
 				rotationDeg: transform.eulerAngles.z, sortingLayer: SprRend.sortingLayerID);
 			return;
 		}

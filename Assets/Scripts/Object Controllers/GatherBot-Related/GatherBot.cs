@@ -24,7 +24,9 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		//attacking unknown entity
 		Attacking,
 		//collecting spoils of a skirmish
-		Collecting
+		Collecting,
+		//Running for backup when solo fight gets too intense
+		Escaping
 	}
 
 	//references
@@ -153,6 +155,9 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 				break;
 			case AIState.Collecting:
 				Collecting();
+				break;
+			case AIState.Escaping:
+				Escaping();
 				break;
 		}
 
@@ -413,9 +418,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 	private void Attacking()
 	{
-		//TODO: make sure distant signalled bots don't instantly remove threat
-		if (threats[0] == null || 
-			(Vector2.Distance(transform.position, threats[0].transform.position) > chaseRange && !respondingToSignal))
+		if (threats[0] == null)
 		{
 			threats.RemoveAt(0);
 			if (threats.Count == 0)
@@ -426,7 +429,36 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 				return;
 			}
 		}
+		//if this bot is too far away and all other bots are also too far away then give up chase
 		float distanceFromTarget = Vector2.Distance(transform.position, threats[0].transform.position);
+		if (distanceFromTarget > chaseRange && !respondingToSignal)
+		{
+			bool found = false;
+			foreach (GatherBot bot in hive.childBots)
+			{
+				if (bot == this) continue;
+				float dist = Vector2.Distance(bot.transform.position, threats[0].transform.position);
+				if (dist < chaseRange)
+				{
+					found = true;
+					break;
+				}
+			}
+			if (!found)
+			{
+				threats.RemoveAt(0);
+				if (threats.Count == 0)
+				{
+					foreach (GatherBot bot in hive.childBots)
+					{
+						bot.state = AIState.Collecting;
+						bot.anim.SetTrigger("Idle");
+						bot.isIdle = true;
+					}
+					return;
+				}
+			}
+		}
 
 		foreach (GatherBot sibling in hive.childBots)
 		{
@@ -459,6 +491,11 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	}
 
 	private void Collecting()
+	{
+
+	}
+
+	private void Escaping()
 	{
 
 	}
@@ -608,7 +645,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		}
 		rotMod /= 180f;
 		rotMod = Mathf.Pow(rotMod, 0.8f);
-		rot = (Mathf.MoveTowardsAngle(rot, angle, rotationSpeed * rotMod) + 360f) % 360f;
+		rot = (Mathf.MoveTowardsAngle(rot, angle, rotationSpeed * rotMod * Time.deltaTime * 60f) + 360f) % 360f;
 		return rotMod;
 	}
 
@@ -902,7 +939,10 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 	public bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer, int dropModifier = 0)
 	{
-		currentHealth -= damage;
+		if (!IsSibling(destroyer))
+		{
+			currentHealth -= damage;
+		}
 		return CheckHealth(destroyer, dropModifier);
 	}
 
@@ -945,8 +985,18 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		return currentHealth <= 0f;
 	}
 
-	public override void DestroySelf()
+	public void DestroySelf(bool explode)
 	{
+		if (explode)
+		{
+			//particle effects
+
+			//sound effects
+
+			//drop resources
+
+		}
+
 		hive.BotDestroyed(this);
 		base.DestroySelf();
 	}

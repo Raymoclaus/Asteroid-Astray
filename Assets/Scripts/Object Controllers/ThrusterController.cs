@@ -31,10 +31,13 @@ public class ThrusterController : MonoBehaviour
 
 	private void Update()
 	{
-		shuttleMag = shuttle.velocity.magnitude;
-		SetThrusterFireValues();
-		SetThrusterForceValues();
-		SetSmokeTrailState();
+		if (!Pause.IsPaused)
+		{
+			shuttleMag = shuttle.velocity.magnitude;
+			SetThrusterFireValues();
+			SetThrusterForceValues();
+			SetSmokeTrailState();
+		}
 	}
 
 	private void SetThrusterFireValues()
@@ -63,7 +66,7 @@ public class ThrusterController : MonoBehaviour
 
 	private void SetSmokeTrailState()
 	{
-		bool active = shuttle._accel != Vector2.zero;
+		bool active = shuttle.accel != Vector2.zero;
 
 		foreach (ParticleSystem ps in smokeTrails)
 		{

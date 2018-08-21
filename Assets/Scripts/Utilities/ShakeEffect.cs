@@ -13,6 +13,8 @@ public class ShakeEffect : MonoBehaviour
 	{
 		while (true)
 		{
+			if (Pause.IsPaused) yield return null;
+
 			//shift intensity towards the goal but don't surpass the limit
 			intensity = Mathf.MoveTowards(intensity, intensityGoal > INTENSITY_LIMIT ? INTENSITY_LIMIT : intensityGoal, intensityShift);
 			//set random position

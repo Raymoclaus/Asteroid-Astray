@@ -19,6 +19,7 @@ public class DrillBit : MonoBehaviour
 	public float pitchModifier = 0.1f;
 	public float maxVolume = 1f;
 	public float volumeIncrease = 0.1f;
+	private float currentVolume;
 	
 	void Start ()
 	{
@@ -38,9 +39,13 @@ public class DrillBit : MonoBehaviour
 	{
 		//query damage from parent
 		float damage = parent.DrillDamageQuery(firstHit);
+		if (firstHit)
+		{
+			damage *= Time.deltaTime * 60f;
+		}
 		firstHit = false;
 		//if damage is 0 then stop drilling
-		if (damage <= 0f)
+		if (damage <= 0f && !Pause.IsPaused)
 		{
 			StopDrilling();
 		}
@@ -56,7 +61,11 @@ public class DrillBit : MonoBehaviour
 		ResizeParticleSystem(damage * sparkSizeModifier);
 
 		//adjust sound
-		drillSoundSource.volume = Mathf.MoveTowards(drillSoundSource.volume, maxVolume, maxVolume * volumeIncrease);
+		if (!Pause.IsPaused)
+		{
+			currentVolume = Mathf.MoveTowards(currentVolume, maxVolume, maxVolume * volumeIncrease);
+		}
+		drillSoundSource.volume = Pause.IsPaused ? 0f : currentVolume;
 		drillSoundSource.pitch = Mathf.MoveTowards(drillPitchRange.x, drillPitchRange.y, damage * pitchModifier);
 	}
 
@@ -70,6 +79,7 @@ public class DrillBit : MonoBehaviour
 		drillTarget = newTarget;
 		firstHit = true;
 
+		currentVolume = 0f;
 		drillSoundSource.volume = 0f;
 		drillSoundSource.Play();
 
@@ -89,6 +99,7 @@ public class DrillBit : MonoBehaviour
 			drillTarget = null;
 		}
 
+		currentVolume = 0f;
 		drillSoundSource.volume = 0f;
 		drillSoundSource.Stop();
 

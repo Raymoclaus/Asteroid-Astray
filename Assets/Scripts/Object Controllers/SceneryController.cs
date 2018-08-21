@@ -11,18 +11,21 @@ public struct CosmicItem
 	public Vector3 pos;
 	public double size;
 	public byte rotation;
+	public bool common;
 
-	public CosmicItem(byte type, Vector3 pos, double size, byte rotation)
+	public CosmicItem(byte type, Vector3 pos, double size, byte rotation, bool common)
 	{
 		this.type = type;
 		this.pos = pos;
 		this.size = size;
 		this.rotation = rotation;
+		this.common = common;
 	}
 }
 
 public class SceneryController : MonoBehaviour
 {
+	private string folderPath, lessFrequentImageFolderPath;
 	public static SceneryController singleton;
 	private bool singletonChecked;
 
@@ -30,7 +33,10 @@ public class SceneryController : MonoBehaviour
 	private const int reserveSize = 100;
 	private const int largeDistance = 500;
 	private const int directions = 4;
-	private List<Sprite> types = new List<Sprite>();
+	public List<Sprite> types, lessFrequentTypes;
+	//less frequent types will appear (1f - commonTypeFrequency  x100)% of the time
+	[Range(0f, 1f)]
+	public float commonTypeFrequency = 0.9f;
 	private int ViewDistance { get { return Mathf.CeilToInt(BgCameraController.bgCam.cam.fieldOfView); } }
 
 	private const int poolSize = 10000;
@@ -96,6 +102,8 @@ public class SceneryController : MonoBehaviour
 		ReserveListCapacity();
 		FillPool();
 		perlinOffset = new Vector2(Random.value, Random.value);
+		folderPath = Application.dataPath + "/../StarSystemImages";
+		lessFrequentImageFolderPath = folderPath + "/LessFrequentImages";
 	}
 
 	private void Update()
@@ -165,10 +173,18 @@ public class SceneryController : MonoBehaviour
 			}
 
 			obj.transform.position = item.pos;
-			rend.sprite = types[item.type];
+			rend.sprite = item.common ? types[item.type] : lessFrequentTypes[item.type];
 			//Color col = transparent ? transparentColor : Color.white;
 			Color col = Color.white;
-			col.a *= (1f - (item.pos.z - starMinDistance) / starDistanceRange) * 0.9f + 0.1f;
+			float delta = (1f - (item.pos.z - starMinDistance) / starDistanceRange) * 0.9f + 0.1f;
+			if (item.common)
+			{
+				col.a *= delta;
+			}
+			else
+			{
+				col = Color.Lerp(Color.black, Color.white, Mathf.Min(0.3f, delta));
+			}
 			rend.color = col;
 			active.Enqueue(rend);
 			obj.transform.localScale = Vector2.one * (float)item.size;
@@ -198,8 +214,10 @@ public class SceneryController : MonoBehaviour
 			Vector2Pair area = ChunkCoords.GetCellArea(c);
 			Vector3 spawnPos = new Vector3(Random.Range(area.A.x, area.B.x), Random.Range(area.A.y, area.B.y),
 				(1f - Mathf.Pow(Random.value, 7f * (max / amount))) * starDistanceRange + starMinDistance);
-			CosmicItem newItem = new CosmicItem((byte)Random.Range(0, types.Count), spawnPos,
-				Random.Range(scaleRange.x, scaleRange.y), (byte)Random.Range(0, 8));
+			bool common = Random.value <= commonTypeFrequency;
+			List<Sprite> listToChooseFrom = common ? types : lessFrequentTypes;
+			CosmicItem newItem = new CosmicItem((byte)Random.Range(0, listToChooseFrom.Count), spawnPos,
+				Random.Range(scaleRange.x, scaleRange.y), (byte)Random.Range(0, 8), common);
 			Chunk(c).Add(newItem);
 		}
 	}
@@ -262,10 +280,10 @@ public class SceneryController : MonoBehaviour
 			int maxFreeWorkers = sc.freeWorkers;
 
 			//prepare colour arrays
-			Color32[][] tex = new Color32[sc.variety][];
+			Color[][] tex = new Color[sc.variety][];
 			for (int i = 0; i < tex.Length; i++)
 			{
-				tex[i] = new Color32[sc.textureSize.x * sc.textureSize.y];
+				tex[i] = new Color[sc.textureSize.x * sc.textureSize.y];
 			}
 			int completedLines = 0;
 			int linesPerJob = 256;
@@ -290,8 +308,8 @@ public class SceneryController : MonoBehaviour
 				systems[i] = new Star[numStars];
 				for (int j = 0; j < systems[i].Length; j++)
 				{
-					systems[i][j] = new Star(sc.textureSize, padding, sc.starSizeRange, power, sc.colorMin, sc.colorMax,
-						rnd, biasDirections);
+					systems[i][j] = new Star(sc.textureSize, padding, sc.starSizeRange, power, sc.colorMin,
+						sc.colorMax, rnd, biasDirections);
 				}
 				yield return null;
 			}
@@ -328,15 +346,15 @@ public class SceneryController : MonoBehaviour
 			}
 
 			//apply all textures and turn them into sprites
-			System.IO.Directory.CreateDirectory(Application.dataPath + "/../StarSystemImages");
+			Directory.CreateDirectory(sc.folderPath);
 			for (int i = 0; i < tex.Length; i++)
 			{
 				Texture2D t = new Texture2D(sc.textureSize.x, sc.textureSize.y, TextureFormat.RGBA32,
 					false);
-				t.SetPixels32(tex[i]);
+				t.SetPixels(tex[i]);
 				t.Apply();
 				byte[] bytes = t.EncodeToPNG();
-				System.IO.File.WriteAllBytes(Application.dataPath + "/../StarSystemImages/starSystem_" + i + ".png", bytes);
+				File.WriteAllBytes(sc.folderPath + "/starSystem_" + i + ".jpg", bytes);
 				sc.types.Add(Sprite.Create(t,
 					new Rect(Vector2.zero, new Vector2(sc.textureSize.x, sc.textureSize.y)),
 					Vector2.one / 2f));
@@ -350,7 +368,7 @@ public class SceneryController : MonoBehaviour
 		a();
 	}
 
-	private IEnumerator GenerateTexture(Star[] stars, Color32[] tex, int start,
+	private IEnumerator GenerateTexture(Star[] stars, Color[] tex, int start,
 		int amount)
 	{
 		for (int i = 0; i < textureSize.x; i++)
@@ -364,7 +382,7 @@ public class SceneryController : MonoBehaviour
 		yield return null;
 	}
 
-	private Color32 GetColorOfPixel(int x, int y, Star[] stars)
+	private Color GetColorOfPixel(int x, int y, Star[] stars)
 	{
 		float r = 0;
 		float b = 0;
@@ -378,10 +396,10 @@ public class SceneryController : MonoBehaviour
 			float distance = riseRun.x * riseRun.y + Mathf.Max(riseRun.x, riseRun.y);
 			if (distance < stars[i].size)
 			{
-				float delta = Mathf.Pow(1 - (distance / stars[i].size), 4f);
+				float delta = Mathf.Pow(1f - (distance / stars[i].size), 4f);
 				alpha += delta;
-				r += stars[i].color.r * delta;
-				b += stars[i].color.b * delta;
+				r += stars[i].color.r / 255f * delta;
+				b += stars[i].color.b / 255f * delta;
 			}
 
 			float hazeDist = Mathf.Sqrt(riseRun.x * riseRun.x + riseRun.y * riseRun.y);
@@ -389,17 +407,16 @@ public class SceneryController : MonoBehaviour
 			{
 				float delta = Mathf.Pow(1f - (hazeDist / hazeRange), hazePower);
 				alpha += hazeOpacity / 255f * delta;
-				r += hazeOpacity * delta;
-				b += hazeOpacity * delta;
+				r += hazeOpacity / 255f * delta;
+				b += hazeOpacity / 255f * delta;
 			}
 		}
 
-		r = Mathf.Clamp(r, 0f, 255f);
-		b = Mathf.Clamp(b, 0f, 255f);
-		alpha = Mathf.Clamp01(alpha) * 255f;
+		r = Mathf.Clamp01(r);
+		b = Mathf.Clamp01(b);
+		alpha = Mathf.Clamp01(alpha);
 		float g = Mathf.Min(r, b) * 0.9f;
-
-		return new Color32((byte)r, (byte)g, (byte)b, (byte)alpha);
+		return new Color(r, g, b, alpha);
 	}
 
 	class Star
@@ -468,28 +485,28 @@ public class SceneryController : MonoBehaviour
 
 	private bool CheckForExistingStars()
 	{
-		if (!Directory.Exists(Application.dataPath + "/../StarSystemImages")) return false;
-
-		for (int i = 0; ; i++)
-		{
-			string path = Application.dataPath + "/../StarSystemImages/starSystem_" + i + ".png";
-			if (File.Exists(path))
-			{
-				byte[] bytes = File.ReadAllBytes(path);
-				Texture2D t = new Texture2D(1, 1);
-				t.LoadImage(bytes);
-				t.Apply();
-				types.Add(Sprite.Create(t, new Rect(Vector2.zero, new Vector2(t.width, t.height)),
-					Vector2.one / 2f));
-			}
-			else
-			{
-				variety -= i;
-				break;
-			}
-		}
-
+		if (!Directory.Exists(folderPath)) return false;
+		//get common type images
+		variety -= SearchForImages(folderPath, "*.png", types) + SearchForImages(folderPath, "*.jpg", types);
+		//get images from folder marked as less frequent
+		SearchForImages(lessFrequentImageFolderPath, "*.png", lessFrequentTypes);
+		SearchForImages(lessFrequentImageFolderPath, "*.jpg", lessFrequentTypes);
 		return variety <= 0;
+	}
+
+	private int SearchForImages(string path, string filename, List<Sprite> spriteList)
+	{
+		string[] images = Directory.GetFiles(path, filename);
+		for (int i = 0; i < images.Length; i++)
+		{
+			byte[] bytes = File.ReadAllBytes(images[i]);
+			Texture2D t = new Texture2D(1, 1);
+			t.LoadImage(bytes);
+			t.Apply();
+			spriteList.Add(Sprite.Create(t, new Rect(Vector2.zero, new Vector2(t.width, t.height)),
+				Vector2.one / 2f));
+		}
+		return images.Length;
 	}
 
 	#region Convenient short-hand methods for accessing the grid

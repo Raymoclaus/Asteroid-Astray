@@ -48,7 +48,8 @@ public class ExpandingCircle : MonoBehaviour
 	{
 		for (int i = 0; i < lr.positionCount; i++)
 		{
-			float angle = (i / 360f) * Mathf.PI * 2f + rot - arcSize / 2f;
+			float angle = i + rot - arcSize / 2f;
+			angle *= Mathf.Deg2Rad;
 			Vector2 pos = origin + new Vector2(Mathf.Sin(angle), Mathf.Cos(angle)) * r;
 			lr.SetPosition(i, pos);
 		}

@@ -43,7 +43,7 @@ public class LaserWeapon : MonoBehaviour
 
 		if (parent == Shuttle.singleton)
 		{
-			if (Input.GetKey(KeyCode.Space))
+			if (Input.GetMouseButton(0) && parent.CanFireLaser() && !Pause.IsPaused)
 			{
 				Fire();
 			}

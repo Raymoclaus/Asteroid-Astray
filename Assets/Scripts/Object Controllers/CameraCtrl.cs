@@ -99,7 +99,8 @@ public class CameraCtrl : MonoBehaviour
 			Vector2 aheadTarget = new Vector2(Mathf.Sin(-TargetToFollow.eulerAngles.z * Mathf.Deg2Rad),
 				Mathf.Cos(-TargetToFollow.eulerAngles.z * Mathf.Deg2Rad)) * distanceAhead;
 			float difference = Vector2.Distance(aheadTarget, aheadVector) / distanceAhead / 2f;
-			aheadVector = Vector2.MoveTowards(aheadVector, aheadTarget, difference * distanceAhead * moveAheadSpeed);
+			aheadVector = Vector2.MoveTowards(aheadVector, aheadTarget, difference * distanceAhead * moveAheadSpeed
+				* Time.deltaTime * 60f);
 			transform.position = TargetToFollow.position + (Vector3)aheadVector + TargetToFollow.forward * -0.4f;
 		}
 	}
@@ -112,7 +113,8 @@ public class CameraCtrl : MonoBehaviour
 			//gradually zoom in
 			float difference = Mathf.Abs(_currentSize - MinCamSize / 2f);
 			float zoomSpeedModifier = Mathf.Min(1f, difference);
-			_currentSize = Mathf.MoveTowards(_currentSize, MinCamSize / 2f, CamDrillZoomSpeed * zoomSpeedModifier);
+			_currentSize = Mathf.MoveTowards(_currentSize, MinCamSize / 2f,
+				CamDrillZoomSpeed * zoomSpeedModifier * Time.deltaTime * 60f);
 		}
 		else
 		{
