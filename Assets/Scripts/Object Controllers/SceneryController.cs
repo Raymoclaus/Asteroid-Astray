@@ -37,6 +37,7 @@ public class SceneryController : MonoBehaviour
 	//less frequent types will appear (1f - commonTypeFrequency  x100)% of the time
 	[Range(0f, 1f)]
 	public float commonTypeFrequency = 0.9f;
+	public Vector2 imageBrightnessRange;
 	private int ViewDistance { get { return Mathf.CeilToInt(BgCameraController.bgCam.cam.fieldOfView); } }
 
 	private const int poolSize = 10000;
@@ -183,7 +184,9 @@ public class SceneryController : MonoBehaviour
 			}
 			else
 			{
-				col = Color.Lerp(Color.black, Color.white, Mathf.Min(0.3f, delta));
+
+				col = Color.Lerp(Color.black, Color.white,
+					Mathf.Clamp(delta, imageBrightnessRange.x, imageBrightnessRange.y));
 			}
 			rend.color = col;
 			active.Enqueue(rend);

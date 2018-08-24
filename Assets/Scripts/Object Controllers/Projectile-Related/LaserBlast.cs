@@ -5,7 +5,7 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D))]
 public class LaserBlast : MonoBehaviour, IProjectile
 {
-	private int sharedID = -1;
+	private double sharedID = -1;
 	private LaserWeapon weaponSystem;
 	[SerializeField]
 	private Rigidbody2D rb;
@@ -43,7 +43,7 @@ public class LaserBlast : MonoBehaviour, IProjectile
 	private AudioClip weakHitSound;
 
 	public void Shoot(Vector2 startPos, Quaternion startRot, Vector2 startingDir, Vector2 followDir,
-		List<LaserBlast> p, Transform wep, Entity shooter, int ID, LaserWeapon wepSystem)
+		List<LaserBlast> p, Transform wep, Entity shooter, double ID, LaserWeapon wepSystem)
 	{
 		firingPos = startPos;
 		transform.position = startPos;

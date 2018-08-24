@@ -257,7 +257,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	{
 		if (waitingForResources) return;
 
-		if (Time.time - searchTimer > scanInterval || targetEntity == null)
+		if (Pause.timeSinceOpen - searchTimer > scanInterval || targetEntity == null)
 		{
 			SearchForNearestAsteroid();
 		}
@@ -418,17 +418,6 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 	private void Attacking()
 	{
-		if (threats[0] == null)
-		{
-			threats.RemoveAt(0);
-			if (threats.Count == 0)
-			{
-				state = AIState.Collecting;
-				anim.SetTrigger("Idle");
-				isIdle = true;
-				return;
-			}
-		}
 		//if this bot is too far away and all other bots are also too far away then give up chase
 		float distanceFromTarget = Vector2.Distance(transform.position, threats[0].transform.position);
 		if (distanceFromTarget > chaseRange && !respondingToSignal)
@@ -478,7 +467,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			}
 		}
 		targetEntity = threats[0];
-		float orbitAngle = Mathf.PI * 2f / hive.childBots.Count * dockID + Time.time * orbitSpeed;
+		float orbitAngle = Mathf.PI * 2f / hive.childBots.Count * dockID + Pause.timeSinceOpen * orbitSpeed;
 		Vector3 targetPos = new Vector2(Mathf.Sin(orbitAngle), Mathf.Cos(orbitAngle)) * orbitRange;
 		GoToLocation(targetEntity.transform.position + targetPos, distanceFromTarget > firingRange, 0.2f, true,
 			distanceFromTarget > firingRange ? null : (Vector2?)targetEntity.transform.position - transform.right);
@@ -588,7 +577,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			}
 		}
 
-		searchTimer = Time.time;
+		searchTimer = Pause.timeSinceOpen;
 	}
 
 	private float AdjustForMomentum(float lookDir)
@@ -921,11 +910,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		if (otherLayer == layerProjectile)
 		{
 			IProjectile projectile = other.GetComponent<IProjectile>();
-			//cannot be hit by projectiles from self or siblings
-			if (!IsSibling(projectile.GetShooter()))
-			{
-				projectile.Hit(this, contactPoint);
-			}
+			projectile.Hit(this, contactPoint);
 		}
 	}
 
@@ -939,6 +924,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 	public bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer, int dropModifier = 0)
 	{
+		//cannot be hit by projectiles from self or siblings
 		if (!IsSibling(destroyer))
 		{
 			currentHealth -= damage;
@@ -981,6 +967,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		{
 			drill.drillTarget.StopDrilling();
 		}
+		destroyer.DestroyedAnEntity(this);
 		DestroySelf();
 		return currentHealth <= 0f;
 	}
@@ -1060,5 +1047,28 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	private int EvaluateScan(Scan sc)
 	{
 		return 1;
+	}
+
+	public override void DestroyedAnEntity(Entity target)
+	{
+		for (int i = 0; i < threats.Count; i++)
+		{
+			if (threats[i] == target)
+			{
+				threats.RemoveAt(i);
+				if (threats.Count == 0)
+				{
+					foreach (GatherBot bot in hive.childBots)
+					{
+						if (bot == null) continue;
+
+						bot.state = AIState.Collecting;
+						bot.anim.SetTrigger("Idle");
+						bot.isIdle = true;
+					}
+				}
+				return;
+			}
+		}
 	}
 }

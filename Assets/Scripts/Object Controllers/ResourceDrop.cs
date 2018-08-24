@@ -27,7 +27,7 @@ public class ResourceDrop : MonoBehaviour
 		startVelocity *= startSpeed;
 		velocity = startVelocity;
 
-		spawnTime = Time.time;
+		spawnTime = Pause.timeSinceOpen;
 
 		//rarity = Random.Range(1, rarityColors.Length);
 		rarity = 1;
@@ -36,7 +36,7 @@ public class ResourceDrop : MonoBehaviour
 
 	private void Update()
 	{
-		float aliveTime = Time.time - spawnTime;
+		float aliveTime = Pause.timeSinceOpen - spawnTime;
 
 		if (aliveTime < delay || follow == null)
 		{
@@ -47,8 +47,8 @@ public class ResourceDrop : MonoBehaviour
 			//gain speed towards the follow target
 			Vector2 direction = follow.transform.position - transform.position;
 			direction.Normalize();
-			speedIncrement += speedGain;
-			direction *= speedIncrement;
+			speedIncrement += speedGain * Time.deltaTime * 60f;
+			direction *= speedIncrement * Time.deltaTime * 60f;
 			velocity = direction;
 		}
 

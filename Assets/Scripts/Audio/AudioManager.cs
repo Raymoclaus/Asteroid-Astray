@@ -6,7 +6,7 @@ using UnityEngine.Audio;
 public class AudioManager : MonoBehaviour
 {
 	public static AudioManager singleton;
-	public AudioMixerGroup musicMixer, sfxMixer;
+	public AudioMixerGroup masterMixer, musicMixer, sfxMixer;
 
 	private const int poolReserve = 400;
 	private Queue<AudioSource> pool = new Queue<AudioSource>(poolReserve);
@@ -27,6 +27,11 @@ public class AudioManager : MonoBehaviour
 		}
 
 		SetUpPoolReserve();
+	}
+
+	private void Update()
+	{
+		masterMixer.audioMixer.SetFloat("Pitch", Time.timeScale);
 	}
 
 	public static void PlaySFX(AudioClip clip, Vector3 position, Transform parent = null, float volume = 1f,

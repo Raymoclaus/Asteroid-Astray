@@ -39,13 +39,16 @@ public class DrillBit : MonoBehaviour
 	{
 		//query damage from parent
 		float damage = parent.DrillDamageQuery(firstHit);
-		if (firstHit)
+		//bigger effects for more damage
+		ResizeParticleSystem(damage * sparkSizeModifier);
+		//This is so that no damage is dealt while drilling while game is paused
+		if (!firstHit)
 		{
 			damage *= Time.deltaTime * 60f;
 		}
 		firstHit = false;
 		//if damage is 0 then stop drilling
-		if (damage <= 0f && !Pause.IsPaused)
+		if (damage <= 0f && !Pause.IsPaused && !Pause.isShifting)
 		{
 			StopDrilling();
 		}
@@ -57,8 +60,6 @@ public class DrillBit : MonoBehaviour
 				parent.DrillComplete();
 			}
 		}
-		//bigger effects for more damage
-		ResizeParticleSystem(damage * sparkSizeModifier);
 
 		//adjust sound
 		if (!Pause.IsPaused)

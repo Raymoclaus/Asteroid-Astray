@@ -153,7 +153,7 @@ public class Shuttle : Entity, IDamageable
 		//automatically look for the nearest asteroid
 		if (autoPilot)
 		{
-			if (Time.time - autoPilotTimer > 0f || followTarget == null)
+			if (Pause.timeSinceOpen - autoPilotTimer > 0f || followTarget == null)
 			{
 				SearchForNearestAsteroid();
 			}
@@ -318,7 +318,7 @@ public class Shuttle : Entity, IDamageable
 		storage.AddItem(Item.Type.Stone);
 
 		//increase pitch of sound for successive resource collection, reset after a break
-		if (Time.time - resourceCollectedTime < 1f)
+		if (Pause.timeSinceOpen - resourceCollectedTime < 1f)
 		{
 			resourceCollectedPitch += resourceCollectedPitchIncreaseAmount;
 		}
@@ -326,7 +326,7 @@ public class Shuttle : Entity, IDamageable
 		{
 			resourceCollectedPitch = 1f;
 		}
-		resourceCollectedTime = Time.time;
+		resourceCollectedTime = Pause.timeSinceOpen;
 		//play resource collect sound
 		AudioManager.PlaySFX(collectResourceSound, transform.position, transform, pitch: resourceCollectedPitch);
 		
@@ -334,7 +334,7 @@ public class Shuttle : Entity, IDamageable
 
 	private void SearchForNearestAsteroid()
 	{
-		autoPilotTimer = Time.time;
+		autoPilotTimer = Pause.timeSinceOpen;
 
 		int searchRange = 1;
 		List<Entity> asteroids = new List<Entity>();

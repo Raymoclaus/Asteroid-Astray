@@ -134,13 +134,13 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 				drop.transform.parent = ParticleGenerator.singleton.transform;
 			}
 		}
-
+		destroyer.DestroyedAnEntity(this);
 		base.DestroySelf();
 	}
 
 	private void CreateDebris(Vector2 pos)
 	{
-		if (!isActive) return;
+		if (!isActive || Pause.IsPaused) return;
 
 		int randomChoose = Random.Range(0, loadRes.debris.Length);
 		if (randomChoose < loadRes.debris.Length)
@@ -154,7 +154,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 
 	private void CreateDust(Vector2 pos, int amount = 1, float alpha = 0.1f)
 	{
-		if (!isActive) return;
+		if (!isActive || Pause.IsPaused) return;
 		for (int i = 0; i < amount; i++)
 		{
 			int randomChoose = Random.Range(0, loadRes.dust.Length);

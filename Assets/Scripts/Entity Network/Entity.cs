@@ -232,6 +232,11 @@ public class Entity : MonoBehaviour
 	{
 		return false;
 	}
+
+	public virtual void DestroyedAnEntity(Entity target)
+	{
+
+	}
 }
 
 public enum EntityType
