@@ -402,4 +402,9 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 	{
 		return EntityType.BotHive;
 	}
+
+	public void Launch()
+	{
+		throw new NotImplementedException();
+	}
 }

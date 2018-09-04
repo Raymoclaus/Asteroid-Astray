@@ -14,6 +14,7 @@ public class ShipEntryPanel : MonoBehaviour
 
 	public void ClosePanel()
 	{
+		Pause.InstantPause(false);
 		gameObject.SetActive(false);
 	}
 }

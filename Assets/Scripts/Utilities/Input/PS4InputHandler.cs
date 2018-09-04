@@ -5,15 +5,16 @@ using System.IO;
 public class Ps4InputHandler : ICustomInputType
 {
 	//set of default key bindings that cannot be changed
-	private readonly Dictionary<string, string> _defaults = new Dictionary<string, string>
-		{
-			{"MoveHorizontal", "J_LeftHorizontalAxis"},
-			{"MoveVertical", "J_LeftVerticalAxis"},
-			{"LookHorizontal", "J_RightHorizontalAxis"},
-			{"LookVertical", "J_RightVerticalAxis"}
-		};
+	private readonly List<KeyCode> defaults = new List<KeyCode>
+	{
+		KeyCode.Joystick1Button7,
+		KeyCode.Joystick1Button0,
+		KeyCode.Joystick1Button5,
+		KeyCode.Joystick1Button1,
+		KeyCode.Joystick1Button9
+	};
 	//set of key bindings that can be changed
-	private readonly Dictionary<string, string> _bindings = new Dictionary<string, string>();
+	private List<KeyCode> bindings = new List<KeyCode>();
 	//used to check if a direction (degrees) is "roughly" close to the expected value
 	private const float LEEWAY = 45f;
 
@@ -33,18 +34,14 @@ public class Ps4InputHandler : ICustomInputType
 
 	private void SetToDefaults()
 	{
-		_bindings.Clear();
-		foreach (string val in _defaults.Values)
-		{
-			_bindings.Add(val, val);
-		}
+		bindings = defaults;
 	}
 
 	public static float GetLookDirection()
 	{
 		Vector2 axisInput = new Vector2(
-			UnityEngine.Input.GetAxisRaw("J_RightHorizontalAxis"),
-			UnityEngine.Input.GetAxisRaw("J_RightVerticalAxis"));
+			Input.GetAxisRaw("J_LeftHorizontalAxis"),
+			Input.GetAxisRaw("J_LeftVerticalAxis"));
 
 		//if the control is not being used then return a non-usable value
 		if (Mathf.Approximately(axisInput.x, 0f) && Mathf.Approximately(axisInput.y, 0f))
@@ -62,63 +59,68 @@ public class Ps4InputHandler : ICustomInputType
 	public bool ProcessInputs()
 	{
 		//checks all the bindings
-		foreach (string kb in _bindings.Values)
+		foreach (KeyCode kb in bindings)
 		{
-			if (kb.Contains("button"))
-			{
-				if (UnityEngine.Input.GetKey(kb))
-					return true;
-
-				continue;
-			}
-
-			if (!kb.Contains("Axis")) continue;
-			if (!Mathf.Approximately(UnityEngine.Input.GetAxisRaw(kb), 0f))
-				return true;
+			if (Input.GetKey(kb)) return true;
 		}
+
+		if (!Mathf.Approximately(Input.GetAxisRaw("J_LeftHorizontalAxis"), 0f))
+			return true;
+		if (!Mathf.Approximately(Input.GetAxisRaw("J_LeftVerticalAxis"), 0f))
+			return true;
+		if (!Mathf.Approximately(Input.GetAxisRaw("J_RightHorizontalAxis"), 0f))
+			return true;
+		if (!Mathf.Approximately(Input.GetAxisRaw("J_RightVerticalAxis"), 0f))
+			return true;
 
 		return false;
 	}
 
-	public void ChangeKeyBinding(string key, string newVal)
+	public void ChangeKeyBinding(string key, KeyCode newVal)
 	{
-		_bindings[key] = newVal;
-	}
-
-	public void ChangeAllKeyBindings(Dictionary<string, string> keys)
-	{
-		_bindings.Clear();
-		foreach (KeyValuePair<string, string> val in keys)
+		int index = InputHandler.GetKeyIndex(key);
+		if (index == -1)
 		{
-			_bindings.Add(_defaults[val.Key], val.Value);
+			Debug.LogWarning(string.Format("Action: {0}, does not exist.", key));
+			return;
 		}
+		bindings[index] = newVal;
 	}
 
-	public Dictionary<string, string> GetDefaults()
+	public void ChangeAllKeyBindings(List<KeyCode> keys)
 	{
-		return _defaults;
+		bindings = keys;
+	}
+
+	public List<KeyCode> GetDefaults()
+	{
+		return defaults;
 	}
 
 	public float GetInput(string key)
 	{
-		if (GetBinding(key).Contains("button")) return UnityEngine.Input.GetKey(GetBinding(key)) ? 1f : 0f;
-		return GetBinding(key).Contains("Axis") ? UnityEngine.Input.GetAxisRaw(GetBinding(key)) : 0f;
+		return Input.GetKey(GetBinding(key)) ? 1f : 0f;
 	}
 
-	private string GetBinding(string key)
+	public float GetInputDown(string key)
 	{
-		return _bindings[_defaults[key]];
+		return Input.GetKeyDown(GetBinding(key)) ? 1f : 0f;
 	}
 
-	public bool IsHoldingBack(Vector2? refDir)
+	public float GetInputUp(string key)
 	{
-		//get vector of movement
-		Vector2 moveVec = MoveVector();
-		//if no reference direction is given then assume it is directly upwards
-		//convert direction of vector to degrees (0 to 180)
-		float moveAngle = Vector2.Angle(refDir == null ? Vector2.up : (Vector2)refDir, moveVec);
-		//return true if value is close enough to 180
-		return moveAngle - 180f < -LEEWAY;
+		return Input.GetKeyUp(GetBinding(key)) ? 1f : 0f;
+	}
+
+	private KeyCode GetBinding(string key)
+	{
+		int index = InputHandler.GetKeyIndex(key);
+		if (index == -1)
+		{
+			Debug.LogWarning(string.Format("Action: {0}, does not exist.", key));
+			return KeyCode.None;
+		}
+		return bindings[index];
 	}
 
 	private Vector2 MoveVector()

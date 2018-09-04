@@ -7,4 +7,5 @@ public interface IDrillableObject
 	void StopDrilling();
 	void OnTriggerEnter2D(Collider2D other);
 	void OnTriggerExit2D(Collider2D other);
+	void Launch();
 }

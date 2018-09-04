@@ -1,19 +1,21 @@
 ﻿using System.Collections.Generic;
+using System.Collections;
 using System.IO;
 using UnityEngine;
 
 public class KeyboardInputHandler : ICustomInputType
 {
 	//set of default key bindings that cannot be changed
-	private readonly Dictionary<string, string> _defaults = new Dictionary<string, string>
-		{
-			{"MoveLeft", "a"},
-			{"MoveRight", "d"},
-			{"MoveUp", "w"},
-			{"MoveDown", "s"}
-		};
+	private readonly List<KeyCode> defaults = new List<KeyCode>
+	{
+		KeyCode.W,
+		KeyCode.S,
+		KeyCode.Mouse0,
+		KeyCode.LeftShift,
+		KeyCode.Escape
+	};
 	//set of key bindings that can be changed
-	private readonly Dictionary<string, string> _bindings = new Dictionary<string, string>();
+	private List<KeyCode> bindings = new List<KeyCode>();
 
 	//used for checking if the mouse has moved
 	private Vector2 _prevMousePos;
@@ -36,11 +38,7 @@ public class KeyboardInputHandler : ICustomInputType
 
 	private void SetToDefaults()
 	{
-		_bindings.Clear();
-		foreach (string val in _defaults.Values)
-		{
-			_bindings.Add(val, val);
-		}
+		bindings = defaults;
 	}
 
 	public static float GetLookDirection(Vector2 refLocation)
@@ -61,7 +59,7 @@ public class KeyboardInputHandler : ICustomInputType
 		bool inputDetected = false;
 
 		//checks all the bindings
-		foreach (string kb in _bindings.Values)
+		foreach (KeyCode kb in bindings)
 		{
 			if (!Input.GetKey(kb)) continue;
 			inputDetected = true;
@@ -77,23 +75,25 @@ public class KeyboardInputHandler : ICustomInputType
 		return true;
 	}
 
-	public void ChangeKeyBinding(string key, string newVal)
+	public void ChangeKeyBinding(string key, KeyCode newVal)
 	{
-		_bindings[key] = newVal;
-	}
-
-	public void ChangeAllKeyBindings(Dictionary<string, string> keys)
-	{
-		_bindings.Clear();
-		foreach (KeyValuePair<string, string> val in keys)
+		int index = InputHandler.GetKeyIndex(key);
+		if (index == -1)
 		{
-			_bindings.Add(_defaults[val.Key], val.Value);
+			Debug.LogWarning(string.Format("Action: {0}, does not exist.", key));
+			return;
 		}
+		bindings[index] = newVal;
 	}
 
-	public Dictionary<string, string> GetDefaults()
+	public void ChangeAllKeyBindings(List<KeyCode> keys)
 	{
-		return _defaults;
+		bindings = keys;
+	}
+
+	public List<KeyCode> GetDefaults()
+	{
+		return defaults;
 	}
 
 	public float GetInput(string key)
@@ -101,13 +101,24 @@ public class KeyboardInputHandler : ICustomInputType
 		return Input.GetKey(GetBinding(key)) ? 1f : 0f;
 	}
 
-	private string GetBinding(string key)
+	public float GetInputDown(string key)
 	{
-		return _bindings[_defaults[key]];
+		return Input.GetKeyDown(GetBinding(key)) ? 1f : 0f;
 	}
 
-	public bool IsHoldingBack()
+	public float GetInputUp(string key)
 	{
-		return GetInput("MoveDown") != 0f;
+		return Input.GetKeyUp(GetBinding(key)) ? 1f : 0f;
+	}
+
+	private KeyCode GetBinding(string key)
+	{
+		int index = InputHandler.GetKeyIndex(key);
+		if (index == -1)
+		{
+			Debug.LogWarning(string.Format("Action: {0}, does not exist.", key));
+			return KeyCode.None;
+		}
+		return bindings[index];
 	}
 }

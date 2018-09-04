@@ -5,6 +5,7 @@ using UnityEngine;
 public class ParticleGenerator : MonoBehaviour
 {
 	public static ParticleGenerator singleton;
+	public static Transform holder;
 
 	private const int poolReserve = 2000;
 	private Queue<SpriteRenderer> pool = new Queue<SpriteRenderer>(poolReserve);
@@ -16,6 +17,7 @@ public class ParticleGenerator : MonoBehaviour
 		{
 			singleton = this;
 			DontDestroyOnLoad(gameObject);
+			holder = new GameObject("Particle Holder").transform;
 		}
 		else
 		{

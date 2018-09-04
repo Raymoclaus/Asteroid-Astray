@@ -70,6 +70,12 @@ public class Shuttle : Entity, IDamageable
 	private Transform followTarget;
 	//used to adjust speed temporarily
 	private float speedMultiplier = 1f;
+	//whether the shuttle can perform a drill launch
+	[SerializeField]
+	private bool canDrillLaunch;
+	public float drillLaunchSpeed = 6f;
+	[SerializeField]
+	private float drillLaunchMaxAngle = 30f;
 	#region Boost
 	//whether boost capability is available
 	[SerializeField]
@@ -140,7 +146,7 @@ public class Shuttle : Entity, IDamageable
 	private void GetMovementInput()
 	{
 		//Check if the player is attempting to boost
-		if (!autoPilot) Boost(Input.GetKey(KeyCode.Space));
+		if (!autoPilot) Boost(InputHandler.GetInput("Boost") > 0f);
 		//used for artificially adjusting speed, used by the auto pilot only
 		float speedMod = 1f;
 		//update rotation variable with transform's current rotation
@@ -203,7 +209,7 @@ public class Shuttle : Entity, IDamageable
 		//reset acceleration
 		accel = Vector2.zero;
 		//get movement input
-		accel.y += Mathf.Clamp01(InputHandler.GetInput("MoveVertical")) * EngineStrength * speedMultiplier;
+		accel.y += Mathf.Clamp01(InputHandler.GetInput("Go")) * EngineStrength * speedMultiplier;
 
 		if (autoPilot)
 		{
@@ -213,21 +219,17 @@ public class Shuttle : Entity, IDamageable
 
 		//if no acceleration then ignore the rest
 		if (Mathf.Approximately(accel.x, 0f) && Mathf.Approximately(accel.y, 0f)) return;
-			
-		//if using a joystick then don't affect direction because it doesn't feel intuitive
-		if (InputHandler.GetMode() == InputHandler.InputMode.Keyboard)
+		
+		//rotate forward acceleration direction to be based on the direction the shuttle is facing
+		float accelAngle = Vector2.Angle(Vector2.up, accel);
+		if (accel.x < 0)
 		{
-			//rotate forward acceleration direction to be based on the direction the shuttle is facing
-			float accelAngle = Vector2.Angle(Vector2.up, accel);
-			if (accel.x < 0)
-			{
-				accelAngle = 180f + (180f - accelAngle);
-			}
-			Vector2 shuttleDir;
-			shuttleDir.x = Mathf.Sin(Mathf.Deg2Rad * (360f - rot.z + accelAngle));
-			shuttleDir.y = Mathf.Cos(Mathf.Deg2Rad * (360f - rot.z + accelAngle));
-			accel = shuttleDir;
+			accelAngle = 180f + (180f - accelAngle);
 		}
+		Vector2 shuttleDir;
+		shuttleDir.x = Mathf.Sin(Mathf.Deg2Rad * (360f - rot.z + accelAngle));
+		shuttleDir.y = Mathf.Cos(Mathf.Deg2Rad * (360f - rot.z + accelAngle));
+		accel = shuttleDir;
 
 		float topSpeed = Mathf.Min(EngineStrength, SpeedLimit) * speedMultiplier;
 		if (magnitude > topSpeed)
@@ -368,7 +370,7 @@ public class Shuttle : Entity, IDamageable
 
 	public override float DrillDamageQuery(bool firstHit)
 	{
-		if (InputHandler.IsHoldingBack()) return 0f;
+		if (InputHandler.GetInputUp("Stop") > 0f) return 0f;
 
 		if (firstHit && velocity.magnitude >= SpeedLimit + 0.5f)
 		{
@@ -378,6 +380,37 @@ public class Shuttle : Entity, IDamageable
 		{
 			return velocity.magnitude * drillDamageMultiplier;
 		}
+	}
+
+	public bool ShouldLaunch()
+	{
+		return canDrillLaunch && velocity.sqrMagnitude >= Mathf.Pow(SpeedLimit * DrillBoost, 2f) * 0.9f;
+	}
+
+	public static Vector2 LaunchDirection(Transform launchableObject)
+	{
+		Vector2 launchDir = Input.mousePosition -
+			Camera.main.WorldToScreenPoint(launchableObject.position);
+		launchDir.Normalize();
+		float launchAngle = Vector2.Angle(Vector2.up, launchDir);
+		if (launchDir.x < 0f)
+		{
+			launchAngle = 180f + (180f - launchAngle);
+		}
+		float shuttleAngle = Vector2.Angle(Vector2.up, singleton.transform.up);
+		if (singleton.transform.up.x < 0f)
+		{
+			shuttleAngle = 180f + (180f - shuttleAngle);
+		}
+		float deltaAngle = Mathf.Abs(Mathf.DeltaAngle(launchAngle, shuttleAngle));
+		if (deltaAngle > singleton.drillLaunchMaxAngle)
+		{
+			launchAngle = Mathf.MoveTowardsAngle(shuttleAngle, launchAngle, singleton.drillLaunchMaxAngle);
+			launchAngle *= Mathf.Deg2Rad;
+			launchDir = new Vector2(Mathf.Sin(launchAngle), Mathf.Cos(launchAngle));
+		}
+		launchDir *= singleton.drillLaunchSpeed;
+		return launchDir;
 	}
 
 	public void AutoPilotSwitch(bool isOn)
@@ -436,11 +469,12 @@ public class Shuttle : Entity, IDamageable
 					Rb.velocity = transform.up;
 					shuttleAnimator.SetBool("IsBoosting", true);
 					Transform effect = Instantiate(sonicBoomBoostEffect).transform;
-					effect.parent = ParticleGenerator.singleton.transform;
+					effect.parent = ParticleGenerator.holder;
 					effect.position = transform.position;
 					Vector3 effectRotation = effect.eulerAngles;
 					effectRotation += transform.eulerAngles;
 					effect.eulerAngles = effectRotation;
+					ScreenRippleEffectController.StartRipple();
 				}
 			}
 			isBoosting = true;

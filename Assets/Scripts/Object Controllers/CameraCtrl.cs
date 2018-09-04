@@ -124,7 +124,8 @@ public class CameraCtrl : MonoBehaviour
 			float zoomDifference = targetSize - _currentSize;
 			float zoomDifferenceAbs = zoomDifference > 0 ? zoomDifference : -zoomDifference;
 			float camZoomSpeedModifier = zoomDifferenceAbs > 1 && zoomDifference > 0 ? 1f : zoomDifferenceAbs;
-			_currentSize = Mathf.MoveTowards(_currentSize, targetSize, CamZoomSpeed * camZoomSpeedModifier);
+			_currentSize = Mathf.MoveTowards(_currentSize, targetSize, CamZoomSpeed * camZoomSpeedModifier
+			* Time.deltaTime * 60f);
 		}
 		//sets the camera size on the camera component
 		Cam.orthographicSize = _currentSize;

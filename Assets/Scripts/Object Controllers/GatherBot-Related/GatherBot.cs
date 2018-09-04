@@ -284,7 +284,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	{
 		if (!waitingForHiveDirection)
 		{
-			if (GoToLocation(targetLocation))
+			if (GoToLocation(targetLocation, isInPhysicsRange))
 			{
 				state = AIState.Scanning;
 			}
@@ -661,7 +661,9 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		Vector2[] dirs = new Vector2[]
 		{
 			new Vector2(Mathf.Sin(Mathf.Deg2Rad * (angleTo - 30f)), Mathf.Cos(Mathf.Deg2Rad * (angleTo - 30f))),
+			new Vector2(Mathf.Sin(Mathf.Deg2Rad * (angleTo - 15f)), Mathf.Cos(Mathf.Deg2Rad * (angleTo - 15f))),
 			new Vector2(Mathf.Sin(Mathf.Deg2Rad * angleTo), Mathf.Cos(Mathf.Deg2Rad * angleTo)),
+			new Vector2(Mathf.Sin(Mathf.Deg2Rad * (angleTo + 15f)), Mathf.Cos(Mathf.Deg2Rad * (angleTo + 15f))),
 			new Vector2(Mathf.Sin(Mathf.Deg2Rad * (angleTo + 30f)), Mathf.Cos(Mathf.Deg2Rad * (angleTo + 30f)))
 		};
 		RaycastHit2D[] hits = new RaycastHit2D[dirs.Length];
@@ -681,7 +683,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 		for (int i = 0; i < hits.Length; i++)
 		{
-			if (facingWall && i != 1) continue;
+			if (facingWall && i != 2) continue;
 
 			RaycastHit2D hit = hits[i];
 
@@ -695,11 +697,17 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 						change += maxSway * delta;
 						break;
 					case 1:
+						change += maxSway * delta * 1.5f;
+						break;
+					case 2:
 						float obstacleAngle = Vector2.Angle(Vector2.up,
 							hit.collider.transform.position - transform.position);
 						change += Mathf.MoveTowardsAngle(angleTo, obstacleAngle, -maxSway * delta * 2f) - angleTo;
 						break;
-					case 2:
+					case 3:
+						change -= maxSway * delta * 1.5f;
+						break;
+					case 4:
 						change -= maxSway * delta;
 						break;
 				}
@@ -818,7 +826,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			scan.arcSize = arcSize;
 			scan.loop = loop;
 			scan.transform.position = transform.position;
-			scan.transform.parent = ParticleGenerator.singleton.transform;
+			scan.transform.parent = ParticleGenerator.holder;
 		};
 		a();
 		yield return wfs;
@@ -1070,5 +1078,10 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 				return;
 			}
 		}
+	}
+
+	public void Launch()
+	{
+		throw new System.NotImplementedException();
 	}
 }

@@ -50,7 +50,11 @@ public class DrillBit : MonoBehaviour
 		//if damage is 0 then stop drilling
 		if (damage <= 0f && !Pause.IsPaused && !Pause.isShifting)
 		{
-			StopDrilling();
+			bool launch =
+				InputHandler.GetInputUp("Stop") > 0f &&
+				parent == Shuttle.singleton &&
+				Shuttle.singleton.ShouldLaunch();
+			StopDrilling(launch);
 		}
 		//else send the damage to the drill target
 		else
@@ -90,13 +94,17 @@ public class DrillBit : MonoBehaviour
 		}
 	}
 
-	public void StopDrilling()
+	public void StopDrilling(bool launch = false)
 	{
 		TriggerParticleEffects(false);
 		isDrilling = false;
 		if (drillTarget != null)
 		{
 			drillTarget.StopDrilling();
+			if (launch)
+			{
+				drillTarget.Launch();
+			}
 			drillTarget = null;
 		}
 

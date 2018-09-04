@@ -32,7 +32,7 @@ public class TimeManager : MonoBehaviour
 
 public struct GTime
 {
-	public static float SecondsPerDay = 1800f;
+	public const float SecondsPerDay = 1800f;
 	public int day;
 	public float time;
 

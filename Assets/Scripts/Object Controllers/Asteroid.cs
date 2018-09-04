@@ -131,7 +131,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 				ResourceDrop drop = Instantiate(resource);
 				drop.Create(destroyer);
 				drop.transform.position = transform.position;
-				drop.transform.parent = ParticleGenerator.singleton.transform;
+				drop.transform.parent = ParticleGenerator.holder;
 			}
 		}
 		destroyer.DestroyedAnEntity(this);
@@ -340,5 +340,10 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 
 		//dust particle effect
 		CreateDust(contactPoint, (int)collisionStrength * collisionDustMultiplier, 0.1f + Random.value * 0.2f);
+	}
+
+	public void Launch()
+	{
+		Rb.velocity = Shuttle.LaunchDirection(transform);
 	}
 }

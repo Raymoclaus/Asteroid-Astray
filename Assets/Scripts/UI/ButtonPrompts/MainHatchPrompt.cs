@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class MainHatchPrompt : MonoBehaviour, IPromptRespone
 {
-	public GameObject mainHutchUI;
+	public GameObject mainHatchUI;
 	public string interactString;
 	private KeyCode interactKey = KeyCode.E;
 
@@ -20,12 +20,13 @@ public class MainHatchPrompt : MonoBehaviour, IPromptRespone
 
 	public void Execute()
 	{
-		mainHutchUI.SetActive(true);
+		Pause.InstantPause(true);
+		mainHatchUI.SetActive(true);
 	}
 
 	public void Exit()
 	{
-		mainHutchUI.SetActive(false);
+		mainHatchUI.SetActive(false);
 	}
 
 	public string InteractString()

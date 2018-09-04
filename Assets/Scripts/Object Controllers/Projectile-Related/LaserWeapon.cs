@@ -30,7 +30,7 @@ public class LaserWeapon : MonoBehaviour
 	private void Awake()
 	{
 		blastPoolHolder = new GameObject("Blast Pool Holder").transform;
-		blastPoolHolder.parent = ParticleGenerator.singleton.transform;
+		blastPoolHolder.parent = ParticleGenerator.holder;
 		FillPool();
 	}
 
@@ -43,7 +43,7 @@ public class LaserWeapon : MonoBehaviour
 
 		if (parent == Shuttle.singleton)
 		{
-			if (Input.GetMouseButton(0) && parent.CanFireLaser() && !Pause.IsPaused)
+			if (InputHandler.GetInput("Shoot") > 0f && parent.CanFireLaser() && !Pause.IsPaused)
 			{
 				Fire();
 			}
@@ -114,7 +114,7 @@ public class LaserWeapon : MonoBehaviour
 		projectileIDs.Clear();
 		projectileIDs.Add(ID);
 		//sonic boom particle effect
-		GameObject sBoom = Instantiate(sonicBoom, ParticleGenerator.singleton.transform);
+		GameObject sBoom = Instantiate(sonicBoom, ParticleGenerator.holder);
 		sBoom.transform.position = position;
 		sBoom.transform.eulerAngles = Vector3.forward * angle;
 		//play sonic boom sound

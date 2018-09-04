@@ -40,7 +40,7 @@ public class ResourceDrop : MonoBehaviour
 
 		if (aliveTime < delay || follow == null)
 		{
-			velocity *= speedDecay;
+			velocity = Vector2.Lerp(velocity, velocity * speedDecay, Time.timeScale);
 		}
 		else
 		{
@@ -53,7 +53,7 @@ public class ResourceDrop : MonoBehaviour
 		}
 
 		//set the position
-		transform.position += (Vector3)velocity;
+		transform.position += (Vector3)velocity * Time.deltaTime * 60f;
 
 		//check if close enough to collect
 		if (Vector2.Distance(transform.position, follow.transform.position) < velocity.magnitude

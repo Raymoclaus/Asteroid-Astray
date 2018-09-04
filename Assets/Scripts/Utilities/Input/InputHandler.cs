@@ -60,6 +60,12 @@ public class InputHandler : MonoBehaviour
 	public static float GetInput(string key)
 	{
 		InputHandler ih = _singletonRef;
+		int index = GetKeyIndex(key);
+		if (index == -1)
+		{
+			Debug.LogWarning(string.Format("Action: {0}, does not exist.", key));
+			return 0f;
+		}
 
 		//make sure we're using the right mode
 		ih.CheckForModeUpdate();
@@ -67,20 +73,77 @@ public class InputHandler : MonoBehaviour
 		switch (ih._mode)
 		{
 			case InputMode.Keyboard:
-				switch (key)
-				{
-					case "MoveHorizontal":
-						return ih._keyLayout.GetInput("MoveRight") - ih._keyLayout.GetInput("MoveLeft");
-					case "MoveVertical":
-						return ih._keyLayout.GetInput("MoveUp") - ih._keyLayout.GetInput("MoveDown");
-					default:
-						return ih._keyLayout.GetInput(key);
-				}
+				return ih._keyLayout.GetInput(key);
 			case InputMode.Ps4:
 				return ih._ps4Layout.GetInput(key);
 			default:
 				Debug.LogError("Input Mode is not set.");
 				return 0f;
+		}
+	}
+
+	//returns the input status of a given command. 0f usually means no input.
+	public static float GetInputDown(string key)
+	{
+		InputHandler ih = _singletonRef;
+		int index = GetKeyIndex(key);
+		if (index == -1)
+		{
+			Debug.LogWarning(string.Format("Action: {0}, does not exist.", key));
+			return 0f;
+		}
+
+		//make sure we're using the right mode
+		ih.CheckForModeUpdate();
+
+		switch (ih._mode)
+		{
+			case InputMode.Keyboard:
+				return ih._keyLayout.GetInputDown(key);
+			case InputMode.Ps4:
+				return ih._ps4Layout.GetInputDown(key);
+			default:
+				Debug.LogError("Input Mode is not set.");
+				return 0f;
+		}
+	}
+
+	//returns the input status of a given command. 0f usually means no input.
+	public static float GetInputUp(string key)
+	{
+		InputHandler ih = _singletonRef;
+		int index = GetKeyIndex(key);
+		if (index == -1)
+		{
+			Debug.LogWarning(string.Format("Action: {0}, does not exist.", key));
+			return 0f;
+		}
+
+		//make sure we're using the right mode
+		ih.CheckForModeUpdate();
+
+		switch (ih._mode)
+		{
+			case InputMode.Keyboard:
+				return ih._keyLayout.GetInputUp(key);
+			case InputMode.Ps4:
+				return ih._ps4Layout.GetInputUp(key);
+			default:
+				Debug.LogError("Input Mode is not set.");
+				return 0f;
+		}
+	}
+
+	public static int GetKeyIndex(string key)
+	{
+		switch (key)
+		{
+			case "Go": return 0;
+			case "Stop": return 1;
+			case "Shoot": return 2;
+			case "Boost": return 3;
+			case "Pause": return 4;
+			default: return -1;
 		}
 	}
 
@@ -110,24 +173,5 @@ public class InputHandler : MonoBehaviour
 	public static InputMode GetMode()
 	{
 		return _singletonRef._mode;
-	}
-
-	public static bool IsHoldingBack(Vector2? refDir = null)
-	{
-		InputHandler ih = _singletonRef;
-
-		//make sure we're using the right mode
-		ih.CheckForModeUpdate();
-
-		switch (ih._mode)
-		{
-			case InputMode.Keyboard:
-				return ih._keyLayout.IsHoldingBack();
-			case InputMode.Ps4:
-				return ih._ps4Layout.IsHoldingBack(refDir);
-			default:
-				Debug.LogError("Input Mode is not set.");
-				return false;
-		}
 	}
 }

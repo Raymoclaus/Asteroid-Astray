@@ -13,6 +13,7 @@ public class Entity : MonoBehaviour
 	public bool ShouldDisableGameObjectOnShortDistance = true;
 	public bool isActive = true;
 	public bool disabled = false;
+	public bool isInPhysicsRange = false;
 	private Vector3 vel;
 	private float disableTime;
 	protected bool needsInit = true;
@@ -64,9 +65,10 @@ public class Entity : MonoBehaviour
 		if (needsInit && !initialised) return;
 
 		SetAllActivity(IsInView());
+		isInPhysicsRange = IsInPhysicsRange();
 		if (ShouldDisablePhysicsOnDistance)
 		{
-			if (IsInPhysicsRange())
+			if (isInPhysicsRange)
 			{
 				if (!disabled) return;
 				entitiesActive++;
@@ -121,17 +123,18 @@ public class Entity : MonoBehaviour
 
 		isActive = active;
 
+		if (ShouldDisableGameObjectOnShortDistance)
+		{
+			gameObject.SetActive(active);
+			return;
+		}
+
 		foreach (Renderer r in rends)
 		{
 			if (r != null)
 			{
 				r.enabled = active;
 			}
-		}
-
-		if (ShouldDisableGameObjectOnShortDistance)
-		{
-			gameObject.SetActive(active);
 		}
 
 		//enable/disable all relevant components

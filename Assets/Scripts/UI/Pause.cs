@@ -5,13 +5,13 @@ public class Pause : MonoBehaviour
 	public static bool IsPaused { get { return Mathf.Approximately(Time.timeScale, Mathf.Epsilon); } }
 	public static float timeSinceOpen = 0f;
 	public static bool isShifting = false;
-	private bool shiftingUp = false;
+	private static bool shiftingUp = false;
 
 	private void Update()
 	{
 		timeSinceOpen += Time.deltaTime;
 
-		if (Input.GetKeyDown(KeyCode.P) && !isShifting)
+		if (InputHandler.GetInputDown("Pause") > 0f && !isShifting)
 		{
 			isShifting = true;
 			shiftingUp = IsPaused;
@@ -20,7 +20,7 @@ public class Pause : MonoBehaviour
 		if (isShifting)
 		{
 			float scl = Time.timeScale;
-			scl += shiftingUp ? Time.unscaledDeltaTime : -Time.unscaledDeltaTime;
+			scl += shiftingUp ? Time.unscaledDeltaTime * 2f : -Time.unscaledDeltaTime * 2f;
 			if (scl <= 0f || scl >= 1f)
 			{
 				Time.timeScale = Mathf.Clamp01(scl);
@@ -31,5 +31,12 @@ public class Pause : MonoBehaviour
 				Time.timeScale = scl;
 			}
 		}
+	}
+
+	public static void InstantPause(bool pause)
+	{
+		isShifting = false;
+		shiftingUp = false;
+		Time.timeScale = pause ? 0f : 1f;
 	}
 }

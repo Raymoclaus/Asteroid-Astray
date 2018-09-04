@@ -28,7 +28,7 @@ public class StraightWeapon : MonoBehaviour
 	private void Awake()
 	{
 		blastPoolHolder = new GameObject("Blast Pool Holder").transform;
-		blastPoolHolder.parent = ParticleGenerator.singleton.transform;
+		blastPoolHolder.parent = ParticleGenerator.holder;
 		FillPool();
 	}
 
@@ -41,7 +41,7 @@ public class StraightWeapon : MonoBehaviour
 
 		if (parent == Shuttle.singleton)
 		{
-			if (Input.GetKey(KeyCode.Space))
+			if (InputHandler.GetInput("Shoot") > 0f)
 			{
 				Fire();
 			}
