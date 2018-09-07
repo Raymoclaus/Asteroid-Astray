@@ -22,17 +22,26 @@ public class ScreenRippleEffectController : MonoBehaviour
 		}
 	}
 
-	public static void StartRipple(float rippleWidth = 0.1f, float speed = 2f, float distortionLevel = 0.01f)
+	public static void StartRipple(float rippleWidth = 0.1f, float speed = 2f, float distortionLevel = 0.01f, float? wait = null)
 	{
 		singleton.rippleEffectMat.SetFloat("_RippleWidth", rippleWidth);
 		singleton.rippleEffectMat.SetFloat("_DistortionAmplitude", distortionLevel);
 		spd = speed;
 		time = 0f;
-		singleton.StartCoroutine(Ripple());
+		singleton.StartCoroutine(Ripple(wait));
 	}
 
-	private static IEnumerator Ripple()
+	private static IEnumerator Ripple(float? wait = null)
 	{
+		if (wait != null)
+		{
+			while (wait > 0f)
+			{
+				wait -= 1f / 60f;
+				//wait -= Time.unscaledDeltaTime;
+				yield return null;
+			}
+		}
 		while (time < 1f)
 		{
 			time += Time.deltaTime * spd;

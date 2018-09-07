@@ -27,11 +27,11 @@ public class ShakeEffect : MonoBehaviour
 		}
 	}
 
-	public void Begin(float? intensityValue = null)
+	public void Begin(float intensityValue = 0f, float intensityGoalValue = 0f, float intensityShiftValue = 0.01f)
 	{
 		Stop();
 		coro = StartCoroutine(Shake());
-		intensity = intensityValue ?? 0f;
+		intensity = intensityValue;
 	}
 
 	public void Stop()

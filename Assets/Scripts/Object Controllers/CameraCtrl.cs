@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class CameraCtrl : MonoBehaviour
@@ -9,6 +10,7 @@ public class CameraCtrl : MonoBehaviour
 	public Entity followTarget;
 	public float MinCamSize = 2f;
 	private static float _currentSize;
+	public ShakeEffect camShake;
 
 	public static float CamSize
 	{
@@ -18,6 +20,7 @@ public class CameraCtrl : MonoBehaviour
 	public float CamZoomSpeed = 0.05f;
 	public float CamDrillZoomSpeed = 0.002f;
 	public float CamSizeModifier = 5f;
+	private float zoomModifier = 1f;
 	private Vector2 _prevPos, aheadVector;
 	[SerializeField]
 	private float distanceAhead = 0.5f, moveAheadSpeed = 0.2f;
@@ -101,7 +104,7 @@ public class CameraCtrl : MonoBehaviour
 			float difference = Vector2.Distance(aheadTarget, aheadVector) / distanceAhead / 2f;
 			aheadVector = Vector2.MoveTowards(aheadVector, aheadTarget, difference * distanceAhead * moveAheadSpeed
 				* Time.deltaTime * 60f);
-			transform.position = TargetToFollow.position + (Vector3)aheadVector + TargetToFollow.forward * -0.4f;
+			transform.localPosition = TargetToFollow.position + (Vector3)aheadVector + TargetToFollow.forward * -0.4f;
 		}
 	}
 
@@ -128,7 +131,7 @@ public class CameraCtrl : MonoBehaviour
 			* Time.deltaTime * 60f);
 		}
 		//sets the camera size on the camera component
-		Cam.orthographicSize = _currentSize;
+		Cam.orthographicSize = _currentSize * zoomModifier;
 		//ensures the ChunkFiller component fills a wide enough area to fill the camera's view
 		CFiller.RangeIncrease = RangeModifier;
 	}
@@ -193,5 +196,26 @@ public class CameraCtrl : MonoBehaviour
 	public static bool IsCoordInPhysicsRange(ChunkCoords coord)
 	{
 		return ChunkCoords.MaxDistance(coord, camCtrl.Coords) < Cnsts.MAX_PHYSICS_RANGE;
+	}
+
+	public static void CamShake()
+	{
+		camCtrl.camShake.Begin(0.1f, 1f / 10f);
+	}
+
+	public static void QuickZoom(float zoomPercentage = 0.8f, float time = 0.5f, bool unscaledTime = true)
+	{
+		camCtrl.StartCoroutine(camCtrl.QuickZoomCoroutine(zoomPercentage, time, unscaledTime));
+	}
+
+	private IEnumerator QuickZoomCoroutine(float zoomPercentage, float time, bool unscaledTime)
+	{
+		zoomModifier = zoomPercentage;
+		while (time >= 0f)
+		{
+			time -= unscaledTime ? 1f / 60f : Time.deltaTime;
+			yield return null;
+		}
+		zoomModifier = 1f;
 	}
 }

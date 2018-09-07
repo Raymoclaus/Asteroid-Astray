@@ -73,9 +73,11 @@ public class Shuttle : Entity, IDamageable
 	//whether the shuttle can perform a drill launch
 	[SerializeField]
 	private bool canDrillLaunch;
-	public float drillLaunchSpeed = 6f;
+	public float drillLaunchSpeed = 10f;
 	[SerializeField]
-	private float drillLaunchMaxAngle = 30f;
+	private float drillLaunchMaxAngle = 60f;
+	[SerializeField]
+	private GameObject drillLaunchArcSprite;
 	#region Boost
 	//whether boost capability is available
 	[SerializeField]
@@ -370,6 +372,17 @@ public class Shuttle : Entity, IDamageable
 
 	public override float DrillDamageQuery(bool firstHit)
 	{
+		if (InputHandler.GetInput("Stop") > 0f)
+		{
+			drillLaunchArcSprite.SetActive(true);
+			drillLaunchArcSprite.transform.position = ((Entity)(drill.drillTarget)).transform.position;
+			drillLaunchArcSprite.transform.eulerAngles = transform.eulerAngles;
+		}
+		else
+		{
+			DrillLaunchArcDisable();
+		}
+
 		if (InputHandler.GetInputUp("Stop") > 0f) return 0f;
 
 		if (firstHit && velocity.magnitude >= SpeedLimit + 0.5f)
@@ -380,6 +393,16 @@ public class Shuttle : Entity, IDamageable
 		{
 			return velocity.magnitude * drillDamageMultiplier;
 		}
+	}
+
+	public void DrillLaunchArcDisable()
+	{
+		drillLaunchArcSprite.SetActive(false);
+	}
+
+	public override void DrillComplete()
+	{
+		DrillLaunchArcDisable();
 	}
 
 	public bool ShouldLaunch()
@@ -403,9 +426,9 @@ public class Shuttle : Entity, IDamageable
 			shuttleAngle = 180f + (180f - shuttleAngle);
 		}
 		float deltaAngle = Mathf.Abs(Mathf.DeltaAngle(launchAngle, shuttleAngle));
-		if (deltaAngle > singleton.drillLaunchMaxAngle)
+		if (deltaAngle > singleton.drillLaunchMaxAngle / 2f)
 		{
-			launchAngle = Mathf.MoveTowardsAngle(shuttleAngle, launchAngle, singleton.drillLaunchMaxAngle);
+			launchAngle = Mathf.MoveTowardsAngle(shuttleAngle, launchAngle, singleton.drillLaunchMaxAngle / 2f);
 			launchAngle *= Mathf.Deg2Rad;
 			launchDir = new Vector2(Mathf.Sin(launchAngle), Mathf.Cos(launchAngle));
 		}

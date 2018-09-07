@@ -43,6 +43,9 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	[SerializeField]
 	private float drillDebrisChance = 0.05f, drillDustChance = 0.2f;
 	private int collisionDustMultiplier = 3;
+	private bool launched = false;
+	private Vector2 launchedDirection;
+	private Entity launcher;
 	#endregion
 
 	#region Audio
@@ -310,6 +313,11 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		ContactPoint2D[] contacts = new ContactPoint2D[1];
 		collision.GetContacts(contacts);
 		Vector2 contactPoint = contacts[0].point;
+		float collisionStrength = collision.relativeVelocity.magnitude;
+		float collisionVolume = collisionStrength * collisionVolumeDampenEffect;
+
+		//dust particle effect
+		CreateDust(contactPoint, (int)collisionStrength * collisionDustMultiplier, 0.1f + Random.value * 0.2f);
 
 		if (otherLayer == layerProjectile)
 		{
@@ -317,8 +325,19 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 			projectile.Hit(this, contactPoint);
 		}
 
-		float collisionStrength = collision.relativeVelocity.magnitude;
-		float collisionVolume = collisionStrength * collisionVolumeDampenEffect;
+		if (otherLayer == layerSolid)
+		{
+			if (launched && Vector2.Angle(launchedDirection, contactPoint - (Vector2)transform.position) < 90f)
+			{
+				IDamageable otherDamageable = other.transform.parent.GetComponent<IDamageable>();
+				if (otherDamageable != null)
+				{
+					otherDamageable.TakeDamage((MaxHealth - Health) * 3f, contactPoint, launcher);
+				}
+				TakeDamage(MaxHealth, contactPoint, launcher);
+			}
+		}
+
 		if (collisionVolume < 0.05f
 			|| Vector2.Distance(transform.position, CameraCtrl.camCtrl.transform.position) > 10f)
 			return;
@@ -337,13 +356,13 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 				}
 			}
 		}
-
-		//dust particle effect
-		CreateDust(contactPoint, (int)collisionStrength * collisionDustMultiplier, 0.1f + Random.value * 0.2f);
 	}
 
-	public void Launch()
+	public void Launch(Vector2 launchDirection, Entity launcher)
 	{
-		Rb.velocity = Shuttle.LaunchDirection(transform);
+		this.launcher = launcher;
+		Rb.velocity = launchDirection;
+		launchedDirection = launchDirection;
+		launched = true;
 	}
 }

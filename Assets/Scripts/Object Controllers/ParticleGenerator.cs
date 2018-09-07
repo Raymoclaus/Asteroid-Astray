@@ -44,7 +44,7 @@ public class ParticleGenerator : MonoBehaviour
 		obj.transform.position = position;
 		obj.transform.eulerAngles = Vector3.forward * rotationDeg;
 		obj.transform.localScale = Vector2.one * size;
-		obj.transform.parent = parent == null ? singleton.transform : parent;
+		obj.transform.parent = parent == null ? holder : parent;
 		singleton.StartCoroutine(Lifetime(rend, lifeTime, fadeOut, speed, slowDown, rotationSpeed,
 			rotationDecay, alpha, tintFix, fadeIn, growthOverLifetime));
 	}

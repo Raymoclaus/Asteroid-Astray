@@ -403,8 +403,8 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 		return EntityType.BotHive;
 	}
 
-	public void Launch()
+	public void Launch(Vector2 launchDirection, Entity launcher)
 	{
-		throw new NotImplementedException();
+
 	}
 }

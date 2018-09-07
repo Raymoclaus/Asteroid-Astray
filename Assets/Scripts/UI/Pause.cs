@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 
 public class Pause : MonoBehaviour
 {
@@ -38,5 +39,21 @@ public class Pause : MonoBehaviour
 		isShifting = false;
 		shiftingUp = false;
 		Time.timeScale = pause ? 0f : 1f;
+	}
+
+	public static void TemporaryPause(float time = 0.5f)
+	{
+		GameController.singleton.StartCoroutine(TempPauseCoroutine(time));
+	}
+
+	private static IEnumerator TempPauseCoroutine(float time = 0.5f)
+	{
+		Time.timeScale = 0f;
+		while (time > 0f)
+		{
+			time -= 1f / 60f;
+			yield return null;
+		}
+		Time.timeScale = 1f;
 	}
 }

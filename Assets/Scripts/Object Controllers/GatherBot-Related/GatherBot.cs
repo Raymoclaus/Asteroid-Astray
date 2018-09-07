@@ -1080,8 +1080,8 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		}
 	}
 
-	public void Launch()
+	public void Launch(Vector2 launchDirection, Entity launcher)
 	{
-		throw new System.NotImplementedException();
+		Rb.velocity = launchDirection;
 	}
 }
