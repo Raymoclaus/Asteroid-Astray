@@ -77,7 +77,7 @@ public class Shuttle : Entity, IDamageable
 	[SerializeField]
 	private float drillLaunchMaxAngle = 60f;
 	[SerializeField]
-	private GameObject drillLaunchArcSprite;
+	private SpriteRenderer drillLaunchArcSprite;
 	#region Boost
 	//whether boost capability is available
 	[SerializeField]
@@ -374,9 +374,20 @@ public class Shuttle : Entity, IDamageable
 	{
 		if (InputHandler.GetInput("Stop") > 0f)
 		{
-			drillLaunchArcSprite.SetActive(true);
-			drillLaunchArcSprite.transform.position = ((Entity)(drill.drillTarget)).transform.position;
-			drillLaunchArcSprite.transform.eulerAngles = transform.eulerAngles;
+			GameObject launchCone = drillLaunchArcSprite.gameObject;
+			launchCone.SetActive(true);
+			launchCone.transform.position = ((Entity)(drill.drillTarget)).transform.position;
+			launchCone.transform.eulerAngles = transform.eulerAngles;
+			drillLaunchArcSprite.material.SetFloat("_ArcAngle", drillLaunchMaxAngle);
+			Transform arrow = launchCone.transform.GetChild(0);
+			Vector2 launchDir = LaunchDirection(((Entity)(drill.drillTarget)).transform);
+			float angle = Vector2.Angle(Vector2.up, launchDir);
+			if (launchDir.x < 0f)
+			{
+				angle = 180f + (180f - angle);
+			}
+			arrow.eulerAngles = Vector3.forward * -angle;
+			arrow.position = ((Entity)(drill.drillTarget)).transform.position;
 		}
 		else
 		{
@@ -397,7 +408,7 @@ public class Shuttle : Entity, IDamageable
 
 	public void DrillLaunchArcDisable()
 	{
-		drillLaunchArcSprite.SetActive(false);
+		drillLaunchArcSprite.gameObject.SetActive(false);
 	}
 
 	public override void DrillComplete()

@@ -1083,5 +1083,6 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	public void Launch(Vector2 launchDirection, Entity launcher)
 	{
 		Rb.velocity = launchDirection;
+		shakeFX.Begin(0.1f, 0f, 1f / 30f);
 	}
 }

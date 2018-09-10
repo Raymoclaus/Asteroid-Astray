@@ -364,5 +364,6 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		Rb.velocity = launchDirection;
 		launchedDirection = launchDirection;
 		launched = true;
+		ShakeFX.Begin(0.1f, 0f, 1f / 30f);
 	}
 }

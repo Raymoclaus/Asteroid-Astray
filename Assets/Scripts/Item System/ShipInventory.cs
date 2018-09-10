@@ -52,5 +52,6 @@ public class ShipInventory : Inventory
 	{
 		singleton.AddItems(items);
 		singleton.Save();
+		SceneryController.Save();
 	}
 }

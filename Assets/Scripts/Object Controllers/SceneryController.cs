@@ -9,11 +9,11 @@ public struct CosmicItem
 {
 	public byte type;
 	public Vector3 pos;
-	public double size;
+	public float size;
 	public byte rotation;
 	public bool common;
 
-	public CosmicItem(byte type, Vector3 pos, double size, byte rotation, bool common)
+	public CosmicItem(byte type, Vector3 pos, float size, byte rotation, bool common)
 	{
 		this.type = type;
 		this.pos = pos;
@@ -100,8 +100,8 @@ public class SceneryController : MonoBehaviour
 		backgroundLayer = LayerMask.NameToLayer("BackgroundImage");
 		sceneryHolder = new GameObject("Scenery Holder").transform;
 		sceneryHolder.gameObject.layer = backgroundLayer;
-		ReserveListCapacity();
 		FillPool();
+		ReserveListCapacity();
 		perlinOffset = new Vector2(Random.value, Random.value);
 		folderPath = Application.dataPath + "/../StarSystemImages";
 		lessFrequentImageFolderPath = folderPath + "/LessFrequentImages";
@@ -164,7 +164,7 @@ public class SceneryController : MonoBehaviour
 			}
 			else
 			{
-				if (pool.Count < 1)
+				if (pool.Count == 0)
 				{
 					FillPool();
 				}
@@ -190,7 +190,7 @@ public class SceneryController : MonoBehaviour
 			}
 			rend.color = col;
 			active.Enqueue(rend);
-			obj.transform.localScale = Vector2.one * (float)item.size;
+			obj.transform.localScale = Vector2.one * item.size;
 			obj.transform.eulerAngles = Vector3.forward * item.rotation * 45f;
 		}
 
@@ -240,6 +240,12 @@ public class SceneryController : MonoBehaviour
 				}
 			}
 		}
+		items = CosmicItemFileReader.Load(items, largeDistance, reserveSize);
+	}
+
+	public static void Save()
+	{
+		CosmicItemFileReader.Save(singleton.items);
 	}
 
 	private void FillPool()

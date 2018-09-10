@@ -22,6 +22,8 @@ public class DrillBit : MonoBehaviour
 	private float currentVolume;
 	[SerializeField]
 	private GameObject drillLaunchSparkEffect;
+	[SerializeField]
+	private float drillLaunchPauseTime = 0.375f;
 
 	void Start ()
 	{
@@ -65,10 +67,10 @@ public class DrillBit : MonoBehaviour
 				eff.position = transform.position;
 				float angle = Vector2.SignedAngle(Vector2.up, launchDirection);
 				eff.eulerAngles = Vector3.forward * angle;
-				Pause.TemporaryPause();
+				Pause.TemporaryPause(drillLaunchPauseTime);
 				CameraCtrl.CamShake();
-				CameraCtrl.QuickZoom();
-				ScreenRippleEffectController.StartRipple(wait: 0.5f);
+				CameraCtrl.QuickZoom(0.8f, drillLaunchPauseTime, true);
+				ScreenRippleEffectController.StartRipple(wait: drillLaunchPauseTime);
 				Shuttle.singleton.DrillLaunchArcDisable();
 			}
 			StopDrilling(launch, launchDirection, Shuttle.singleton);

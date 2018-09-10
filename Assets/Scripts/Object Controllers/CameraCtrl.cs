@@ -200,7 +200,7 @@ public class CameraCtrl : MonoBehaviour
 
 	public static void CamShake()
 	{
-		camCtrl.camShake.Begin(0.1f, 1f / 10f);
+		camCtrl.camShake.Begin(0.1f, 0f, 0.1f);
 	}
 
 	public static void QuickZoom(float zoomPercentage = 0.8f, float time = 0.5f, bool unscaledTime = true)
@@ -213,7 +213,8 @@ public class CameraCtrl : MonoBehaviour
 		zoomModifier = zoomPercentage;
 		while (time >= 0f)
 		{
-			time -= unscaledTime ? 1f / 60f : Time.deltaTime;
+			time -= unscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+			//time -= unscaledTime ? 1f / 60f : Time.deltaTime;
 			yield return null;
 		}
 		zoomModifier = 1f;
