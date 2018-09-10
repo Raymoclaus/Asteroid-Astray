@@ -95,6 +95,8 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	private float intenseScanTimer = 0f;
 	private float intenseScanRange = 1.5f;
 	private List<Entity> nearbySuspects = new List<Entity>();
+	[SerializeField]
+	private ParticleSystem intenseScanner;
 
 	//combat variables
 	private bool beingDrilled;
@@ -351,8 +353,20 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		{
 			//scan entity if close enough
 			intenseScanTimer += Time.deltaTime;
+			//draw scanner particles
+			if (!intenseScanner.isPlaying) intenseScanner.Play();
+			float angle = Vector2.Angle(Vector2.up, targetEntity.transform.position - transform.position);
+			if (targetEntity.transform.position.x < transform.position.x)
+			{
+				angle = 180f + (180f - angle);
+			}
+			intenseScanner.transform.eulerAngles = Vector3.forward * -angle;
+			intenseScanner.transform.localScale = Vector3.one *
+				Vector2.Distance(transform.position, targetEntity.transform.position);
+			//check if scan is complete
 			if (intenseScanTimer >= intenseScanDuration)
 			{
+				intenseScanner.Stop();
 				//scan complete
 				intenseScanTimer = 0f;
 				//assess threat level and make a decision
@@ -399,6 +413,10 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 						break;
 				}
 			}
+		}
+		else
+		{
+			intenseScanner.Stop();
 		}
 	}
 

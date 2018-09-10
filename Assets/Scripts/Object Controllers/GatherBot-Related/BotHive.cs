@@ -354,7 +354,10 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 		//self destruct all child bots
 		for (int i = childBots.Count - 1; i >= 0; i--)
 		{
-			childBots[i].DestroySelf(explode);
+			if (childBots[i] != null)
+			{
+				childBots[i].DestroySelf(explode);
+			}
 		}
 		destroyer.DestroyedAnEntity(this);
 		base.DestroySelf();

@@ -25,7 +25,6 @@ public class StraightBlast : MonoBehaviour, IProjectile
 		rb.velocity = transform.up * speed;
 		pool = p;
 		parent = shooter;
-
 	}
 
 	private void Update()

@@ -102,7 +102,7 @@ public class ParticleGenerator : MonoBehaviour
 
 		//disable object and return to pool
 		rend.gameObject.SetActive(false);
-		rend.transform.parent = singleton.transform;
+		rend.transform.parent = holder;
 		singleton.active.Remove(rend);
 		singleton.pool.Enqueue(rend);
 	}
@@ -113,7 +113,7 @@ public class ParticleGenerator : MonoBehaviour
 		{
 			GameObject go = new GameObject();
 			go.SetActive(false);
-			go.transform.parent = transform;
+			go.transform.parent = holder;
 			SpriteRenderer rend = go.AddComponent<SpriteRenderer>();
 			pool.Enqueue(rend);
 		}

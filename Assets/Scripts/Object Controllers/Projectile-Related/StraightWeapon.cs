@@ -23,6 +23,7 @@ public class StraightWeapon : MonoBehaviour
 	[SerializeField]
 	private float muzzleFlashAngle = 45f;
 	private float aimThreshold = 16f;
+	private bool flipMuzzleFlash = false;
 
 
 	private void Awake()
@@ -79,9 +80,8 @@ public class StraightWeapon : MonoBehaviour
 			Vector2 dir = new Vector2(Mathf.Sin(angle), Mathf.Cos(angle));
 			dir.Normalize();
 			parent.Rb.AddForce(-dir * recoil);
-		} 
+		}
 
-		bool flipMuzzleFlash = true;
 		for (int i = alternatingFire ? nextWeaponCounter : 0; i < weapons.Length; i++)
 		{
 			StraightBlast blast = pool[pool.Count - 1];
@@ -90,9 +90,9 @@ public class StraightWeapon : MonoBehaviour
 				pool, parent);
 			//muzzle flash
 			GameObject muzFlash = Instantiate(muzzleFlash);
-			muzFlash.transform.parent = transform;
 			muzFlash.transform.position = weapons[i].position;
-			muzFlash.transform.localEulerAngles = Vector3.forward * muzzleFlashAngle;
+			muzFlash.transform.eulerAngles = Vector3.forward * transform.eulerAngles.z;
+			muzFlash.transform.parent = transform;
 			muzFlash.GetComponent<SpriteRenderer>().flipX = flipMuzzleFlash;
 			flipMuzzleFlash = !flipMuzzleFlash;
 

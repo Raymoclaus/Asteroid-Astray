@@ -12,6 +12,7 @@ public class AudioManager : MonoBehaviour
 	private Queue<AudioSource> pool = new Queue<AudioSource>(poolReserve);
 	private List<AudioSource> active = new List<AudioSource>(poolReserve);
 	private const float MIN_DISTANCE = 1f / 3f, MAX_DISTANCE = 30f;
+	public static Transform holder;
 
 	private void Awake()
 	{
@@ -26,6 +27,7 @@ public class AudioManager : MonoBehaviour
 			return;
 		}
 
+		holder = new GameObject("Audio Holder").transform;
 		SetUpPoolReserve();
 	}
 
@@ -42,7 +44,7 @@ public class AudioManager : MonoBehaviour
 		GameObject obj = src.gameObject;
 		obj.SetActive(true);
 		obj.transform.position = position;
-		obj.transform.parent = parent == null ? singleton.transform : parent;
+		obj.transform.parent = parent == null ? holder : parent;
 		src.clip = clip;
 		src.volume = volume;
 		src.pitch = pitch;
@@ -58,7 +60,7 @@ public class AudioManager : MonoBehaviour
 			yield return null;
 		}
 		src.gameObject.SetActive(false);
-		src.transform.parent = singleton.transform;
+		src.transform.parent = holder;
 		singleton.active.Remove(src);
 		singleton.pool.Enqueue(src);
 	}
@@ -69,7 +71,7 @@ public class AudioManager : MonoBehaviour
 		{
 			GameObject go = new GameObject();
 			go.SetActive(false);
-			go.transform.parent = transform;
+			go.transform.parent = holder;
 			AudioSource src = go.AddComponent<AudioSource>();
 			src.outputAudioMixerGroup = sfxMixer;
 			src.spatialBlend = 1f;
