@@ -423,14 +423,10 @@ public class Shuttle : Entity, IDamageable
 
 	public static Vector2 LaunchDirection(Transform launchableObject)
 	{
-		Vector2 launchDir = Input.mousePosition -
-			Camera.main.WorldToScreenPoint(launchableObject.position);
-		launchDir.Normalize();
-		float launchAngle = Vector2.Angle(Vector2.up, launchDir);
-		if (launchDir.x < 0f)
-		{
-			launchAngle = 180f + (180f - launchAngle);
-		}
+		float launchAngle = InputHandler.GetLookDirection(singleton.transform.position);
+		if (float.IsPositiveInfinity(launchAngle)) launchAngle = singleton._lastLookDirection;
+			Vector2 launchDir = new Vector2(Mathf.Sin(launchAngle * Mathf.Deg2Rad),
+			Mathf.Cos(launchAngle * Mathf.Deg2Rad));
 		float shuttleAngle = Vector2.Angle(Vector2.up, singleton.transform.up);
 		if (singleton.transform.up.x < 0f)
 		{
