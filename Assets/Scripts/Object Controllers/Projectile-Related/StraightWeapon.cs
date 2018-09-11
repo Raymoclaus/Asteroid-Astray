@@ -20,8 +20,6 @@ public class StraightWeapon : MonoBehaviour
 	private Entity parent;
 	[SerializeField]
 	private GameObject muzzleFlash;
-	[SerializeField]
-	private float muzzleFlashAngle = 45f;
 	private float aimThreshold = 16f;
 	private bool flipMuzzleFlash = false;
 

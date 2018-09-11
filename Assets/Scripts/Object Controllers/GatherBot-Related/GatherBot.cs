@@ -97,6 +97,11 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	private List<Entity> nearbySuspects = new List<Entity>();
 	[SerializeField]
 	private ParticleSystem intenseScanner;
+	[SerializeField]
+	private SpriteRenderer radialMeterPrefab;
+	private SpriteRenderer suspicionMeter;
+	[SerializeField]
+	private Vector2 meterRelativePosition = Vector2.one * 0.2f;
 
 	//combat variables
 	private bool beingDrilled;
@@ -225,6 +230,12 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 				if (nearbySuspects.Count > 0)
 				{
 					state = AIState.Suspicious;
+					if (suspicionMeter == null)
+					{
+						suspicionMeter = Instantiate(radialMeterPrefab);
+						suspicionMeter.transform.parent = ParticleGenerator.holder;
+						suspicionMeter.material.SetFloat("_ArcAngle", 0);
+					}
 					if (!isIdle)
 					{
 						anim.SetTrigger("Idle");
@@ -353,6 +364,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		{
 			//scan entity if close enough
 			intenseScanTimer += Time.deltaTime;
+
 			//draw scanner particles
 			if (!intenseScanner.isPlaying) intenseScanner.Play();
 			float angle = Vector2.Angle(Vector2.up, targetEntity.transform.position - transform.position);
@@ -363,10 +375,17 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			intenseScanner.transform.eulerAngles = Vector3.forward * -angle;
 			intenseScanner.transform.localScale = Vector3.one *
 				Vector2.Distance(transform.position, targetEntity.transform.position);
+
+			//draw suspicion meter
+			suspicionMeter.gameObject.SetActive(true);
+			suspicionMeter.material.SetFloat("_ArcAngle", intenseScanTimer / intenseScanDuration * 360f);
+
 			//check if scan is complete
 			if (intenseScanTimer >= intenseScanDuration)
 			{
 				intenseScanner.Stop();
+				suspicionMeter.gameObject.SetActive(false);
+				suspicionMeter.material.SetFloat("_ArcAngle", 0);
 				//scan complete
 				intenseScanTimer = 0f;
 				//assess threat level and make a decision
@@ -418,6 +437,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		{
 			intenseScanner.Stop();
 		}
+		suspicionMeter.transform.position = (Vector2)transform.position + meterRelativePosition;
 	}
 
 	private void Signalling()
@@ -1050,12 +1070,17 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		state = AIState.Attacking;
 		anim.SetTrigger("GunOut");
 		isIdle = false;
-		nearbySuspects.Clear();
-
 		if (drillableTarget != null)
 		{
 			drill.StopDrilling();
 			anim.SetBool("Drilling", false);
+		}
+		nearbySuspects.Clear();
+		intenseScanner.Stop();
+		if (suspicionMeter != null)
+		{
+			suspicionMeter.gameObject.SetActive(false);
+			suspicionMeter.material.SetFloat("_ArcAngle", 0);
 		}
 	}
 
