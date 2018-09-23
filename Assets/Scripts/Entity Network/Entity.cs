@@ -91,7 +91,7 @@ public class Entity : MonoBehaviour
 				{
 					Rb.simulated = !ShouldDisablePhysicsOnDistance;
 				}
-				gameObject.SetActive(!ShouldDisableObjectOnDistance);
+				gameObject.SetActive(!ShouldDisablePhysicsOnDistance);
 			}
 		}
 	}

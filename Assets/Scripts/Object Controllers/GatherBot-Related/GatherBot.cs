@@ -108,6 +108,9 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	private List<Entity> threats = new List<Entity>();
 	private float chaseRange = 16f;
 	[SerializeField]
+	private float outOfRangeCountdown = 8f;
+	private float outOfRangeTimer;
+	[SerializeField]
 	private float orbitRange = 1.75f;
 	[SerializeField]
 	private float orbitSpeed = 0.6f;
@@ -116,7 +119,6 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 	//signalling variables
 	private float signalTimer;
-	private bool respondingToSignal;
 
 	private void Start()
 	{
@@ -447,7 +449,6 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		{
 			foreach (GatherBot sibling in hive.childBots)
 			{
-				sibling.respondingToSignal = true;
 				sibling.threats = threats;
 				sibling.StartEmergencyAttack();
 			}
@@ -458,7 +459,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	{
 		//if this bot is too far away and all other bots are also too far away then give up chase
 		float distanceFromTarget = Vector2.Distance(transform.position, threats[0].transform.position);
-		if (distanceFromTarget > chaseRange && !respondingToSignal)
+		if (distanceFromTarget > chaseRange)
 		{
 			bool found = false;
 			foreach (GatherBot bot in hive.childBots)
@@ -473,18 +474,31 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			}
 			if (!found)
 			{
-				threats.RemoveAt(0);
-				if (threats.Count == 0)
+				outOfRangeTimer += Time.deltaTime;
+				if (outOfRangeTimer >= outOfRangeCountdown)
 				{
-					foreach (GatherBot bot in hive.childBots)
+					outOfRangeTimer = 0f;
+					threats.RemoveAt(0);
+					if (threats.Count == 0)
 					{
-						bot.state = AIState.Collecting;
-						bot.anim.SetTrigger("Idle");
-						bot.isIdle = true;
+						foreach (GatherBot bot in hive.childBots)
+						{
+							bot.state = AIState.Collecting;
+							bot.anim.SetTrigger("Idle");
+							bot.isIdle = true;
+						}
+						return;
 					}
-					return;
 				}
 			}
+			else
+			{
+				outOfRangeTimer = 0f;
+			}
+		}
+		else
+		{
+			outOfRangeTimer = 0f;
 		}
 
 		foreach (GatherBot sibling in hive.childBots)
@@ -511,7 +525,6 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			distanceFromTarget > firingRange ? null : (Vector2?)targetEntity.transform.position - transform.right);
 		if (distanceFromTarget <= firingRange)
 		{
-			respondingToSignal = false;
 			straightWeapon.Fire(targetEntity.transform.position);
 		}
 		

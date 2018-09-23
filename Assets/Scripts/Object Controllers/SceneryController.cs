@@ -53,7 +53,7 @@ public class SceneryController : MonoBehaviour
 	public Vector2 scaleRange = new Vector2(1f, 4f);
 	private Transform sceneryHolder;
 	private int backgroundLayer;
-	public Color transparentColor;
+	public Color nebulaFadeBackground;
 
 	[Header("Texture Variables")]
 	private bool texturesGenerated;
@@ -175,7 +175,7 @@ public class SceneryController : MonoBehaviour
 
 			obj.transform.position = item.pos;
 			rend.sprite = item.common ? types[item.type] : lessFrequentTypes[item.type];
-			//Color col = transparent ? transparentColor : Color.white;
+			//Color col = transparent ? nebulaFadeBackground : Color.white;
 			Color col = Color.white;
 			float delta = (1f - (item.pos.z - starMinDistance) / starDistanceRange) * 0.9f + 0.1f;
 			if (item.common)

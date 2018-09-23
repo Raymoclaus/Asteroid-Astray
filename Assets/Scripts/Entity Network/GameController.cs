@@ -7,7 +7,10 @@ public class GameController : MonoBehaviour
 {
 	public static GameController singleton;
 	public EntityPrefabController prefabs;
-	public static bool loading = true;
+	public static bool IsLoading
+	{
+		get { return singleton.loadingUI.activeSelf; }
+	}
 	public GameObject loadingUI;
 	[SerializeField]
 	private List<GameObject> objsToActivate;

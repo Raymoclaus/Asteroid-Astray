@@ -16,6 +16,8 @@ public class ResourceDrop : MonoBehaviour
 	private int rarity = 1;
 	public Color[] rarityColors;
 	public SpriteRenderer rend;
+	[SerializeField]
+	private LoadedResources loadRes;
 
 	private void Start()
 	{
@@ -66,6 +68,12 @@ public class ResourceDrop : MonoBehaviour
 			ParticleSystem.MainModule main = ps.main;
 			main.loop = false;
 			follow.CollectResources(this);
+			Item.Type type = Item.Type.Stone;
+			if (follow == Shuttle.singleton)
+			{
+				ItemPopupUI.GeneratePopup(loadRes.itemSprites[(int)type],
+					type.ToString(), Item.ItemDescription(type));
+			}
 			Destroy(gameObject);
 			return;
 		}

@@ -17,9 +17,7 @@ public class NebulaSetup : Entity
 	public float color2Max = 0.75f;
 	[Range(0f, 1f)]
 	public float alpha = 0.5f;
-
-	private Color col1;
-	private Color col2;
+	private Color col1, col2;
 	private bool colorSet = false;
 	
 	public bool shouldExpand = false;
@@ -27,6 +25,7 @@ public class NebulaSetup : Entity
 	public int maxSystemSize = 8;
 	//when expanding, it won't expand into space that already contains nebula. This will prevent accidental infinite loops
 	private const int FAIL_LIMIT = 20;
+	private List<NebulaSetup> cluster;
 
 	[HideInInspector]
 	public Component thrusterRef;
@@ -74,6 +73,7 @@ public class NebulaSetup : Entity
 	private void Expansion()
 	{
 		int size = Random.Range(minSystemSize, maxSystemSize + 1);
+		cluster = new List<NebulaSetup>(size);
 		List<ChunkCoords> filled = new List<ChunkCoords>(size);
 		ChunkCoords c = _coords;
 		filled.Add(c);
@@ -115,6 +115,8 @@ public class NebulaSetup : Entity
 			count++;
 			filled.Add(c);
 			NebulaSetup newNebula = Instantiate(this, transform.parent);
+			cluster.Add(newNebula);
+			newNebula.cluster = cluster;
 			newNebula.SetColors(col1, col2);
 			newNebula.SetThrusterReference(thrusterRef);
 			newNebula.transform.position = ChunkCoords.GetCenterCell(c);
@@ -178,4 +180,22 @@ public class NebulaSetup : Entity
 	{
 		return EntityType.Nebula;
 	}
+
+	//public override bool OnExitPhysicsRange()
+	//{
+	//	foreach (NebulaSetup nebula in cluster)
+	//	{
+	//		if (nebula.isInPhysicsRange)
+	//		{
+	//			return base.OnExitPhysicsRange();
+	//		}
+	//	}
+	//	transform.parent.gameObject.SetActive(false);
+	//	return false;
+	//}
+
+	//public override void PhysicsReEnabled()
+	//{
+	//	transform.parent.gameObject.SetActive(true);
+	//}
 }

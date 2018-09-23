@@ -448,6 +448,8 @@ public static class EntityNetwork
 
 	public static bool ContainsType(EntityType type, ChunkCoords c, Entity entToExclude)
 	{
+		if (!ChunkExists(c)) return false;
+
 		foreach (Entity e in Chunk(c))
 		{
 			if (e.GetEntityType() == type && e != entToExclude)
