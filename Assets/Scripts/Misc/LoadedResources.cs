@@ -12,7 +12,24 @@ public class LoadedResources : MonoBehaviour
 	public Sprite[] dust;
 
 	//item sprites
-	public Sprite[] itemSprites;
+	public ItemSprites itemSprites;
+
+	public Sprite GetItemSprite(Item.Type type)
+	{
+		switch (type)
+		{
+			default: return itemSprites.itemBlank;
+			case Item.Type.Blank: return itemSprites.itemBlank;
+			case Item.Type.Corvorite: return itemSprites.itemCorvorite;
+			case Item.Type.Stone: return itemSprites.itemStone;
+		}
+	}
+
+	[System.Serializable]
+	public class ItemSprites
+	{
+		public Sprite itemBlank, itemCorvorite, itemStone;
+	}
 }
 
 [System.Serializable]

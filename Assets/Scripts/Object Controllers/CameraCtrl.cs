@@ -214,7 +214,6 @@ public class CameraCtrl : MonoBehaviour
 		while (time >= 0f)
 		{
 			time -= unscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
-			//time -= unscaledTime ? 1f / 60f : Time.deltaTime;
 			yield return null;
 		}
 		zoomModifier = 1f;

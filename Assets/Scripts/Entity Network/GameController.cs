@@ -20,6 +20,10 @@ public class GameController : MonoBehaviour
 	//booleans to check when certain systems are ready
 	private static bool gridCreated, triggerListFilled, entityPrefabsReady, starsGenerated;
 
+	[SerializeField]
+	private bool recordingMode = false;
+	public static bool RecordingMode { get { return singleton.recordingMode; } }
+
 	private void Awake()
 	{
 		if (singleton == null)

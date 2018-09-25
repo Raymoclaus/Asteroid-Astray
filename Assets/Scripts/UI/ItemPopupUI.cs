@@ -4,6 +4,7 @@ using UnityEngine.UI;
 
 public class ItemPopupUI : MonoBehaviour
 {
+	private static ItemPopupUI singleton;
 	private RectTransform[] popups;
 	private float popupHeight, xPos;
 	private static List<PopupData> popupsToShow = new List<PopupData>();
@@ -12,14 +13,25 @@ public class ItemPopupUI : MonoBehaviour
 	private float scrollDelayTimer = 0f;
 	[SerializeField]
 	private int popupViewLimit = 4;
-	private List<PopupObject> activePopups = new List<PopupObject>();
+	private static List<PopupObject> activePopups = new List<PopupObject>();
 	private List<PopupObject> inactivePopups = new List<PopupObject>();
 	public Color textColor;
 	[SerializeField]
-	private float popupEntrySpeed = 2f, popupMoveSpeed = 5f;
+	private float popupEntrySpeed = 2f, popupMoveSpeed = 5f, textFadeSpeed = 0.17f;
+	[SerializeField]
+	private LoadedResources loadRes;
 
 	private void Awake()
 	{
+		if (singleton == null)
+		{
+			singleton = this;
+		}
+		else
+		{
+			Destroy(gameObject);
+		}
+
 		popups = new RectTransform[transform.childCount];
 		for (int i = 0; i < transform.childCount; i++)
 		{
@@ -43,15 +55,13 @@ public class ItemPopupUI : MonoBehaviour
 		{
 			if (activePopups.Count == popupViewLimit)
 			{
-				scrollDelayTimer += Time.unscaledDeltaTime;
+				scrollDelayTimer += Time.deltaTime;
 				if (scrollDelayTimer >= scrollDelay)
 				{
 					RemovePopup(activePopups.Count - 1);
 					for (int i = 0; i < activePopups.Count; i++)
 					{
-						PopupObject po = activePopups[i];
-						po.timer = Mathf.Max(0f, po.timer - scrollDelayTimer);
-						activePopups[i] = po;
+						activePopups[i].SetTimer(Mathf.Max(0f, activePopups[i].timer - scrollDelayTimer));
 					}
 					scrollDelayTimer = 0f;
 				}
@@ -68,14 +78,11 @@ public class ItemPopupUI : MonoBehaviour
 				inactivePopups.RemoveAt(0);
 				po.transform.anchoredPosition =
 					new Vector2(xPos, -popupHeight / 2f - popupViewLimit * (popupHeight - 1));
-				po.timer = 0f;
-				PopupData data = popupsToShow[0];
-				po.spr.sprite = data.spr;
-				po.name.text = data.name;
-				po.description.text = data.description;
+				po.SetTimer(0f);
+				po.amount = popupsToShow[0].amount;
+				po.UpdateData(popupsToShow[0].type);
 				popupsToShow.RemoveAt(0);
 				po.UIimg.material.SetFloat("_Radius", 0f);
-				activePopups[0] = po;
 			}
 		}
 
@@ -84,19 +91,20 @@ public class ItemPopupUI : MonoBehaviour
 			PopupObject po = activePopups[i];
 			po.UIimg.material.SetFloat("_Flash", 1f);
 			float delta = po.UIimg.material.GetFloat("_Radius");
-			po.UIimg.material.SetFloat("_Radius", Mathf.MoveTowards(delta, 1f, Time.unscaledDeltaTime * popupEntrySpeed));
+			delta = Mathf.MoveTowards(delta, 1f, Time.deltaTime * popupEntrySpeed);
+			po.UIimg.material.SetFloat("_Radius", delta);
 			po.transform.anchoredPosition = Vector2.Lerp(po.transform.anchoredPosition,
 				new Vector2(xPos, -popupHeight / 2f - popupHeight * (popupViewLimit - i - 1)),
-				Time.unscaledDeltaTime * popupMoveSpeed);
+				Time.deltaTime * popupMoveSpeed);
 			if (delta >= 0.833f)
 			{
-				po.spr.gameObject.SetActive(true);
-				po.name.gameObject.SetActive(true);
-				po.description.gameObject.SetActive(true);
+				ActivateUIDetails(po, true);
+				po.name.color = po.description.color =
+					Color.Lerp(Color.white, textColor, (delta - 0.833f) / textFadeSpeed);
 			}
 
-			po.timer += Time.unscaledDeltaTime;
-			activePopups[i] = po;
+			po.AddTimer(Time.deltaTime);
+			Debug.Log(po.UIimg.material.GetFloat("_Radius"));
 			if (po.timer >= fullDelay)
 			{
 				RemovePopup(i);
@@ -109,15 +117,10 @@ public class ItemPopupUI : MonoBehaviour
 			po.UIimg.material.SetFloat("_Flash", 0f);
 			float delta = po.UIimg.material.GetFloat("_Radius");
 			po.UIimg.material.SetFloat("_Radius",
-				Mathf.MoveTowards(delta, 0f, Time.unscaledDeltaTime));
+				Mathf.MoveTowards(delta, 0f, Time.deltaTime));
 			po.transform.anchoredPosition = Vector2.Lerp(po.transform.anchoredPosition,
 				new Vector2(xPos, po.transform.anchoredPosition.y),
-				Time.unscaledDeltaTime * popupMoveSpeed);
-		}
-
-		if (Input.GetKeyDown(KeyCode.P))
-		{
-			GeneratePopup(null, "Hi1", "what");
+				Time.deltaTime * popupMoveSpeed);
 		}
 	}
 
@@ -126,50 +129,121 @@ public class ItemPopupUI : MonoBehaviour
 		PopupObject po = activePopups[index];
 		inactivePopups.Add(po);
 		activePopups.Remove(po);
-		po.spr.gameObject.SetActive(false);
-		po.name.gameObject.SetActive(false);
-		po.description.gameObject.SetActive(false);
+		ActivateUIDetails(po, false);
 	}
 
-	public static void GeneratePopup(PopupData data)
+	private void ActivateUIDetails(PopupObject po, bool activate)
 	{
+		po.spr.gameObject.SetActive(activate);
+		po.name.gameObject.SetActive(activate);
+		po.description.gameObject.SetActive(activate);
+	}
+
+	public static void GeneratePopup(Item.Type type, int amount = 1)
+	{
+		PopupData data = new PopupData(type, amount);
+		foreach (PopupObject po in activePopups)
+		{
+			if (po.type == type)
+			{
+				po.AddAmount(data.amount);
+				return;
+			}
+		}
+		foreach (PopupData pd in popupsToShow)
+		{
+			if (pd.type == type)
+			{
+				pd.AddAmount(amount);
+				return;
+			}
+		}
 		popupsToShow.Add(data);
 	}
 
-	public static void GeneratePopup(Sprite spr, string name, string description)
-	{
-		GeneratePopup(new PopupData(spr, name, description));
-	}
-
-	private struct PopupObject
+	private class PopupObject
 	{
 		public RectTransform transform;
+		public Item.Type type;
 		public Image UIimg, spr;
 		public Text name, description;
 		public float timer;
+		public int amount;
 
-		public PopupObject(RectTransform transform, Image UIimg, Image spr, Text name, Text description)
+		public PopupObject(RectTransform transform, Image UIimg, Image spr, Text name, Text description, Item.Type type = Item.Type.Blank, int amount = 0)
 		{
 			this.transform = transform;
+			this.type = type;
 			this.UIimg = UIimg;
 			this.UIimg.material = Instantiate(this.UIimg.material);
 			this.spr = spr;
 			this.name = name;
 			this.description = description;
 			timer = 0f;
+			this.amount = amount;
+		}
+
+		public int AddAmount(int amount)
+		{
+			this.amount += amount;
+			timer = 0f;
+			UpdateName();
+			return this.amount;
+		}
+
+		private void UpdateName()
+		{
+			if (amount > 1)
+			{
+				name.text = string.Format("{0} (x{1})", type.ToString(), amount);
+			}
+			else
+			{
+				name.text = type.ToString();
+			}
+		}
+
+		public void UpdateData(Item.Type? type = null)
+		{
+			if (type != null)
+			{
+				this.type = (Item.Type)type;
+			}
+			spr.sprite = singleton.loadRes.GetItemSprite(this.type);
+			UpdateName();
+			description.text = Item.ItemDescription(this.type);
+		}
+
+		public void SetTimer(float time)
+		{
+			timer = time;
+		}
+
+		public void AddTimer(float time)
+		{
+			timer += time;
 		}
 	}
-}
 
-public struct PopupData
-{
-	public Sprite spr;
-	public string name, description;
-
-	public PopupData(Sprite spr, string name, string description)
+	private struct PopupData
 	{
-		this.spr = spr;
-		this.name = name;
-		this.description = description;
+		public Sprite spr;
+		public Item.Type type;
+		public string name, description;
+		public int amount;
+
+		public PopupData(Item.Type type, int amount = 1)
+		{
+			this.type = type;
+			spr = singleton.loadRes.GetItemSprite(type);
+			name = type.ToString();
+			description = Item.ItemDescription(type);
+			this.amount = amount;
+		}
+
+		public void AddAmount(int amount)
+		{
+			this.amount += amount;
+		}
 	}
 }

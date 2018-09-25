@@ -52,7 +52,6 @@ public class Pause : MonoBehaviour
 		while (time > 0f)
 		{
 			time -= Time.unscaledDeltaTime;
-			//time -= 1f / 60f;
 			yield return null;
 		}
 		Time.timeScale = 1f;

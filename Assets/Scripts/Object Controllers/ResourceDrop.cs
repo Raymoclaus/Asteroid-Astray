@@ -13,8 +13,6 @@ public class ResourceDrop : MonoBehaviour
 	public float delay = 0.5f;
 	private float spawnTime;
 	public ParticleSystem ps;
-	private int rarity = 1;
-	public Color[] rarityColors;
 	public SpriteRenderer rend;
 	[SerializeField]
 	private LoadedResources loadRes;
@@ -30,10 +28,6 @@ public class ResourceDrop : MonoBehaviour
 		velocity = startVelocity;
 
 		spawnTime = Pause.timeSinceOpen;
-
-		//rarity = Random.Range(1, rarityColors.Length);
-		rarity = 1;
-		rend.color = rarityColors[rarity - 1];
 	}
 
 	private void Update()
@@ -71,8 +65,7 @@ public class ResourceDrop : MonoBehaviour
 			Item.Type type = Item.Type.Stone;
 			if (follow == Shuttle.singleton)
 			{
-				ItemPopupUI.GeneratePopup(loadRes.itemSprites[(int)type],
-					type.ToString(), Item.ItemDescription(type));
+				ItemPopupUI.GeneratePopup(type);
 			}
 			Destroy(gameObject);
 			return;

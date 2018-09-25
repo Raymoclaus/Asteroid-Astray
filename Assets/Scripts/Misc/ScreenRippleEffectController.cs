@@ -38,7 +38,6 @@ public class ScreenRippleEffectController : MonoBehaviour
 			while (wait > 0f)
 			{
 				wait -= Time.unscaledDeltaTime;
-				//wait -= 1f / 60f;
 				yield return null;
 			}
 		}
