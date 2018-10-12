@@ -104,7 +104,7 @@ public class CameraCtrl : MonoBehaviour
 			float difference = Vector2.Distance(aheadTarget, aheadVector) / distanceAhead / 2f;
 			aheadVector = Vector2.MoveTowards(aheadVector, aheadTarget, difference * distanceAhead * moveAheadSpeed
 				* Time.deltaTime * 60f);
-			transform.localPosition = TargetToFollow.position + (Vector3)aheadVector + TargetToFollow.forward * -0.4f;
+			transform.localPosition = TargetToFollow.position + (Vector3)aheadVector + Vector3.forward * -1f;
 		}
 	}
 

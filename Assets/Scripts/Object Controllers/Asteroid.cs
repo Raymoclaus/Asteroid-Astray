@@ -28,7 +28,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	//current health value between 0 and MaxHealth
 	private float Health;
 	//reference to all the sprites
-	public LoadedResources loadRes;
+	private LoadedResources resources;
 	//collection of info about the colliders the large asteroids should use
 	[SerializeField]
 	private ColliderInfo[] largeInfo;
@@ -44,6 +44,8 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	private float drillDebrisChance = 0.05f, drillDustChance = 0.2f;
 	private int collisionDustMultiplier = 3;
 	private bool launched = false;
+	[SerializeField]
+	private float launchDuration = 2f;
 	private Vector2 launchedDirection;
 	private Entity launcher;
 	#endregion
@@ -61,9 +63,10 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		base.Awake();
 
 		//choose size of asteroid then choose a random sprite
+		resources = GameController.GetResources();
 		id.x = Random.value <= largeChance ? 0 : 1;
-		id.y = Random.Range(0, loadRes.asteroidSprites[id.x].collection.Length);
-		SprRend.sprite = loadRes.asteroidSprites[id.x].collection[id.y].sprites[0];
+		id.y = Random.Range(0, resources.asteroidSprites[id.x].collection.Length);
+		SprRend.sprite = resources.asteroidSprites[id.x].collection[id.y].sprites[0];
 
 		//if a large asteroid is chosen then adjust collider to fit the shape
 		if (id.x == 0)
@@ -125,7 +128,8 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 
 			//sound effect
 			AudioManager.PlaySFX(shatterSounds[Random.Range(0, shatterSounds.Length)], transform.position,
-				pitch: Random.Range(shatterPitchRange.x, shatterPitchRange.y), volume: 0.25f, parent: Shuttle.singleton.transform);
+				pitch: Random.Range(shatterPitchRange.x, shatterPitchRange.y), volume: 0.25f,
+				parent: Shuttle.singleton.transform);
 
 			//drop resources
 			int minDrop = isLarge ? 4 : 1;
@@ -145,11 +149,11 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	{
 		if (!isActive || Pause.IsPaused) return;
 
-		int randomChoose = Random.Range(0, loadRes.debris.Length);
-		if (randomChoose < loadRes.debris.Length)
+		int randomChoose = Random.Range(0, resources.debris.Length);
+		if (randomChoose < resources.debris.Length)
 		{
 			ParticleGenerator.GenerateParticle(
-				loadRes.debris[randomChoose], pos, speed: Random.value * 3f, slowDown: true, lifeTime: 1.5f,
+				resources.debris[randomChoose], pos, speed: Random.value * 3f, slowDown: true, lifeTime: 1.5f,
 				rotationDeg: Random.value * 360f, rotationSpeed: Random.value * 3f,
 				sortingLayer: SprRend.sortingLayerID);
 		}
@@ -160,11 +164,11 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		if (!isActive || Pause.IsPaused) return;
 		for (int i = 0; i < amount; i++)
 		{
-			int randomChoose = Random.Range(0, loadRes.dust.Length);
-			if (randomChoose < loadRes.dust.Length)
+			int randomChoose = Random.Range(0, resources.dust.Length);
+			if (randomChoose < resources.dust.Length)
 			{
 				ParticleGenerator.GenerateParticle(
-					loadRes.dust[randomChoose], pos, speed: Random.value * 0.5f, slowDown: true,
+					resources.dust[randomChoose], pos, speed: Random.value * 0.5f, slowDown: true,
 					lifeTime: Random.value * 3f + 2f, rotationDeg: Random.value * 360f,
 					rotationSpeed: Random.value * 0.5f, size: 0.3f + Mathf.Pow(Random.value, 2f) * 0.7f, alpha: alpha,
 					fadeIn: Random.value + 0.5f, sortingLayer: SprRend.sortingLayerID, growthOverLifetime: 2f);
@@ -189,7 +193,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 
 	private NestedSpriteArray[] GetAllSprites()
 	{
-		return loadRes.asteroidSprites;
+		return resources.asteroidSprites;
 	}
 
 	private SpriteArray[] GetSpriteCategory()
@@ -327,7 +331,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 
 		if (otherLayer == layerSolid)
 		{
-			if (launched && Vector2.Angle(launchedDirection, contactPoint - (Vector2)transform.position) < 90f)
+			if (launched && Vector2.Angle(launchedDirection, contactPoint - (Vector2)transform.position) <= 90f)
 			{
 				IDamageable otherDamageable = other.transform.parent.GetComponent<IDamageable>();
 				if (otherDamageable != null)
@@ -335,6 +339,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 					otherDamageable.TakeDamage((MaxHealth - Health) * 3f, contactPoint, launcher);
 				}
 				TakeDamage(MaxHealth, contactPoint, launcher);
+				launched = false;
 			}
 		}
 
@@ -365,5 +370,11 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		launchedDirection = launchDirection;
 		launched = true;
 		ShakeFX.Begin(0.1f, 0f, 1f / 30f);
+		Pause.DelayedAction(() => { launched = false; }, launchDuration);
+	}
+
+	public bool IsDrillable()
+	{
+		return launched;
 	}
 }

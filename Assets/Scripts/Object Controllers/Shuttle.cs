@@ -206,6 +206,7 @@ public class Shuttle : Entity, IDamageable
 		}
 		rotMod /= 180f;
 		rotMod = Mathf.Pow(rotMod, 0.8f);
+		rot.y = rotMod * 45f;
 		SetRot(Mathf.MoveTowardsAngle(rot.z, -lookDirection, MaxRotSpeed * rotMod * Time.deltaTime * 60f));
 
 		//reset acceleration
@@ -377,7 +378,7 @@ public class Shuttle : Entity, IDamageable
 			GameObject launchCone = drillLaunchArcSprite.gameObject;
 			launchCone.SetActive(true);
 			launchCone.transform.position = ((Entity)(drill.drillTarget)).transform.position;
-			launchCone.transform.eulerAngles = transform.eulerAngles;
+			launchCone.transform.eulerAngles = Vector3.forward * transform.eulerAngles.z;
 			drillLaunchArcSprite.material.SetFloat("_ArcAngle", drillLaunchMaxAngle);
 			Transform arrow = launchCone.transform.GetChild(0);
 			Vector2 launchDir = LaunchDirection(((Entity)(drill.drillTarget)).transform);
@@ -504,7 +505,7 @@ public class Shuttle : Entity, IDamageable
 					Vector3 effectRotation = effect.eulerAngles;
 					effectRotation += transform.eulerAngles;
 					effect.eulerAngles = effectRotation;
-					ScreenRippleEffectController.StartRipple();
+					ScreenRippleEffectController.StartRipple(distortionLevel: 0.01f);
 				}
 			}
 			isBoosting = true;
@@ -540,7 +541,23 @@ public class Shuttle : Entity, IDamageable
 		}
 	}
 
-	public float GetBoostRemaining()
+	public override void DestroyedAnEntity(Entity target)
+	{
+		switch (target.GetEntityType())
+		{
+			case EntityType.Nebula:
+				break;
+			case EntityType.Asteroid:
+			case EntityType.BotHive:
+			case EntityType.GatherBot:
+				{
+					Pause.TemporarySlowDownEffect();
+					break;
+				}
+		}
+}
+
+public float GetBoostRemaining()
 	{
 		return (boostCapacity - boostLevel) / boostCapacity;
 	}

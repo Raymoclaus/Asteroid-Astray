@@ -8,4 +8,5 @@ public interface IDrillableObject
 	void OnTriggerEnter2D(Collider2D other);
 	void OnTriggerExit2D(Collider2D other);
 	void Launch(Vector2 launchDirection, Entity launcher);
+	bool IsDrillable();
 }

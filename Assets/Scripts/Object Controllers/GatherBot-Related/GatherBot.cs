@@ -34,13 +34,9 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	[SerializeField]
 	private ShakeEffect shakeFX;
 	[SerializeField]
-	private ExpandingCircle scanningBeam;
-	[SerializeField]
 	private Inventory storage;
 	[SerializeField]
 	private Animator anim;
-	[SerializeField]
-	private StraightWeapon straightWeapon;
 
 	//fields
 	[SerializeField]
@@ -63,6 +59,8 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	public Entity targetEntity;
 
 	//scanning variables
+	[SerializeField]
+	private ExpandingCircle scanningBeam;
 	private float scanTimer, scanDuration = 3f;
 	private bool scanStarted;
 	private List<Entity> entitiesScanned = new List<Entity>();
@@ -104,6 +102,8 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	private Vector2 meterRelativePosition = Vector2.one * 0.2f;
 
 	//combat variables
+	[SerializeField]
+	private StraightWeapon straightWeapon;
 	private bool beingDrilled;
 	private List<Entity> threats = new List<Entity>();
 	private float chaseRange = 16f;
@@ -116,6 +116,10 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	private float orbitSpeed = 0.6f;
 	[SerializeField]
 	private float firingRange = 5f;
+	[SerializeField]
+	private float drillToChargeTimer = 1f;
+	[SerializeField]
+	private float chargeToExplosionTimer = 3f;
 
 	//signalling variables
 	private float signalTimer;
@@ -357,6 +361,8 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		{
 			intenseScanTimer = 0f;
 			nearbySuspects.RemoveAt(0);
+			suspicionMeter.gameObject.SetActive(false);
+			suspicionMeter.material.SetFloat("_ArcAngle", 0);
 			return;
 		}
 
@@ -905,6 +911,25 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		return TakeDamage(drillDmg, drillPos, destroyer, dropModifier);
 	}
 
+	public void StartChargingForcePulse()
+	{
+		if (beingDrilled)
+		{
+			Pause.DelayedAction(() =>
+			{
+				ForcePulseExplosion();
+			}, chargeToExplosionTimer);
+		}
+	}
+
+	public void ForcePulseExplosion()
+	{
+		if (beingDrilled)
+		{
+
+		}
+	}
+
 	public void StartDrilling()
 	{
 		Rb.constraints = RigidbodyConstraints2D.FreezeAll;
@@ -918,6 +943,10 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			}
 		}
 		shakeFX.Begin();
+		Pause.DelayedAction(() =>
+		{
+			StartChargingForcePulse();
+		}, drillToChargeTimer);
 	}
 
 	public void StopDrilling()
@@ -931,7 +960,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	{
 		int otherLayer = other.gameObject.layer;
 
-		if (otherLayer == layerDrill)
+		if (otherLayer == layerDrill && IsDrillable())
 		{
 			DrillBit otherDrill = other.GetComponentInParent<DrillBit>();
 			if (otherDrill.CanDrill && otherDrill.drillTarget == null && otherDrill.Verify(this))
@@ -1140,5 +1169,10 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	{
 		Rb.velocity = launchDirection;
 		shakeFX.Begin(0.1f, 0f, 1f / 30f);
+	}
+
+	public bool IsDrillable()
+	{
+		return true;
 	}
 }

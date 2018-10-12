@@ -267,7 +267,7 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 	{
 		int otherLayer = other.gameObject.layer;
 
-		if (otherLayer == layerDrill)
+		if (otherLayer == layerDrill && IsDrillable())
 		{
 			DrillBit otherDrill = other.GetComponentInParent<DrillBit>();
 			if (otherDrill.CanDrill && !IsDrilling)
@@ -409,5 +409,10 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 	public void Launch(Vector2 launchDirection, Entity launcher)
 	{
 
+	}
+
+	public bool IsDrillable()
+	{
+		return true;
 	}
 }

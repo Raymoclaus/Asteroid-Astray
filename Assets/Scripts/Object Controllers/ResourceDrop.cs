@@ -14,8 +14,6 @@ public class ResourceDrop : MonoBehaviour
 	private float spawnTime;
 	public ParticleSystem ps;
 	public SpriteRenderer rend;
-	[SerializeField]
-	private LoadedResources loadRes;
 
 	private void Start()
 	{

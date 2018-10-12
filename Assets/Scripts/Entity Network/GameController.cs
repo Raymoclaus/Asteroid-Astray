@@ -7,6 +7,7 @@ public class GameController : MonoBehaviour
 {
 	public static GameController singleton;
 	public EntityPrefabController prefabs;
+	public LoadedResources loadRes;
 	public static bool IsLoading
 	{
 		get { return singleton.loadingUI.activeSelf; }
@@ -23,6 +24,12 @@ public class GameController : MonoBehaviour
 	[SerializeField]
 	private bool recordingMode = false;
 	public static bool RecordingMode { get { return singleton.recordingMode; } }
+	private bool wasRecordingMode;
+	[Header("Items to adjust when in recording mode.")]
+	#region Recording Mode items to fix
+	[SerializeField]
+	private AnimationClip drillLaunchLightningEffect;
+	#endregion
 
 	private void Awake()
 	{
@@ -50,6 +57,16 @@ public class GameController : MonoBehaviour
 			starsGenerated = true;
 			Ready();
 		}));
+
+		UpdateRecordModeFixes();
+	}
+
+	private void Update()
+	{
+		if (wasRecordingMode != recordingMode)
+		{
+			UpdateRecordModeFixes();
+		}
 	}
 
 	private void Ready()
@@ -102,5 +119,16 @@ public class GameController : MonoBehaviour
 		{
 			cf.enabled = true;
 		}
+	}
+
+	public static LoadedResources GetResources()
+	{
+		return singleton.loadRes;
+	}
+
+	private void UpdateRecordModeFixes()
+	{
+		drillLaunchLightningEffect.frameRate = recordingMode ? 24f * (1f / Time.deltaTime) / 60f : 24f;
+		wasRecordingMode = recordingMode;
 	}
 }

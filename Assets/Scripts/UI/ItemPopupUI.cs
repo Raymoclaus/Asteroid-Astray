@@ -104,7 +104,6 @@ public class ItemPopupUI : MonoBehaviour
 			}
 
 			po.AddTimer(Time.deltaTime);
-			Debug.Log(po.UIimg.material.GetFloat("_Radius"));
 			if (po.timer >= fullDelay)
 			{
 				RemovePopup(i);

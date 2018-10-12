@@ -20,9 +20,14 @@ public class ScreenRippleEffectController : MonoBehaviour
 		{
 			Destroy(gameObject);
 		}
+
+		//set defaults
+		rippleEffectMat.SetFloat("_RippleWidth", 0.1f);
+		rippleEffectMat.SetFloat("_DistortionAmplitude", 0.02f);
+		rippleEffectMat.SetFloat("_Radius", 1f);
 	}
 
-	public static void StartRipple(float rippleWidth = 0.1f, float speed = 2f, float distortionLevel = 0.01f, float? wait = null)
+	public static void StartRipple(float rippleWidth = 0.1f, float speed = 2f, float distortionLevel = 0.02f, float? wait = null)
 	{
 		singleton.rippleEffectMat.SetFloat("_RippleWidth", rippleWidth);
 		singleton.rippleEffectMat.SetFloat("_DistortionAmplitude", distortionLevel);

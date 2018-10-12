@@ -6,6 +6,7 @@
 		_Radius("Radius", Range(0, 1)) = 0
 		_RippleWidth("RippleWidth", Range(0, 1)) = 0.1
 		_DistortionAmplitude("_DistortionAmplitude", Range(0, 1)) = 0.01
+		_Tint("Tint", Color) = (1, 1, 1, 1)
 	}
 	SubShader
 	{
@@ -44,24 +45,20 @@
 			float _Radius;
 			float _RippleWidth;
 			float _DistortionAmplitude;
+			fixed4 _Tint;
 
 			fixed4 frag (v2f i) : SV_Target
 			{
-				float diff = 0;
 				float2 center = float2(0.5, 0.5);
-				float2 diffUV = float2(0, 0);
 				float scl = _ScreenParams.y / _ScreenParams.x;
 				float2 screenPos = float2(i.uv.x, (i.uv.y - 0.5) * scl + 0.5);
 				float dis = sqrt(pow(screenPos.x - center.x, 2) + pow(screenPos.y - center.y, 2));
-				if (dis <= _Radius + _RippleWidth / 2.0 && dis >= _Radius - _RippleWidth / 2.0)
-				{
-					diff = (1.0 - abs(dis - _Radius) / (_RippleWidth / 2.0)) * _DistortionAmplitude;
-					diffUV = normalize(i.uv - center);
-					diffUV *= diff;
-				}
-
+				float inDistortion = step(dis, _Radius + _RippleWidth / 2.0) * step(_Radius - _RippleWidth / 2.0, dis);
+				float diff = (1.0 - abs(dis - _Radius) / (_RippleWidth / 2.0)) * _DistortionAmplitude * inDistortion;
+				float2 diffUV = normalize(i.uv - center) * diff;
 				fixed4 col = tex2D(_MainTex, i.uv - diffUV);
-				//fixed4 col = float4(diff, diff, diff, diff);
+				_Tint.rgb *= _Tint.a;
+				col += _Tint * diff / _DistortionAmplitude;
 				return col;
 			}
 			ENDCG
