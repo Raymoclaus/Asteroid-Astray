@@ -31,12 +31,13 @@ public class ParticleGenerator : MonoBehaviour
 		Sprite spr, Vector3 position, Transform parent = null, bool fadeOut = true, float lifeTime = 1f,
 		float speed = 0f, bool slowDown = false, float rotationDeg = 0f, float rotationSpeed = 0f, float size = 1f,
 		bool rotationDecay = false, float alpha = 1f, Color? tint = null, float fadeIn = 0f, int sortingLayer = 0,
-		float growthOverLifetime = 1f)
+		int sortingOrder = 0, float growthOverLifetime = 1f)
 	{
 		SpriteRenderer rend = singleton.pool.Dequeue();
 		singleton.active.Add(rend);
 		rend.sprite = spr;
 		rend.sortingLayerID = sortingLayer;
+		rend.sortingOrder = sortingOrder;
 		Color tintFix = tint == null ? Color.white : (Color)tint;
 		rend.color = tintFix;
 		GameObject obj = rend.gameObject;

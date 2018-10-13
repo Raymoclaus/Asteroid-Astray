@@ -120,6 +120,20 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	private float drillToChargeTimer = 1f;
 	[SerializeField]
 	private float chargeToExplosionTimer = 3f;
+	[SerializeField]
+	private SpriteRenderer chargeSprRend;
+	[SerializeField]
+	private float explosionRadius = 3f;
+	[SerializeField]
+	private float explosionStrength = 1f;
+	private bool stunned = false;
+	[SerializeField]
+	private float stunDuration = 2f;
+	private float stunTimer = 0f;
+	private bool launched = false;
+	private float launchedDuration = 1f;
+	private Entity launcher;
+	public float drillDamageResistance = 2f;
 
 	//signalling variables
 	private float signalTimer;
@@ -133,11 +147,12 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	private void Update()
 	{
 		accel = Vector2.zero;
-
-		if (beingDrilled)
+		if (stunned)
 		{
-			return;
+			stunTimer -= Time.deltaTime;
+			stunned = stunTimer <= 0f;
 		}
+		if (beingDrilled || launched) return;
 
 		switch (state)
 		{
@@ -470,7 +485,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			bool found = false;
 			foreach (GatherBot bot in hive.childBots)
 			{
-				if (bot == this) continue;
+				if (bot == this || bot == null) continue;
 				float dist = Vector2.Distance(bot.transform.position, threats[0].transform.position);
 				if (dist < chaseRange)
 				{
@@ -757,9 +772,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 						change += maxSway * delta * 1.5f;
 						break;
 					case 2:
-						float obstacleAngle = Vector2.Angle(Vector2.up,
-							hit.collider.transform.position - transform.position);
-						change += Mathf.MoveTowardsAngle(angleTo, obstacleAngle, -maxSway * delta * 2f) - angleTo;
+						change += maxSway * delta * 2f;
 						break;
 					case 3:
 						change -= maxSway * delta * 1.5f;
@@ -908,17 +921,40 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 	public bool TakeDrillDamage(float drillDmg, Vector2 drillPos, Entity destroyer, int dropModifier = 0)
 	{
-		return TakeDamage(drillDmg, drillPos, destroyer, dropModifier);
+		return TakeDamage(drillDmg / drillDamageResistance, drillPos, destroyer, dropModifier);
 	}
 
-	public void StartChargingForcePulse()
+	public IEnumerator ChargeForcePulse()
 	{
-		if (beingDrilled)
+		if (!beingDrilled) yield break;
+		
+		float timer = 0f;
+		Color clearWhite = Color.white;
+		clearWhite.a = 0f;
+		while (timer < chargeToExplosionTimer)
 		{
-			Pause.DelayedAction(() =>
+			if (!beingDrilled && timer / chargeToExplosionTimer < 0.5f) break;
+			timer += Time.deltaTime;
+			chargeSprRend.color = Color.Lerp(clearWhite, Color.white, timer / chargeToExplosionTimer);
+			chargeSprRend.transform.localScale = Vector3.one
+				* Mathf.Lerp(1.5f, 0.5f, Mathf.Pow(timer / chargeToExplosionTimer, 0.8f));
+			yield return null;
+		}
+		if (timer / chargeToExplosionTimer > 0.5f)
+		{
+			chargeSprRend.color = clearWhite;
+			chargeSprRend.transform.localScale = Vector3.one;
+			ForcePulseExplosion();
+		}
+		else
+		{
+			while (chargeSprRend.color.a > 0.05f)
 			{
-				ForcePulseExplosion();
-			}, chargeToExplosionTimer);
+				chargeSprRend.color = Color.Lerp(chargeSprRend.color, clearWhite, 0.3f);
+				yield return null;
+			}
+			chargeSprRend.color = clearWhite;
+			chargeSprRend.transform.localScale = Vector3.one;
 		}
 	}
 
@@ -926,8 +962,60 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	{
 		if (beingDrilled)
 		{
-
+			Shuttle.Stun();
 		}
+		Vector2 point = transform.position;
+		int layers = (1 << layerSolid) | (1 << layerProjectile);
+		Collider2D[] colliders = Physics2D.OverlapCircleAll(point, explosionRadius, layers);
+		List<Rigidbody2D> rbs = new List<Rigidbody2D>();
+		foreach (Collider2D col in colliders)
+		{
+			if (col.attachedRigidbody.bodyType == RigidbodyType2D.Static) continue;
+			bool found = false;
+			foreach (Rigidbody2D colRb in rbs)
+			{
+				if (colRb == col.attachedRigidbody)
+				{
+					found = true;
+					break;
+				}
+			}
+			if (!found)
+			{
+				rbs.Add(col.attachedRigidbody);
+			}
+		}
+		foreach (Rigidbody2D colRb in rbs)
+		{
+			if (colRb == Rb) continue;
+			Vector2 dir = ((Vector2)colRb.transform.position - point).normalized;
+			float distance = Vector2.Distance(point, colRb.transform.position);
+			if (distance >= explosionRadius) continue;
+			if (colRb == Shuttle.singleton.Rb)
+			{
+				colRb.velocity = dir * Mathf.Pow((explosionRadius - distance) / explosionRadius, 0.5f)
+					* explosionStrength;
+			}
+			else
+			{
+				colRb.velocity += dir * Mathf.Pow((explosionRadius - distance) / explosionRadius, 0.5f)
+					* explosionStrength;
+			}
+			colRb.AddTorque(Mathf.Pow(Random.value, 0.5f) * (Random.value > 0.5 ? 1f : -1f) * explosionStrength * 2f);
+		}
+		if (beingDrilled)
+		{
+			Vector2 direction = (point - (Vector2)Shuttle.singleton.transform.position).normalized;
+			Rb.velocity = direction * explosionStrength;
+			Rb.AddTorque(Mathf.Pow(Random.value, 0.5f) * (Random.value > 0.5 ? 1f : -1f) * explosionStrength * 2f);
+		}
+		Vector2 screenPos = Camera.main.WorldToViewportPoint(transform.position);
+		if (screenPos.x > -0.5f || screenPos.x < 1.5f || screenPos.y > -0.5f || screenPos.y < 1.5f)
+		{
+			ScreenRippleEffectController.StartRipple(distortionLevel: 0.03f,
+				position: screenPos);
+		}
+		Stun();
 	}
 
 	public void StartDrilling()
@@ -943,9 +1031,15 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			}
 		}
 		shakeFX.Begin();
+		threats.Add(Shuttle.singleton);
+		foreach (GatherBot sibling in hive.childBots)
+		{
+			sibling.threats = threats;
+			sibling.StartEmergencyAttack();
+		}
 		Pause.DelayedAction(() =>
 		{
-			StartChargingForcePulse();
+			StartCoroutine(ChargeForcePulse());
 		}, drillToChargeTimer);
 	}
 
@@ -999,6 +1093,26 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		{
 			IProjectile projectile = other.GetComponent<IProjectile>();
 			projectile.Hit(this, contactPoint);
+		}
+
+		if (otherLayer == layerSolid)
+		{
+			if (launched)
+			{
+				IDamageable otherDamageable = other.transform.parent.GetComponent<IDamageable>();
+				float damage = Shuttle.GetLaunchDamage();
+				if (currentHealth / maxHealth < 0.5f)
+				{
+					damage *= 2f;
+				}
+				if (otherDamageable != null)
+				{
+					otherDamageable.TakeDamage(damage, contactPoint, launcher);
+				}
+				TakeDamage(damage, contactPoint, launcher);
+				launched = false;
+				Stun();
+			}
 		}
 	}
 
@@ -1167,8 +1281,21 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 	public void Launch(Vector2 launchDirection, Entity launcher)
 	{
+		this.launcher = launcher;
 		Rb.velocity = launchDirection;
 		shakeFX.Begin(0.1f, 0f, 1f / 30f);
+		launched = true;
+		Pause.DelayedAction(() =>
+		{
+			launched = false;
+			this.launcher = null;
+		}, launchedDuration);
+	}
+
+	private void Stun()
+	{
+		stunned = true;
+		stunTimer = stunDuration;
 	}
 
 	public bool IsDrillable()

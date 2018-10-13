@@ -135,10 +135,16 @@ public class DrillBit : MonoBehaviour
 		{
 			drillAnim.SetBool("Drilling", false);
 		}
+		
+		if (parent == Shuttle.singleton)
+		{
+			Shuttle.singleton.DrillLaunchArcDisable();
+		}
 	}
 
 	public bool Verify(Entity target)
 	{
+		if (target == null) return false;
 		return parent.VerifyDrillTarget(target);
 	}
 

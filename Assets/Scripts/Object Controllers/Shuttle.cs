@@ -78,6 +78,9 @@ public class Shuttle : Entity, IDamageable
 	private float drillLaunchMaxAngle = 60f;
 	[SerializeField]
 	private SpriteRenderer drillLaunchArcSprite;
+	private bool stunned = false;
+	private float stunDuration = 2f;
+	public float launchDamage = 500f;
 	#region Boost
 	//whether boost capability is available
 	[SerializeField]
@@ -133,6 +136,7 @@ public class Shuttle : Entity, IDamageable
 
 	private void Update()
 	{
+		if (stunned) return;
 		//get shuttle movement input
 		GetMovementInput();
 		//calculate position based on input
@@ -444,6 +448,20 @@ public class Shuttle : Entity, IDamageable
 		return launchDir;
 	}
 
+	public static void Stun()
+	{
+		singleton.drill.StopDrilling();
+		singleton.stunned = true;
+		singleton.Rb.constraints = RigidbodyConstraints2D.None;
+		singleton.accel = Vector2.zero;
+		singleton.velocity = Vector3.zero;
+		Pause.DelayedAction(() =>
+		{
+			singleton.stunned = false;
+			singleton.Rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+		}, singleton.stunDuration);
+	}
+
 	public void AutoPilotSwitch(bool isOn)
 	{
 		autoPilot = isOn;
@@ -545,19 +563,16 @@ public class Shuttle : Entity, IDamageable
 	{
 		switch (target.GetEntityType())
 		{
-			case EntityType.Nebula:
-				break;
-			case EntityType.Asteroid:
 			case EntityType.BotHive:
 			case EntityType.GatherBot:
-				{
-					Pause.TemporarySlowDownEffect();
-					break;
-				}
+			{
+				Pause.TemporarySlowDownEffect();
+				break;
+			}
 		}
-}
+	}
 
-public float GetBoostRemaining()
+	public float GetBoostRemaining()
 	{
 		return (boostCapacity - boostLevel) / boostCapacity;
 	}
@@ -565,6 +580,11 @@ public float GetBoostRemaining()
 	public override bool CanFireLaser()
 	{
 		return !isBoosting;
+	}
+
+	public static float GetLaunchDamage()
+	{
+		return singleton.launchDamage;
 	}
 
 	#region Attach/Detach Methods

@@ -3,10 +3,12 @@
 	Properties
 	{
 		_MainTex ("Texture", 2D) = "white" {}
-		_Radius("Radius", Range(0, 1)) = 0
+		_Radius("Radius", Range(0, 3)) = 0
 		_RippleWidth("RippleWidth", Range(0, 1)) = 0.1
 		_DistortionAmplitude("_DistortionAmplitude", Range(0, 1)) = 0.01
 		_Tint("Tint", Color) = (1, 1, 1, 1)
+		_PosX("PosX", float) = 0.5
+		_PosY("PosY", float) = 0.5
 	}
 	SubShader
 	{
@@ -46,10 +48,11 @@
 			float _RippleWidth;
 			float _DistortionAmplitude;
 			fixed4 _Tint;
+			float _PosX, _PosY;
 
 			fixed4 frag (v2f i) : SV_Target
 			{
-				float2 center = float2(0.5, 0.5);
+				float2 center = float2(_PosX, _PosY);
 				float scl = _ScreenParams.y / _ScreenParams.x;
 				float2 screenPos = float2(i.uv.x, (i.uv.y - 0.5) * scl + 0.5);
 				float dis = sqrt(pow(screenPos.x - center.x, 2) + pow(screenPos.y - center.y, 2));

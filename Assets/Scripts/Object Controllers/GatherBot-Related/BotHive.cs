@@ -11,8 +11,6 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 	[SerializeField]
 	private GatherBot botPrefab;
 	[SerializeField]
-	private ShakeEffect shakeFX;
-	[SerializeField]
 	private HiveInventory inventory;
 	[SerializeField]
 	private Transform dockHolder;
@@ -50,7 +48,7 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 		resourceCount = UnityEngine.Random.Range(
 			minLeftoverResources + botCreationCost * minInitialBotCount,
 			minLeftoverResources + (botCreationCost + botUpgradeCost * maxInitialUpgrades) * maxBotCount + 1);
-		inventory.AddItem(Item.Type.Corvorite, resourceCount);
+		inventory.AddItem(Item.Type.PureCorvorite, resourceCount);
 		SpendResources();
 
 		initialised = true;
@@ -120,7 +118,7 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 		
 		resourceCount -= botCreationCost;
 		toBeSpent -= botCreationCost;
-		inventory.RemoveItem(Item.Type.Corvorite, botCreationCost);
+		inventory.RemoveItem(Item.Type.PureCorvorite, botCreationCost);
 		GatherBot bot = Instantiate(botPrefab);
 		bot.gameObject.SetActive(false);
 		bot.Create(this, botBaseHP, dockID);
@@ -141,7 +139,7 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 		//bot.Upgrade();
 		resourceCount -= botUpgradeCost;
 		toBeSpent -= botUpgradeCost;
-		inventory.RemoveItem(Item.Type.Corvorite, botUpgradeCost);
+		inventory.RemoveItem(Item.Type.PureCorvorite, botUpgradeCost);
 	}
 
 	public IEnumerator ActivateBot(int ID)
@@ -259,7 +257,7 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 		b.gameObject.SetActive(false);
 		dockAnims[b.dockID].SetTrigger("Dismantle1");
 		inventory.Store(items);
-		resourceCount = inventory.Count(Item.Type.Corvorite);
+		resourceCount = inventory.Count(Item.Type.PureCorvorite);
 		SpendResources(b);
 	}
 
@@ -315,14 +313,12 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 
 	public void StartDrilling()
 	{
-		Rb.constraints = RigidbodyConstraints2D.FreezeAll;
-		shakeFX.Begin();
+
 	}
 
 	public void StopDrilling()
 	{
-		Rb.constraints = RigidbodyConstraints2D.None;
-		shakeFX.Stop();
+
 	}
 
 	public bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer, int dropModifier = 0)

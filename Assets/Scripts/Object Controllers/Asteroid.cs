@@ -45,8 +45,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	private int collisionDustMultiplier = 3;
 	private bool launched = false;
 	[SerializeField]
-	private float launchDuration = 2f;
-	private Vector2 launchedDirection;
+	private float launchDuration = 1.5f;
 	private Entity launcher;
 	#endregion
 
@@ -155,7 +154,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 			ParticleGenerator.GenerateParticle(
 				resources.debris[randomChoose], pos, speed: Random.value * 3f, slowDown: true, lifeTime: 1.5f,
 				rotationDeg: Random.value * 360f, rotationSpeed: Random.value * 3f,
-				sortingLayer: SprRend.sortingLayerID);
+				sortingLayer: SprRend.sortingLayerID, sortingOrder: -1);
 		}
 	}
 
@@ -331,14 +330,19 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 
 		if (otherLayer == layerSolid)
 		{
-			if (launched && Vector2.Angle(launchedDirection, contactPoint - (Vector2)transform.position) <= 90f)
+			if (launched)
 			{
 				IDamageable otherDamageable = other.transform.parent.GetComponent<IDamageable>();
+				float damage = Shuttle.GetLaunchDamage();
+				if (Health / MaxHealth < 0.7f)
+				{
+					damage *= 2f;
+				}
 				if (otherDamageable != null)
 				{
-					otherDamageable.TakeDamage((MaxHealth - Health) * 3f, contactPoint, launcher);
+					otherDamageable.TakeDamage(damage, contactPoint, launcher);
 				}
-				TakeDamage(MaxHealth, contactPoint, launcher);
+				TakeDamage(damage, contactPoint, launcher);
 				launched = false;
 			}
 		}
@@ -367,10 +371,13 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	{
 		this.launcher = launcher;
 		Rb.velocity = launchDirection;
-		launchedDirection = launchDirection;
 		launched = true;
 		ShakeFX.Begin(0.1f, 0f, 1f / 30f);
-		Pause.DelayedAction(() => { launched = false; }, launchDuration);
+		Pause.DelayedAction(() =>
+		{
+			this.launcher = null;
+			launched = false;
+		}, launchDuration);
 	}
 
 	public bool IsDrillable()

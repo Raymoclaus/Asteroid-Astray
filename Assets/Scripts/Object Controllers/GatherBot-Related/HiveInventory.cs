@@ -16,7 +16,7 @@ public class HiveInventory : Inventory
 
 	private void ConvertResources()
 	{
-		int[] rarityCounts = CountRarities(Item.Type.Corvorite);
+		int[] rarityCounts = CountRarities(Item.Type.PureCorvorite);
 
 		for (int i = 1; i < rarityCounts.Length; i++)
 		{
@@ -25,8 +25,8 @@ public class HiveInventory : Inventory
 			if (count >= costReturn.x)
 			{
 				int amount = count / costReturn.x;
-				AddItem(Item.Type.Corvorite, amount);
-				RemoveByRarity(i, amount * count, Item.Type.Corvorite);
+				AddItem(Item.Type.PureCorvorite, amount);
+				RemoveByRarity(i, amount * count, Item.Type.PureCorvorite);
 			}
 		}
 	}
