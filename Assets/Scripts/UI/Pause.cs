@@ -3,13 +3,21 @@ using UnityEngine;
 
 public class Pause : MonoBehaviour
 {
-	public static bool IsPaused { get { return Mathf.Approximately(Time.timeScale, Mathf.Epsilon); } }
+	private static bool isPaused = false;
+	public static bool IsPaused { get { return isPaused && Mathf.Approximately(Time.timeScale, Mathf.Epsilon); } }
 	public static float timeSinceOpen = 0f;
 	public static bool isShifting = false;
 	private static bool shiftingUp = false;
 	private static bool slowDownEffect = false;
 	private static bool canPause = true;
 	public static float intendedTimeSpeed = 1f;
+	[SerializeField]
+	private GameObject pauseUI;
+
+	private void Awake()
+	{
+		pauseUI.SetActive(false);
+	}
 
 	private void Update()
 	{
@@ -34,7 +42,8 @@ public class Pause : MonoBehaviour
 			}
 			if (scl <= 0f || scl >= intendedTimeSpeed)
 			{
-				Time.timeScale = Mathf.Clamp01(scl);
+				Time.timeScale = Mathf.Clamp(scl, 0f, intendedTimeSpeed);
+				isPaused = !isPaused;
 				isShifting = false;
 			}
 			else
@@ -42,7 +51,9 @@ public class Pause : MonoBehaviour
 				Time.timeScale = scl;
 			}
 		}
+
 		Time.fixedDeltaTime = Time.timeScale <= 0.01f ? 1f : 0.01666666f * Time.timeScale;
+		pauseUI.SetActive(IsPaused);
 	}
 
 	public static void InstantPause(bool pause)

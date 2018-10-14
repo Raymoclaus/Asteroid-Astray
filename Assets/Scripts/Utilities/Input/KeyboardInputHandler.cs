@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Collections;
 using System.IO;
 using UnityEngine;
 
@@ -12,7 +11,7 @@ public class KeyboardInputHandler : ICustomInputType
 		KeyCode.S,
 		KeyCode.Mouse0,
 		KeyCode.LeftShift,
-		KeyCode.Escape
+		KeyCode.Tab
 	};
 	//set of key bindings that can be changed
 	private List<KeyCode> bindings = new List<KeyCode>();
