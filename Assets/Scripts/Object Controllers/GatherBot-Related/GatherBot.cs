@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using System.Linq;
 
 public class GatherBot : Entity, IDrillableObject, IDamageable
 {
@@ -743,22 +744,21 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		for (int i = 0; i < dirs.Length; i++)
 		{
 			dirs[i].Normalize();
-			dirs[i] *= dist;
-			Debug.DrawLine((Vector2)transform.position + dirs[i] / (dist * 2f),
-				(Vector2)transform.position + dirs[i]);
-			hits[i] = Physics2D.Raycast((Vector2)transform.position + dirs[i] / (dist * 2f),
-				dirs[i], dist);
+			Debug.DrawLine(transform.position, (Vector2)transform.position + dirs[i] * dist);
+			RaycastHit2D[] checks = Physics2D.RaycastAll(transform.position, dirs[i], dist);
+			hits[i] = GetClosestHit(checks);
+		}
+
+		if (FacingWall(hits))
+		{
+			//print("facing wall");
+			return angleTo + 135f;
 		}
 
 		float change = 0f;
-		bool facingWall = FacingWall(hits);
-
 		for (int i = 0; i < hits.Length; i++)
 		{
-			if (facingWall && i != 2) continue;
-
 			RaycastHit2D hit = hits[i];
-
 			if (hit.collider != null && !IsTarget(hit))
 			{
 				accel *= hit.fraction;
@@ -783,33 +783,52 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 				}
 			}
 		}
-
-		Debug.DrawLine(transform.position, (Vector2)transform.position
-			+ new Vector2(Mathf.Sin(Mathf.Deg2Rad * (angleTo + change)), Mathf.Cos(Mathf.Deg2Rad * (angleTo + change))), Color.red);
-
+		Debug.DrawLine(transform.position, (Vector2)transform.position + new Vector2(
+			Mathf.Sin(Mathf.Deg2Rad * (angleTo + change)), Mathf.Cos(Mathf.Deg2Rad * (angleTo + change))),
+			Color.red);
 		return angleTo + change;
 	}
 
 	private bool FacingWall(RaycastHit2D[] hits)
 	{
 		//look at all the objects being seen by the raycasts
-		//if there are any duplicates then assume it is a wall
-		List<GameObject> obstacles = new List<GameObject>();
+		//if there are too many hits on the same object then assume it is a wall or large object
+		List<Rigidbody2D> obstacles = new List<Rigidbody2D>();
 		foreach (RaycastHit2D hit in hits)
 		{
-			if (hit.collider != null)
+			if (hit.collider == null) continue;
+			obstacles.Add(hit.collider.attachedRigidbody);
+		}
+		int[] counts = new int[obstacles.Count];
+		for (int i = 0; i < obstacles.Count; i++)
+		{
+			for (int j = 0; j < obstacles.Count; j++)
 			{
-				foreach (GameObject obstacle in obstacles)
+				if (obstacles[i] == obstacles[j])
 				{
-					if (hit.collider.gameObject == obstacle)
-					{
-						return true;
-					}
+					if (counts[i] >= 2) return true;
+					counts[i] += 1;
 				}
-				obstacles.Add(hit.collider.gameObject);
 			}
 		}
 		return false;
+	}
+
+	private RaycastHit2D GetClosestHit(RaycastHit2D[] hits)
+	{
+		RaycastHit2D closest = new RaycastHit2D();
+		float distance = Mathf.Infinity;
+		foreach (RaycastHit2D hit in hits)
+		{
+			if (hit.collider.attachedRigidbody == Rb) continue;
+			float dist = Vector2.Distance(transform.position, hit.collider.attachedRigidbody.transform.position);
+			if (dist < distance)
+			{
+				closest = hit;
+				distance = dist;
+			}
+		}
+		return closest;
 	}
 
 	private bool IsSuspicious(Entity e)
