@@ -1,25 +1,61 @@
 ﻿using UnityEngine;
+using System.Collections.Generic;
 
 [ExecuteInEditMode]
 public class CustomScreenEffect : MonoBehaviour
 {
-	public Material[] effectMaterials;
-	public Material defaultMaterial;
+	public Material[] effects;
+	[SerializeField]
+	private bool[] noBlit;
 	public Camera cam;
+
+	private void Awake()
+	{
+		enabled = effects.Length > 0;
+	}
 
 	private void OnRenderImage(RenderTexture source, RenderTexture destination)
 	{
-		bool needDefault = true;
-		foreach (Material mat in effectMaterials)
+		List<Material> effectsToBlit = new List<Material>();
+		for (int i = 0; i < effects.Length; i++)
 		{
-			if (mat == null) continue;
-			needDefault = false;
-			Graphics.Blit(source, destination, mat);
-			source = destination;
+			if (noBlit[i] || effects[i] == null) continue;
+			effectsToBlit.Add(effects[i]);
 		}
-		if (needDefault)
+
+		if (effectsToBlit.Count == 0)
 		{
-			Graphics.Blit(source, destination, defaultMaterial);
+			enabled = false;
+			Graphics.Blit(source, destination);
+			return;
 		}
+
+		if (effectsToBlit.Count == 1)
+		{
+			Graphics.Blit(source, destination, effectsToBlit[0]);
+			return;
+		}
+		
+		RenderTexture[] rts = new RenderTexture[effectsToBlit.Count];
+
+		for (int i = 0; i < effectsToBlit.Count; i++)
+		{
+			rts[i] = i == 0 ? new RenderTexture(Screen.width, Screen.height, 0) : new RenderTexture(rts[i - 1]);
+			rts[i].filterMode = FilterMode.Point;
+			Graphics.Blit(source, rts[i], effectsToBlit[i]);
+			source = rts[i];
+		}
+		Graphics.Blit(source, destination);
+		
+		foreach (RenderTexture rt in rts)
+		{
+			rt.Release();
+		}
+	}
+
+	public void SetNoBlit(int index, bool shouldNotBlit)
+	{
+		noBlit[index] = shouldNotBlit;
+		if (!shouldNotBlit) enabled = true;
 	}
 }

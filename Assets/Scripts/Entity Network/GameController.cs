@@ -25,6 +25,7 @@ public class GameController : MonoBehaviour
 	private bool recordingMode = false;
 	public static bool RecordingMode { get { return singleton.recordingMode; } }
 	private bool wasRecordingMode;
+	public static float UnscaledDeltaTime { get { return RecordingMode ? 1f / 60f : Time.unscaledDeltaTime; } }
 	[Header("Items to adjust when in recording mode.")]
 	#region Recording Mode items to fix
 	[SerializeField]

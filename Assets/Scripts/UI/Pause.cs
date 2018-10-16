@@ -12,11 +12,11 @@ public class Pause : MonoBehaviour
 	private static bool canPause = true;
 	public static float intendedTimeSpeed = 1f;
 	[SerializeField]
-	private GameObject pauseUI;
+	private PauseUIController pauseUI;
 
 	private void Awake()
 	{
-		pauseUI.SetActive(false);
+		pauseUI.Activate(false, instant: true);
 	}
 
 	private void Update()
@@ -25,21 +25,26 @@ public class Pause : MonoBehaviour
 
 		if (InputHandler.GetInputDown("Pause") > 0f && !isShifting && canPause)
 		{
-			isShifting = true;
-			shiftingUp = IsPaused;
+			if (IsPaused)
+			{
+				pauseUI.Activate(false, () =>
+				{
+					isShifting = true;
+					shiftingUp = IsPaused;
+				});
+			}
+			else
+			{
+				isShifting = true;
+				shiftingUp = IsPaused;
+				pauseUI.Activate(true);
+			}
 		}
 
 		if (isShifting)
 		{
 			float scl = Time.timeScale;
-			if (GameController.RecordingMode)
-			{
-				scl += shiftingUp ? 2f / 60f : -2f / 60f;
-			}
-			else
-			{
-				scl += shiftingUp ? Time.unscaledDeltaTime * 2f : -Time.unscaledDeltaTime * 2f;
-			}
+			scl += GameController.UnscaledDeltaTime * (shiftingUp ? 2f : -2f);
 			if (scl <= 0f || scl >= intendedTimeSpeed)
 			{
 				Time.timeScale = Mathf.Clamp(scl, 0f, intendedTimeSpeed);
@@ -53,7 +58,6 @@ public class Pause : MonoBehaviour
 		}
 
 		Time.fixedDeltaTime = Time.timeScale <= 0.01f ? 1f : 0.01666666f * Time.timeScale;
-		pauseUI.SetActive(IsPaused);
 	}
 
 	public static void InstantPause(bool pause)
@@ -73,7 +77,7 @@ public class Pause : MonoBehaviour
 		Time.timeScale = 0f;
 		while (time > 0f)
 		{
-			time -= GameController.RecordingMode ? 1f / 60f : Time.unscaledDeltaTime;
+			time -= GameController.UnscaledDeltaTime;
 			yield return null;
 		}
 		Time.timeScale = intendedTimeSpeed;
@@ -125,7 +129,7 @@ public class Pause : MonoBehaviour
 	{
 		while (wait > 0f)
 		{
-			wait -= GameController.RecordingMode ? 1f / 60f : Time.unscaledDeltaTime;
+			wait -= GameController.UnscaledDeltaTime;
 			yield return null;
 		}
 		a();

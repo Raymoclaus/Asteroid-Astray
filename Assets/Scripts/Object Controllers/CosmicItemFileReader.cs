@@ -49,8 +49,7 @@ public static class CosmicItemFileReader
 			}
 			if (quad <= background.Count - 1) text.Append(quadSeparator.ToString() + newLine);
 		}
-
-		Debug.Log(text.Length);
+		
 		File.WriteAllText(path, text.ToString());
 	}
 

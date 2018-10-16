@@ -44,7 +44,7 @@ public class DrillBit : MonoBehaviour
 		//query damage from parent
 		float damage = parent.DrillDamageQuery(firstHit);
 		//bigger effects for more damage
-		ResizeParticleSystem(damage * sparkSizeModifier);
+		ResizeParticleSystem(firstHit ? 1f : damage * sparkSizeModifier);
 		//This is so that no damage is dealt while drilling while game is paused
 		if (!firstHit)
 		{

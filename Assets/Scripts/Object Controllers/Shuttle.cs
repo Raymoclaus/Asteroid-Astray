@@ -210,7 +210,7 @@ public class Shuttle : Entity, IDamageable
 		}
 		rotMod /= 180f;
 		rotMod = Mathf.Pow(rotMod, 0.8f);
-		rot.y = rotMod * 45f;
+		rot.y = Mathf.Lerp(rot.y, rotMod * 45f, Time.deltaTime * 60f);
 		SetRot(Mathf.MoveTowardsAngle(rot.z, -lookDirection, MaxRotSpeed * rotMod * Time.deltaTime * 60f));
 
 		//reset acceleration
@@ -474,7 +474,7 @@ public class Shuttle : Entity, IDamageable
 
 	public override bool VerifyDrillTarget(Entity target)
 	{
-		return accel != Vector2.zero;
+		return autoPilot ? target.GetEntityType() == EntityType.Asteroid : accel != Vector2.zero;
 	}
 
 	public void OnCollisionEnter2D(Collision2D collision)

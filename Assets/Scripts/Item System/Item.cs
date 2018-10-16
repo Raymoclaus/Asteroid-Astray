@@ -92,7 +92,35 @@ public static class Item
 		{
 			case Type.Blank: return string.Empty;
 			case Type.PureCorvorite: return string.Empty;
-			case Type.Stone: return "Charged with two counts of murder by the Avian Court of Caw.";
+			case Type.Stone: return string.Empty;
+			case Type.CorruptedCorvorite: return string.Empty;
+			case Type.WarpCoreBattery: return string.Empty;
+			case Type.IronAlloy: return string.Empty;
+			case Type.BugFood: return string.Empty;
+			case Type.ProximityMine: return string.Empty;
+			case Type.UnstableAcid: return string.Empty;
+			case Type.EnergyDrink: return string.Empty;
+			case Type.DataChip: return string.Empty;
+			case Type.HeatResistantIce: return string.Empty;
+			case Type.Amber: return string.Empty;
+			case Type.Probe: return string.Empty;
+			case Type.Beacon: return string.Empty;
+			case Type.ShieldGenerator: return string.Empty;
+			case Type.SpareParts: return string.Empty;
+			case Type.RepairKit: return string.Empty;
+			case Type.NioleriumCrystals: return string.Empty;
+			case Type.NiolerDung: return string.Empty;
+			default: return string.Empty;
+		}
+	}
+
+	public static string ItemFlavourText(Type type)
+	{
+		switch (type)
+		{
+			case Type.Blank: return string.Empty;
+			case Type.PureCorvorite: return string.Empty;
+			case Type.Stone: return "\"Charged with two counts of murder by the Avian Court of Caw Law.\"";
 			case Type.CorruptedCorvorite: return string.Empty;
 			case Type.WarpCoreBattery: return string.Empty;
 			case Type.IronAlloy: return string.Empty;
