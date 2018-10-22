@@ -92,7 +92,7 @@ public static class Item
 		{
 			case Type.Blank: return string.Empty;
 			case Type.PureCorvorite: return string.Empty;
-			case Type.Stone: return string.Empty;
+			case Type.Stone: return "A lump of rock. Can be used in crafting.";
 			case Type.CorruptedCorvorite: return string.Empty;
 			case Type.WarpCoreBattery: return string.Empty;
 			case Type.IronAlloy: return string.Empty;

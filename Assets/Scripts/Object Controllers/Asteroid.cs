@@ -260,7 +260,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		Rb.constraints = RigidbodyConstraints2D.FreezeAll;
 		ShakeFX.Begin();
 	}
-
+	
 	public void OnTriggerEnter2D(Collider2D other)
 	{
 		int otherLayer = other.gameObject.layer;

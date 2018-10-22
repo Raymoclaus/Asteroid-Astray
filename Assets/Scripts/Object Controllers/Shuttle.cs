@@ -81,6 +81,7 @@ public class Shuttle : Entity, IDamageable
 	private bool stunned = false;
 	private float stunDuration = 2f;
 	public float launchDamage = 500f;
+	private List<Entity> inCombat = new List<Entity>();
 	#region Boost
 	//whether boost capability is available
 	[SerializeField]
@@ -474,7 +475,20 @@ public class Shuttle : Entity, IDamageable
 
 	public override bool VerifyDrillTarget(Entity target)
 	{
-		return autoPilot ? target.GetEntityType() == EntityType.Asteroid : accel != Vector2.zero;
+		bool checks = true;
+		if (autoPilot)
+		{
+			checks = target.GetEntityType() == EntityType.Asteroid;
+		}
+		else
+		{
+			checks = accel != Vector2.zero;
+			if (target.GetEntityType() != EntityType.Asteroid)
+			{
+				checks = checks && inCombat.Count > 0;
+			}
+		}
+		return checks;
 	}
 
 	public void OnCollisionEnter2D(Collision2D collision)
@@ -585,6 +599,20 @@ public class Shuttle : Entity, IDamageable
 	public static float GetLaunchDamage()
 	{
 		return singleton.launchDamage;
+	}
+
+	public static void EngageInCombat(Entity hostile)
+	{
+		foreach (Entity e in singleton.inCombat)
+		{
+			if (e == hostile) return;
+		}
+		singleton.inCombat.Add(hostile);
+	}
+
+	public static void DisengageInCombat(Entity nonHostile)
+	{
+		singleton.inCombat.Remove(nonHostile);
 	}
 
 	#region Attach/Detach Methods

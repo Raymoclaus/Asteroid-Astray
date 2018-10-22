@@ -135,6 +135,8 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	private float launchedDuration = 1f;
 	private Entity launcher;
 	public float drillDamageResistance = 2f;
+	[SerializeField]
+	private ExpandingCircle forcePulseWave;
 
 	//signalling variables
 	private float signalTimer;
@@ -418,13 +420,21 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 				{
 					//attack alone
 					case 0:
-						threats.Add(targetEntity);
+						AddThreat(targetEntity);
+						if (ShuttleIsThreat())
+						{
+							Shuttle.EngageInCombat(this);
+						}
 						state = AIState.Attacking;
 						nearbySuspects.Clear();
 						break;
 					//signal for help
 					case 1:
-						threats.Add(targetEntity);
+						AddThreat(targetEntity);
+						if (ShuttleIsThreat())
+						{
+							Shuttle.EngageInCombat(this);
+						}
 						state = AIState.Signalling;
 						nearbySuspects.Clear();
 						foreach (GatherBot sibling in hive.childBots)
@@ -473,6 +483,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			{
 				sibling.threats = threats;
 				sibling.StartEmergencyAttack();
+				Shuttle.EngageInCombat(sibling);
 			}
 		}
 	}
@@ -500,6 +511,10 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 				if (outOfRangeTimer >= outOfRangeCountdown)
 				{
 					outOfRangeTimer = 0f;
+					if (ShuttleIsThreat())
+					{
+						Shuttle.DisengageInCombat(this);
+					}
 					threats.RemoveAt(0);
 					if (threats.Count == 0)
 					{
@@ -538,6 +553,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 				StartCoroutine(ScanRings(scanAngle, 30f, false, 0.3f));
 				sibling.threats = threats;
 				sibling.StartEmergencyAttack();
+				Shuttle.EngageInCombat(sibling);
 			}
 		}
 		targetEntity = threats[0];
@@ -979,6 +995,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 	public void ForcePulseExplosion()
 	{
+		Instantiate(forcePulseWave, transform.position, Quaternion.identity, ParticleGenerator.holder);
 		if (beingDrilled)
 		{
 			Shuttle.Stun();
@@ -1020,13 +1037,13 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 				colRb.velocity += dir * Mathf.Pow((explosionRadius - distance) / explosionRadius, 0.5f)
 					* explosionStrength;
 			}
-			colRb.AddTorque(Mathf.Pow(Random.value, 0.5f) * (Random.value > 0.5 ? 1f : -1f) * explosionStrength * 2f);
+			colRb.AddTorque((Random.value > 0.5 ? 1f : -1f) * explosionStrength * 5f);
 		}
 		if (beingDrilled)
 		{
 			Vector2 direction = (point - (Vector2)Shuttle.singleton.transform.position).normalized;
 			Rb.velocity = direction * explosionStrength;
-			Rb.AddTorque(Mathf.Pow(Random.value, 0.5f) * (Random.value > 0.5 ? 1f : -1f) * explosionStrength * 2f);
+			Rb.AddTorque((Random.value > 0.5 ? 1f : -1f) * explosionStrength * 5f);
 		}
 		Vector2 screenPos = Camera.main.WorldToViewportPoint(transform.position);
 		if (screenPos.x > -0.5f || screenPos.x < 1.5f || screenPos.y > -0.5f || screenPos.y < 1.5f)
@@ -1050,14 +1067,9 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			}
 		}
 		shakeFX.Begin();
-		threats.Add(Shuttle.singleton);
-		foreach (GatherBot sibling in hive.childBots)
-		{
-			sibling.threats = threats;
-			sibling.StartEmergencyAttack();
-		}
 		Pause.DelayedAction(() =>
 		{
+			if (this == null) return;
 			StartCoroutine(ChargeForcePulse());
 		}, drillToChargeTimer);
 	}
@@ -1149,6 +1161,12 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		if (!IsSibling(destroyer))
 		{
 			currentHealth -= damage;
+			AddThreat(destroyer);
+			if (destroyer == Shuttle.singleton)
+			{
+				Shuttle.EngageInCombat(this);
+			}
+			StartEmergencyAttack();
 		}
 		return CheckHealth(destroyer, dropModifier);
 	}
@@ -1189,7 +1207,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			drill.drillTarget.StopDrilling();
 		}
 		destroyer.DestroyedAnEntity(this);
-		DestroySelf();
+		DestroySelf(true);
 		return currentHealth <= 0f;
 	}
 
@@ -1204,7 +1222,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			//drop resources
 
 		}
-
+		Shuttle.DisengageInCombat(this);
 		hive.BotDestroyed(this);
 		base.DestroySelf();
 	}
@@ -1281,6 +1299,10 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		{
 			if (threats[i] == target)
 			{
+				if (ShuttleIsThreat())
+				{
+					Shuttle.DisengageInCombat(this);
+				}
 				threats.RemoveAt(i);
 				if (threats.Count == 0)
 				{
@@ -1320,5 +1342,23 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	public bool IsDrillable()
 	{
 		return true;
+	}
+
+	private bool ShuttleIsThreat()
+	{
+		foreach (Entity e in threats)
+		{
+			if (e == Shuttle.singleton) return true;
+		}
+		return false;
+	}
+
+	private void AddThreat(Entity threat)
+	{
+		foreach (Entity e in threats)
+		{
+			if (e == threat) return;
+		}
+		threats.Add(threat);
 	}
 }
