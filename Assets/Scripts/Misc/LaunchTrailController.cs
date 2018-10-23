@@ -22,10 +22,11 @@ public class LaunchTrailController : MonoBehaviour
 		transform.position = followTarget.position;
 	}
 
-	public void SetFollowTarget(Transform target, Vector2 direction)
+	public void SetFollowTarget(Transform target, Vector2 direction, float scale = 1f)
 	{
 		followTarget = target;
 		transform.eulerAngles = Vector3.forward * Vector2.SignedAngle(Vector2.up, -direction);
+		transform.localScale = Vector3.one * scale;
 	}
 
 	public void EndLaunchTrail()

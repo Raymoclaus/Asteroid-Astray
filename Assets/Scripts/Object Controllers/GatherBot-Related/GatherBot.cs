@@ -1072,7 +1072,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		{
 			if (this == null) return;
 			StartCoroutine(ChargeForcePulse());
-		}, drillToChargeTimer);
+		}, drillToChargeTimer, true);
 	}
 
 	public void StopDrilling()
@@ -1353,7 +1353,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			}
 			launched = false;
 			this.launcher = null;
-		}, launchedDuration);
+		}, launchedDuration, true);
 	}
 
 	private void Stun()

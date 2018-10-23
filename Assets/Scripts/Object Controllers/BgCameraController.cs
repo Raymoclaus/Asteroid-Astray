@@ -21,7 +21,7 @@ public class BgCameraController : MonoBehaviour
 
 	private void Update()
 	{
-		float zoomLevel = mainCam.orthographicSize - CameraCtrl.camCtrl.MinCamSize;
+		float zoomLevel = mainCam.orthographicSize - CameraCtrl.singleton.minCameSize;
 		transform.position = new Vector3(mainCam.transform.position.x  * scrollSpeed,
 			mainCam.transform.position.y * scrollSpeed,
 			Mathf.Max(0.4f, 100f - zoomLevel * zoomStrength + mainCam.transform.position.z));

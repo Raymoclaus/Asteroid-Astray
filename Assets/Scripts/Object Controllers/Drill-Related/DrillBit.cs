@@ -87,7 +87,7 @@ public class DrillBit : MonoBehaviour
 						burst.parent = ParticleGenerator.holder;
 						burst.position = transform.position;
 						burst.eulerAngles = Vector3.forward * angle;
-					}, 0.05f);
+					}, 0.05f, true);
 				}
 			}
 			StopDrilling(launch, launchDirection, Shuttle.singleton);

@@ -469,7 +469,7 @@ public class Shuttle : Entity, IDamageable
 		{
 			singleton.stunned = false;
 			singleton.Rb.constraints = RigidbodyConstraints2D.FreezeRotation;
-		}, singleton.stunDuration);
+		}, singleton.stunDuration, true);
 	}
 
 	public void AutoPilotSwitch(bool isOn)

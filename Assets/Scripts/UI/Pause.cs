@@ -74,6 +74,7 @@ public class Pause : MonoBehaviour
 
 	private static IEnumerator TempPauseCoroutine(float time = 0.5f)
 	{
+		canPause = false;
 		Time.timeScale = 0f;
 		while (time > 0f)
 		{
@@ -81,6 +82,7 @@ public class Pause : MonoBehaviour
 			yield return null;
 		}
 		Time.timeScale = intendedTimeSpeed;
+		canPause = true;
 	}
 
 	public static void BulletTime(bool activate, float timeSpeed = 0.1f)
@@ -120,16 +122,16 @@ public class Pause : MonoBehaviour
 		canPause = true;
 	}
 
-	public static void DelayedAction(System.Action a, float wait)
+	public static void DelayedAction(System.Action a, float wait, bool useDeltaTime = false)
 	{
-		GameController.singleton.StartCoroutine(Delay(a, wait));
+		GameController.singleton.StartCoroutine(Delay(a, wait, useDeltaTime));
 	}
 
-	private static IEnumerator Delay(System.Action a, float wait)
+	private static IEnumerator Delay(System.Action a, float wait, bool useDeltaTime = false)
 	{
 		while (wait > 0f)
 		{
-			wait -= GameController.UnscaledDeltaTime;
+			wait -= useDeltaTime ? Time.deltaTime : GameController.UnscaledDeltaTime;
 			yield return null;
 		}
 		a();

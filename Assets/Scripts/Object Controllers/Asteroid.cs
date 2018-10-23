@@ -361,11 +361,15 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 				}
 				TakeDamage(damage, contactPoint, launcher);
 				launched = false;
+				if (CameraCtrl.GetPanTarget() == transform)
+				{
+					CameraCtrl.Pan(null);
+				}
 			}
 		}
 
 		if (collisionVolume < 0.05f
-			|| Vector2.Distance(transform.position, CameraCtrl.camCtrl.transform.position) > 10f)
+			|| Vector2.Distance(transform.position, CameraCtrl.singleton.transform.position) > 10f)
 			return;
 
 		//must play at least 1 sound effect
@@ -390,10 +394,11 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		Rb.velocity = launchDirection;
 		launched = true;
 		ShakeFX.Begin(0.1f, 0f, 1f / 30f);
+		CameraCtrl.Pan(transform);
 		if (launcher.GetLaunchTrailAnimation() != null)
 		{
 			launchTrail = Instantiate(launcher.GetLaunchTrailAnimation());
-			launchTrail.SetFollowTarget(transform, launchDirection);
+			launchTrail.SetFollowTarget(transform, launchDirection, isLarge ? 2f : 1f);
 
 		}
 		Pause.DelayedAction(() =>
@@ -402,9 +407,16 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 			{
 				launchTrail.EndLaunchTrail();
 			}
+
+			if (this == null) return;
+
 			this.launcher = null;
 			launched = false;
-		}, launchDuration);
+			if (CameraCtrl.GetPanTarget() == transform)
+			{
+				CameraCtrl.Pan(null);
+			}
+		}, launchDuration, true);
 	}
 
 	public bool IsDrillable()
