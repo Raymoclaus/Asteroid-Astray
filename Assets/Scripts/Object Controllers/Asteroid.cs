@@ -47,6 +47,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	[SerializeField]
 	private float launchDuration = 1.5f;
 	private Entity launcher;
+	private LaunchTrailController launchTrail;
 	#endregion
 
 	#region Audio
@@ -286,6 +287,10 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 
 			if ((Entity)otherDrill.drillTarget == this)
 			{
+				if (Health > 0f)
+				{
+					print("Stop");
+				}
 				StopDrilling();
 				otherDrill.StopDrilling();
 			}
@@ -318,6 +323,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		Vector2 contactPoint = contacts[0].point;
 		float collisionStrength = collision.relativeVelocity.magnitude;
 		float collisionVolume = collisionStrength * collisionVolumeDampenEffect;
+		float angle = Vector2.SignedAngle(Vector2.up, contactPoint - (Vector2)transform.position);
 
 		//dust particle effect
 		CreateDust(contactPoint, (int)collisionStrength * collisionDustMultiplier, 0.1f + Random.value * 0.2f);
@@ -332,6 +338,17 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		{
 			if (launched)
 			{
+				if (launcher.GetLaunchImpactAnimation() != null)
+				{
+					Transform impact = Instantiate(launcher.GetLaunchImpactAnimation()).transform;
+					impact.parent = ParticleGenerator.holder;
+					impact.position = contactPoint;
+					impact.eulerAngles = Vector3.forward * angle;
+				}
+				if (launchTrail != null)
+				{
+					launchTrail.CutLaunchTrail();
+				}
 				IDamageable otherDamageable = other.transform.parent.GetComponent<IDamageable>();
 				float damage = Shuttle.GetLaunchDamage();
 				if (Health / MaxHealth < 0.7f)
@@ -373,8 +390,18 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		Rb.velocity = launchDirection;
 		launched = true;
 		ShakeFX.Begin(0.1f, 0f, 1f / 30f);
+		if (launcher.GetLaunchTrailAnimation() != null)
+		{
+			launchTrail = Instantiate(launcher.GetLaunchTrailAnimation());
+			launchTrail.SetFollowTarget(transform, launchDirection);
+
+		}
 		Pause.DelayedAction(() =>
 		{
+			if (launchTrail != null)
+			{
+				launchTrail.EndLaunchTrail();
+			}
 			this.launcher = null;
 			launched = false;
 		}, launchDuration);

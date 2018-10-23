@@ -198,6 +198,21 @@ public class Entity : MonoBehaviour
 		return 1f;
 	}
 
+	public virtual float MaxDrillDamage()
+	{
+		return 1f;
+	}
+
+	public virtual LaunchTrailController GetLaunchTrailAnimation()
+	{
+		return null;
+	}
+
+	public virtual GameObject GetLaunchImpactAnimation()
+	{
+		return null;
+	}
+
 	//This should be overridden. Called by a drill to alert the entity that the drilling has completed
 	public virtual void DrillComplete()
 	{

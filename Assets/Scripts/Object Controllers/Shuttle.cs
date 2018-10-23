@@ -78,6 +78,10 @@ public class Shuttle : Entity, IDamageable
 	private float drillLaunchMaxAngle = 60f;
 	[SerializeField]
 	private SpriteRenderer drillLaunchArcSprite;
+	[SerializeField]
+	private GameObject drillLaunchImpact;
+	[SerializeField]
+	private LaunchTrailController launchTrail;
 	private bool stunned = false;
 	private float stunDuration = 2f;
 	public float launchDamage = 500f;
@@ -412,6 +416,11 @@ public class Shuttle : Entity, IDamageable
 		}
 	}
 
+	public override float MaxDrillDamage()
+	{
+		return SpeedLimit * drillDamageMultiplier;
+	}
+
 	public void DrillLaunchArcDisable()
 	{
 		drillLaunchArcSprite.gameObject.SetActive(false);
@@ -599,6 +608,16 @@ public class Shuttle : Entity, IDamageable
 	public static float GetLaunchDamage()
 	{
 		return singleton.launchDamage;
+	}
+
+	public override GameObject GetLaunchImpactAnimation()
+	{
+		return drillLaunchImpact;
+	}
+
+	public override LaunchTrailController GetLaunchTrailAnimation()
+	{
+		return launchTrail;
 	}
 
 	public static void EngageInCombat(Entity hostile)

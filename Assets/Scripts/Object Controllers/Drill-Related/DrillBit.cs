@@ -21,9 +21,15 @@ public class DrillBit : MonoBehaviour
 	public float volumeIncrease = 0.1f;
 	private float currentVolume;
 	[SerializeField]
+	private GameObject[] drillSparkObjects;
+	[SerializeField]
+	private float[] drillSparkObjectThresholds = { 0f, 0.5f };
+	[SerializeField]
 	private GameObject drillLaunchSparkEffect;
 	[SerializeField]
 	private float drillLaunchPauseTime = 0.375f;
+	[SerializeField]
+	private GameObject[] drillLaunchBurstAnimations;
 
 	void Start ()
 	{
@@ -44,7 +50,7 @@ public class DrillBit : MonoBehaviour
 		//query damage from parent
 		float damage = parent.DrillDamageQuery(firstHit);
 		//bigger effects for more damage
-		ResizeParticleSystem(firstHit ? 1f : damage * sparkSizeModifier);
+		ResizeParticleSystem(firstHit ? 1f : damage / parent.MaxDrillDamage());
 		//This is so that no damage is dealt while drilling while game is paused
 		if (!firstHit)
 		{
@@ -72,6 +78,17 @@ public class DrillBit : MonoBehaviour
 				CameraCtrl.QuickZoom(0.8f, drillLaunchPauseTime, true);
 				ScreenRippleEffectController.StartRipple(wait: drillLaunchPauseTime);
 				Shuttle.singleton.DrillLaunchArcDisable();
+				if (drillLaunchBurstAnimations.Length > 0)
+				{
+					Pause.DelayedAction(() =>
+					{
+						int chooseLaunchBurstAnimation = Random.Range(0, drillLaunchBurstAnimations.Length);
+						Transform burst = Instantiate(drillLaunchBurstAnimations[chooseLaunchBurstAnimation]).transform;
+						burst.parent = ParticleGenerator.holder;
+						burst.position = transform.position;
+						burst.eulerAngles = Vector3.forward * angle;
+					}, 0.05f);
+				}
 			}
 			StopDrilling(launch, launchDirection, Shuttle.singleton);
 		}
@@ -150,6 +167,11 @@ public class DrillBit : MonoBehaviour
 
 	private void TriggerParticleEffects(bool start)
 	{
+		foreach (GameObject obj in drillSparkObjects)
+		{
+			if (obj == null) continue;
+			obj.SetActive(start);
+		}
 		foreach (ParticleSystem ps in DrillSparks)
 		{
 			if (start)
@@ -166,10 +188,16 @@ public class DrillBit : MonoBehaviour
 
 	private void ResizeParticleSystem(float size)
 	{
+		for (int i = 0; i < drillSparkObjects.Length; i++)
+		{
+			GameObject obj = drillSparkObjects[i];
+			if (obj == null) continue;
+			obj.SetActive(size > drillSparkObjectThresholds[i]);
+		}
 		foreach (ParticleSystem ps in DrillSparks)
 		{
 			ParticleSystem.MainModule main = ps.main;
-			main.startSpeed = size;
+			main.startSpeed = size * sparkSizeModifier;
 		}
 	}
 }

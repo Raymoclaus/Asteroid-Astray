@@ -134,6 +134,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	private bool launched = false;
 	private float launchedDuration = 1f;
 	private Entity launcher;
+	private LaunchTrailController launchTrail;
 	public float drillDamageResistance = 2f;
 	[SerializeField]
 	private ExpandingCircle forcePulseWave;
@@ -1119,6 +1120,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		ContactPoint2D[] contacts = new ContactPoint2D[1];
 		collision.GetContacts(contacts);
 		Vector2 contactPoint = contacts[0].point;
+		float angle = Vector2.SignedAngle(Vector2.up, contactPoint - (Vector2)transform.position);
 
 		if (otherLayer == layerProjectile)
 		{
@@ -1130,6 +1132,17 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		{
 			if (launched)
 			{
+				if (launcher.GetLaunchImpactAnimation() != null)
+				{
+					Transform impact = Instantiate(launcher.GetLaunchImpactAnimation()).transform;
+					impact.parent = ParticleGenerator.holder;
+					impact.position = contactPoint;
+					impact.eulerAngles = Vector3.forward * angle;
+				}
+				if (launchTrail != null)
+				{
+					launchTrail.CutLaunchTrail();
+				}
 				IDamageable otherDamageable = other.transform.parent.GetComponent<IDamageable>();
 				float damage = Shuttle.GetLaunchDamage();
 				if (currentHealth / maxHealth < 0.5f)
@@ -1326,8 +1339,18 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		Rb.velocity = launchDirection;
 		shakeFX.Begin(0.1f, 0f, 1f / 30f);
 		launched = true;
+		if (launcher.GetLaunchTrailAnimation() != null)
+		{
+			launchTrail = Instantiate(launcher.GetLaunchTrailAnimation());
+			launchTrail.SetFollowTarget(transform, launchDirection);
+
+		}
 		Pause.DelayedAction(() =>
 		{
+			if (launchTrail != null)
+			{
+				launchTrail.EndLaunchTrail();
+			}
 			launched = false;
 			this.launcher = null;
 		}, launchedDuration);
