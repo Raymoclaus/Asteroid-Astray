@@ -14,6 +14,8 @@ public class ResourceDrop : MonoBehaviour
 	private float spawnTime;
 	public ParticleSystem ps;
 	public SpriteRenderer rend;
+	private int amount = 1;
+	private Item.Type type = Item.Type.Stone;
 
 	private void Start()
 	{
@@ -60,18 +62,21 @@ public class ResourceDrop : MonoBehaviour
 			ParticleSystem.MainModule main = ps.main;
 			main.loop = false;
 			follow.CollectResources(this);
-			Item.Type type = Item.Type.Stone;
 			if (follow == Shuttle.singleton)
 			{
-				ItemPopupUI.GeneratePopup(type);
+				ItemPopupUI.GeneratePopup(type, amount);
 			}
 			Destroy(gameObject);
 			return;
 		}
 	}
 
-	public void Create(Entity target)
+	public void Create(Entity target, Vector2 pos, Item.Type type = Item.Type.Stone, int amount = 1)
 	{
 		follow = target;
+		transform.position = pos;
+		transform.parent = ParticleGenerator.holder;
+		this.amount = amount;
+		this.type = type;
 	}
 }

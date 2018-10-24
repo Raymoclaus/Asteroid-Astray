@@ -11,6 +11,8 @@ public class ParticleGenerator : MonoBehaviour
 	private Queue<SpriteRenderer> pool = new Queue<SpriteRenderer>(poolReserve);
 	private List<SpriteRenderer> active = new List<SpriteRenderer>(poolReserve);
 
+	public ResourceDrop dropPrefab;
+
 	private void Awake()
 	{
 		if (singleton == null)
@@ -118,5 +120,11 @@ public class ParticleGenerator : MonoBehaviour
 			SpriteRenderer rend = go.AddComponent<SpriteRenderer>();
 			pool.Enqueue(rend);
 		}
+	}
+
+	public static void DropResource(Entity target, Vector2 pos, Item.Type type = Item.Type.Stone, int amount = 1)
+	{
+		ResourceDrop rd = Instantiate(singleton.dropPrefab);
+		rd.Create(target, pos, type, amount);
 	}
 }

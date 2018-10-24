@@ -138,6 +138,8 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	public float drillDamageResistance = 2f;
 	[SerializeField]
 	private ExpandingCircle forcePulseWave;
+	[SerializeField]
+	private List<Loot> loot;
 
 	//signalling variables
 	private float signalTimer;
@@ -1220,11 +1222,11 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			drill.drillTarget.StopDrilling();
 		}
 		destroyer.DestroyedAnEntity(this);
-		DestroySelf(true);
+		DestroySelf(true, destroyer, dropModifier);
 		return currentHealth <= 0f;
 	}
 
-	public void DestroySelf(bool explode)
+	public void DestroySelf(bool explode, Entity destroyer, int dropModifier = 0)
 	{
 		if (explode)
 		{
@@ -1233,11 +1235,29 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			//sound effects
 
 			//drop resources
-
+			GameController.singleton.StartCoroutine(DropLoot(destroyer, transform.position, dropModifier));
 		}
 		Shuttle.DisengageInCombat(this);
 		hive.BotDestroyed(this);
 		base.DestroySelf();
+	}
+
+	private IEnumerator DropLoot(Entity destroyer, Vector2 pos, int dropModifier = 0)
+	{
+		for (int i = 0; i < storage.inventory.Count; i++)
+		{
+			ItemStack stack = storage.inventory[i];
+			if (stack.GetItemType() == Item.Type.Blank) continue;
+			ParticleGenerator.DropResource(destroyer, pos, stack.GetItemType(), stack.GetAmount());
+			yield return null;
+		}
+
+		for (int i = 0; i < loot.Count; i++)
+		{
+			ItemStack stack = loot[i].GetStack();
+			ParticleGenerator.DropResource(destroyer, pos, stack.GetItemType(), stack.GetAmount());
+			yield return null;
+		}
 	}
 
 	public override float DrillDamageQuery(bool firstHit)

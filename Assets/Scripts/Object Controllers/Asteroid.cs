@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Collections;
 
 public class Asteroid : Entity, IDrillableObject, IDamageable
 {
@@ -15,8 +16,6 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	[Header("Asteroid Fields")]
 	[Tooltip("Reference to the sprite renderer of the asteroid.")]
 	public SpriteRenderer SprRend;
-	//for testing resource drop
-	public ResourceDrop resource;
 	[Tooltip("Reference to the shake effect script on the sprite.")]
 	public ShakeEffect ShakeFX;
 	[Tooltip("Picks a random value between given value and negative given value to determine its rotation speed")]
@@ -132,17 +131,20 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 				parent: Shuttle.singleton.transform);
 
 			//drop resources
-			int minDrop = isLarge ? 4 : 1;
-			for (int i = 0; i < Random.Range(minDrop, minDrop + dropModifier + 1); i++)
-			{
-				ResourceDrop drop = Instantiate(resource);
-				drop.Create(destroyer);
-				drop.transform.position = transform.position;
-				drop.transform.parent = ParticleGenerator.holder;
-			}
+			GameController.singleton.StartCoroutine(DropLoot(destroyer, transform.position, dropModifier));
 		}
 		destroyer.DestroyedAnEntity(this);
 		base.DestroySelf();
+	}
+
+	private IEnumerator DropLoot(Entity destroyer, Vector2 pos, int dropModifier = 0)
+	{
+		int minDrop = isLarge ? 4 : 1;
+		for (int i = 0; i < Random.Range(minDrop, minDrop + dropModifier + 1); i++)
+		{
+			ParticleGenerator.DropResource(destroyer, pos);
+			yield return null;
+		}
 	}
 
 	private void CreateDebris(Vector2 pos)
