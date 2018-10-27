@@ -6,6 +6,8 @@ public class ResourceViewer : MonoBehaviour
 {
 	private Text counter;
 	private int currentCount;
+	[SerializeField]
+	private ShuttleTrackers shuttleTrackerSO;
 
 	private void Awake()
 	{
@@ -14,14 +16,13 @@ public class ResourceViewer : MonoBehaviour
 
 	private void Update()
 	{
-		if (Shuttle.singleton != null && Shuttle.singleton.storage.inventory.Count > 0)
+		if (!shuttleTrackerSO) return;
+
+		int count = shuttleTrackerSO.storageCount;
+		if (count != currentCount)
 		{
-			int count = Shuttle.singleton.storage.Count(Item.Type.Stone);
-			if (count != currentCount)
-			{
-				counter.text = count.ToString();
-				currentCount = count;
-			}
+			counter.text = count.ToString();
+			currentCount = count;
 		}
 	}
 }

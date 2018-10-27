@@ -97,7 +97,7 @@ public class LaserBlast : MonoBehaviour, IProjectile
 			{
 				convergePoint = transform.position;
 				sprRend.sprite = boostedBullet;
-				float angle = Vector2.SignedAngle(Vector2.up, vel);
+				float angle = -Vector2.SignedAngle(Vector2.up, vel);
 				transform.eulerAngles = Vector3.forward * angle;
 				//signal weapon system to create sonic boom effects
 				weaponSystem.LaserConvergeEffect(sharedID, convergePoint, angle);
@@ -119,7 +119,7 @@ public class LaserBlast : MonoBehaviour, IProjectile
 
 		//create explosion effect based on damage dealt
 		bool isStrongHit = damageCalc >= damage * 0.9f;
-		float dirToObject = Vector2.SignedAngle(Vector2.up, obj.GetPosition() - contactPoint);
+		float dirToObject = -Vector2.SignedAngle(Vector2.up, obj.GetPosition() - contactPoint);
 		GameObject hitFX = Instantiate(isStrongHit ? strongHit : weakHit);
 		hitFX.transform.position = contactPoint;
 		hitFX.transform.eulerAngles = Vector3.forward * (dirToObject + 180f);

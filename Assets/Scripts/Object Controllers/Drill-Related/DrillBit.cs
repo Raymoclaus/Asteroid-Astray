@@ -5,9 +5,9 @@ public class DrillBit : MonoBehaviour
 {
 	public Collider2D drillCol;
 	public Entity parent;
-	private bool isDrilling;
-	public bool IsDrilling { get { return isDrilling; } }
+	public bool IsDrilling { get; private set; }
 	public bool CanDrill { get { return parent.canDrill; } }
+	public bool CanLaunch { get { return parent.canDrillLaunch; } }
 	public IDrillableObject drillTarget;
 	private bool firstHit = false;
 	public List<ParticleSystem> DrillSparks;
@@ -39,7 +39,7 @@ public class DrillBit : MonoBehaviour
 
 	private void Update()
 	{
-		if (isDrilling)
+		if (IsDrilling)
 		{
 			InflictDamage();
 		}
@@ -60,24 +60,24 @@ public class DrillBit : MonoBehaviour
 		//if damage is 0 then stop drilling
 		if (damage <= 0f && !Pause.IsPaused && !Pause.isShifting)
 		{
-			bool launch =
-				InputHandler.GetInputUp("Stop") > 0f &&
-				parent == Shuttle.singleton &&
-				Shuttle.singleton.ShouldLaunch();
+			bool launch = parent.ShouldLaunch();
 			Vector2 launchDirection = Vector2.up;
 			if (launch)
 			{
-				launchDirection = Shuttle.LaunchDirection(((Entity)drillTarget).transform);
+				launchDirection = parent.LaunchDirection(((Entity)drillTarget).transform);
 				Transform eff = Instantiate(drillLaunchSparkEffect).transform;
 				eff.parent = ParticleGenerator.holder;
 				eff.position = transform.position;
-				float angle = Vector2.SignedAngle(Vector2.up, launchDirection);
-				eff.eulerAngles = Vector3.forward * angle;
+				float angle = -Vector2.SignedAngle(Vector2.up, launchDirection);
+				eff.eulerAngles = Vector3.forward * -angle;
 				Pause.TemporaryPause(drillLaunchPauseTime);
 				CameraCtrl.CamShake();
 				CameraCtrl.QuickZoom(0.8f, drillLaunchPauseTime, true);
-				ScreenRippleEffectController.StartRipple(wait: drillLaunchPauseTime);
-				Shuttle.singleton.DrillLaunchArcDisable();
+				Pause.DelayedAction(() =>
+				{
+					ScreenRippleEffectController.StartRipple(wait: drillLaunchPauseTime);
+				}, 0.02f, true);
+				parent.Launching();
 				if (drillLaunchBurstAnimations.Length > 0)
 				{
 					Pause.DelayedAction(() =>
@@ -86,11 +86,11 @@ public class DrillBit : MonoBehaviour
 						Transform burst = Instantiate(drillLaunchBurstAnimations[chooseLaunchBurstAnimation]).transform;
 						burst.parent = ParticleGenerator.holder;
 						burst.position = transform.position;
-						burst.eulerAngles = Vector3.forward * angle;
-					}, 0.05f, true);
+						burst.eulerAngles = Vector3.forward * -angle;
+					}, 0.02f, true);
 				}
 			}
-			StopDrilling(launch, launchDirection, Shuttle.singleton);
+			StopDrilling(launch, launchDirection, parent);
 		}
 		//else send the damage to the drill target
 		else
@@ -116,7 +116,7 @@ public class DrillBit : MonoBehaviour
 		{
 			TriggerParticleEffects(true);
 		}
-		isDrilling = true;
+		IsDrilling = true;
 		drillTarget = newTarget;
 		firstHit = true;
 
@@ -133,7 +133,7 @@ public class DrillBit : MonoBehaviour
 	public void StopDrilling(bool launch = false, Vector2? launchDirection = null, Entity launcher = null)
 	{
 		TriggerParticleEffects(false);
-		isDrilling = false;
+		IsDrilling = false;
 		if (drillTarget != null)
 		{
 			drillTarget.StopDrilling();
@@ -152,11 +152,8 @@ public class DrillBit : MonoBehaviour
 		{
 			drillAnim.SetBool("Drilling", false);
 		}
-		
-		if (parent == Shuttle.singleton)
-		{
-			Shuttle.singleton.DrillLaunchArcDisable();
-		}
+
+		parent.StoppedDrilling();
 	}
 
 	public bool Verify(Entity target)

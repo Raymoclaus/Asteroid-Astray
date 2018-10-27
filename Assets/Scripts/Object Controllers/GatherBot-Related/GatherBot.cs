@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using System.Linq;
 
-public class GatherBot : Entity, IDrillableObject, IDamageable
+public class GatherBot : Entity, IDrillableObject, IDamageable, IStunnable, ICombat
 {
 	private enum AIState
 	{
@@ -38,6 +37,8 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	private Inventory storage;
 	[SerializeField]
 	private Animator anim;
+	[SerializeField]
+	private AudioSO collisionSounds;
 
 	//fields
 	[SerializeField]
@@ -93,7 +94,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	private float intenseScanDuration = 4f;
 	private float intenseScanTimer = 0f;
 	private float intenseScanRange = 1.5f;
-	private List<Entity> nearbySuspects = new List<Entity>();
+	private List<ICombat> nearbySuspects = new List<ICombat>();
 	[SerializeField]
 	private ParticleSystem intenseScanner;
 	[SerializeField]
@@ -106,7 +107,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	[SerializeField]
 	private StraightWeapon straightWeapon;
 	private bool beingDrilled;
-	private List<Entity> threats = new List<Entity>();
+	private List<ICombat> enemies = new List<ICombat>();
 	private float chaseRange = 16f;
 	[SerializeField]
 	private float outOfRangeCountdown = 8f;
@@ -140,6 +141,8 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	private ExpandingCircle forcePulseWave;
 	[SerializeField]
 	private List<Loot> loot;
+	private bool straightWeaponAttached = false;
+	private bool readyToFire = false;
 
 	//signalling variables
 	private float signalTimer;
@@ -248,9 +251,10 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 				//look for the first unusual entity in the scan
 				foreach (Entity e in entitiesScanned)
 				{
-					if (IsSuspicious(e))
+					ICombat threat = e.GetICombat();
+					if (threat != null && IsSuspicious(threat))
 					{
-						nearbySuspects.Add(e);
+						nearbySuspects.Add(threat);
 					}
 				}
 
@@ -375,7 +379,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			StartExploring();
 			return;
 		}
-		targetEntity = nearbySuspects[0];
+		targetEntity = (Entity)nearbySuspects[0];
 		//if target is too far away then return to exploring
 		if (targetEntity == null ||
 			Vector2.Distance(targetEntity.transform.position, transform.position) > suspiciousChaseRange)
@@ -396,12 +400,8 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 			//draw scanner particles
 			if (!intenseScanner.isPlaying) intenseScanner.Play();
-			float angle = Vector2.Angle(Vector2.up, targetEntity.transform.position - transform.position);
-			if (targetEntity.transform.position.x < transform.position.x)
-			{
-				angle = 180f + (180f - angle);
-			}
-			intenseScanner.transform.eulerAngles = Vector3.forward * -angle;
+			float angle = -Vector2.SignedAngle(Vector2.up, targetEntity.transform.position - transform.position);
+			intenseScanner.transform.eulerAngles = Vector3.forward * angle;
 			intenseScanner.transform.localScale = Vector3.one *
 				Vector2.Distance(transform.position, targetEntity.transform.position);
 
@@ -423,20 +423,26 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 				{
 					//attack alone
 					case 0:
-						AddThreat(targetEntity);
-						if (ShuttleIsThreat())
+						ICombat enemy = targetEntity.GetICombat();
+						if (enemy != null)
 						{
-							Shuttle.EngageInCombat(this);
+							if (enemy.EngageInCombat(this))
+							{
+								AddThreat(enemy);
+							}
 						}
 						state = AIState.Attacking;
 						nearbySuspects.Clear();
 						break;
 					//signal for help
 					case 1:
-						AddThreat(targetEntity);
-						if (ShuttleIsThreat())
+						enemy = targetEntity.GetICombat();
+						if (enemy != null)
 						{
-							Shuttle.EngageInCombat(this);
+							if (enemy.EngageInCombat(this))
+							{
+								AddThreat(enemy);
+							}
 						}
 						state = AIState.Signalling;
 						nearbySuspects.Clear();
@@ -447,12 +453,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 								hive.childBots.Remove(sibling);
 							}
 							if (sibling == this) continue;
-							float scanAngle = Vector2.Angle(
-								Vector2.up, sibling.transform.position - transform.position);
-							if (sibling.transform.position.x < transform.position.x)
-							{
-								scanAngle = 180f + (180f - scanAngle);
-							}
+							float scanAngle = -Vector2.SignedAngle(Vector2.up, sibling.transform.position - transform.position);
 							StartCoroutine(ScanRings(scanAngle, 30f, false, 0.3f));
 						}
 						signalTimer = scanDuration;
@@ -484,9 +485,12 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		{
 			foreach (GatherBot sibling in hive.childBots)
 			{
-				sibling.threats = threats;
+				sibling.enemies = enemies;
 				sibling.StartEmergencyAttack();
-				Shuttle.EngageInCombat(sibling);
+				foreach (ICombat enemy in enemies)
+				{
+					enemy.EngageInCombat(sibling);
+				}
 			}
 		}
 	}
@@ -494,14 +498,14 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	private void Attacking()
 	{
 		//if this bot is too far away and all other bots are also too far away then give up chase
-		float distanceFromTarget = Vector2.Distance(transform.position, threats[0].transform.position);
+		float distanceFromTarget = Vector2.Distance(transform.position, ((Entity)enemies[0]).transform.position);
 		if (distanceFromTarget > chaseRange)
 		{
 			bool found = false;
 			foreach (GatherBot bot in hive.childBots)
 			{
 				if (bot == this || bot == null) continue;
-				float dist = Vector2.Distance(bot.transform.position, threats[0].transform.position);
+				float dist = Vector2.Distance(bot.transform.position, ((Entity)enemies[0]).transform.position);
 				if (dist < chaseRange)
 				{
 					found = true;
@@ -514,12 +518,9 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 				if (outOfRangeTimer >= outOfRangeCountdown)
 				{
 					outOfRangeTimer = 0f;
-					if (ShuttleIsThreat())
-					{
-						Shuttle.DisengageInCombat(this);
-					}
-					threats.RemoveAt(0);
-					if (threats.Count == 0)
+					enemies[0].DisengageInCombat(this);
+					enemies.RemoveAt(0);
+					if (enemies.Count == 0)
 					{
 						foreach (GatherBot bot in hive.childBots)
 						{
@@ -548,25 +549,22 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			if (Vector2.Distance(transform.position, sibling.transform.position)
 				< Cnsts.CHUNK_SIZE)
 			{
-				float scanAngle = Vector2.Angle(Vector2.up, sibling.transform.position - transform.position);
-				if (sibling.transform.position.x < transform.position.x)
-				{
-					scanAngle = 180f + (180f - scanAngle);
-				}
+				float scanAngle = -Vector2.SignedAngle(Vector2.up, sibling.transform.position - transform.position);
 				StartCoroutine(ScanRings(scanAngle, 30f, false, 0.3f));
-				sibling.threats = threats;
+				sibling.enemies = enemies;
 				sibling.StartEmergencyAttack();
-				Shuttle.EngageInCombat(sibling);
+				enemies[0].EngageInCombat(sibling);
 			}
 		}
-		targetEntity = threats[0];
+		targetEntity = (Entity)enemies[0];
 		float orbitAngle = Mathf.PI * 2f / hive.childBots.Count * dockID + Pause.timeSinceOpen * orbitSpeed;
 		Vector3 targetPos = new Vector2(Mathf.Sin(orbitAngle), Mathf.Cos(orbitAngle)) * orbitRange;
 		GoToLocation(targetEntity.transform.position + targetPos, distanceFromTarget > firingRange, 0.2f, true,
 			distanceFromTarget > firingRange ? null : (Vector2?)targetEntity.transform.position - transform.right);
-		if (distanceFromTarget <= firingRange)
+		readyToFire = distanceFromTarget <= firingRange;
+		if (readyToFire)
 		{
-			straightWeapon.Fire(targetEntity.transform.position);
+			straightWeapon.aim = targetEntity.transform.position;
 		}
 		
 	}
@@ -605,11 +603,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 		if (lookPos != null)
 		{
-			float lookAngle = Vector2.Angle(Vector2.up, targetEntity.transform.position - transform.position);
-			if (targetEntity.transform.position.x < transform.position.x)
-			{
-				lookAngle = 180f + (180f - lookAngle);
-			}
+			float lookAngle = -Vector2.SignedAngle(Vector2.up, targetEntity.transform.position - transform.position);
 			rotTo = RotateTo(lookAngle);
 		}
 
@@ -674,11 +668,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 	private float AdjustForMomentum(float lookDir)
 	{
-		float ld = lookDir, rt = Vector2.Angle(Vector2.up, velocity);
-		if (velocity.x < 0f)
-		{
-			rt = 180f + (180f - rt);
-		}
+		float ld = lookDir, rt = -Vector2.SignedAngle(Vector2.up, velocity);
 
 		float difference = ld - rt;
 		if (difference > 180f)
@@ -732,11 +722,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 	private float DetermineDirection(Vector2 targetPos, bool avoidObstacles = false)
 	{
-		float angleTo = Vector2.Angle(Vector2.up, targetPos - (Vector2)transform.position);
-		if (targetPos.x < transform.position.x)
-		{
-			angleTo = 180f + (180f - angleTo);
-		}
+		float angleTo = -Vector2.SignedAngle(Vector2.up, targetPos - (Vector2)transform.position);
 
 		if (avoidObstacles)
 		{
@@ -850,18 +836,18 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		return closest;
 	}
 
-	private bool IsSuspicious(Entity e)
+	private bool IsSuspicious(ICombat threat)
 	{
-		if (e == null) return false;
+		if (threat == null) return false;
 
 		//ignore if too far away
-		if (Vector2.Distance(transform.position, e.transform.position) > suspiciousChaseRange) return false;
+		if (Vector2.Distance(transform.position, ((Entity)threat).transform.position) > suspiciousChaseRange) return false;
 
 		//determine suspect based on entity type
-		EntityType type = e.GetEntityType();
+		EntityType type = ((Entity)threat).GetEntityType();
 		if (type == EntityType.Shuttle) return true;
-		if (type == EntityType.BotHive) return e != hive;
-		if (type == EntityType.GatherBot) return !IsSibling(e);
+		if (type == EntityType.BotHive) return (Entity)threat != hive;
+		if (type == EntityType.GatherBot) return !IsSibling(((Entity)threat));
 
 		return false;
 	}
@@ -999,10 +985,6 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 	public void ForcePulseExplosion()
 	{
 		Instantiate(forcePulseWave, transform.position, Quaternion.identity, ParticleGenerator.holder);
-		if (beingDrilled)
-		{
-			Shuttle.Stun();
-		}
 		Vector2 point = transform.position;
 		int layers = (1 << layerSolid) | (1 << layerProjectile);
 		Collider2D[] colliders = Physics2D.OverlapCircleAll(point, explosionRadius, layers);
@@ -1024,37 +1006,28 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 				rbs.Add(col.attachedRigidbody);
 			}
 		}
+
 		foreach (Rigidbody2D colRb in rbs)
 		{
+			IStunnable stunnable = colRb.GetComponent<IStunnable>();
+			stunnable = stunnable ?? colRb.GetComponentInChildren<IStunnable>();
+			if (stunnable != null) stunnable.Stun();
+
 			if (colRb == Rb) continue;
 			Vector2 dir = ((Vector2)colRb.transform.position - point).normalized;
 			float distance = Vector2.Distance(point, colRb.transform.position);
 			if (distance >= explosionRadius) continue;
-			if (colRb == Shuttle.singleton.Rb)
-			{
-				colRb.velocity = dir * Mathf.Pow((explosionRadius - distance) / explosionRadius, 0.5f)
-					* explosionStrength;
-			}
-			else
-			{
-				colRb.velocity += dir * Mathf.Pow((explosionRadius - distance) / explosionRadius, 0.5f)
-					* explosionStrength;
-			}
+			colRb.velocity += dir * Mathf.Pow((explosionRadius - distance) / explosionRadius, 0.5f)
+				* explosionStrength;
 			colRb.AddTorque((Random.value > 0.5 ? 1f : -1f) * explosionStrength * 5f);
 		}
-		if (beingDrilled)
-		{
-			Vector2 direction = (point - (Vector2)Shuttle.singleton.transform.position).normalized;
-			Rb.velocity = direction * explosionStrength;
-			Rb.AddTorque((Random.value > 0.5 ? 1f : -1f) * explosionStrength * 5f);
-		}
+
 		Vector2 screenPos = Camera.main.WorldToViewportPoint(transform.position);
 		if (screenPos.x > -0.5f || screenPos.x < 1.5f || screenPos.y > -0.5f || screenPos.y < 1.5f)
 		{
 			ScreenRippleEffectController.StartRipple(distortionLevel: 0.03f,
 				position: screenPos);
 		}
-		Stun();
 	}
 
 	public void StartDrilling()
@@ -1122,7 +1095,8 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		ContactPoint2D[] contacts = new ContactPoint2D[1];
 		collision.GetContacts(contacts);
 		Vector2 contactPoint = contacts[0].point;
-		float angle = Vector2.SignedAngle(Vector2.up, contactPoint - (Vector2)transform.position);
+		float collisionStrength = collision.relativeVelocity.magnitude;
+		float angle = -Vector2.SignedAngle(Vector2.up, contactPoint - (Vector2)transform.position);
 
 		if (otherLayer == layerProjectile)
 		{
@@ -1146,7 +1120,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 					launchTrail.CutLaunchTrail();
 				}
 				IDamageable otherDamageable = other.transform.parent.GetComponent<IDamageable>();
-				float damage = Shuttle.GetLaunchDamage();
+				float damage = launcher.GetLaunchDamage();
 				if (currentHealth / maxHealth < 0.5f)
 				{
 					damage *= 2f;
@@ -1159,6 +1133,13 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 				launched = false;
 				Stun();
 			}
+		}
+
+		//play a sound effect
+		if (collisionSounds)
+		{
+			AudioManager.PlaySFX(collisionSounds.PickRandomClip(), contactPoint, null,
+				collisionSounds.PickRandomVolume() * collisionStrength, collisionSounds.PickRandomPitch());
 		}
 	}
 
@@ -1176,10 +1157,13 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		if (!IsSibling(destroyer))
 		{
 			currentHealth -= damage;
-			AddThreat(destroyer);
-			if (destroyer == Shuttle.singleton)
+			ICombat enemy = destroyer.GetICombat();
+			if (enemy != null)
 			{
-				Shuttle.EngageInCombat(this);
+				if (enemy.EngageInCombat(this))
+				{
+					AddThreat(enemy);
+				}
 			}
 			StartEmergencyAttack();
 		}
@@ -1237,7 +1221,10 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 			//drop resources
 			GameController.singleton.StartCoroutine(DropLoot(destroyer, transform.position, dropModifier));
 		}
-		Shuttle.DisengageInCombat(this);
+		foreach (ICombat enemy in enemies)
+		{
+			enemy.DisengageInCombat(this);
+		}
 		hive.BotDestroyed(this);
 		base.DestroySelf();
 	}
@@ -1328,16 +1315,13 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 
 	public override void DestroyedAnEntity(Entity target)
 	{
-		for (int i = 0; i < threats.Count; i++)
+		for (int i = 0; i < enemies.Count; i++)
 		{
-			if (threats[i] == target)
+			if ((Entity)enemies[i] == target)
 			{
-				if (ShuttleIsThreat())
-				{
-					Shuttle.DisengageInCombat(this);
-				}
-				threats.RemoveAt(i);
-				if (threats.Count == 0)
+				enemies[i].DisengageInCombat(this);
+				enemies.RemoveAt(i);
+				if (enemies.Count == 0)
 				{
 					foreach (GatherBot bot in hive.childBots)
 					{
@@ -1376,7 +1360,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		}, launchedDuration, true);
 	}
 
-	private void Stun()
+	public void Stun()
 	{
 		stunned = true;
 		stunTimer = stunDuration;
@@ -1387,21 +1371,46 @@ public class GatherBot : Entity, IDrillableObject, IDamageable
 		return true;
 	}
 
-	private bool ShuttleIsThreat()
+	private void AddThreat(ICombat threat)
 	{
-		foreach (Entity e in threats)
-		{
-			if (e == Shuttle.singleton) return true;
-		}
-		return false;
-	}
-
-	private void AddThreat(Entity threat)
-	{
-		foreach (Entity e in threats)
+		foreach (ICombat e in enemies)
 		{
 			if (e == threat) return;
 		}
-		threats.Add(threat);
+		enemies.Add(threat);
+	}
+
+	public bool EngageInCombat(ICombat hostile)
+	{
+		if (IsSibling((Entity)hostile) || (Entity)hostile == hive || enemies.Contains(hostile)) return false;
+		enemies.Add(hostile);
+		return true;
+	}
+
+	public void DisengageInCombat(ICombat nonHostile)
+	{
+		for (int i = 0; i < enemies.Count; i++)
+		{
+			if (enemies[i] == nonHostile)
+			{
+				enemies.RemoveAt(i);
+				return;
+			}
+		}
+	}
+
+	public override bool CanFireStraightWeapon()
+	{
+		return straightWeaponAttached && readyToFire;
+	}
+
+	public override void AttachStraightWeapon(bool attach)
+	{
+		straightWeaponAttached = attach;
+	}
+
+	public override ICombat GetICombat()
+	{
+		return this;
 	}
 }

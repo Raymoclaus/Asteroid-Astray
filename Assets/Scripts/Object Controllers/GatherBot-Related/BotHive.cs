@@ -17,6 +17,8 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 	private Transform[] docks;
 	[SerializeField]
 	private Animator[] dockAnims;
+	[SerializeField]
+	private AudioSO collisionSounds;
 
 	//fields
 	[SerializeField]
@@ -298,11 +300,19 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 		ContactPoint2D[] contacts = new ContactPoint2D[1];
 		collision.GetContacts(contacts);
 		Vector2 contactPoint = contacts[0].point;
+		float collisionStrength = collision.relativeVelocity.magnitude;
 
 		if (otherLayer == layerProjectile)
 		{
 			IProjectile projectile = other.GetComponent<IProjectile>();
 			projectile.Hit(this, contactPoint);
+		}
+
+		//play a sound effect
+		if (collisionSounds)
+		{
+			AudioManager.PlaySFX(collisionSounds.PickRandomClip(), contactPoint, null,
+				collisionSounds.PickRandomVolume() * collisionStrength, collisionSounds.PickRandomPitch());
 		}
 	}
 

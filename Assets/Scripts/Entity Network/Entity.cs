@@ -18,13 +18,14 @@ public class Entity : MonoBehaviour
 	private float disableTime;
 	protected bool needsInit = true;
 	protected bool initialised = false;
+	public bool canDoCombat = false;
 
 	//related layers
 	private static bool layersSet;
 	protected static int layerDrill, layerProjectile, layerSolid;
 
 	//drill related
-	public bool canDrill;
+	public bool canDrill, canDrillLaunch;
 	protected DrillBit drill;
 	public bool IsDrilling { get { return drill == null ? false : drill.IsDrilling; } }
 
@@ -203,6 +204,11 @@ public class Entity : MonoBehaviour
 		return 1f;
 	}
 
+	public virtual void StoppedDrilling()
+	{
+
+	}
+
 	public virtual LaunchTrailController GetLaunchTrailAnimation()
 	{
 		return null;
@@ -251,7 +257,47 @@ public class Entity : MonoBehaviour
 		return false;
 	}
 
+	public virtual bool CanFireStraightWeapon()
+	{
+		return false;
+	}
+
 	public virtual void DestroyedAnEntity(Entity target)
+	{
+
+	}
+
+	public virtual bool ShouldLaunch()
+	{
+		return false;
+	}
+
+	public virtual Vector2 LaunchDirection(Transform launchableObject)
+	{
+		return Vector2.zero;
+	}
+
+	public virtual void Launching()
+	{
+
+	}
+
+	public virtual float GetLaunchDamage()
+	{
+		return 0f;
+	}
+
+	public virtual ICombat GetICombat()
+	{
+		return null;
+	}
+
+	public virtual void AttachLaser(bool attach)
+	{
+
+	}
+
+	public virtual void AttachStraightWeapon(bool attach)
 	{
 
 	}

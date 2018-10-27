@@ -22,6 +22,7 @@ public class StraightWeapon : MonoBehaviour
 	private GameObject muzzleFlash;
 	private float aimThreshold = 16f;
 	private bool flipMuzzleFlash = false;
+	public Vector2 aim;
 
 
 	private void Awake()
@@ -29,6 +30,7 @@ public class StraightWeapon : MonoBehaviour
 		blastPoolHolder = new GameObject("Blast Pool Holder").transform;
 		blastPoolHolder.parent = ParticleGenerator.holder;
 		FillPool();
+		parent.AttachStraightWeapon(true);
 	}
 
 	private void Update()
@@ -38,16 +40,13 @@ public class StraightWeapon : MonoBehaviour
 			timer = Mathf.MoveTowards(timer, 0f, Time.deltaTime);
 		}
 
-		if (parent == Shuttle.singleton)
+		if (parent.CanFireStraightWeapon())
 		{
-			if (InputHandler.GetInput("Shoot") > 0f)
-			{
-				Fire();
-			}
+			Fire();
 		}
 	}
 
-	public void Fire(Vector2? aim = null)
+	public void Fire()
 	{
 		if (timer <= 0f)
 		{
@@ -55,20 +54,14 @@ public class StraightWeapon : MonoBehaviour
 		}
 		else return;
 
-		float angle = -parent.transform.eulerAngles.z;
+		float angle = parent.transform.eulerAngles.z;
 
-		if (aim != null)
+		Vector2 aimPos = aim;
+		float aimAngle = -Vector2.SignedAngle(Vector2.up, aimPos - (Vector2)transform.position);
+
+		if (Mathf.Abs(Mathf.DeltaAngle(angle, aimAngle)) < aimThreshold)
 		{
-			Vector2 aimPos = (Vector2)aim;
-			float aimAngle = Vector2.Angle(Vector2.up, aimPos - (Vector2)transform.position);
-			if (aimPos.x < transform.position.x)
-			{
-				aimAngle = 180f + (180f - aimAngle);
-			}
-			if (Mathf.Abs(Mathf.DeltaAngle(angle, aimAngle)) < aimThreshold)
-			{
-				angle = aimAngle;
-			}
+			angle = aimAngle;
 		}
 
 		angle *= Mathf.Deg2Rad;
@@ -84,7 +77,7 @@ public class StraightWeapon : MonoBehaviour
 		{
 			StraightBlast blast = pool[pool.Count - 1];
 			pool.RemoveAt(pool.Count - 1);
-			blast.Shoot(weapons[i].position, Quaternion.Euler(Vector3.forward * -angle * Mathf.Rad2Deg),
+			blast.Shoot(weapons[i].position, Quaternion.Euler(Vector3.forward * angle * Mathf.Rad2Deg),
 				pool, parent);
 			//muzzle flash
 			GameObject muzFlash = Instantiate(muzzleFlash);

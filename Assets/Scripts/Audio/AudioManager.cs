@@ -39,6 +39,8 @@ public class AudioManager : MonoBehaviour
 	public static void PlaySFX(AudioClip clip, Vector3 position, Transform parent = null, float volume = 1f,
 		float pitch = 1f)
 	{
+		if (!clip) return;
+
 		AudioSource src = singleton.pool.Dequeue();
 		singleton.active.Add(src);
 		GameObject obj = src.gameObject;

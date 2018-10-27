@@ -8,7 +8,6 @@ public class LaunchTrailController : MonoBehaviour
 	[SerializeField]
 	private Animator anim;
 	private Transform followTarget;
-	private float angle;
 
 	private void Awake()
 	{

@@ -32,6 +32,7 @@ public class LaserWeapon : MonoBehaviour
 		blastPoolHolder = new GameObject("Blast Pool Holder").transform;
 		blastPoolHolder.parent = ParticleGenerator.holder;
 		FillPool();
+		parent.AttachLaser(true);
 	}
 
 	private void Update()
@@ -41,12 +42,9 @@ public class LaserWeapon : MonoBehaviour
 			timer = Mathf.MoveTowards(timer, 0f, Time.deltaTime);
 		}
 
-		if (parent == Shuttle.singleton)
+		if (parent.CanFireLaser() && !Pause.IsPaused)
 		{
-			if (InputHandler.GetInput("Shoot") > 0f && parent.CanFireLaser() && !Pause.IsPaused)
-			{
-				Fire();
-			}
+			Fire();
 		}
 	}
 
@@ -79,7 +77,7 @@ public class LaserWeapon : MonoBehaviour
 			//muzzle flash
 			GameObject muzFlash = Instantiate(muzzleFlash);
 			muzFlash.transform.position = weapon.position;
-			muzFlash.transform.eulerAngles = Vector3.forward * -angle * Mathf.Rad2Deg;
+			muzFlash.transform.eulerAngles = Vector3.forward * angle * Mathf.Rad2Deg;
 			muzFlash.GetComponent<SpriteRenderer>().flipX = flipMuzzleFlash;
 			flipMuzzleFlash = !flipMuzzleFlash;
 		}

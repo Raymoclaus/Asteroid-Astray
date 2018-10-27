@@ -62,7 +62,7 @@ public class ResourceDrop : MonoBehaviour
 			ParticleSystem.MainModule main = ps.main;
 			main.loop = false;
 			follow.CollectResources(this);
-			if (follow == Shuttle.singleton)
+			if (follow.GetEntityType() == EntityType.Shuttle)
 			{
 				ItemPopupUI.GeneratePopup(type, amount);
 			}

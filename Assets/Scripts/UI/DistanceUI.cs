@@ -11,6 +11,8 @@ public class DistanceUI : MonoBehaviour
 	private string unit = "m";
 	private int dist = -1;
 	private Text _textComponent;
+	[SerializeField]
+	private ShuttleTrackers shuttleTrackerSO;
 
 	private void Start()
 	{
@@ -20,9 +22,9 @@ public class DistanceUI : MonoBehaviour
 
 	private void Update()
 	{
-		if (Shuttle.singleton == null) return;
+		if (!shuttleTrackerSO) return;
 
-		int currentDist = (int)(Shuttle.singleton.transform.position.magnitude * 3f);
+		int currentDist = (int)(shuttleTrackerSO.position.magnitude * 3f);
 		if (dist != currentDist)
 		{
 			dist = currentDist;

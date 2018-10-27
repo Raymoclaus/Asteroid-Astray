@@ -8,6 +8,8 @@ public class CameraCtrl : MonoBehaviour
 	public static CameraCtrl singleton;
 	public Transform targetToFollow;
 	private Transform panView;
+	private bool useConstantSize = false;
+	private float constantSize = 2f;
 	public float panRange = 5f;
 	public Entity followTarget;
 	public float minCameSize = 1.7f;
@@ -113,7 +115,7 @@ public class CameraCtrl : MonoBehaviour
 	/// Zooms out based on the shuttles speed.
 	private void AdjustSize()
 	{
-		if (followTarget.IsDrilling)
+		if (followTarget.IsDrilling && !useConstantSize)
 		{
 			//gradually zoom in
 			float difference = Mathf.Abs(CamSize - minCameSize / 2f);
@@ -137,13 +139,18 @@ public class CameraCtrl : MonoBehaviour
 					}
 				}
 			}
+			if (useConstantSize)
+			{
+				targetSize = constantSize;
+			}
 			//calculation to determine how quickly the camera zoom needs to change
 			float zoomDifference = targetSize - CamSize;
 			float zoomDifferenceAbs = zoomDifference > 0 ? zoomDifference : -zoomDifference;
 			float camZoomSpeedModifier = zoomDifferenceAbs > 1 && zoomDifference > 0 ? 1f : zoomDifferenceAbs;
 			CamSize = Mathf.MoveTowards(CamSize, targetSize, camZoomSpeed * camZoomSpeedModifier
 			* Time.deltaTime * 60f);
-		}
+		} 
+
 		//sets the camera size on the camera component
 		Cam.orthographicSize = CamSize * zoomModifier;
 		//ensures the ChunkFiller component fills a wide enough area to fill the camera's view
@@ -231,6 +238,7 @@ public class CameraCtrl : MonoBehaviour
 			yield return null;
 		}
 		zoomModifier = 1f;
+		CamSize = Cam.orthographicSize;
 	}
 
 	public static void Pan(Transform panTarget)
@@ -241,5 +249,11 @@ public class CameraCtrl : MonoBehaviour
 	public static Transform GetPanTarget()
 	{
 		return singleton.panView;
+	}
+
+	public static void SetConstantSize(bool enable = true, float size = 2f)
+	{
+		singleton.useConstantSize = enable;
+		singleton.constantSize = size;
 	}
 }

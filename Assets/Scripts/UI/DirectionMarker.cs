@@ -28,19 +28,11 @@ public class DirectionMarker : MonoBehaviour
 		float angle;
 		if (followTarget != null)
 		{
-			angle = Vector2.Angle(Vector2.up, followTarget.position - parent.position);
-			if (followTarget.position.x < parent.position.x)
-			{
-				angle = 180f + (180f - angle);
-			}
+			angle = -Vector2.SignedAngle(Vector2.up, followTarget.position - parent.position);
 		}
 		else
 		{
-			angle = Vector2.Angle(Vector2.up, locationTarget - (Vector2)parent.position);
-			if (locationTarget.x < parent.position.x)
-			{
-				angle = 180f + (180f - angle);
-			}
+			angle = -Vector2.SignedAngle(Vector2.up, locationTarget - (Vector2)parent.position);
 		}
 		return angle;
 	}

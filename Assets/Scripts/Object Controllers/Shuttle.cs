@@ -1,13 +1,13 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-public class Shuttle : Entity, IDamageable
+public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 {
 	#region Fields
-	//singleton reference because there will only be one and many scripts may need access to this
-	public static Shuttle singleton;
 
 	[Header("Required references")]
+	[SerializeField]
+	private ShuttleTrackers trackerSO;
 	[Tooltip("Requires reference to the SpriteRenderer of the shuttle.")]
 	public SpriteRenderer SprRend;
 	[Tooltip("Requires reference to the Animator of the shuttle's transform.")]
@@ -36,7 +36,7 @@ public class Shuttle : Entity, IDamageable
 	//force of acceleration via the shuttle
 	public Vector2 accel;
 	//store last look direction, useful for joysticks
-	private float _lastLookDirection;
+	private float lastLookDirection;
 	//return how far over the speed limit the shuttle's velocity is
 	private float SpeedCheck
 	{
@@ -71,8 +71,6 @@ public class Shuttle : Entity, IDamageable
 	//used to adjust speed temporarily
 	private float speedMultiplier = 1f;
 	//whether the shuttle can perform a drill launch
-	[SerializeField]
-	private bool canDrillLaunch;
 	public float drillLaunchSpeed = 10f;
 	[SerializeField]
 	private float drillLaunchMaxAngle = 60f;
@@ -84,8 +82,10 @@ public class Shuttle : Entity, IDamageable
 	private LaunchTrailController launchTrail;
 	private bool stunned = false;
 	private float stunDuration = 2f;
-	public float launchDamage = 500f;
-	private List<Entity> inCombat = new List<Entity>();
+	[SerializeField]
+	private float launchZoomOutSize = 5f;
+	private List<ICombat> enemies = new List<ICombat>();
+	public Inventory storage;
 	#region Boost
 	//whether boost capability is available
 	[SerializeField]
@@ -117,11 +117,10 @@ public class Shuttle : Entity, IDamageable
 	#endregion Fields
 
 	#region Attachments
-	// Laser Weapon
-	//[SerializeField]
-	//private bool laserAttached = false;
-	//[SerializeField]
-	//private GameObject laserWeaponObj;
+	[SerializeField]
+	private bool laserAttached = false;
+	[SerializeField]
+	private bool straightWeaponAttached = false;
 	#endregion
 
 	#region Sound Stuff
@@ -130,22 +129,26 @@ public class Shuttle : Entity, IDamageable
 	private float resourceCollectedTime;
 	private float resourceCollectedPitch = 1f;
 	private float resourceCollectedPitchIncreaseAmount = 0.2f;
-	public Inventory storage;
+	[SerializeField]
+	public AudioSO collisionSounds;
 	#endregion
 
 	public override void Awake()
 	{
 		base.Awake();
-		singleton = this;
 	}
 
 	private void Update()
 	{
-		if (stunned) return;
-		//get shuttle movement input
-		GetMovementInput();
-		//calculate position based on input
-		CalculateForces();
+		if (!stunned)
+		{
+			//get shuttle movement input
+			GetMovementInput();
+			//calculate position based on input
+			CalculateForces();
+		}
+
+		UpdateShuttleTrackerSO();
 	}
 
 	private void FixedUpdate()
@@ -165,7 +168,7 @@ public class Shuttle : Entity, IDamageable
 		//get rotation input
 		float lookDirection = InputHandler.GetLookDirection(transform.position);
 		//if no rotation input has been given then use the same as last frame
-		if (float.IsPositiveInfinity(lookDirection)) lookDirection = _lastLookDirection;
+		if (float.IsPositiveInfinity(lookDirection)) lookDirection = lastLookDirection;
 
 		//automatically look for the nearest asteroid
 		if (autoPilot)
@@ -175,11 +178,7 @@ public class Shuttle : Entity, IDamageable
 				SearchForNearestAsteroid();
 			}
 
-			lookDirection = Vector2.Angle(Vector2.up, followTarget.position - transform.position);
-			if (followTarget.position.x < transform.position.x)
-			{
-				lookDirection = 180f + (180f - lookDirection);
-			}
+			lookDirection = -Vector2.SignedAngle(Vector2.up, followTarget.position - transform.position);
 
 			lookDirection = AdjustForMomentum(lookDirection);
 			if (!IsDrilling)
@@ -204,7 +203,7 @@ public class Shuttle : Entity, IDamageable
 		}
 			
 		//update last look direction (mostly for joystick use)
-		_lastLookDirection = lookDirection;
+		lastLookDirection = lookDirection;
 
 		//determine how quickly to rotate
 		//rotMod controls how smoothly the rotation happens
@@ -233,11 +232,7 @@ public class Shuttle : Entity, IDamageable
 		if (Mathf.Approximately(accel.x, 0f) && Mathf.Approximately(accel.y, 0f)) return;
 		
 		//rotate forward acceleration direction to be based on the direction the shuttle is facing
-		float accelAngle = Vector2.Angle(Vector2.up, accel);
-		if (accel.x < 0)
-		{
-			accelAngle = 180f + (180f - accelAngle);
-		}
+		float accelAngle = -Vector2.SignedAngle(Vector2.up, accel);
 		Vector2 shuttleDir;
 		shuttleDir.x = Mathf.Sin(Mathf.Deg2Rad * (360f - rot.z + accelAngle));
 		shuttleDir.y = Mathf.Cos(Mathf.Deg2Rad * (360f - rot.z + accelAngle));
@@ -391,17 +386,15 @@ public class Shuttle : Entity, IDamageable
 			drillLaunchArcSprite.material.SetFloat("_ArcAngle", drillLaunchMaxAngle);
 			Transform arrow = launchCone.transform.GetChild(0);
 			Vector2 launchDir = LaunchDirection(((Entity)(drill.drillTarget)).transform);
-			float angle = Vector2.Angle(Vector2.up, launchDir);
-			if (launchDir.x < 0f)
-			{
-				angle = 180f + (180f - angle);
-			}
-			arrow.eulerAngles = Vector3.forward * -angle;
+			float angle = Vector2.SignedAngle(Vector2.up, launchDir);
+			arrow.eulerAngles = Vector3.forward * angle;
 			arrow.position = ((Entity)(drill.drillTarget)).transform.position;
+			CameraCtrl.SetConstantSize(true, launchZoomOutSize);
 		}
 		else
 		{
 			DrillLaunchArcDisable();
+			CameraCtrl.SetConstantSize(false);
 		}
 
 		if (InputHandler.GetInputUp("Stop") > 0f) return 0f;
@@ -431,45 +424,25 @@ public class Shuttle : Entity, IDamageable
 		DrillLaunchArcDisable();
 	}
 
-	public bool ShouldLaunch()
+	public override bool ShouldLaunch()
 	{
-		return canDrillLaunch && velocity.sqrMagnitude >= Mathf.Pow(SpeedLimit * DrillBoost, 2f) * 0.9f;
+		return canDrillLaunch
+			&& velocity.sqrMagnitude >= Mathf.Pow(SpeedLimit * DrillBoost, 2f) * 0.9f
+			&& InputHandler.GetInputUp("Stop") > 0f;
 	}
 
-	public static Vector2 LaunchDirection(Transform launchableObject)
+	public void Stun()
 	{
-		float launchAngle = InputHandler.GetLookDirection(singleton.transform.position);
-		if (float.IsPositiveInfinity(launchAngle)) launchAngle = singleton._lastLookDirection;
-			Vector2 launchDir = new Vector2(Mathf.Sin(launchAngle * Mathf.Deg2Rad),
-			Mathf.Cos(launchAngle * Mathf.Deg2Rad));
-		float shuttleAngle = Vector2.Angle(Vector2.up, singleton.transform.up);
-		if (singleton.transform.up.x < 0f)
-		{
-			shuttleAngle = 180f + (180f - shuttleAngle);
-		}
-		float deltaAngle = Mathf.Abs(Mathf.DeltaAngle(launchAngle, shuttleAngle));
-		if (deltaAngle > singleton.drillLaunchMaxAngle / 2f)
-		{
-			launchAngle = Mathf.MoveTowardsAngle(shuttleAngle, launchAngle, singleton.drillLaunchMaxAngle / 2f);
-			launchAngle *= Mathf.Deg2Rad;
-			launchDir = new Vector2(Mathf.Sin(launchAngle), Mathf.Cos(launchAngle));
-		}
-		launchDir *= singleton.drillLaunchSpeed;
-		return launchDir;
-	}
-
-	public static void Stun()
-	{
-		singleton.drill.StopDrilling();
-		singleton.stunned = true;
-		singleton.Rb.constraints = RigidbodyConstraints2D.None;
-		singleton.accel = Vector2.zero;
-		singleton.velocity = Vector3.zero;
+		drill.StopDrilling();
+		stunned = true;
+		Rb.constraints = RigidbodyConstraints2D.None;
+		accel = Vector2.zero;
+		velocity = Vector3.zero;
 		Pause.DelayedAction(() =>
 		{
-			singleton.stunned = false;
-			singleton.Rb.constraints = RigidbodyConstraints2D.FreezeRotation;
-		}, singleton.stunDuration, true);
+			stunned = false;
+			Rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+		}, stunDuration, true);
 	}
 
 	public void AutoPilotSwitch(bool isOn)
@@ -494,10 +467,15 @@ public class Shuttle : Entity, IDamageable
 			checks = accel != Vector2.zero;
 			if (target.GetEntityType() != EntityType.Asteroid)
 			{
-				checks = checks && inCombat.Count > 0;
+				checks = checks && enemies.Count > 0;
 			}
 		}
 		return checks;
+	}
+
+	public override void StoppedDrilling()
+	{
+		DrillLaunchArcDisable();
 	}
 
 	public void OnCollisionEnter2D(Collision2D collision)
@@ -507,11 +485,19 @@ public class Shuttle : Entity, IDamageable
 		ContactPoint2D[] contacts = new ContactPoint2D[1];
 		collision.GetContacts(contacts);
 		Vector2 contactPoint = contacts[0].point;
+		float collisionStrength = collision.relativeVelocity.magnitude;
 
 		if (otherLayer == layerProjectile)
 		{
 			IProjectile projectile = other.GetComponent<IProjectile>();
 			projectile.Hit(this, contactPoint);
+		}
+
+		//play a sound effect
+		if (collisionSounds)
+		{
+			AudioManager.PlaySFX(collisionSounds.PickRandomClip(), contactPoint, transform,
+				collisionSounds.PickRandomVolume() * collisionStrength, collisionSounds.PickRandomPitch());
 		}
 	}
 
@@ -602,12 +588,12 @@ public class Shuttle : Entity, IDamageable
 
 	public override bool CanFireLaser()
 	{
-		return !isBoosting;
+		return laserAttached && !isBoosting && InputHandler.GetInput("Shoot") > 0f;
 	}
 
-	public static float GetLaunchDamage()
+	public override bool CanFireStraightWeapon()
 	{
-		return singleton.launchDamage;
+		return straightWeaponAttached && !isBoosting && InputHandler.GetInput("Shoot") > 0f;
 	}
 
 	public override GameObject GetLaunchImpactAnimation()
@@ -620,27 +606,81 @@ public class Shuttle : Entity, IDamageable
 		return launchTrail;
 	}
 
-	public static void EngageInCombat(Entity hostile)
+	public override Vector2 LaunchDirection(Transform launchableObject)
 	{
-		foreach (Entity e in singleton.inCombat)
+		float launchAngle = InputHandler.GetLookDirection(transform.position);
+		if (float.IsPositiveInfinity(launchAngle)) launchAngle = lastLookDirection;
+		float launchAngleRad = launchAngle * Mathf.Deg2Rad;
+		Vector2 launchDir = new Vector2(Mathf.Sin(launchAngleRad), Mathf.Cos(launchAngleRad));
+		float shuttleAngle = -Vector2.SignedAngle(Vector2.up, transform.up);
+		float deltaAngle = Mathf.Abs(Mathf.DeltaAngle(launchAngle, shuttleAngle));
+		if (deltaAngle > drillLaunchMaxAngle / 2f)
 		{
-			if (e == hostile) return;
+			launchAngle = Mathf.MoveTowardsAngle(shuttleAngle, launchAngle, drillLaunchMaxAngle / 2f);
+			launchAngle *= Mathf.Deg2Rad;
+			launchDir = new Vector2(Mathf.Sin(launchAngle), Mathf.Cos(launchAngle));
 		}
-		singleton.inCombat.Add(hostile);
+		launchDir *= drillLaunchSpeed;
+		return launchDir;
 	}
 
-	public static void DisengageInCombat(Entity nonHostile)
+	public override void Launching()
 	{
-		singleton.inCombat.Remove(nonHostile);
+		DrillLaunchArcDisable();
 	}
 
-	#region Attach/Detach Methods
+	public override float GetLaunchDamage()
+	{
+		return trackerSO.launchDamage;
+	}
 
-	//public void AttachDetachLaser1(bool attach)
-	//{
-	//	laserObj.SetActive(attach);
-	//	laserAttached = attach;
-	//}
+	public bool EngageInCombat(ICombat hostile)
+	{
+		if (enemies.Contains(hostile)) return false;
+		enemies.Add(hostile);
+		return true;
+	}
 
-	#endregion
+	public void DisengageInCombat(ICombat nonHostile)
+	{
+		for (int i = 0; i < enemies.Count; i++)
+		{
+			if (enemies[i] == nonHostile)
+			{
+				enemies.RemoveAt(i);
+				return;
+			}
+		}
+	}
+
+	private void UpdateShuttleTrackerSO()
+	{
+		if (!trackerSO)
+		{
+			print("Attach shuttle tracker scriptable object reference");
+			return;
+		}
+
+		trackerSO.position = transform.position;
+		trackerSO.rotation = transform.eulerAngles;
+		trackerSO.velocity = velocity;
+		trackerSO.lastLookDirection = lastLookDirection;
+		trackerSO.boostRemaining = GetBoostRemaining();
+		trackerSO.storageCount = storage.Count(Item.Type.Stone);
+	}
+
+	public override void AttachLaser(bool attach)
+	{
+		laserAttached = attach;
+	}
+
+	public override void AttachStraightWeapon(bool attach)
+	{
+		straightWeaponAttached = attach;
+	}
+
+	public override ICombat GetICombat()
+	{
+		return this;
+	}
 }

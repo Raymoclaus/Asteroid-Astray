@@ -47,12 +47,7 @@ public class Ps4InputHandler : ICustomInputType
 		if (Mathf.Approximately(axisInput.x, 0f) && Mathf.Approximately(axisInput.y, 0f))
 			return float.PositiveInfinity;
 
-		float angle = Vector2.Angle(Vector2.up, axisInput);
-		if (axisInput.x < 0f)
-		{
-			angle = 180f + (180f - angle);
-		}
-		return angle;
+		return -Vector2.SignedAngle(Vector2.up, axisInput);
 	}
 
 	//checks all methods of input to determine if ps4 controller is in use, excludes non-bound inputs

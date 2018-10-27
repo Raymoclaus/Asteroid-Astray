@@ -53,8 +53,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	public AudioClip[] shatterSounds;
 	public Vector2 shatterPitchRange;
 	[SerializeField]
-	private AudioClip[] collisionSounds;
-	float collisionVolumeDampenEffect = 0.25f;
+	private AudioSO collisionSounds;
 	#endregion
 
 	public override void Awake()
@@ -128,7 +127,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 			//sound effect
 			AudioManager.PlaySFX(shatterSounds[Random.Range(0, shatterSounds.Length)], transform.position,
 				pitch: Random.Range(shatterPitchRange.x, shatterPitchRange.y), volume: 0.25f,
-				parent: Shuttle.singleton.transform);
+				parent: null);
 
 			//drop resources
 			GameController.singleton.StartCoroutine(DropLoot(destroyer, transform.position, dropModifier));
@@ -324,8 +323,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		collision.GetContacts(contacts);
 		Vector2 contactPoint = contacts[0].point;
 		float collisionStrength = collision.relativeVelocity.magnitude;
-		float collisionVolume = collisionStrength * collisionVolumeDampenEffect;
-		float angle = Vector2.SignedAngle(Vector2.up, contactPoint - (Vector2)transform.position);
+		float angle = -Vector2.SignedAngle(Vector2.up, contactPoint - (Vector2)transform.position);
 
 		//dust particle effect
 		CreateDust(contactPoint, (int)collisionStrength * collisionDustMultiplier, 0.1f + Random.value * 0.2f);
@@ -352,7 +350,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 					launchTrail.CutLaunchTrail();
 				}
 				IDamageable otherDamageable = other.transform.parent.GetComponent<IDamageable>();
-				float damage = Shuttle.GetLaunchDamage();
+				float damage = launcher.GetLaunchDamage();
 				if (Health / MaxHealth < 0.7f)
 				{
 					damage *= 2f;
@@ -370,23 +368,15 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 			}
 		}
 
-		if (collisionVolume < 0.05f
+		if (collisionStrength < 0.05f
 			|| Vector2.Distance(transform.position, CameraCtrl.singleton.transform.position) > 10f)
 			return;
-
-		//must play at least 1 sound effect
-		int count = 0;
-		while (count == 0)
+		
+		//play a sound effect
+		if (collisionSounds)
 		{
-			foreach (AudioClip clip in collisionSounds)
-			{
-				if (Random.value > 0.5f)
-				{
-					count++;
-					AudioManager.PlaySFX(clip, contactPoint, null, collisionVolume,
-						0.9f + Random.value * 0.2f);
-				}
-			}
+			AudioManager.PlaySFX(collisionSounds.PickRandomClip(), contactPoint, null,
+				collisionSounds.PickRandomVolume() * collisionStrength, collisionSounds.PickRandomPitch());
 		}
 	}
 
