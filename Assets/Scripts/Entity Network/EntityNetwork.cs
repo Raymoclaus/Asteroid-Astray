@@ -24,7 +24,10 @@ public static class EntityNetwork
 	//another large number for each individual cell in the grid
 	public const int CellReserve = 10;
 	//check if grid has already been created
-	private static bool gridCreated = false;
+	public static bool ready = false;
+	//Entities and other stuff that might be create before the grid is initialised can store functions here
+	//to be run after the grid is initialised
+	public static List<Action> postInitActions = new List<Action>();
 	#endregion
 
 	#region Stat Tracking
@@ -34,7 +37,7 @@ public static class EntityNetwork
 	/// Constructs and reserves a large amount of space for the grid
 	public static IEnumerator CreateGrid(Action a)
 	{
-		if (gridCreated) yield break;
+		if (ready) yield break;
 
 		//reserve space in each direction
 		//takes ~1.5 seconds for 1000 * 1000 * 10
@@ -53,7 +56,11 @@ public static class EntityNetwork
 			yield return null;
 		}
 
-		gridCreated = true;
+		ready = true;
+		foreach (Action action in postInitActions)
+		{
+			action();
+		}
 		a();
 	}
 
@@ -201,17 +208,6 @@ public static class EntityNetwork
 	public static bool RemoveEntity(Entity e, EntityType? type = null)
 	{
 		ChunkCoords cc = e.GetCoords();
-		if (!cc.IsValid())
-		{
-			Debug.LogWarning("Removal coordinates are invalid.");
-			return false;
-		}
-
-		if (type != null && e.GetEntityType() != type)
-		{
-			Debug.LogWarning("EntityType value given does not match entity's type");
-			return false;
-		}
 
 		if (Chunk(cc).Remove(e))
 		{
@@ -224,7 +220,6 @@ public static class EntityNetwork
 			return true;
 		}
 
-		Debug.LogWarning("Entity not found at removal coordinates.");
 		return false;
 	}
 

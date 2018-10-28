@@ -18,6 +18,9 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	public SpriteRenderer SprRend;
 	[Tooltip("Reference to the shake effect script on the sprite.")]
 	public ShakeEffect ShakeFX;
+	private CameraCtrl cameraCtrl;
+	[SerializeField]
+	private AsteroidSprites spritesSO;
 	[Tooltip("Picks a random value between given value and negative given value to determine its rotation speed")]
 	public float SpinSpeedRange;
 	[Tooltip("Picks a random value between given value and negative given value to determine starting velocity")]
@@ -26,8 +29,6 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	public float MaxHealth = 150f;
 	//current health value between 0 and MaxHealth
 	private float Health;
-	//reference to all the sprites
-	private LoadedResources resources;
 	//collection of info about the colliders the large asteroids should use
 	[SerializeField]
 	private ColliderInfo[] largeInfo;
@@ -59,12 +60,10 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	public override void Awake()
 	{
 		base.Awake();
-
-		//choose size of asteroid then choose a random sprite
-		resources = GameController.GetResources();
+		
 		id.x = Random.value <= largeChance ? 0 : 1;
-		id.y = Random.Range(0, resources.asteroidSprites[id.x].collection.Length);
-		SprRend.sprite = resources.asteroidSprites[id.x].collection[id.y].sprites[0];
+		id.y = Random.Range(0, spritesSO.asteroidSprites[id.x].collection.Length);
+		SprRend.sprite = spritesSO.asteroidSprites[id.x].collection[id.y].sprites[0];
 
 		//if a large asteroid is chosen then adjust collider to fit the shape
 		if (id.x == 0)
@@ -150,11 +149,11 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	{
 		if (!isActive || Pause.IsPaused) return;
 
-		int randomChoose = Random.Range(0, resources.debris.Length);
-		if (randomChoose < resources.debris.Length)
+		int randomChoose = Random.Range(0, spritesSO.debris.Length);
+		if (randomChoose < spritesSO.debris.Length)
 		{
 			ParticleGenerator.GenerateParticle(
-				resources.debris[randomChoose], pos, speed: Random.value * 3f, slowDown: true, lifeTime: 1.5f,
+				spritesSO.debris[randomChoose], pos, speed: Random.value * 3f, slowDown: true, lifeTime: 1.5f,
 				rotationDeg: Random.value * 360f, rotationSpeed: Random.value * 3f,
 				sortingLayer: SprRend.sortingLayerID, sortingOrder: -1);
 		}
@@ -165,11 +164,11 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		if (!isActive || Pause.IsPaused) return;
 		for (int i = 0; i < amount; i++)
 		{
-			int randomChoose = Random.Range(0, resources.dust.Length);
-			if (randomChoose < resources.dust.Length)
+			int randomChoose = Random.Range(0, spritesSO.dust.Length);
+			if (randomChoose < spritesSO.dust.Length)
 			{
 				ParticleGenerator.GenerateParticle(
-					resources.dust[randomChoose], pos, speed: Random.value * 0.5f, slowDown: true,
+					spritesSO.dust[randomChoose], pos, speed: Random.value * 0.5f, slowDown: true,
 					lifeTime: Random.value * 3f + 2f, rotationDeg: Random.value * 360f,
 					rotationSpeed: Random.value * 0.5f, size: 0.3f + Mathf.Pow(Random.value, 2f) * 0.7f, alpha: alpha,
 					fadeIn: Random.value + 0.5f, sortingLayer: SprRend.sortingLayerID, growthOverLifetime: 2f);
@@ -194,7 +193,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 
 	private NestedSpriteArray[] GetAllSprites()
 	{
-		return resources.asteroidSprites;
+		return spritesSO.asteroidSprites;
 	}
 
 	private SpriteArray[] GetSpriteCategory()
@@ -361,15 +360,15 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 				}
 				TakeDamage(damage, contactPoint, launcher);
 				launched = false;
-				if (CameraCtrl.GetPanTarget() == transform)
+				if (cameraCtrl && cameraCtrl.GetPanTarget() == transform)
 				{
-					CameraCtrl.Pan(null);
+					cameraCtrl.Pan(null);
 				}
 			}
 		}
 
-		if (collisionStrength < 0.05f
-			|| Vector2.Distance(transform.position, CameraCtrl.singleton.transform.position) > 10f)
+		if (collisionStrength < 0.05f || !camTrackerSO
+			|| Vector2.Distance(transform.position, camTrackerSO.position) > 10f)
 			return;
 		
 		//play a sound effect
@@ -386,7 +385,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		Rb.velocity = launchDirection;
 		launched = true;
 		ShakeFX.Begin(0.1f, 0f, 1f / 30f);
-		CameraCtrl.Pan(transform);
+		if (cameraCtrl) cameraCtrl.Pan(transform);
 		if (launcher.GetLaunchTrailAnimation() != null)
 		{
 			launchTrail = Instantiate(launcher.GetLaunchTrailAnimation());
@@ -404,9 +403,9 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 
 			this.launcher = null;
 			launched = false;
-			if (CameraCtrl.GetPanTarget() == transform)
+			if (cameraCtrl && cameraCtrl.GetPanTarget() == transform)
 			{
-				CameraCtrl.Pan(null);
+				cameraCtrl.Pan(null);
 			}
 		}, launchDuration, true);
 	}

@@ -19,7 +19,7 @@ public class ItemPopupUI : MonoBehaviour
 	[SerializeField]
 	private float popupEntrySpeed = 2f, popupMoveSpeed = 5f, textFadeSpeed = 0.17f;
 	[SerializeField]
-	private LoadedResources loadRes;
+	private ItemSprites sprites;
 
 	private void Awake()
 	{
@@ -208,7 +208,10 @@ public class ItemPopupUI : MonoBehaviour
 			{
 				this.type = (Item.Type)type;
 			}
-			spr.sprite = singleton.loadRes.GetItemSprite(this.type);
+			if (singleton.sprites)
+			{
+				spr.sprite = singleton.sprites.GetItemSprite(this.type);
+			}
 			UpdateName();
 			description.text = Item.ItemDescription(this.type);
 		}
@@ -224,7 +227,7 @@ public class ItemPopupUI : MonoBehaviour
 		}
 	}
 
-	private struct PopupData
+	private class PopupData
 	{
 		public Sprite spr;
 		public Item.Type type;
@@ -234,7 +237,14 @@ public class ItemPopupUI : MonoBehaviour
 		public PopupData(Item.Type type, int amount = 1)
 		{
 			this.type = type;
-			spr = singleton.loadRes.GetItemSprite(type);
+			if (singleton.sprites)
+			{
+				spr = singleton.sprites.GetItemSprite(type);
+			}
+			else
+			{
+				spr = null;
+			}
 			name = type.ToString();
 			description = Item.ItemDescription(type);
 			this.amount = amount;

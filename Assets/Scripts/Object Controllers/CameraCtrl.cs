@@ -5,14 +5,13 @@ using UnityEngine;
 public class CameraCtrl : MonoBehaviour
 {
 	public Camera Cam;
-	public static CameraCtrl singleton;
+	[SerializeField]
+	private CameraCtrlTracker trackerSO;
 	public Transform targetToFollow;
 	private Transform panView;
-	private bool useConstantSize = false;
-	private float constantSize = 2f;
 	public float panRange = 5f;
 	public Entity followTarget;
-	public float minCameSize = 1.7f;
+	public float minCamSize = 1.7f;
 	public ShakeEffect camShake;
 
 	public static float CamSize { get; private set; }
@@ -25,23 +24,11 @@ public class CameraCtrl : MonoBehaviour
 	[SerializeField]
 	private float distanceAhead = 0.5f, moveAheadSpeed = 0.05f;
 	public ChunkCoords coords;
-	public const int ENTITY_VIEW_RANGE = 1;
 	private List<ChunkCoords> coordsInView = new List<ChunkCoords>(16);
 
-	//roughly gets the range of network grid cells that the camera can see
-	public static int RangeModifier
-	{
-		get { return (int)((CamSize - singleton.minCameSize) / 5f); }
-	}
-
-	public int TotalViewRange { get { return ENTITY_VIEW_RANGE + RangeModifier; } }
+	public int TotalViewRange { get { return trackerSO.ENTITY_VIEW_RANGE + trackerSO.RangeModifier; } }
 
 	public ChunkFiller chunkFiller;
-
-	private void Awake()
-	{
-		singleton = this;
-	}
 
 	private void Start()
 	{
@@ -58,7 +45,7 @@ public class CameraCtrl : MonoBehaviour
 		//get list of entities that are within the camera's view range
 		GetEntitiesInView(coords);
 		//start camera size at minimum size
-		CamSize = minCameSize;
+		CamSize = minCamSize;
 		//camera position starts ahead of the target
 		aheadVector = new Vector2(Mathf.Sin(-targetToFollow.eulerAngles.z * Mathf.Deg2Rad),
 			Mathf.Cos(-targetToFollow.eulerAngles.z * Mathf.Deg2Rad)) * distanceAhead;
@@ -66,10 +53,24 @@ public class CameraCtrl : MonoBehaviour
 
 	private void Update()
 	{
-		//stay above target
-		FollowTarget();
-		//adjust orthographic size based on speed of target
-		AdjustSize();
+		UpdateSO();
+		if (followTarget)
+		{
+			targetToFollow = followTarget.transform;
+			//stay above target
+			FollowTarget();
+			//adjust orthographic size based on speed of target
+			AdjustSize();
+		}
+		else
+		{
+			//if follow target does not exist, find one
+			followTarget = FindObjectOfType<Entity>();
+			if (followTarget != null)
+			{
+				targetToFollow = followTarget.transform;
+			}
+		}
 
 		//check if moved, ignore if no movement detected
 		Vector2 pos = transform.position;
@@ -115,18 +116,18 @@ public class CameraCtrl : MonoBehaviour
 	/// Zooms out based on the shuttles speed.
 	private void AdjustSize()
 	{
-		if (followTarget.IsDrilling && !useConstantSize)
+		if (followTarget.IsDrilling && !trackerSO.useConstantSize)
 		{
 			//gradually zoom in
-			float difference = Mathf.Abs(CamSize - minCameSize / 2f);
+			float difference = Mathf.Abs(CamSize - minCamSize / 2f);
 			float zoomSpeedModifier = Mathf.Min(1f, difference);
-			CamSize = Mathf.MoveTowards(CamSize, minCameSize / 2f,
+			CamSize = Mathf.MoveTowards(CamSize, minCamSize / 2f,
 				camDrillZoomSpeed * zoomSpeedModifier * Time.deltaTime * 60f);
 		}
 		else
 		{
 			//calculates the zoom level the camera should be at
-			float targetSize = followTarget.Rb.velocity.magnitude * camSizeModifier + minCameSize;
+			float targetSize = followTarget.Rb.velocity.magnitude * camSizeModifier + minCamSize;
 			if (panView != null)
 			{
 				float dist = Vector2.Distance(panView.position, targetToFollow.position) / 2f;
@@ -139,9 +140,9 @@ public class CameraCtrl : MonoBehaviour
 					}
 				}
 			}
-			if (useConstantSize)
+			if (trackerSO.useConstantSize)
 			{
-				targetSize = constantSize;
+				targetSize = trackerSO.constantSize;
 			}
 			//calculation to determine how quickly the camera zoom needs to change
 			float zoomDifference = targetSize - CamSize;
@@ -154,7 +155,7 @@ public class CameraCtrl : MonoBehaviour
 		//sets the camera size on the camera component
 		Cam.orthographicSize = CamSize * zoomModifier;
 		//ensures the ChunkFiller component fills a wide enough area to fill the camera's view
-		chunkFiller.RangeIncrease = RangeModifier;
+		chunkFiller.RangeIncrease = trackerSO.RangeModifier;
 	}
 
 	/// Disables all entities previously in view, gets a new list of entities and enables them.
@@ -164,7 +165,8 @@ public class CameraCtrl : MonoBehaviour
 		ChunkCoords center = cc ?? ChunkCoords.Zero;
 		//keep track of coords previous in view
 		//query the EntityNetwork for a list of coordinates in view based on camera's size
-		List<ChunkCoords> newCoordsInView = EntityNetwork.GetCoordsInRange(center, ENTITY_VIEW_RANGE + RangeModifier);
+		List<ChunkCoords> newCoordsInView =
+			EntityNetwork.GetCoordsInRange(center, trackerSO.ENTITY_VIEW_RANGE + trackerSO.RangeModifier);
 		//create a lists and filter out coordinates that are still in view
 		List<ChunkCoords> notInViewAnymore = new List<ChunkCoords>(coordsInView);
 		List<ChunkCoords> newCoords = new List<ChunkCoords>(newCoordsInView);
@@ -202,31 +204,21 @@ public class CameraCtrl : MonoBehaviour
 
 		foreach(Entity e in physicsRange)
 		{
-			if (!e.gameObject.activeSelf)
+			if (e && !e.gameObject.activeSelf)
 			{
 				e.RepositionInNetwork();
 			}
 		}
 	}
 
-	public static bool IsCoordInView(ChunkCoords coord)
+	public void CamShake()
 	{
-		return ChunkCoords.MaxDistance(coord, singleton.coords) <= ENTITY_VIEW_RANGE + RangeModifier;
+		camShake.Begin(0.1f, 0f, 0.1f);
 	}
 
-	public static bool IsCoordInPhysicsRange(ChunkCoords coord)
+	public void QuickZoom(float zoomPercentage = 0.8f, float time = 0.5f, bool unscaledTime = true)
 	{
-		return ChunkCoords.MaxDistance(coord, singleton.coords) < Cnsts.MAX_PHYSICS_RANGE;
-	}
-
-	public static void CamShake()
-	{
-		singleton.camShake.Begin(0.1f, 0f, 0.1f);
-	}
-
-	public static void QuickZoom(float zoomPercentage = 0.8f, float time = 0.5f, bool unscaledTime = true)
-	{
-		singleton.StartCoroutine(singleton.QuickZoomCoroutine(zoomPercentage, time, unscaledTime));
+		StartCoroutine(QuickZoomCoroutine(zoomPercentage, time, unscaledTime));
 	}
 
 	private IEnumerator QuickZoomCoroutine(float zoomPercentage, float time, bool unscaledTime)
@@ -241,19 +233,31 @@ public class CameraCtrl : MonoBehaviour
 		CamSize = Cam.orthographicSize;
 	}
 
-	public static void Pan(Transform panTarget)
+	public void Pan(Transform panTarget)
 	{
-		singleton.panView = panTarget;
+		panView = panTarget;
 	}
 
-	public static Transform GetPanTarget()
+	public Transform GetPanTarget()
 	{
-		return singleton.panView;
+		return panView;
 	}
 
-	public static void SetConstantSize(bool enable = true, float size = 2f)
+	public void SetConstantSize(bool enable = true, float size = 2f)
 	{
-		singleton.useConstantSize = enable;
-		singleton.constantSize = size;
+		trackerSO.useConstantSize = enable;
+		trackerSO.constantSize = size;
+	}
+
+	private void UpdateSO()
+	{
+		if (!trackerSO)
+		{
+			print("Attach appropriate Scriptable Object tracker to " + GetType().Name);
+		}
+
+		trackerSO.camSize = CamSize;
+		trackerSO.coords = coords;
+		trackerSO.position = transform.position;
 	}
 }

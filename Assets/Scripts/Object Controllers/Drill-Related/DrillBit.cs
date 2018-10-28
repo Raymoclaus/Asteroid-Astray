@@ -13,6 +13,8 @@ public class DrillBit : MonoBehaviour
 	public List<ParticleSystem> DrillSparks;
 	public float sparkSizeModifier = 20f;
 	public Animator drillAnim;
+	[SerializeField]
+	private CameraCtrl cameraCtrl;
 
 	public AudioSource drillSoundSource;
 	public Vector2 drillPitchRange;
@@ -35,6 +37,7 @@ public class DrillBit : MonoBehaviour
 	{
 		drillCol = drillCol ?? GetComponentInChildren<Collider2D>();
 		parent.AttachDrill(this);
+		cameraCtrl = cameraCtrl ?? Camera.main.GetComponent<CameraCtrl>();
 	}
 
 	private void Update()
@@ -71,8 +74,11 @@ public class DrillBit : MonoBehaviour
 				float angle = -Vector2.SignedAngle(Vector2.up, launchDirection);
 				eff.eulerAngles = Vector3.forward * -angle;
 				Pause.TemporaryPause(drillLaunchPauseTime);
-				CameraCtrl.CamShake();
-				CameraCtrl.QuickZoom(0.8f, drillLaunchPauseTime, true);
+				if (cameraCtrl)
+				{
+					cameraCtrl.CamShake();
+					cameraCtrl.QuickZoom(0.8f, drillLaunchPauseTime, true);
+				}
 				Pause.DelayedAction(() =>
 				{
 					ScreenRippleEffectController.StartRipple(wait: drillLaunchPauseTime);

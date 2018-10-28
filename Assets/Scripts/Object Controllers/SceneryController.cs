@@ -38,7 +38,9 @@ public class SceneryController : MonoBehaviour
 	[Range(0f, 1f)]
 	public float commonTypeFrequency = 0.9f;
 	public Vector2 imageBrightnessRange;
-	private int ViewDistance { get { return Mathf.CeilToInt(BgCameraController.bgCam.cam.fieldOfView); } }
+	[SerializeField]
+	private BgCamTracker bgCamTrackerSO;
+	private int ViewDistance { get { return Mathf.CeilToInt(bgCamTrackerSO ? bgCamTrackerSO.fieldOfView : 1f); } }
 
 	private const int poolSize = 10000;
 	private Queue<SpriteRenderer> pool = new Queue<SpriteRenderer>(poolSize);
@@ -78,6 +80,7 @@ public class SceneryController : MonoBehaviour
 	private void Awake()
 	{
 		InitialSetup();
+		CreateStarSystems(null);
 	}
 
 	private void InitialSetup()
@@ -114,7 +117,10 @@ public class SceneryController : MonoBehaviour
 
 	private void CheckCoords()
 	{
-		transform.position = BgCameraController.bgCam.transform.position;
+		if (bgCamTrackerSO)
+		{
+			transform.position = bgCamTrackerSO.position;
+		}
 		if (types.Count >= variety)
 		{
 			ChunkCoords newCoords = new ChunkCoords(transform.position);
@@ -243,9 +249,9 @@ public class SceneryController : MonoBehaviour
 		items = CosmicItemFileReader.Load(items, largeDistance, reserveSize);
 	}
 
-	public static void Save()
+	public void Save()
 	{
-		CosmicItemFileReader.Save(singleton.items);
+		CosmicItemFileReader.Save(items);
 	}
 
 	private void FillPool()
@@ -262,51 +268,50 @@ public class SceneryController : MonoBehaviour
 		}
 	}
 
-	public static IEnumerator CreateStarSystems(System.Action a)
+	public IEnumerator CreateStarSystems(System.Action a)
 	{
 		yield return null;
 
 		//ensure this class is setup properly first
-		SceneryController sc = singleton;
-		sc.InitialSetup();
+		InitialSetup();
 
 		//if textures have already been generated then don't worry about making more
-		if (sc.texturesGenerated) yield break;
-		sc.texturesGenerated = true;
+		if (texturesGenerated) yield break;
+		texturesGenerated = true;
 
 		//check for existing star system textures
-		if (!sc.CheckForExistingStars())
+		if (!CheckForExistingStars())
 		{
 			//determine min/max amount of stars per texture
-			Vector2Int starNumRange = new Vector2Int((int)Mathf.Pow(2f, sc.starPowerRange.x),
-				(int)Mathf.Pow(2f, sc.starPowerRange.y));
+			Vector2Int starNumRange = new Vector2Int((int)Mathf.Pow(2f, starPowerRange.x),
+				(int)Mathf.Pow(2f, starPowerRange.y));
 
 			//prepare worker threads
 			int expected;
-			ThreadPool.GetMinThreads(out sc.freeWorkers, out expected);
+			ThreadPool.GetMinThreads(out freeWorkers, out expected);
 			expected = 0;
-			sc.freeWorkers = Mathf.Max(1, sc.freeWorkers - 2);
-			int maxFreeWorkers = sc.freeWorkers;
+			freeWorkers = Mathf.Max(1, freeWorkers - 2);
+			int maxFreeWorkers = freeWorkers;
 
 			//prepare colour arrays
-			Color[][] tex = new Color[sc.variety][];
+			Color[][] tex = new Color[variety][];
 			for (int i = 0; i < tex.Length; i++)
 			{
-				tex[i] = new Color[sc.textureSize.x * sc.textureSize.y];
+				tex[i] = new Color[textureSize.x * textureSize.y];
 			}
 			int completedLines = 0;
 			int linesPerJob = 256;
 
 			//prepare star systems
-			Star[][] systems = new Star[sc.variety][];
+			Star[][] systems = new Star[variety][];
 			for (int i = 0; i < systems.Length; i++)
 			{
 				System.Random rnd = new System.Random();
-				float power = (float)rnd.NextDouble() * (sc.starPowerRange.y - sc.starPowerRange.x)
-					+ sc.starPowerRange.x;
+				float power = (float)rnd.NextDouble() * (starPowerRange.y - starPowerRange.x)
+					+ starPowerRange.x;
 				int numStars = (int)((float)rnd.NextDouble() * (starNumRange.y - starNumRange.x) + starNumRange.x);
 				float padding = (numStars - starNumRange.x) / (starNumRange.y - starNumRange.x)
-					* (sc.texturePaddingRange.y - sc.texturePaddingRange.x) + sc.texturePaddingRange.x;
+					* (texturePaddingRange.y - texturePaddingRange.x) + texturePaddingRange.x;
 				float[] biasDirections = new float[(int)Mathf.Floor((float)rnd.NextDouble() * 4)];
 
 				for (int j = 0; j < biasDirections.Length; j++)
@@ -317,8 +322,8 @@ public class SceneryController : MonoBehaviour
 				systems[i] = new Star[numStars];
 				for (int j = 0; j < systems[i].Length; j++)
 				{
-					systems[i][j] = new Star(sc.textureSize, padding, sc.starSizeRange, power, sc.colorMin,
-						sc.colorMax, rnd, biasDirections);
+					systems[i][j] = new Star(textureSize, padding, starSizeRange, power, colorMin,
+						colorMax, rnd, biasDirections);
 				}
 				yield return null;
 			}
@@ -329,25 +334,25 @@ public class SceneryController : MonoBehaviour
 				bool allWorkDone = false;
 
 				//use available workers to generate textures
-				for (; sc.freeWorkers > 0; sc.freeWorkers--)
+				for (; freeWorkers > 0; freeWorkers--)
 				{
 					//which texture are we up to?
-					int textureCounter = completedLines / sc.textureSize.y;
+					int textureCounter = completedLines / textureSize.y;
 					//have we made enough?
-					if (textureCounter >= sc.variety)
+					if (textureCounter >= variety)
 					{
 						allWorkDone = true;
 						break;
 					}
 					//where does the worker start in the texture?
-					int start = completedLines % sc.textureSize.y;
+					int start = completedLines % textureSize.y;
 					//start working
-					sc.StartCoroutineAsync(sc.GenerateTexture(systems[textureCounter], tex[textureCounter],
+					this.StartCoroutineAsync(GenerateTexture(systems[textureCounter], tex[textureCounter],
 						start, linesPerJob));
 					completedLines += linesPerJob;
 				}
 				//if all textures are complete and all workers are free
-				if (allWorkDone && sc.freeWorkers == maxFreeWorkers)
+				if (allWorkDone && freeWorkers == maxFreeWorkers)
 				{
 					break;
 				}
@@ -355,26 +360,26 @@ public class SceneryController : MonoBehaviour
 			}
 
 			//apply all textures and turn them into sprites
-			Directory.CreateDirectory(sc.folderPath);
+			Directory.CreateDirectory(folderPath);
 			for (int i = 0; i < tex.Length; i++)
 			{
-				Texture2D t = new Texture2D(sc.textureSize.x, sc.textureSize.y, TextureFormat.RGBA32,
+				Texture2D t = new Texture2D(textureSize.x, textureSize.y, TextureFormat.RGBA32,
 					false);
 				t.SetPixels(tex[i]);
 				t.Apply();
 				byte[] bytes = t.EncodeToPNG();
-				File.WriteAllBytes(sc.folderPath + "/starSystem_" + i + ".jpg", bytes);
-				sc.types.Add(Sprite.Create(t,
-					new Rect(Vector2.zero, new Vector2(sc.textureSize.x, sc.textureSize.y)),
+				File.WriteAllBytes(folderPath + "/starSystem_" + i + ".jpg", bytes);
+				types.Add(Sprite.Create(t,
+					new Rect(Vector2.zero, new Vector2(textureSize.x, textureSize.y)),
 					Vector2.one / 2f));
 			}
 		}
 
 		//fill background with new textures
-		sc.CheckCoords(); 
+		CheckCoords(); 
 
 		//run mandatory action, probably to signal that it's finished
-		a();
+		if (a != null) a();
 	}
 
 	private IEnumerator GenerateTexture(Star[] stars, Color[] tex, int start,

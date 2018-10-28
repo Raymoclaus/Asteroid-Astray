@@ -8,6 +8,8 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 	[Header("Required references")]
 	[SerializeField]
 	private ShuttleTrackers trackerSO;
+	[SerializeField]
+	private CameraCtrl cameraCtrl;
 	[Tooltip("Requires reference to the SpriteRenderer of the shuttle.")]
 	public SpriteRenderer SprRend;
 	[Tooltip("Requires reference to the Animator of the shuttle's transform.")]
@@ -86,6 +88,8 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 	private float launchZoomOutSize = 5f;
 	private List<ICombat> enemies = new List<ICombat>();
 	public Inventory storage;
+	[SerializeField]
+	private ShipInventory shipStorage;
 	#region Boost
 	//whether boost capability is available
 	[SerializeField]
@@ -117,9 +121,7 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 	#endregion Fields
 
 	#region Attachments
-	[SerializeField]
 	private bool laserAttached = false;
-	[SerializeField]
 	private bool straightWeaponAttached = false;
 	#endregion
 
@@ -136,6 +138,8 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 	public override void Awake()
 	{
 		base.Awake();
+		shipStorage = shipStorage ?? FindObjectOfType<ShipInventory>();
+		cameraCtrl = cameraCtrl ?? Camera.main.GetComponent<CameraCtrl>();
 	}
 
 	private void Update()
@@ -389,12 +393,18 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 			float angle = Vector2.SignedAngle(Vector2.up, launchDir);
 			arrow.eulerAngles = Vector3.forward * angle;
 			arrow.position = ((Entity)(drill.drillTarget)).transform.position;
-			CameraCtrl.SetConstantSize(true, launchZoomOutSize);
+			if (cameraCtrl)
+			{
+				cameraCtrl.SetConstantSize(true, launchZoomOutSize);
+			}
 		}
 		else
 		{
 			DrillLaunchArcDisable();
-			CameraCtrl.SetConstantSize(false);
+			if (cameraCtrl)
+			{
+				cameraCtrl.SetConstantSize(false);
+			}
 		}
 
 		if (InputHandler.GetInputUp("Stop") > 0f) return 0f;
@@ -452,7 +462,7 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 
 	public void StoreInShip()
 	{
-		ShipInventory.Store(storage.inventory);
+		if (shipStorage) shipStorage.Store(storage.inventory);
 	}
 
 	public override bool VerifyDrillTarget(Entity target)
@@ -657,7 +667,7 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 	{
 		if (!trackerSO)
 		{
-			print("Attach shuttle tracker scriptable object reference");
+			print("Attach appropriate Scriptable Object tracker to " + GetType().Name);
 			return;
 		}
 

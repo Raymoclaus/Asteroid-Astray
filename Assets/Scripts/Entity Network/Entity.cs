@@ -8,6 +8,9 @@ public class Entity : MonoBehaviour
 	protected ChunkCoords _coords;
 	public Collider2D[] Col;
 	public Rigidbody2D Rb;
+	[SerializeField]
+	protected CameraCtrlTracker camTrackerSO;
+	protected bool entityReady = false;
 	public bool ShouldDisablePhysicsOnDistance = true;
 	public bool ShouldDisableObjectOnDistance = true;
 	public bool ShouldDisableGameObjectOnShortDistance = true;
@@ -42,15 +45,38 @@ public class Entity : MonoBehaviour
 
 	public virtual void Awake()
 	{
+		if (!EntityNetwork.ready)
+		{
+			gameObject.SetActive(false);
+			EntityNetwork.postInitActions.Add(() =>
+			{
+				Initialise();
+				gameObject.SetActive(true);
+			});
+		}
+		else
+		{
+			Initialise();
+		}
+	}
+
+	public virtual void Initialise()
+	{
 		entitiesActive++;
 		_coords = new ChunkCoords(transform.position);
 		EntityNetwork.AddEntity(this, _coords);
 		GetLayers();
+		entityReady = true;
 	}
 
 	public virtual void LateUpdate()
 	{
 		RepositionInNetwork();
+	}
+
+	private void OnDestroy()
+	{
+		EntityNetwork.RemoveEntity(this);
 	}
 
 	public void RepositionInNetwork()
@@ -109,12 +135,14 @@ public class Entity : MonoBehaviour
 
 	protected bool IsInView()
 	{
-		return CameraCtrl.IsCoordInView(_coords);
+		if (!camTrackerSO) return false;
+		return camTrackerSO.IsCoordInView(_coords);
 	}
 
 	protected bool IsInPhysicsRange()
 	{
-		return CameraCtrl.IsCoordInPhysicsRange(_coords);
+		if (!camTrackerSO) return false;
+		return camTrackerSO.IsCoordInPhysicsRange(_coords);
 	}
 
 	public void SetAllActivity(bool active)

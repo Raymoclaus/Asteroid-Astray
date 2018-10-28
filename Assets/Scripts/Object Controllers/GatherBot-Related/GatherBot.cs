@@ -401,7 +401,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable, IStunnable, ICom
 			//draw scanner particles
 			if (!intenseScanner.isPlaying) intenseScanner.Play();
 			float angle = -Vector2.SignedAngle(Vector2.up, targetEntity.transform.position - transform.position);
-			intenseScanner.transform.eulerAngles = Vector3.forward * angle;
+			intenseScanner.transform.eulerAngles = Vector3.forward * -angle;
 			intenseScanner.transform.localScale = Vector3.one *
 				Vector2.Distance(transform.position, targetEntity.transform.position);
 

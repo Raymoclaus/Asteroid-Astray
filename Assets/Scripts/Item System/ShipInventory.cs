@@ -8,6 +8,7 @@ public class ShipInventory : Inventory
 	public const string SHIP_INVENTORY_SIZE = "ShipInventorySize";
 	public const string SHIP_SLOT_TYPE = "ShipSlot{0}Type";
 	public const string SHIP_SLOT_AMOUNT = "ShipSlot{0}Amount";
+	public SceneryController sceneryCtrl;
 
 	protected override void Awake()
 	{
@@ -48,10 +49,10 @@ public class ShipInventory : Inventory
 		}
 	}
 
-	public static void Store(List<ItemStack> items)
+	public void Store(List<ItemStack> items)
 	{
 		singleton.AddItems(items);
 		singleton.Save();
-		SceneryController.Save();
+		if (sceneryCtrl) sceneryCtrl.Save();
 	}
 }

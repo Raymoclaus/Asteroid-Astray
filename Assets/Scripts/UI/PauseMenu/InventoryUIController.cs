@@ -20,6 +20,8 @@ public class InventoryUIController : MonoBehaviour
 	private Text previewDesc;
 	[SerializeField]
 	private Text previewFlav;
+	[SerializeField]
+	private ItemSprites sprites;
 
 	private void Awake()
 	{
@@ -38,18 +40,23 @@ public class InventoryUIController : MonoBehaviour
 	private void UpdateSlots()
 	{
 		List<ItemStack> stacks = shuttleInventory.inventory;
-		LoadedResources lr = GameController.GetResources();
 		for (int i = 0; i < stacks.Count; i++)
 		{
 			Item.Type type = stacks[i].GetItemType();
-			itemSprites[i].sprite = lr.GetItemSprite(type);
+			if (sprites)
+			{
+				itemSprites[i].sprite = sprites.GetItemSprite(type);
+			}
 			itemSprites[i].color = type == Item.Type.Blank ? Color.clear : Color.white;
 			int count = stacks[i].GetAmount();
 			countTexts[i].text = count <= 1 ? string.Empty : count.ToString();
 		}
 
 		Item.Type previewType = stacks[selected].GetItemType();
-		previewImg.sprite = lr.GetItemSprite(previewType);
+		if (sprites)
+		{
+			previewImg.sprite = sprites.GetItemSprite(previewType);
+		}
 		previewImg.color = previewType == Item.Type.Blank ? Color.clear : Color.white;
 		previewName.text = previewType.ToString();
 		previewDesc.text = Item.ItemDescription(previewType);

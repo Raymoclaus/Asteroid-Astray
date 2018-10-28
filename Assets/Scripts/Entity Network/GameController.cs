@@ -7,7 +7,6 @@ public class GameController : MonoBehaviour
 {
 	public static GameController singleton;
 	public EntityPrefabController prefabs;
-	public LoadedResources loadRes;
 	public static bool IsLoading
 	{
 		get { return singleton.loadingUI.activeSelf; }
@@ -17,9 +16,12 @@ public class GameController : MonoBehaviour
 	private List<GameObject> objsToActivate;
 	[SerializeField]
 	private List<ChunkFiller> fillersToActivate;
+	[SerializeField]
+	private SceneryController sceneryCtrl;
 
 	//booleans to check when certain systems are ready
 	private static bool gridCreated, triggerListFilled, entityPrefabsReady, starsGenerated;
+	private List<bool> loadingReady = new List<bool>();
 
 	[SerializeField]
 	private bool recordingMode = false;
@@ -47,67 +49,85 @@ public class GameController : MonoBehaviour
 
 		loadingUI.SetActive(true);
 
-		StartCoroutine(EntityNetwork.CreateGrid(() =>
-		{
-			gridCreated = true;
-			Ready();
-		}));
+		List<System.Action> preLoadActions = new List<System.Action>();
 
-		StartCoroutine(SceneryController.CreateStarSystems(() =>
+		preLoadActions.Add(() =>
 		{
-			starsGenerated = true;
-			Ready();
-		}));
+			loadingReady.Add(false);
+			int ID = loadingReady.Count - 1;
+			StartCoroutine(EntityNetwork.CreateGrid(() =>
+			{
+				loadingReady[ID] = true;
+				Ready();
+				print(ID);
+			}));
+		});
 
-		UpdateRecordModeFixes();
+		preLoadActions.Add(() =>
+		{
+			loadingReady.Add(false);
+			int ID = loadingReady.Count - 1;
+			StartCoroutine(sceneryCtrl.CreateStarSystems(() =>
+			{
+				loadingReady[ID] = true;
+				Ready();
+				print(ID);
+			}));
+		});
+
+		preLoadActions.Add(() =>
+		{
+			loadingReady.Add(false);
+			int ID = loadingReady.Count - 1;
+			StartCoroutine(EntityGenerator.FillTriggerList(() =>
+			{
+				loadingReady[ID] = true;
+				Ready();
+				print(ID);
+			}));
+		});
+
+		preLoadActions.Add(() =>
+		{
+			loadingReady.Add(false);
+			int ID = loadingReady.Count - 1;
+			StartCoroutine(EntityGenerator.SetPrefabs(prefabs, () =>
+			{
+				loadingReady[ID] = true;
+				Ready();
+				print(ID);
+			}));
+		});
+
+		foreach (System.Action a in preLoadActions)
+		{
+			a();
+		}
 	}
 
 	private void Update()
 	{
-		if (wasRecordingMode != recordingMode)
-		{
-			UpdateRecordModeFixes();
-		}
+		UpdateRecordModeFixes();
 	}
 
 	private void Ready()
 	{
-		if (starsGenerated)
-		{
-			if (!triggerListFilled)
-			{
-				StartCoroutine(EntityGenerator.FillTriggerList(() =>
-				{
-					triggerListFilled = true;
-					Ready();
-				}));
-			}
-
-			if (!entityPrefabsReady)
-			{
-				StartCoroutine(EntityGenerator.SetPrefabs(prefabs, () =>
-				{
-					entityPrefabsReady = true;
-					Ready();
-				}));
-			}
-		}
-
-		if (gridCreated && triggerListFilled && entityPrefabsReady)
-		{
-			StartCoroutine(EntityGenerator.ChunkBatchOrder());
-			ActivateObjectList();
-		}
-
 		if (AllEssentialSystemsReady())
 		{
+			loadingReady = null;
+			StartCoroutine(EntityGenerator.ChunkBatchOrder());
+			ActivateObjectList();
 			loadingUI.SetActive(false);
 		}
 	}
 
 	private bool AllEssentialSystemsReady()
 	{
-		return gridCreated && triggerListFilled && entityPrefabsReady && starsGenerated;
+		foreach (bool b in loadingReady)
+		{
+			if (!b) return false;
+		}
+		return true;
 	}
 
 	private void ActivateObjectList()
@@ -122,14 +142,12 @@ public class GameController : MonoBehaviour
 		}
 	}
 
-	public static LoadedResources GetResources()
-	{
-		return singleton.loadRes;
-	}
-
 	private void UpdateRecordModeFixes()
 	{
-		drillLaunchLightningEffect.frameRate = recordingMode ? 24f * (1f / Time.deltaTime) / 60f : 24f;
-		wasRecordingMode = recordingMode;
+		if (wasRecordingMode != recordingMode)
+		{
+			drillLaunchLightningEffect.frameRate = recordingMode ? 24f * (1f / Time.deltaTime) / 60f : 24f;
+			wasRecordingMode = recordingMode;
+		}
 	}
 }
