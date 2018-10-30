@@ -4,7 +4,6 @@ using UnityEngine.UI;
 
 public class ItemPopupUI : MonoBehaviour
 {
-	private static ItemPopupUI singleton;
 	private RectTransform[] popups;
 	private float popupHeight, xPos;
 	private static List<PopupData> popupsToShow = new List<PopupData>();
@@ -19,24 +18,18 @@ public class ItemPopupUI : MonoBehaviour
 	[SerializeField]
 	private float popupEntrySpeed = 2f, popupMoveSpeed = 5f, textFadeSpeed = 0.17f;
 	[SerializeField]
-	private ItemSprites sprites;
+	public ItemSprites sprites;
+	[SerializeField]
+	private LoadingTracker loadingTrackerSO;
 
 	private void Awake()
 	{
-		if (singleton == null)
-		{
-			singleton = this;
-		}
-		else
-		{
-			Destroy(gameObject);
-		}
-
 		popups = new RectTransform[transform.childCount];
 		for (int i = 0; i < transform.childCount; i++)
 		{
 			popups[i] = (RectTransform)transform.GetChild(i);
-			PopupObject po = new PopupObject(popups[i],
+			PopupObject po = new PopupObject(sprites,
+				popups[i],
 				popups[i].GetComponent<Image>(),
 				popups[i].GetChild(0).GetComponent<Image>(),
 				popups[i].GetChild(1).GetChild(0).GetComponent<Text>(),
@@ -49,7 +42,7 @@ public class ItemPopupUI : MonoBehaviour
 
 	private void Update()
 	{
-		if (GameController.IsLoading) return;
+		if (loadingTrackerSO.isLoading) return;
 
 		while (popupsToShow.Count > 0)
 		{
@@ -138,9 +131,9 @@ public class ItemPopupUI : MonoBehaviour
 		po.description.gameObject.SetActive(activate);
 	}
 
-	public static void GeneratePopup(Item.Type type, int amount = 1)
+	public void GeneratePopup(Item.Type type, int amount = 1)
 	{
-		PopupData data = new PopupData(type, amount);
+		PopupData data = new PopupData(sprites, type, amount);
 		foreach (PopupObject po in activePopups)
 		{
 			if (po.type == type)
@@ -162,6 +155,7 @@ public class ItemPopupUI : MonoBehaviour
 
 	private class PopupObject
 	{
+		private ItemSprites sprites;
 		public RectTransform transform;
 		public Item.Type type;
 		public Image UIimg, spr;
@@ -169,8 +163,9 @@ public class ItemPopupUI : MonoBehaviour
 		public float timer;
 		public int amount;
 
-		public PopupObject(RectTransform transform, Image UIimg, Image spr, Text name, Text description, Item.Type type = Item.Type.Blank, int amount = 0)
+		public PopupObject(ItemSprites sprites, RectTransform transform, Image UIimg, Image spr, Text name, Text description, Item.Type type = Item.Type.Blank, int amount = 0)
 		{
+			this.sprites = sprites;
 			this.transform = transform;
 			this.type = type;
 			this.UIimg = UIimg;
@@ -208,9 +203,9 @@ public class ItemPopupUI : MonoBehaviour
 			{
 				this.type = (Item.Type)type;
 			}
-			if (singleton.sprites)
+			if (sprites)
 			{
-				spr.sprite = singleton.sprites.GetItemSprite(this.type);
+				spr.sprite = sprites.GetItemSprite(this.type);
 			}
 			UpdateName();
 			description.text = Item.ItemDescription(this.type);
@@ -229,17 +224,18 @@ public class ItemPopupUI : MonoBehaviour
 
 	private class PopupData
 	{
+
 		public Sprite spr;
 		public Item.Type type;
 		public string name, description;
 		public int amount;
 
-		public PopupData(Item.Type type, int amount = 1)
+		public PopupData(ItemSprites sprites, Item.Type type, int amount = 1)
 		{
 			this.type = type;
-			if (singleton.sprites)
+			if (sprites)
 			{
-				spr = singleton.sprites.GetItemSprite(type);
+				spr = sprites.GetItemSprite(type);
 			}
 			else
 			{

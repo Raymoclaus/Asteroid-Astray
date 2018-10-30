@@ -124,24 +124,30 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 			}
 
 			//sound effect
-			AudioManager.PlaySFX(shatterSounds[Random.Range(0, shatterSounds.Length)], transform.position,
-				pitch: Random.Range(shatterPitchRange.x, shatterPitchRange.y), volume: 0.25f,
-				parent: null);
+			audioManager = audioManager ?? FindObjectOfType<AudioManager>();
+			if (audioManager)
+			{
+				audioManager.PlaySFX(shatterSounds[Random.Range(0, shatterSounds.Length)], transform.position,
+					pitch: Random.Range(shatterPitchRange.x, shatterPitchRange.y), volume: 0.25f,
+					parent: null);
+			}
 
 			//drop resources
-			GameController.singleton.StartCoroutine(DropLoot(destroyer, transform.position, dropModifier));
+			DropLoot(destroyer, transform.position, dropModifier);
 		}
 		destroyer.DestroyedAnEntity(this);
 		base.DestroySelf();
 	}
 
-	private IEnumerator DropLoot(Entity destroyer, Vector2 pos, int dropModifier = 0)
+	private void DropLoot(Entity destroyer, Vector2 pos, int dropModifier = 0)
 	{
+		particleGenerator = particleGenerator ?? FindObjectOfType<ParticleGenerator>();
+		if (!particleGenerator) return;
+
 		int minDrop = isLarge ? 4 : 1;
 		for (int i = 0; i < Random.Range(minDrop, minDrop + dropModifier + 1); i++)
 		{
-			ParticleGenerator.DropResource(destroyer, pos);
-			yield return null;
+			particleGenerator.DropResource(destroyer, pos);
 		}
 	}
 
@@ -149,10 +155,13 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	{
 		if (!isActive || Pause.IsPaused) return;
 
+		particleGenerator = particleGenerator ?? FindObjectOfType<ParticleGenerator>();
+		if (!particleGenerator) return;
+
 		int randomChoose = Random.Range(0, spritesSO.debris.Length);
 		if (randomChoose < spritesSO.debris.Length)
 		{
-			ParticleGenerator.GenerateParticle(
+			particleGenerator.GenerateParticle(
 				spritesSO.debris[randomChoose], pos, speed: Random.value * 3f, slowDown: true, lifeTime: 1.5f,
 				rotationDeg: Random.value * 360f, rotationSpeed: Random.value * 3f,
 				sortingLayer: SprRend.sortingLayerID, sortingOrder: -1);
@@ -162,12 +171,16 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	private void CreateDust(Vector2 pos, int amount = 1, float alpha = 0.1f)
 	{
 		if (!isActive || Pause.IsPaused) return;
+
+		particleGenerator = particleGenerator ?? FindObjectOfType<ParticleGenerator>();
+		if (!particleGenerator) return;
+
 		for (int i = 0; i < amount; i++)
 		{
 			int randomChoose = Random.Range(0, spritesSO.dust.Length);
 			if (randomChoose < spritesSO.dust.Length)
 			{
-				ParticleGenerator.GenerateParticle(
+				particleGenerator.GenerateParticle(
 					spritesSO.dust[randomChoose], pos, speed: Random.value * 0.5f, slowDown: true,
 					lifeTime: Random.value * 3f + 2f, rotationDeg: Random.value * 360f,
 					rotationSpeed: Random.value * 0.5f, size: 0.3f + Mathf.Pow(Random.value, 2f) * 0.7f, alpha: alpha,
@@ -178,9 +191,12 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 
 	private void UpdateSprite()
 	{
+		particleGenerator = particleGenerator ?? FindObjectOfType<ParticleGenerator>();
+		if (!particleGenerator) return;
+
 		if (Health <= 0f)
 		{
-			ParticleGenerator.GenerateParticle(GetCurrentSpriteSettings()[GetCurrentSpriteSettings().Length - 1],
+			particleGenerator.GenerateParticle(GetCurrentSpriteSettings()[GetCurrentSpriteSettings().Length - 1],
 				transform.position, fadeOut: false, lifeTime: 0.05f,
 				rotationDeg: transform.eulerAngles.z, sortingLayer: SprRend.sortingLayerID);
 			return;
@@ -287,10 +303,6 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 
 			if ((Entity)otherDrill.drillTarget == this)
 			{
-				if (Health > 0f)
-				{
-					print("Stop");
-				}
 				StopDrilling();
 				otherDrill.StopDrilling();
 			}
@@ -366,17 +378,6 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 				}
 			}
 		}
-
-		if (collisionStrength < 0.05f || !camTrackerSO
-			|| Vector2.Distance(transform.position, camTrackerSO.position) > 10f)
-			return;
-		
-		//play a sound effect
-		if (collisionSounds)
-		{
-			AudioManager.PlaySFX(collisionSounds.PickRandomClip(), contactPoint, null,
-				collisionSounds.PickRandomVolume() * collisionStrength, collisionSounds.PickRandomPitch());
-		}
 	}
 
 	public void Launch(Vector2 launchDirection, Entity launcher)
@@ -392,22 +393,26 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 			launchTrail.SetFollowTarget(transform, launchDirection, isLarge ? 2f : 1f);
 
 		}
-		Pause.DelayedAction(() =>
+		pause = pause ?? FindObjectOfType<Pause>();
+		if (pause)
 		{
-			if (launchTrail != null)
+			pause.DelayedAction(() =>
 			{
-				launchTrail.EndLaunchTrail();
-			}
+				if (launchTrail != null)
+				{
+					launchTrail.EndLaunchTrail();
+				}
 
-			if (this == null) return;
+				if (this == null) return;
 
-			this.launcher = null;
-			launched = false;
-			if (cameraCtrl && cameraCtrl.GetPanTarget() == transform)
-			{
-				cameraCtrl.Pan(null);
-			}
-		}, launchDuration, true);
+				this.launcher = null;
+				launched = false;
+				if (cameraCtrl && cameraCtrl.GetPanTarget() == transform)
+				{
+					cameraCtrl.Pan(null);
+				}
+			}, launchDuration, true);
+		}
 	}
 
 	public bool IsDrillable()

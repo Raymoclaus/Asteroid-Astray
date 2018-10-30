@@ -12,4 +12,10 @@ public class ShuttleTrackers : ScriptableObject
 	public float drillLaunchMaxAngle = 60f, drillLaunchSpeed = 10f, launchDamage = 500f;
 	[HideInInspector]
 	public int storageCount;
+	public bool autoPilot = false;
+
+	public void ToggleAutoPilot()
+	{
+		autoPilot = !autoPilot;
+	}
 }

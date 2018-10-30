@@ -144,13 +144,14 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 		inventory.RemoveItem(Item.Type.PureCorvorite, botUpgradeCost);
 	}
 
-	public IEnumerator ActivateBot(int ID)
+	public IEnumerator ActivateBot(int ID, Vector2 position)
 	{
 		yield return null;
 		foreach (GatherBot bot in childBots)
 		{
 			if (bot.dockID == ID)
 			{
+				bot.transform.position = position;
 				bot.gameObject.SetActive(true);
 				yield break;
 			}
@@ -300,19 +301,11 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 		ContactPoint2D[] contacts = new ContactPoint2D[1];
 		collision.GetContacts(contacts);
 		Vector2 contactPoint = contacts[0].point;
-		float collisionStrength = collision.relativeVelocity.magnitude;
 
 		if (otherLayer == layerProjectile)
 		{
 			IProjectile projectile = other.GetComponent<IProjectile>();
 			projectile.Hit(this, contactPoint);
-		}
-
-		//play a sound effect
-		if (collisionSounds)
-		{
-			AudioManager.PlaySFX(collisionSounds.PickRandomClip(), contactPoint, null,
-				collisionSounds.PickRandomVolume() * collisionStrength, collisionSounds.PickRandomPitch());
 		}
 	}
 

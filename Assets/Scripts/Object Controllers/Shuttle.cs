@@ -10,6 +10,7 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 	private ShuttleTrackers trackerSO;
 	[SerializeField]
 	private CameraCtrl cameraCtrl;
+	public Entity GetEntity { get { return this; } }
 	[Tooltip("Requires reference to the SpriteRenderer of the shuttle.")]
 	public SpriteRenderer SprRend;
 	[Tooltip("Requires reference to the Animator of the shuttle's transform.")]
@@ -64,8 +65,6 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 			return speedCheck;
 		}
 	}
-	//automatically move towards nearby asteroids and drill them
-	private bool autoPilot;
 	//efficiency with the searching algorithm used by the auto pilot
 	private float autoPilotTimer;
 	//transform for the auto pilot to follow
@@ -93,7 +92,7 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 	#region Boost
 	//whether boost capability is available
 	[SerializeField]
-	private bool boostAvailable = true;
+	private readonly bool boostAvailable = true;
 	//how long a boost can last
 	[SerializeField]
 	private float boostCapacity = 1f;
@@ -140,6 +139,7 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 		base.Awake();
 		shipStorage = shipStorage ?? FindObjectOfType<ShipInventory>();
 		cameraCtrl = cameraCtrl ?? Camera.main.GetComponent<CameraCtrl>();
+		if (cameraCtrl) cameraCtrl.followTarget = this;
 	}
 
 	private void Update()
@@ -164,7 +164,7 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 	private void GetMovementInput()
 	{
 		//Check if the player is attempting to boost
-		if (!autoPilot) Boost(InputHandler.GetInput("Boost") > 0f);
+		if (!trackerSO.autoPilot) Boost(InputHandler.GetInput("Boost") > 0f);
 		//used for artificially adjusting speed, used by the auto pilot only
 		float speedMod = 1f;
 		//update rotation variable with transform's current rotation
@@ -175,7 +175,7 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 		if (float.IsPositiveInfinity(lookDirection)) lookDirection = lastLookDirection;
 
 		//automatically look for the nearest asteroid
-		if (autoPilot)
+		if (trackerSO.autoPilot)
 		{
 			if (Pause.timeSinceOpen - autoPilotTimer > 0f || followTarget == null)
 			{
@@ -226,7 +226,7 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 		//get movement input
 		accel.y += Mathf.Clamp01(InputHandler.GetInput("Go")) * EngineStrength * speedMultiplier;
 
-		if (autoPilot)
+		if (trackerSO.autoPilot)
 		{
 			accel = Vector2.up * EngineStrength * speedMultiplier;
 		}
@@ -341,7 +341,11 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 		}
 		resourceCollectedTime = Pause.timeSinceOpen;
 		//play resource collect sound
-		AudioManager.PlaySFX(collectResourceSound, transform.position, transform, pitch: resourceCollectedPitch);
+		audioManager = audioManager ?? FindObjectOfType<AudioManager>();
+		if (audioManager)
+		{
+			audioManager.PlaySFX(collectResourceSound, transform.position, transform, pitch: resourceCollectedPitch);
+		}
 		
 	}
 
@@ -448,27 +452,27 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 		Rb.constraints = RigidbodyConstraints2D.None;
 		accel = Vector2.zero;
 		velocity = Vector3.zero;
-		Pause.DelayedAction(() =>
+		pause = pause ?? FindObjectOfType<Pause>();
+		if (pause)
 		{
-			stunned = false;
-			Rb.constraints = RigidbodyConstraints2D.FreezeRotation;
-		}, stunDuration, true);
-	}
-
-	public void AutoPilotSwitch(bool isOn)
-	{
-		autoPilot = isOn;
+			pause.DelayedAction(() =>
+			{
+				stunned = false;
+				Rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+			}, stunDuration, true);
+		}
 	}
 
 	public void StoreInShip()
 	{
+		shipStorage = shipStorage ?? FindObjectOfType<ShipInventory>();
 		if (shipStorage) shipStorage.Store(storage.inventory);
 	}
 
 	public override bool VerifyDrillTarget(Entity target)
 	{
 		bool checks = true;
-		if (autoPilot)
+		if (trackerSO.autoPilot)
 		{
 			checks = target.GetEntityType() == EntityType.Asteroid;
 		}
@@ -495,19 +499,11 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 		ContactPoint2D[] contacts = new ContactPoint2D[1];
 		collision.GetContacts(contacts);
 		Vector2 contactPoint = contacts[0].point;
-		float collisionStrength = collision.relativeVelocity.magnitude;
 
 		if (otherLayer == layerProjectile)
 		{
 			IProjectile projectile = other.GetComponent<IProjectile>();
 			projectile.Hit(this, contactPoint);
-		}
-
-		//play a sound effect
-		if (collisionSounds)
-		{
-			AudioManager.PlaySFX(collisionSounds.PickRandomClip(), contactPoint, transform,
-				collisionSounds.PickRandomVolume() * collisionStrength, collisionSounds.PickRandomPitch());
 		}
 	}
 
@@ -542,7 +538,7 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 					Vector3 effectRotation = effect.eulerAngles;
 					effectRotation += transform.eulerAngles;
 					effect.eulerAngles = effectRotation;
-					ScreenRippleEffectController.StartRipple(distortionLevel: 0.01f);
+					screenRippleSO.StartRipple(this, distortionLevel: 0.01f);
 				}
 			}
 			isBoosting = true;
@@ -585,8 +581,12 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 			case EntityType.BotHive:
 			case EntityType.GatherBot:
 			{
-				Pause.TemporarySlowDownEffect();
-				break;
+				pause = pause ?? FindObjectOfType<Pause>();
+				if (pause)
+				{
+					pause.TemporarySlowDownEffect();
+				}
+			break;
 			}
 		}
 	}

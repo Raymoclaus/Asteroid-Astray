@@ -149,6 +149,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable, IStunnable, ICom
 
 	private void Start()
 	{
+		if (!hive) DestroySelf(false, null);
 		rot = transform.eulerAngles.z;
 		initialised = true;
 	}
@@ -547,7 +548,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable, IStunnable, ICom
 			if (sibling.state == AIState.Attacking) continue;
 
 			if (Vector2.Distance(transform.position, sibling.transform.position)
-				< Cnsts.CHUNK_SIZE)
+				< Constants.CHUNK_SIZE)
 			{
 				float scanAngle = -Vector2.SignedAngle(Vector2.up, sibling.transform.position - transform.position);
 				StartCoroutine(ScanRings(scanAngle, 30f, false, 0.3f));
@@ -1025,7 +1026,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable, IStunnable, ICom
 		Vector2 screenPos = Camera.main.WorldToViewportPoint(transform.position);
 		if (screenPos.x > -0.5f || screenPos.x < 1.5f || screenPos.y > -0.5f || screenPos.y < 1.5f)
 		{
-			ScreenRippleEffectController.StartRipple(distortionLevel: 0.03f,
+			screenRippleSO.StartRipple(this, distortionLevel: 0.03f,
 				position: screenPos);
 		}
 	}
@@ -1043,11 +1044,15 @@ public class GatherBot : Entity, IDrillableObject, IDamageable, IStunnable, ICom
 			}
 		}
 		shakeFX.Begin();
-		Pause.DelayedAction(() =>
+		pause = pause ?? FindObjectOfType<Pause>();
+		if (pause)
 		{
-			if (this == null) return;
-			StartCoroutine(ChargeForcePulse());
-		}, drillToChargeTimer, true);
+			pause.DelayedAction(() =>
+			{
+				if (this == null) return;
+				StartCoroutine(ChargeForcePulse());
+			}, drillToChargeTimer, true);
+		}
 	}
 
 	public void StopDrilling()
@@ -1095,7 +1100,6 @@ public class GatherBot : Entity, IDrillableObject, IDamageable, IStunnable, ICom
 		ContactPoint2D[] contacts = new ContactPoint2D[1];
 		collision.GetContacts(contacts);
 		Vector2 contactPoint = contacts[0].point;
-		float collisionStrength = collision.relativeVelocity.magnitude;
 		float angle = -Vector2.SignedAngle(Vector2.up, contactPoint - (Vector2)transform.position);
 
 		if (otherLayer == layerProjectile)
@@ -1133,13 +1137,6 @@ public class GatherBot : Entity, IDrillableObject, IDamageable, IStunnable, ICom
 				launched = false;
 				Stun();
 			}
-		}
-
-		//play a sound effect
-		if (collisionSounds)
-		{
-			AudioManager.PlaySFX(collisionSounds.PickRandomClip(), contactPoint, null,
-				collisionSounds.PickRandomVolume() * collisionStrength, collisionSounds.PickRandomPitch());
 		}
 	}
 
@@ -1219,31 +1216,32 @@ public class GatherBot : Entity, IDrillableObject, IDamageable, IStunnable, ICom
 			//sound effects
 
 			//drop resources
-			GameController.singleton.StartCoroutine(DropLoot(destroyer, transform.position, dropModifier));
+			DropLoot(destroyer, transform.position, dropModifier);
 		}
 		foreach (ICombat enemy in enemies)
 		{
 			enemy.DisengageInCombat(this);
 		}
-		hive.BotDestroyed(this);
+		if (hive) hive.BotDestroyed(this);
 		base.DestroySelf();
 	}
 
-	private IEnumerator DropLoot(Entity destroyer, Vector2 pos, int dropModifier = 0)
+	private void DropLoot(Entity destroyer, Vector2 pos, int dropModifier = 0)
 	{
+		particleGenerator = particleGenerator ?? FindObjectOfType<ParticleGenerator>();
+		if (!particleGenerator) return;
+
 		for (int i = 0; i < storage.inventory.Count; i++)
 		{
 			ItemStack stack = storage.inventory[i];
 			if (stack.GetItemType() == Item.Type.Blank) continue;
-			ParticleGenerator.DropResource(destroyer, pos, stack.GetItemType(), stack.GetAmount());
-			yield return null;
+			particleGenerator.DropResource(destroyer, pos, stack.GetItemType(), stack.GetAmount());
 		}
 
 		for (int i = 0; i < loot.Count; i++)
 		{
 			ItemStack stack = loot[i].GetStack();
-			ParticleGenerator.DropResource(destroyer, pos, stack.GetItemType(), stack.GetAmount());
-			yield return null;
+			particleGenerator.DropResource(destroyer, pos, stack.GetItemType(), stack.GetAmount());
 		}
 	}
 
@@ -1349,15 +1347,19 @@ public class GatherBot : Entity, IDrillableObject, IDamageable, IStunnable, ICom
 			launchTrail.SetFollowTarget(transform, launchDirection);
 
 		}
-		Pause.DelayedAction(() =>
+		pause = pause ?? FindObjectOfType<Pause>();
+		if (pause)
 		{
-			if (launchTrail != null)
+			pause.DelayedAction(() =>
 			{
-				launchTrail.EndLaunchTrail();
-			}
-			launched = false;
-			this.launcher = null;
-		}, launchedDuration, true);
+				if (launchTrail != null)
+				{
+					launchTrail.EndLaunchTrail();
+				}
+				launched = false;
+				this.launcher = null;
+			}, launchedDuration, true);
+		}
 	}
 
 	public void Stun()
@@ -1401,7 +1403,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable, IStunnable, ICom
 
 	public override bool CanFireStraightWeapon()
 	{
-		return straightWeaponAttached && readyToFire;
+		return straightWeaponAttached && readyToFire && !beingDrilled && !stunned;
 	}
 
 	public override void AttachStraightWeapon(bool attach)

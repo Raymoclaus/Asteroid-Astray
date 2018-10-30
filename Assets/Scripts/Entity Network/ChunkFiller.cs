@@ -7,16 +7,32 @@ public class ChunkFiller : MonoBehaviour
 	private Vector2 _prevPos = Vector2.positiveInfinity;
 	public int FillRange = 2;
 	[HideInInspector] public int RangeIncrease;
+	private bool ready = false;
 
 	private void Start()
+	{
+		if (!EntityNetwork.ready)
+		{
+			EntityNetwork.postInitActions.Add(() => Initialise());
+		}
+		else
+		{
+			Initialise();
+		}
+	}
+
+	private void Initialise()
 	{
 		_coords = new ChunkCoords(transform.position);
 		//load up some asteroids around the current position
 		FillChunks(_coords, false);
+		ready = true;
 	}
 
 	private void Update()
 	{
+		if (!ready) return;
+
 		CheckForMovement();
 	}
 
@@ -41,10 +57,10 @@ public class ChunkFiller : MonoBehaviour
 		FillChunks(newCc, true);
 	}
 
-	private void FillChunks(ChunkCoords center, bool? batchOrder = null)
+	private void FillChunks(ChunkCoords center, bool batchOrder = false)
 	{
 		List<ChunkCoords> coords = GetChunkFillList(center);
-		if (batchOrder == null || !(bool)batchOrder)
+		if (!batchOrder)
 		{
 			EntityGenerator.InstantFillChunks(coords);
 		}

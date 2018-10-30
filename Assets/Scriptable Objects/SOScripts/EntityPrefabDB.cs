@@ -1,7 +1,8 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
-public class EntityPrefabController : MonoBehaviour
+[CreateAssetMenu]
+public class EntityPrefabDB : ScriptableObject
 {
 	[Header("If a space-priority entity is spawned in a chunk then no other entities will spawn in the same chunk.")]
 	public List<SpawnableEntity> spacePriorityEntities;

@@ -61,7 +61,7 @@ public static class EntityNetwork
 		{
 			action();
 		}
-		a();
+		if (a != null) a();
 	}
 
 	/// Returns a list of all entities located in cells within range of the given coordinates
@@ -208,6 +208,7 @@ public static class EntityNetwork
 	public static bool RemoveEntity(Entity e, EntityType? type = null)
 	{
 		ChunkCoords cc = e.GetCoords();
+		if (!ChunkExists(cc)) return false;
 
 		if (Chunk(cc).Remove(e))
 		{

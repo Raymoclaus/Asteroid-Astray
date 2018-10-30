@@ -7,7 +7,8 @@ public class CameraCtrl : MonoBehaviour
 	public Camera Cam;
 	[SerializeField]
 	private CameraCtrlTracker trackerSO;
-	public Transform targetToFollow;
+	[SerializeField]
+	private Transform targetToFollow;
 	private Transform panView;
 	public float panRange = 5f;
 	public Entity followTarget;
@@ -34,8 +35,6 @@ public class CameraCtrl : MonoBehaviour
 	{
 		//get ref to Camera component
 		Cam = Cam ?? GetComponent<Camera>();
-		//if there is no target then create a default one
-		targetToFollow = targetToFollow ?? new GameObject("camTarget").transform;
 		//get ref to ChunkFiller component
 		chunkFiller = chunkFiller ?? GetComponent<ChunkFiller>();
 		//ensure the chunk filler has created chunks first
@@ -46,9 +45,8 @@ public class CameraCtrl : MonoBehaviour
 		GetEntitiesInView(coords);
 		//start camera size at minimum size
 		CamSize = minCamSize;
-		//camera position starts ahead of the target
-		aheadVector = new Vector2(Mathf.Sin(-targetToFollow.eulerAngles.z * Mathf.Deg2Rad),
-			Mathf.Cos(-targetToFollow.eulerAngles.z * Mathf.Deg2Rad)) * distanceAhead;
+		//default follow target to shuttle if no target is set
+		followTarget = followTarget ?? FindObjectOfType<Shuttle>();
 	}
 
 	private void Update()
@@ -200,7 +198,7 @@ public class CameraCtrl : MonoBehaviour
 
 	private void CheckPhysicsRange(ChunkCoords center)
 	{
-		List<Entity> physicsRange = EntityNetwork.GetEntitiesInRange(center, Cnsts.MAX_PHYSICS_RANGE);
+		List<Entity> physicsRange = EntityNetwork.GetEntitiesInRange(center, Constants.MAX_PHYSICS_RANGE);
 
 		foreach(Entity e in physicsRange)
 		{

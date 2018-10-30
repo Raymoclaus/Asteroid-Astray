@@ -78,13 +78,13 @@ public struct ChunkCoords
 
 	private static IntPair ConvertToXy(Vector2 pos)
 	{
-		pos /= Cnsts.CHUNK_SIZE;
+		pos /= Constants.CHUNK_SIZE;
 		return new IntPair(Math.Abs((int) pos.x), Math.Abs((int) pos.y));
 	}
 
 	public static Quadrant GetDirection(Vector2 pos)
 	{
-		pos /= Cnsts.CHUNK_SIZE;
+		pos /= Constants.CHUNK_SIZE;
 		return GetDirection(pos.x, pos.y);
 	}
 
@@ -137,7 +137,7 @@ public struct ChunkCoords
 				break;
 		}
 
-		return new Vector2Pair(min * Cnsts.CHUNK_SIZE, max * Cnsts.CHUNK_SIZE);
+		return new Vector2Pair(min * Constants.CHUNK_SIZE, max * Constants.CHUNK_SIZE);
 	}
 
 	public static Vector2 GetCenterCell(ChunkCoords c)

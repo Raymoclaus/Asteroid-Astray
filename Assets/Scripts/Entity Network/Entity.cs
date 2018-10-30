@@ -10,6 +10,20 @@ public class Entity : MonoBehaviour
 	public Rigidbody2D Rb;
 	[SerializeField]
 	protected CameraCtrlTracker camTrackerSO;
+	[SerializeField]
+	private EntityPrefabDB prefabs;
+	[SerializeField]
+	protected static ParticleGenerator particleGenerator;
+	private static LoadingController loadingController;
+	[SerializeField]
+	private LoadingController loadingControllerPrefab;
+	private static MainCanvas mainCanvas;
+	[SerializeField]
+	private MainCanvas mainCanvasPrefab;
+	protected static Pause pause;
+	protected static AudioManager audioManager;
+	[SerializeField]
+	protected ScreenRippleEffectController screenRippleSO;
 	protected bool entityReady = false;
 	public bool ShouldDisablePhysicsOnDistance = true;
 	public bool ShouldDisableObjectOnDistance = true;
@@ -48,6 +62,9 @@ public class Entity : MonoBehaviour
 		if (!EntityNetwork.ready)
 		{
 			gameObject.SetActive(false);
+			mainCanvas = mainCanvas ?? FindObjectOfType<MainCanvas>() ?? Instantiate(mainCanvasPrefab);
+			loadingController = loadingController ?? FindObjectOfType<LoadingController>()
+				?? Instantiate(loadingControllerPrefab, mainCanvas.transform);
 			EntityNetwork.postInitActions.Add(() =>
 			{
 				Initialise();

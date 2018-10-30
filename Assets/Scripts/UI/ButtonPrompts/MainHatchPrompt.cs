@@ -1,12 +1,11 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class MainHatchPrompt : MonoBehaviour, IPromptRespone
 {
-	public GameObject mainHatchUI;
 	public string interactString;
 	private KeyCode interactKey = KeyCode.E;
+	[SerializeField]
+	private ShipEntryPanel shipEntryUI;
 
 	public bool CheckResponse()
 	{
@@ -21,12 +20,14 @@ public class MainHatchPrompt : MonoBehaviour, IPromptRespone
 	public void Execute()
 	{
 		Pause.InstantPause(true);
-		mainHatchUI.SetActive(true);
+		shipEntryUI = shipEntryUI ?? FindObjectOfType<ShipEntryPanel>();
+		shipEntryUI.OpenPanel();
 	}
 
 	public void Exit()
 	{
-		mainHatchUI.SetActive(false);
+		shipEntryUI = shipEntryUI ?? FindObjectOfType<ShipEntryPanel>();
+		shipEntryUI.gameObject.SetActive(false);
 	}
 
 	public string InteractString()

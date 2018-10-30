@@ -41,6 +41,8 @@ public class LaserBlast : MonoBehaviour, IProjectile
 	private AudioClip strongHitSound;
 	[SerializeField]
 	private AudioClip weakHitSound;
+	protected static Pause pause;
+	protected static AudioManager audioManager;
 
 	public void Shoot(Vector2 startPos, Quaternion startRot, Vector2 startingDir, Vector2 followDir,
 		List<LaserBlast> p, Transform wep, Entity shooter, double ID, LaserWeapon wepSystem)
@@ -124,8 +126,12 @@ public class LaserBlast : MonoBehaviour, IProjectile
 		hitFX.transform.position = contactPoint;
 		hitFX.transform.eulerAngles = Vector3.forward * (dirToObject + 180f);
 		//play sound effect
-		AudioManager.PlaySFX(isStrongHit ? strongHitSound : weakHitSound, contactPoint,
+		audioManager = audioManager ?? FindObjectOfType<AudioManager>();
+		if (audioManager)
+		{
+			audioManager.PlaySFX(isStrongHit ? strongHitSound : weakHitSound, contactPoint,
 			pitch: Random.value * 0.2f + 0.9f);
+		}
 		//report damage calculation to the object taking the damage
 		obj.TakeDamage(damageCalc, contactPoint, parent);
 		//destroy projectile
@@ -134,7 +140,11 @@ public class LaserBlast : MonoBehaviour, IProjectile
 
 	private void Dissipate()
 	{
-		GameController.singleton.StartCoroutine(DelayedAction.Go(() => particleTrail.Stop()));
+		pause = pause ?? FindObjectOfType<Pause>();
+		if (pause)
+		{
+			pause.DelayedAction(() => particleTrail.Stop(), 0f);
+		}
 		particleTrail.transform.parent = transform.parent;
 		pool.Add(this);
 		sprRend.sprite = notBoostedBullet;

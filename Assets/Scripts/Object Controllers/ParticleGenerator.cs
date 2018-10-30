@@ -4,39 +4,29 @@ using UnityEngine;
 
 public class ParticleGenerator : MonoBehaviour
 {
-	public static ParticleGenerator singleton;
 	public static Transform holder;
-
 	private const int poolReserve = 2000;
 	private Queue<SpriteRenderer> pool = new Queue<SpriteRenderer>(poolReserve);
 	private List<SpriteRenderer> active = new List<SpriteRenderer>(poolReserve);
 
 	public ResourceDrop dropPrefab;
+	[SerializeField]
+	private ItemPopupUI popupUI;
 
 	private void Awake()
 	{
-		if (singleton == null)
-		{
-			singleton = this;
-			DontDestroyOnLoad(gameObject);
-			holder = new GameObject("Particle Holder").transform;
-		}
-		else
-		{
-			Destroy(gameObject);
-		}
-
+		holder = new GameObject("Particle Holder").transform;
 		SetUpPoolReserve();
 	}
 
-	public static void GenerateParticle(
+	public void GenerateParticle(
 		Sprite spr, Vector3 position, Transform parent = null, bool fadeOut = true, float lifeTime = 1f,
 		float speed = 0f, bool slowDown = false, float rotationDeg = 0f, float rotationSpeed = 0f, float size = 1f,
 		bool rotationDecay = false, float alpha = 1f, Color? tint = null, float fadeIn = 0f, int sortingLayer = 0,
 		int sortingOrder = 0, float growthOverLifetime = 1f)
 	{
-		SpriteRenderer rend = singleton.pool.Dequeue();
-		singleton.active.Add(rend);
+		SpriteRenderer rend = pool.Dequeue();
+		active.Add(rend);
 		rend.sprite = spr;
 		rend.sortingLayerID = sortingLayer;
 		rend.sortingOrder = sortingOrder;
@@ -48,11 +38,11 @@ public class ParticleGenerator : MonoBehaviour
 		obj.transform.eulerAngles = Vector3.forward * rotationDeg;
 		obj.transform.localScale = Vector2.one * size;
 		obj.transform.parent = parent == null ? holder : parent;
-		singleton.StartCoroutine(Lifetime(rend, lifeTime, fadeOut, speed, slowDown, rotationSpeed,
+		StartCoroutine(Lifetime(rend, lifeTime, fadeOut, speed, slowDown, rotationSpeed,
 			rotationDecay, alpha, tintFix, fadeIn, growthOverLifetime));
 	}
 
-	private static IEnumerator Lifetime(
+	private IEnumerator Lifetime(
 		SpriteRenderer rend, float time, bool fadeOut, float originalSpeed, bool slowDown,
 		float originalRotationSpeed, bool rotationDecay, float alpha, Color tint, float fadeIn,
 		float growthOverLifetime)
@@ -106,8 +96,8 @@ public class ParticleGenerator : MonoBehaviour
 		//disable object and return to pool
 		rend.gameObject.SetActive(false);
 		rend.transform.parent = holder;
-		singleton.active.Remove(rend);
-		singleton.pool.Enqueue(rend);
+		active.Remove(rend);
+		pool.Enqueue(rend);
 	}
 
 	private void SetUpPoolReserve()
@@ -122,9 +112,10 @@ public class ParticleGenerator : MonoBehaviour
 		}
 	}
 
-	public static void DropResource(Entity target, Vector2 pos, Item.Type type = Item.Type.Stone, int amount = 1)
+	public void DropResource(Entity target, Vector2 pos, Item.Type type = Item.Type.Stone, int amount = 1)
 	{
-		ResourceDrop rd = Instantiate(singleton.dropPrefab);
-		rd.Create(target, pos, type, amount);
+		ResourceDrop rd = Instantiate(dropPrefab);
+		popupUI = popupUI ?? FindObjectOfType<ItemPopupUI>();
+		rd.Create(popupUI, target, pos, type, amount);
 	}
 }

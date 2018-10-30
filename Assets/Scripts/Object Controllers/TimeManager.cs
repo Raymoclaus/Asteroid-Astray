@@ -2,24 +2,8 @@
 
 public class TimeManager : MonoBehaviour
 {
-	public static TimeManager singleton;
-
 	public static GTime GameTime; 
 	public static bool Running = false;
-
-	private void Awake()
-	{
-		if (singleton == null)
-		{
-			singleton = this;
-			DontDestroyOnLoad(gameObject);
-		}
-		else
-		{
-			Destroy(gameObject);
-			return;
-		}
-	}
 
 	private void Update()
 	{

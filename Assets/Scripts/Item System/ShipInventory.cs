@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class ShipInventory : Inventory
 {
-	public static ShipInventory singleton;
 	public const string SHIP_INVENTORY_SIZE = "ShipInventorySize";
 	public const string SHIP_SLOT_TYPE = "ShipSlot{0}Type";
 	public const string SHIP_SLOT_AMOUNT = "ShipSlot{0}Amount";
@@ -12,16 +11,6 @@ public class ShipInventory : Inventory
 
 	protected override void Awake()
 	{
-		if (singleton == null)
-		{
-			singleton = this;
-			DontDestroyOnLoad(gameObject);
-		}
-		else
-		{
-			Destroy(gameObject);
-		}
-
 		Load();
 	}
 
@@ -51,8 +40,8 @@ public class ShipInventory : Inventory
 
 	public void Store(List<ItemStack> items)
 	{
-		singleton.AddItems(items);
-		singleton.Save();
+		AddItems(items);
+		Save();
 		if (sceneryCtrl) sceneryCtrl.Save();
 	}
 }

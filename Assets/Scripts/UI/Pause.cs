@@ -13,10 +13,16 @@ public class Pause : MonoBehaviour
 	public static float intendedTimeSpeed = 1f;
 	[SerializeField]
 	private PauseUIController pauseUI;
+	[SerializeField]
+	private RecordingModeController recordingModeController;
 
 	private void Awake()
 	{
-		pauseUI.Activate(false, instant: true);
+		pauseUI = pauseUI ?? FindObjectOfType<PauseUIController>();
+		if (pauseUI)
+		{
+			pauseUI.Activate(false, instant: true);
+		}
 	}
 
 	private void Update()
@@ -27,24 +33,37 @@ public class Pause : MonoBehaviour
 		{
 			if (IsPaused)
 			{
-				pauseUI.Activate(false, () =>
+				pauseUI = pauseUI ?? FindObjectOfType<PauseUIController>();
+				if (pauseUI)
+				{
+					pauseUI.Activate(false, () =>
+					{
+						isShifting = true;
+						shiftingUp = IsPaused;
+					});
+				}
+				else
 				{
 					isShifting = true;
 					shiftingUp = IsPaused;
-				});
+				}
 			}
 			else
 			{
 				isShifting = true;
 				shiftingUp = IsPaused;
-				pauseUI.Activate(true);
+				pauseUI = pauseUI ?? FindObjectOfType<PauseUIController>();
+				if (pauseUI)
+				{
+					pauseUI.Activate(true);
+				}
 			}
 		}
 
 		if (isShifting)
 		{
 			float scl = Time.timeScale;
-			scl += GameController.UnscaledDeltaTime * (shiftingUp ? 2f : -2f);
+			scl += recordingModeController.UnscaledDeltaTime * (shiftingUp ? 2f : -2f);
 			if (scl <= 0f || scl >= intendedTimeSpeed)
 			{
 				Time.timeScale = Mathf.Clamp(scl, 0f, intendedTimeSpeed);
@@ -67,29 +86,29 @@ public class Pause : MonoBehaviour
 		Time.timeScale = pause ? 0f : intendedTimeSpeed;
 	}
 
-	public static void TemporaryPause(float time = 0.5f)
+	public void TemporaryPause(float time = 0.5f)
 	{
-		GameController.singleton.StartCoroutine(TempPauseCoroutine(time));
+		StartCoroutine(TempPauseCoroutine(time));
 	}
 
-	private static IEnumerator TempPauseCoroutine(float time = 0.5f)
+	private IEnumerator TempPauseCoroutine(float time = 0.5f)
 	{
 		canPause = false;
 		Time.timeScale = 0f;
 		while (time > 0f)
 		{
-			time -= GameController.UnscaledDeltaTime;
+			time -= recordingModeController.UnscaledDeltaTime;
 			yield return null;
 		}
 		Time.timeScale = intendedTimeSpeed;
 		canPause = true;
 	}
 
-	public static void BulletTime(bool activate, float timeSpeed = 0.1f)
+	public void BulletTime(bool activate, float timeSpeed = 0.1f)
 	{
 		if (activate)
 		{
-			GameController.singleton.StartCoroutine(SlowDown(timeSpeed * intendedTimeSpeed));
+			StartCoroutine(SlowDown(timeSpeed * intendedTimeSpeed));
 		}
 		else
 		{
@@ -97,14 +116,14 @@ public class Pause : MonoBehaviour
 		}
 	}
 
-	public static void TemporarySlowDownEffect(float duration = 1f, float timeSpeed = 0.1f)
+	public void TemporarySlowDownEffect(float duration = 1f, float timeSpeed = 0.1f)
 	{
 		canPause = false;
-		GameController.singleton.StartCoroutine(SlowDown(timeSpeed * intendedTimeSpeed));
+		StartCoroutine(SlowDown(timeSpeed * intendedTimeSpeed));
 		DelayedAction(() => { slowDownEffect = false; }, duration);
 	}
 
-	private static IEnumerator SlowDown(float timeSpeed = 0.5f)
+	private IEnumerator SlowDown(float timeSpeed = 0.5f)
 	{
 		slowDownEffect = true;
 		while (slowDownEffect)
@@ -122,16 +141,16 @@ public class Pause : MonoBehaviour
 		canPause = true;
 	}
 
-	public static void DelayedAction(System.Action a, float wait, bool useDeltaTime = false)
+	public void DelayedAction(System.Action a, float wait, bool useDeltaTime = false)
 	{
-		GameController.singleton.StartCoroutine(Delay(a, wait, useDeltaTime));
+		StartCoroutine(Delay(a, wait, useDeltaTime));
 	}
 
-	private static IEnumerator Delay(System.Action a, float wait, bool useDeltaTime = false)
+	private IEnumerator Delay(System.Action a, float wait, bool useDeltaTime = false)
 	{
 		while (wait > 0f)
 		{
-			wait -= useDeltaTime ? Time.deltaTime : GameController.UnscaledDeltaTime;
+			wait -= useDeltaTime ? Time.deltaTime : recordingModeController.UnscaledDeltaTime;
 			yield return null;
 		}
 		a();

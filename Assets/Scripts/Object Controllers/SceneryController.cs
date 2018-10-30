@@ -26,8 +26,7 @@ public struct CosmicItem
 public class SceneryController : MonoBehaviour
 {
 	private string folderPath, lessFrequentImageFolderPath;
-	public static SceneryController singleton;
-	private bool singletonChecked;
+	private bool ready;
 
 	private List<List<List<List<CosmicItem>>>> items;
 	private const int reserveSize = 100;
@@ -59,6 +58,8 @@ public class SceneryController : MonoBehaviour
 
 	[Header("Texture Variables")]
 	private bool texturesGenerated;
+	private bool found, done, searchCompleted;
+	private int searchAmount;
 	public int variety = 10;
 	public Vector2Int textureSize = new Vector2Int(256, 256);
 	[Tooltip("Size of each individual star.")]
@@ -79,26 +80,16 @@ public class SceneryController : MonoBehaviour
 
 	private void Awake()
 	{
-		InitialSetup();
-		CreateStarSystems(null);
+		LoadingController lc = FindObjectOfType<LoadingController>();
+		if (!lc || lc.finishedLoading)
+		{
+			StartCoroutine(CreateStarSystems(null));
+		}
 	}
 
 	private void InitialSetup()
 	{
-		if (singletonChecked) return;
-
-		singletonChecked = true;
-
-		if (singleton == null)
-		{
-			singleton = this;
-			DontDestroyOnLoad(gameObject);
-		}
-		else
-		{
-			Destroy(gameObject);
-			return;
-		}
+		if (ready) return;
 
 		backgroundLayer = LayerMask.NameToLayer("BackgroundImage");
 		sceneryHolder = new GameObject("Scenery Holder").transform;
@@ -108,6 +99,7 @@ public class SceneryController : MonoBehaviour
 		perlinOffset = new Vector2(Random.value, Random.value);
 		folderPath = Application.dataPath + "/../StarSystemImages";
 		lessFrequentImageFolderPath = folderPath + "/LessFrequentImages";
+		ready = true;
 	}
 
 	private void Update()
@@ -115,8 +107,15 @@ public class SceneryController : MonoBehaviour
 		CheckCoords();
 	}
 
+	private void OnDestroy()
+	{
+		if (sceneryHolder) Destroy(sceneryHolder.gameObject);
+	}
+
 	private void CheckCoords()
 	{
+		if (!texturesGenerated) return;
+
 		if (bgCamTrackerSO)
 		{
 			transform.position = bgCamTrackerSO.position;
@@ -277,10 +276,16 @@ public class SceneryController : MonoBehaviour
 
 		//if textures have already been generated then don't worry about making more
 		if (texturesGenerated) yield break;
-		texturesGenerated = true;
+
+		StartCoroutine(CheckForExistingStars());
+
+		while (!done)
+		{
+			yield return null;
+		}
 
 		//check for existing star system textures
-		if (!CheckForExistingStars())
+		if (!found)
 		{
 			//determine min/max amount of stars per texture
 			Vector2Int starNumRange = new Vector2Int((int)Mathf.Pow(2f, starPowerRange.x),
@@ -372,11 +377,11 @@ public class SceneryController : MonoBehaviour
 				types.Add(Sprite.Create(t,
 					new Rect(Vector2.zero, new Vector2(textureSize.x, textureSize.y)),
 					Vector2.one / 2f));
+
+				if (i % 3 == 0) yield return null;
 			}
 		}
-
-		//fill background with new textures
-		CheckCoords(); 
+		texturesGenerated = true;
 
 		//run mandatory action, probably to signal that it's finished
 		if (a != null) a();
@@ -497,19 +502,32 @@ public class SceneryController : MonoBehaviour
 		}
 	}
 
-	private bool CheckForExistingStars()
+	private IEnumerator CheckForExistingStars()
 	{
-		if (!Directory.Exists(folderPath)) return false;
+		done = false;
+		found = false;
+		if (!Directory.Exists(folderPath)) yield break;
 		//get common type images
-		variety -= SearchForImages(folderPath, "*.png", types) + SearchForImages(folderPath, "*.jpg", types);
+		StartCoroutine(SearchForImages(folderPath, "*.png", types));
+		while (!searchCompleted) yield return null;
+		variety -= searchAmount;
+		StartCoroutine(SearchForImages(folderPath, "*.jpg", types));
+		while (!searchCompleted) yield return null;
+		variety -= searchAmount;
+		yield return null;
 		//get images from folder marked as less frequent
-		SearchForImages(lessFrequentImageFolderPath, "*.png", lessFrequentTypes);
-		SearchForImages(lessFrequentImageFolderPath, "*.jpg", lessFrequentTypes);
-		return variety <= 0;
+		StartCoroutine(SearchForImages(lessFrequentImageFolderPath, "*.png", lessFrequentTypes));
+		while (!searchCompleted) yield return null;
+		StartCoroutine(SearchForImages(lessFrequentImageFolderPath, "*.jpg", lessFrequentTypes));
+		while (!searchCompleted) yield return null;
+		found = variety <= 0;
+		done = true;
 	}
 
-	private int SearchForImages(string path, string filename, List<Sprite> spriteList)
+	private IEnumerator SearchForImages(string path, string filename, List<Sprite> spriteList)
 	{
+		searchAmount = 0;
+		searchCompleted = false;
 		string[] images = Directory.GetFiles(path, filename);
 		for (int i = 0; i < images.Length; i++)
 		{
@@ -519,8 +537,11 @@ public class SceneryController : MonoBehaviour
 			t.Apply();
 			spriteList.Add(Sprite.Create(t, new Rect(Vector2.zero, new Vector2(t.width, t.height)),
 				Vector2.one / 2f));
+
+			if (i % 5 == 0) yield return null;
 		}
-		return images.Length;
+		searchAmount = images.Length;
+		searchCompleted = true;
 	}
 
 	#region Convenient short-hand methods for accessing the grid

@@ -39,7 +39,7 @@ public class SpawnableEntity
 		float a = Mathf.Clamp01(rarity);
 		float b = Mathf.Max(0, rarityIncreaseSteepness);
 		float c = Math.Max(0, rarityZoneOffset);
-		float x = distance / Cnsts.CHUNK_SIZE;
+		float x = distance / Constants.CHUNK_SIZE;
 
 		return a * ((x - c)/(x - c + b));
 	}

@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,6 +8,8 @@ public class InventoryUIController : MonoBehaviour
 	private List<Image> slotSprites;
 	private List<Image> itemSprites = new List<Image>();
 	private List<Text> countTexts = new List<Text>();
+	[SerializeField]
+	private Shuttle shuttle;
 	[SerializeField]
 	private Inventory shuttleInventory;
 	private int selected = 0;
@@ -39,6 +40,10 @@ public class InventoryUIController : MonoBehaviour
 
 	private void UpdateSlots()
 	{
+		shuttle = shuttle ?? FindObjectOfType<Shuttle>();
+		if (!shuttle) return;
+		shuttleInventory = shuttleInventory ?? shuttle.storage;
+
 		List<ItemStack> stacks = shuttleInventory.inventory;
 		for (int i = 0; i < stacks.Count; i++)
 		{

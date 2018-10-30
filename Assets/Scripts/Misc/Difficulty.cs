@@ -11,7 +11,7 @@ public static class Difficulty
 		//simplified quadratic formula
 		//formula: difficulty = (sqrt(modifier^2 + 4 * distance) - modifier) / 2
 		//solve formula for difficulty rounded to nearest integer
-		return (int)(((Mathf.Sqrt(Mathf.Pow(rangeBasedDifficultyModifier, 2f)) + 4 * distance / Cnsts.CHUNK_SIZE)
+		return (int)(((Mathf.Sqrt(Mathf.Pow(rangeBasedDifficultyModifier, 2f)) + 4 * distance / Constants.CHUNK_SIZE)
 			- rangeBasedDifficultyModifier) / 2f);
 	}
 }

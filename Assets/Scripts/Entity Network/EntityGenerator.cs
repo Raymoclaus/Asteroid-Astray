@@ -6,7 +6,7 @@ public static class EntityGenerator
 {
 	#region Fields
 	//references to all kinds of spawnable entities
-	private static EntityPrefabController prefabs;
+	private static EntityPrefabDB prefabs;
 	//keeps track of whether chunks have been filled already. Prevents chunk from refilling if emptied by player
 	private static List<List<List<bool>>> _wasFilled = new List<List<List<bool>>>();
 	//List of empty game objects to store entities in and keep the hierarchy organised
@@ -170,7 +170,7 @@ public static class EntityGenerator
 			}
 			yield return null;
 		}
-		a();
+		if (a != null) a();
 	}
 
 	/// Removes and destroys all asteroids in the entity network then sets all fill triggers to false
@@ -195,7 +195,7 @@ public static class EntityGenerator
 		}
 	}
 
-	public static IEnumerator SetPrefabs(EntityPrefabController prf, System.Action a)
+	public static IEnumerator SetPrefabs(EntityPrefabDB prf, System.Action a)
 	{
 		prefabs = prf;
 		//sort the space priority entities by lowest rarity to highest
@@ -226,7 +226,7 @@ public static class EntityGenerator
 		{
 			holders.Add(e.name, new GameObject(e.name));
 		}
-		a();
+		if (a != null) a();
 	}
 
 	#region Convenient short-hand methods for accessing the grid

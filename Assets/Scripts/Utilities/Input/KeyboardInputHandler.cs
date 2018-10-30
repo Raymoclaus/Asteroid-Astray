@@ -42,6 +42,8 @@ public class KeyboardInputHandler : ICustomInputType
 
 	public static float GetLookDirection(Vector2 refLocation)
 	{
+		if (!Camera.main) return 0f;
+
 		Vector2 cursorPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
 		return -Vector2.SignedAngle(Vector2.up, cursorPos - refLocation);
 	}

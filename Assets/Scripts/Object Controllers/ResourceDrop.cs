@@ -16,6 +16,7 @@ public class ResourceDrop : MonoBehaviour
 	public SpriteRenderer rend;
 	private int amount = 1;
 	private Item.Type type = Item.Type.Stone;
+	private ItemPopupUI popupUI;
 
 	private void Start()
 	{
@@ -64,15 +65,19 @@ public class ResourceDrop : MonoBehaviour
 			follow.CollectResources(this);
 			if (follow.GetEntityType() == EntityType.Shuttle)
 			{
-				ItemPopupUI.GeneratePopup(type, amount);
+				if (popupUI)
+				{
+					popupUI.GeneratePopup(type, amount);
+				}
 			}
 			Destroy(gameObject);
 			return;
 		}
 	}
 
-	public void Create(Entity target, Vector2 pos, Item.Type type = Item.Type.Stone, int amount = 1)
+	public void Create(ItemPopupUI popupUI, Entity target, Vector2 pos, Item.Type type = Item.Type.Stone, int amount = 1)
 	{
+		this.popupUI = popupUI;
 		follow = target;
 		transform.position = pos;
 		transform.parent = ParticleGenerator.holder;

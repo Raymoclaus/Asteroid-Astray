@@ -25,6 +25,6 @@ public class CameraCtrlTracker : ScriptableObject
 
 	public bool IsCoordInPhysicsRange(ChunkCoords coord)
 	{
-		return ChunkCoords.MaxDistance(coord, coords) < Cnsts.MAX_PHYSICS_RANGE;
+		return ChunkCoords.MaxDistance(coord, coords) < Constants.MAX_PHYSICS_RANGE;
 	}
 }

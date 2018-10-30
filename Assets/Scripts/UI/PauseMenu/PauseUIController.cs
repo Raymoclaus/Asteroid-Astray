@@ -12,11 +12,17 @@ public class PauseUIController : MonoBehaviour
 	[SerializeField]
 	private CanvasGroup pauseUIGroup;
 	[SerializeField]
-	private CustomScreenEffect uiCam;
+	private UICamCtrl uiCam;
 	[SerializeField]
-	private CustomScreenEffect mainCam;
+	private CameraCtrl mainCam;
+	[SerializeField]
+	private CustomScreenEffect uiCamEffects;
+	[SerializeField]
+	private CustomScreenEffect mainCamEffects;
 	[SerializeField]
 	private Material uiRenderEffect;
+	[SerializeField]
+	private RecordingModeController recordingModeController;
 
 	public void Activate(bool active, System.Action a = null, bool instant = false)
 	{
@@ -64,7 +70,7 @@ public class PauseUIController : MonoBehaviour
 		float timer = 0f;
 		while (timer < tabShiftDuration)
 		{
-			timer += GameController.UnscaledDeltaTime;
+			timer += recordingModeController.UnscaledDeltaTime;
 
 			for (int i = 0; i < panels.Length; i++)
 			{
@@ -83,7 +89,7 @@ public class PauseUIController : MonoBehaviour
 			float timer = 0f;
 			while (timer < 1f)
 			{
-				timer += GameController.UnscaledDeltaTime * 2f;
+				timer += recordingModeController.UnscaledDeltaTime * 2f;
 				pauseUIGroup.alpha = Mathf.Lerp(0f, 1f, timer);
 				yield return null;
 			}
@@ -98,7 +104,7 @@ public class PauseUIController : MonoBehaviour
 			float timer = 0f;
 			while (timer < 1f)
 			{
-				timer += GameController.UnscaledDeltaTime * 2f;
+				timer += recordingModeController.UnscaledDeltaTime * 2f;
 				pauseUIGroup.alpha = Mathf.Lerp(1f, 0f, timer);
 				yield return null;
 			}
@@ -111,13 +117,22 @@ public class PauseUIController : MonoBehaviour
 
 	private void ActivateRender(bool activate)
 	{
-		uiCam.gameObject.SetActive(activate);
+		uiCam = uiCam ?? FindObjectOfType<UICamCtrl>();
+		if (!uiCam) return;
+		uiCamEffects = uiCamEffects ?? uiCam.GetComponent<CustomScreenEffect>();
+		if (!uiCamEffects) return;
+		mainCam = mainCam ?? FindObjectOfType<CameraCtrl>();
+		if (!mainCam) return;
+		mainCamEffects = mainCamEffects ?? mainCam.GetComponent<CustomScreenEffect>();
+		if (!mainCamEffects) return;
+
+		uiCamEffects.gameObject.SetActive(activate);
 		int i = 0;
-		for (; i < mainCam.effects.Length; i++)
+		for (; i < mainCamEffects.effects.Length; i++)
 		{
-			if (mainCam.effects[i] == uiRenderEffect)
+			if (mainCamEffects.effects[i] == uiRenderEffect)
 			{
-				mainCam.SetNoBlit(i, !activate);
+				mainCamEffects.SetNoBlit(i, !activate);
 				break;
 			}
 		}
