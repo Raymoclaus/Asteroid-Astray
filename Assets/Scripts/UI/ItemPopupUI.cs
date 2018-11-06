@@ -2,42 +2,33 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ItemPopupUI : MonoBehaviour
+public class ItemPopupUI : PopupUI
 {
-	private RectTransform[] popups;
-	private float popupHeight, xPos;
-	private static List<PopupData> popupsToShow = new List<PopupData>();
-	[SerializeField]
-	private float scrollDelay = 3f, fullDelay = 5f;
-	private float scrollDelayTimer = 0f;
-	[SerializeField]
-	private int popupViewLimit = 4;
-	private static List<PopupObject> activePopups = new List<PopupObject>();
-	private List<PopupObject> inactivePopups = new List<PopupObject>();
+	private List<ItemPopupObject> activePopups = new List<ItemPopupObject>();
+	private List<ItemPopupObject> inactivePopups = new List<ItemPopupObject>();
+	private List<PopupData> popupsToShow = new List<PopupData>();
 	public Color textColor;
 	[SerializeField]
-	private float popupEntrySpeed = 2f, popupMoveSpeed = 5f, textFadeSpeed = 0.17f;
+	private float textFadeSpeed = 0.17f;
+	private float xPos;
 	[SerializeField]
-	public ItemSprites sprites;
-	[SerializeField]
-	private LoadingTracker loadingTrackerSO;
+	private ItemSprites sprites;
 
 	private void Awake()
 	{
-		popups = new RectTransform[transform.childCount];
 		for (int i = 0; i < transform.childCount; i++)
 		{
-			popups[i] = (RectTransform)transform.GetChild(i);
-			PopupObject po = new PopupObject(sprites,
-				popups[i],
-				popups[i].GetComponent<Image>(),
-				popups[i].GetChild(0).GetComponent<Image>(),
-				popups[i].GetChild(1).GetChild(0).GetComponent<Text>(),
-				popups[i].GetChild(1).GetChild(1).GetComponent<Text>());
+			RectTransform popup = (RectTransform)transform.GetChild(i);
+			ItemPopupObject po = new ItemPopupObject(sprites,
+				popup,
+				popup.GetComponent<Image>(),
+				popup.GetChild(0).GetComponent<Image>(),
+				popup.GetChild(1).GetChild(0).GetComponent<Text>(),
+				popup.GetChild(1).GetChild(1).GetComponent<Text>());
 			inactivePopups.Add(po);
 		}
-		popupHeight = popups[0].rect.height;
-		xPos = popups[0].anchoredPosition.x;
+		popupHeight = ((RectTransform)transform.GetChild(0)).rect.height;
+		xPos = ((RectTransform)transform.GetChild(0)).anchoredPosition.x;
 	}
 
 	private void Update()
@@ -48,7 +39,7 @@ public class ItemPopupUI : MonoBehaviour
 		{
 			if (activePopups.Count == popupViewLimit)
 			{
-				scrollDelayTimer += Time.deltaTime;
+				scrollDelayTimer += recordingModeTrackerSO.UnscaledDeltaTime;
 				if (scrollDelayTimer >= scrollDelay)
 				{
 					RemovePopup(activePopups.Count - 1);
@@ -66,7 +57,7 @@ public class ItemPopupUI : MonoBehaviour
 
 			if (activePopups.Count < popupViewLimit)
 			{
-				PopupObject po = inactivePopups[0];
+				ItemPopupObject po = inactivePopups[0];
 				activePopups.Insert(0, po);
 				inactivePopups.RemoveAt(0);
 				po.transform.anchoredPosition =
@@ -81,14 +72,14 @@ public class ItemPopupUI : MonoBehaviour
 
 		for (int i = 0; i < activePopups.Count; i++)
 		{
-			PopupObject po = activePopups[i];
+			ItemPopupObject po = activePopups[i];
 			po.UIimg.material.SetFloat("_Flash", 1f);
 			float delta = po.UIimg.material.GetFloat("_Radius");
-			delta = Mathf.MoveTowards(delta, 1f, Time.deltaTime * popupEntrySpeed);
+			delta = Mathf.MoveTowards(delta, 1f, recordingModeTrackerSO.UnscaledDeltaTime * popupEntrySpeed);
 			po.UIimg.material.SetFloat("_Radius", delta);
 			po.transform.anchoredPosition = Vector2.Lerp(po.transform.anchoredPosition,
 				new Vector2(xPos, -popupHeight / 2f - popupHeight * (popupViewLimit - i - 1)),
-				Time.deltaTime * popupMoveSpeed);
+				recordingModeTrackerSO.UnscaledDeltaTime * popupMoveSpeed);
 			if (delta >= 0.833f)
 			{
 				ActivateUIDetails(po, true);
@@ -96,7 +87,7 @@ public class ItemPopupUI : MonoBehaviour
 					Color.Lerp(Color.white, textColor, (delta - 0.833f) / textFadeSpeed);
 			}
 
-			po.AddTimer(Time.deltaTime);
+			po.AddTimer(recordingModeTrackerSO.UnscaledDeltaTime);
 			if (po.timer >= fullDelay)
 			{
 				RemovePopup(i);
@@ -105,26 +96,26 @@ public class ItemPopupUI : MonoBehaviour
 
 		for (int i = 0; i < inactivePopups.Count; i++)
 		{
-			PopupObject po = inactivePopups[i];
+			ItemPopupObject po = inactivePopups[i];
 			po.UIimg.material.SetFloat("_Flash", 0f);
 			float delta = po.UIimg.material.GetFloat("_Radius");
 			po.UIimg.material.SetFloat("_Radius",
-				Mathf.MoveTowards(delta, 0f, Time.deltaTime));
+				Mathf.MoveTowards(delta, 0f, recordingModeTrackerSO.UnscaledDeltaTime));
 			po.transform.anchoredPosition = Vector2.Lerp(po.transform.anchoredPosition,
 				new Vector2(xPos, po.transform.anchoredPosition.y),
-				Time.deltaTime * popupMoveSpeed);
+				recordingModeTrackerSO.UnscaledDeltaTime * popupMoveSpeed);
 		}
 	}
 
-	private void RemovePopup(int index)
+	protected override void RemovePopup(int index)
 	{
-		PopupObject po = activePopups[index];
+		ItemPopupObject po = activePopups[index];
 		inactivePopups.Add(po);
 		activePopups.Remove(po);
 		ActivateUIDetails(po, false);
 	}
 
-	private void ActivateUIDetails(PopupObject po, bool activate)
+	private void ActivateUIDetails(ItemPopupObject po, bool activate)
 	{
 		po.spr.gameObject.SetActive(activate);
 		po.name.gameObject.SetActive(activate);
@@ -134,7 +125,7 @@ public class ItemPopupUI : MonoBehaviour
 	public void GeneratePopup(Item.Type type, int amount = 1)
 	{
 		PopupData data = new PopupData(sprites, type, amount);
-		foreach (PopupObject po in activePopups)
+		foreach (ItemPopupObject po in activePopups)
 		{
 			if (po.type == type)
 			{
@@ -153,17 +144,15 @@ public class ItemPopupUI : MonoBehaviour
 		popupsToShow.Add(data);
 	}
 
-	private class PopupObject
+	private class ItemPopupObject : PopupObject
 	{
 		private ItemSprites sprites;
-		public RectTransform transform;
 		public Item.Type type;
 		public Image UIimg, spr;
 		public Text name, description;
-		public float timer;
 		public int amount;
 
-		public PopupObject(ItemSprites sprites, RectTransform transform, Image UIimg, Image spr, Text name, Text description, Item.Type type = Item.Type.Blank, int amount = 0)
+		public ItemPopupObject(ItemSprites sprites, RectTransform transform, Image UIimg, Image spr, Text name, Text description, Item.Type type = Item.Type.Blank, int amount = 0)
 		{
 			this.sprites = sprites;
 			this.transform = transform;
@@ -209,16 +198,6 @@ public class ItemPopupUI : MonoBehaviour
 			}
 			UpdateName();
 			description.text = Item.ItemDescription(this.type);
-		}
-
-		public void SetTimer(float time)
-		{
-			timer = time;
-		}
-
-		public void AddTimer(float time)
-		{
-			timer += time;
 		}
 	}
 

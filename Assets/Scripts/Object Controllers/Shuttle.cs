@@ -116,6 +116,8 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 	//reference to sonic boom animation
 	[SerializeField]
 	private GameObject sonicBoomBoostEffect;
+	public float boostInvulnerabilityTime = 0.2f;
+	private bool isInvulnerable = false;
 	#endregion Boost
 	#endregion Fields
 
@@ -205,7 +207,7 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 				Boost(isBoosting);
 			}
 		}
-			
+
 		//update last look direction (mostly for joystick use)
 		lastLookDirection = lookDirection;
 
@@ -234,7 +236,7 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 
 		//if no acceleration then ignore the rest
 		if (Mathf.Approximately(accel.x, 0f) && Mathf.Approximately(accel.y, 0f)) return;
-		
+
 		//rotate forward acceleration direction to be based on the direction the shuttle is facing
 		float accelAngle = -Vector2.SignedAngle(Vector2.up, accel);
 		Vector2 shuttleDir;
@@ -346,7 +348,7 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 		{
 			audioManager.PlaySFX(collectResourceSound, transform.position, transform, pitch: resourceCollectedPitch);
 		}
-		
+
 	}
 
 	private void SearchForNearestAsteroid()
@@ -378,7 +380,7 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 	{
 		rot.z = ((newRot % 360f) + 360f) % 360f;
 	}
-	
+
 	public override EntityType GetEntityType() {
 		return EntityType.Shuttle;
 	}
@@ -447,6 +449,8 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 
 	public void Stun()
 	{
+		if (isInvulnerable) return;
+
 		drill.StopDrilling();
 		stunned = true;
 		Rb.constraints = RigidbodyConstraints2D.None;
@@ -509,11 +513,9 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 
 	public bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer, int dropModifier = 0)
 	{
-		if (destroyer != this)
-		{
-			//take damage
-		}
-		return false;
+		if (destroyer == this || isInvulnerable) return false;
+
+		return true;
 	}
 
 	public Vector2 GetPosition()
@@ -539,6 +541,9 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 					effectRotation += transform.eulerAngles;
 					effect.eulerAngles = effectRotation;
 					screenRippleSO.StartRipple(this, distortionLevel: 0.01f);
+					isInvulnerable = true;
+					pause = pause ?? FindObjectOfType<Pause>();
+					pause.DelayedAction(() => isInvulnerable = false, boostInvulnerabilityTime, true);
 				}
 			}
 			isBoosting = true;

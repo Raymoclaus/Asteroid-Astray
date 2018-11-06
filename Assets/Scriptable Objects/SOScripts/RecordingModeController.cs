@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-[CreateAssetMenu]
+[CreateAssetMenu(menuName = "Scriptable Objects/RecordingModeController")]
 public class RecordingModeController : ScriptableObject
 {
 	[SerializeField]
@@ -8,7 +8,6 @@ public class RecordingModeController : ScriptableObject
 	public bool RecordingMode { get { return recordingMode; } }
 	public float UnscaledDeltaTime { get { return RecordingMode ? 1.4f / 60f : Time.unscaledDeltaTime; } }
 	public AnimationClip drillLaunchLightningEffect;
-
 
 	private void UpdateRecordModeFixes(RecordingModeController fixes)
 	{

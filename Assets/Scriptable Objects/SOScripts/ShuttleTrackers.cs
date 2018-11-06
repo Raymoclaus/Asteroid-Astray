@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-[CreateAssetMenu]
+[CreateAssetMenu(menuName = "Scriptable Objects/ShuttleTracker")]
 public class ShuttleTrackers : ScriptableObject
 {
 	[HideInInspector]

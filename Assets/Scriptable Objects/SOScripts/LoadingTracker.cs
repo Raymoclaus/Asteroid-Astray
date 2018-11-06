@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-[CreateAssetMenu]
+[CreateAssetMenu(menuName = "Scriptable Objects/LoadingTracker")]
 public class LoadingTracker : ScriptableObject
 {
 	public bool isLoading = true;

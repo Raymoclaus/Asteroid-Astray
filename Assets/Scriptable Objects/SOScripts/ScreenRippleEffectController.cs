@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using UnityEngine;
 
-[CreateAssetMenu]
+[CreateAssetMenu(menuName = "Scriptable Objects/ScreenRippleEffectController")]
 public class ScreenRippleEffectController : ScriptableObject
 {
 	[SerializeField]

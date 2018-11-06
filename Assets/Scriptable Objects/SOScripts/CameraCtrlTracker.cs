@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-[CreateAssetMenu]
+[CreateAssetMenu(menuName = "Scriptable Objects/CameraCtrlTracker")]
 public class CameraCtrlTracker : ScriptableObject
 {
 	public float minCamSize = 1.7f;

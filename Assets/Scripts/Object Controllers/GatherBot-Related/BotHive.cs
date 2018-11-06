@@ -187,35 +187,29 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 		List<ChunkCoords> searchCoords = new List<ChunkCoords>();
 
 		ChunkCoords location = ChunkCoords.Zero;
-		while (true)
+		bool finished = false;
+		while (!finished)
 		{
 			if (b == null) return;
 			searchCoords = EntityNetwork.GetCoordsOnRangeBorder(_coords, searchRange);
 			searchRange++;
-			bool finished = false;
 
-			foreach (ChunkCoords c in searchCoords)
+			for (int i = searchCoords.Count - 1; i >= 0; i--)
 			{
-				bool found = false;
-				foreach (ChunkCoords cc in occupiedCoords)
+				ChunkCoords c = searchCoords[i];
+				for (int j = 0; j < occupiedCoords.Count; j++)
 				{
-					if (cc == c)
+					ChunkCoords cc = searchCoords[i];
+					if (c == cc)
 					{
-						found = true;
-						break;
+						searchCoords.RemoveAt(i);
 					}
 				}
-				if (!found)
-				{
-					finished = true;
-					location = c;
-					break;
-				}
 			}
-
-			if (finished)
+			if (searchCoords.Count > 0)
 			{
-				break;
+				finished = true;
+				location = searchCoords[UnityEngine.Random.Range(0, searchCoords.Count)];
 			}
 		}
 

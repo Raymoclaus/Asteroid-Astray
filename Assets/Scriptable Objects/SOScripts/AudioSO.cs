@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEditor;
 
-[CreateAssetMenu]
+[CreateAssetMenu(menuName = "Scriptable Objects/AudioSO")]
 public class AudioSO : ScriptableObject
 {
 	public AudioClip[] sfx;

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-[CreateAssetMenu]
+[CreateAssetMenu(menuName = "Scriptable Objects/AsteroidSprites")]
 public class AsteroidSprites : ScriptableObject
 {
 	public NestedSpriteArray[] asteroidSprites;
