@@ -5,8 +5,6 @@ public class DialogueController : MonoBehaviour
 {
 	[SerializeField]
 	private DialoguePopupUI dialogueUI;
-	[SerializeField]
-	private List<ConversationEvent> dialogueStarters;
 	private ConversationEvent currentConversation;
 	private DialogueLineEvent[] currentLines;
 	private EntityProfile[] speakers;
@@ -20,22 +18,9 @@ public class DialogueController : MonoBehaviour
 
 	private void Update()
 	{
-		if (Input.GetKeyDown(KeyCode.T))
+		if (dialogueIsRunning && (Input.GetKeyDown(KeyCode.Return) || Input.GetMouseButtonDown(0)))
 		{
-			if (!dialogueIsRunning)
-			{
-				dialogueIsRunning = true;
-				currentConversation = dialogueStarters[0];
-				currentLines = currentConversation.conversation;
-				speakers = currentConversation.speakers;
-				currentPosition = 0;
-				Pause.InstantPause(true);
-				SendPopup();
-			}
-			else
-			{
-				GetNextLine();
-			}
+			GetNextLine();
 		}
 	}
 
@@ -74,5 +59,16 @@ public class DialogueController : MonoBehaviour
 		string line = currentLines[currentPosition].GetLine();
 		Sprite face = speakers[speakerID].face;
 		dialogueUI.GeneratePopup(name, line, face, speakerID);
+	}
+
+	public void StartDialogue(ConversationEvent newDialogue)
+	{
+		dialogueIsRunning = true;
+		currentConversation = newDialogue;
+		currentLines = currentConversation.conversation;
+		speakers = currentConversation.speakers;
+		currentPosition = 0;
+		Pause.InstantPause(true);
+		SendPopup();
 	}
 }
