@@ -31,6 +31,14 @@ public class CameraCtrl : MonoBehaviour
 
 	public ChunkFiller chunkFiller;
 
+	//cache
+	private List<ChunkCoords> notInViewAnymore = new List<ChunkCoords>();
+	private List<ChunkCoords> newCoords = new List<ChunkCoords>();
+	private List<Entity> notInView = new List<Entity>();
+	private List<ChunkCoords> newCoordsInView = new List<ChunkCoords>();
+	private List<Entity> nowInView = new List<Entity>();
+	private List<Entity> physicsRange = new List<Entity>();
+
 	private void Start()
 	{
 		//get ref to Camera component
@@ -163,11 +171,13 @@ public class CameraCtrl : MonoBehaviour
 		ChunkCoords center = cc ?? ChunkCoords.Zero;
 		//keep track of coords previous in view
 		//query the EntityNetwork for a list of coordinates in view based on camera's size
-		List<ChunkCoords> newCoordsInView =
-			EntityNetwork.GetCoordsInRange(center, trackerSO.ENTITY_VIEW_RANGE + trackerSO.RangeModifier);
+		newCoordsInView.Clear();
+		EntityNetwork.GetCoordsInRange(center, trackerSO.ENTITY_VIEW_RANGE + trackerSO.RangeModifier, newCoordsInView);
 		//create a lists and filter out coordinates that are still in view
-		List<ChunkCoords> notInViewAnymore = new List<ChunkCoords>(coordsInView);
-		List<ChunkCoords> newCoords = new List<ChunkCoords>(newCoordsInView);
+		notInViewAnymore.Clear();
+		newCoords.Clear();
+		notInViewAnymore.AddRange(coordsInView);
+		newCoords.AddRange(newCoordsInView);
 		for (int i = notInViewAnymore.Count - 1; i >= 0; i--)
 		{
 			int index = newCoords.IndexOf(notInViewAnymore[i]);
@@ -180,14 +190,16 @@ public class CameraCtrl : MonoBehaviour
 		coordsInView = newCoordsInView;
 		
 		//disable all entities previously in view
-		List<Entity> notInView = EntityNetwork.GetEntitiesAtCoords(notInViewAnymore);
+		notInView.Clear();
+		EntityNetwork.GetEntitiesAtCoords(notInViewAnymore, addToList: notInView);
 		foreach (Entity e in notInView)
 		{
 			e.SetAllActivity(false);
 		}
 
 		//enables all entities now in view
-		List<Entity> nowInView = EntityNetwork.GetEntitiesAtCoords(newCoords);
+		nowInView.Clear();
+		EntityNetwork.GetEntitiesAtCoords(newCoords, addToList: nowInView);
 		foreach (Entity e in nowInView)
 		{
 			e.SetAllActivity(true);
@@ -198,7 +210,8 @@ public class CameraCtrl : MonoBehaviour
 
 	private void CheckPhysicsRange(ChunkCoords center)
 	{
-		List<Entity> physicsRange = EntityNetwork.GetEntitiesInRange(center, Constants.MAX_PHYSICS_RANGE);
+		physicsRange.Clear();
+		EntityNetwork.GetEntitiesInRange(center, Constants.MAX_PHYSICS_RANGE, addToList: physicsRange);
 
 		foreach(Entity e in physicsRange)
 		{

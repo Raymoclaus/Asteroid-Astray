@@ -59,12 +59,12 @@ public class Entity : MonoBehaviour
 
 	public virtual void Awake()
 	{
-		if (!EntityNetwork.ready)
+		mainCanvas = mainCanvas ?? FindObjectOfType<MainCanvas>() ?? Instantiate(mainCanvasPrefab);
+		loadingController = loadingController ?? FindObjectOfType<LoadingController>()
+			?? Instantiate(loadingControllerPrefab, mainCanvas.transform);
+		if (!EntityNetwork.ready || !loadingController.finishedLoading)
 		{
 			gameObject.SetActive(false);
-			mainCanvas = mainCanvas ?? FindObjectOfType<MainCanvas>() ?? Instantiate(mainCanvasPrefab);
-			loadingController = loadingController ?? FindObjectOfType<LoadingController>()
-				?? Instantiate(loadingControllerPrefab, mainCanvas.transform);
 			EntityNetwork.postInitActions.Add(() =>
 			{
 				Initialise();

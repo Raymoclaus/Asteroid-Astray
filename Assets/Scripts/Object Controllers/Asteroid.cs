@@ -48,6 +48,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	private float launchDuration = 1.5f;
 	private Entity launcher;
 	private LaunchTrailController launchTrail;
+	private ContactPoint2D[] contacts = new ContactPoint2D[1];
 	#endregion
 
 	#region Audio
@@ -194,7 +195,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		particleGenerator = particleGenerator ?? FindObjectOfType<ParticleGenerator>();
 		if (!particleGenerator) return;
 
-		if (Health <= 0f)
+		if (Health <= 0f && this != null)
 		{
 			particleGenerator.GenerateParticle(GetCurrentSpriteSettings()[GetCurrentSpriteSettings().Length - 1],
 				transform.position, fadeOut: false, lifeTime: 0.05f,
@@ -330,7 +331,6 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	{
 		Collider2D other = collision.collider;
 		int otherLayer = other.gameObject.layer;
-		ContactPoint2D[] contacts = new ContactPoint2D[1];
 		collision.GetContacts(contacts);
 		Vector2 contactPoint = contacts[0].point;
 		float collisionStrength = collision.relativeVelocity.magnitude;

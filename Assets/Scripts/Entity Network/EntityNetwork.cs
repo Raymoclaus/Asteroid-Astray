@@ -57,26 +57,31 @@ public static class EntityNetwork
 		}
 
 		ready = true;
-		foreach (Action action in postInitActions)
+		a?.Invoke();
+	}
+
+	public static void RunInitialisationActions()
+	{
+		for (int i = 0; postInitActions.Count > 0;)
 		{
-			action();
+			postInitActions[i]();
+			postInitActions.RemoveAt(i);
 		}
-		if (a != null) a();
 	}
 
 	/// Returns a list of all entities located in cells within range of the given coordinates
 	public static List<Entity> GetEntitiesInRange(ChunkCoords center, int range, EntityType? type = null,
-		List<Entity> exclusions = null)
+		List<Entity> exclusions = null, List<Entity> addToList = null)
 	{
 		List<ChunkCoords> coordsInRange = GetCoordsInRange(center, range);
 		//declare a list to be filled and reserve some room
-		return GetEntitiesAtCoords(coordsInRange, type, exclusions);
+		return GetEntitiesAtCoords(coordsInRange, type, exclusions, addToList);
 	}
 
 	public static List<Entity> GetEntitiesAtCoords(List<ChunkCoords> coordsList, EntityType? type = null,
-		List<Entity> exclusions = null)
+		List<Entity> exclusions = null, List<Entity> addToList = null)
 	{
-		List<Entity> entitiesInCoords = new List<Entity>(CellReserve * coordsList.Count);
+		List<Entity> entitiesInCoords = addToList ?? new List<Entity>(CellReserve * coordsList.Count);
 		EntityType filter = type ?? EntityType.Entity;
 		//loop through coordinates list and grab all entities at each coordinate
 		foreach (ChunkCoords coord in coordsList)
@@ -117,7 +122,7 @@ public static class EntityNetwork
 		List<ChunkCoords> coordsInRange = null, bool ignoreLackOfExistence = false)
 	{
 		int r = range + 2;
-		coordsInRange = coordsInRange == null ? new List<ChunkCoords>(r * r) : coordsInRange;
+		coordsInRange = coordsInRange ?? new List<ChunkCoords>(r * r);
 		//loop through surrounding chunks
 		for (int i = 0; i <= range; i++)
 		{
@@ -128,10 +133,10 @@ public static class EntityNetwork
 	}
 
 	public static List<ChunkCoords> GetCoordsOnRangeBorder(ChunkCoords center, int range,
-		List<ChunkCoords> coords = null, bool ignoreLackOfExistence = false)
+		List<ChunkCoords> addToList = null, bool ignoreLackOfExistence = false)
 	{
 		int r = range * 8;
-		coords = coords == null ? new List<ChunkCoords>(r) : coords;
+		addToList = addToList ?? new List<ChunkCoords>(r);
 		ChunkCoords c = center;
 		//loop through surrounding chunks
 		for (int i = -range; i <= range; i++)
@@ -145,19 +150,14 @@ public static class EntityNetwork
 				//validate will adjust for edge cases
 				ChunkCoords validCc = c;
 				validCc.Validate();
-				if (ignoreLackOfExistence)
+				if (ignoreLackOfExistence || ChunkExists(validCc))
 				{
-					coords.Add(validCc);
-					continue;
-				}
-				if (ChunkExists(validCc))
-				{
-					coords.Add(validCc);
+					addToList.Add(validCc);
 				}
 			}
 		}
 
-		return coords;
+		return addToList;
 	}
 
 	public static int CountInRange(ChunkCoords center, int range)

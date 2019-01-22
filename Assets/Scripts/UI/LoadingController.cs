@@ -80,8 +80,10 @@ public class LoadingController : MonoBehaviour
 	{
 		if (AllEssentialSystemsReady())
 		{
+			Debug.Log("Finished Loading");
 			loadingReady = null;
 			StartCoroutine(EntityGenerator.ChunkBatchOrder());
+			EntityNetwork.RunInitialisationActions();
 			trackerSO.isLoading = false;
 			holder.SetActive(false);
 			finishedLoading = true;

@@ -155,8 +155,6 @@ public class SceneryController : MonoBehaviour
 
 	private void SetUpScenery(ChunkCoords c)
 	{
-		//bool transparent = EntityNetwork.ContainsType(EntityType.Nebula, c, null);
-
 		foreach(CosmicItem item in Chunk(c))
 		{
 			GameObject obj;
@@ -179,7 +177,15 @@ public class SceneryController : MonoBehaviour
 			}
 
 			obj.transform.position = item.pos;
-			rend.sprite = item.common ? types[item.type] : lessFrequentTypes[item.type];
+			List<Sprite> listToUse = item.common ? types : lessFrequentTypes;
+			if (item.type >= listToUse.Count)
+			{
+				Debug.Log($"Is common? {item.common}. List size: {listToUse.Count}. Item value: {item.type}.", obj);
+			}
+			else
+			{
+				rend.sprite = item.common ? types[item.type] : lessFrequentTypes[item.type];
+			}
 			//Color col = transparent ? nebulaFadeBackground : Color.white;
 			Color col = Color.white;
 			float delta = (1f - (item.pos.z - starMinDistance) / starDistanceRange) * 0.9f + 0.1f;
@@ -222,7 +228,7 @@ public class SceneryController : MonoBehaviour
 			Vector2Pair area = ChunkCoords.GetCellArea(c);
 			Vector3 spawnPos = new Vector3(Random.Range(area.A.x, area.B.x), Random.Range(area.A.y, area.B.y),
 				(1f - Mathf.Pow(Random.value, 7f * (max / amount))) * starDistanceRange + starMinDistance);
-			bool common = Random.value <= commonTypeFrequency;
+			bool common = lessFrequentTypes.Count == 0 || Random.value <= commonTypeFrequency;
 			List<Sprite> listToChooseFrom = common ? types : lessFrequentTypes;
 			CosmicItem newItem = new CosmicItem((byte)Random.Range(0, listToChooseFrom.Count), spawnPos,
 				Random.Range(scaleRange.x, scaleRange.y), (byte)Random.Range(0, 8), common);
@@ -269,6 +275,7 @@ public class SceneryController : MonoBehaviour
 
 	public IEnumerator CreateStarSystems(System.Action a)
 	{
+		Debug.Log("Star Systems method executed");
 		yield return null;
 
 		//ensure this class is setup properly first
@@ -276,6 +283,8 @@ public class SceneryController : MonoBehaviour
 
 		//if textures have already been generated then don't worry about making more
 		if (texturesGenerated) yield break;
+
+		Debug.Log("Creating Star Systems");
 
 		StartCoroutine(CheckForExistingStars());
 
@@ -287,6 +296,7 @@ public class SceneryController : MonoBehaviour
 		//check for existing star system textures
 		if (!found)
 		{
+			Debug.Log("Generating new Star Systems");
 			//determine min/max amount of stars per texture
 			Vector2Int starNumRange = new Vector2Int((int)Mathf.Pow(2f, starPowerRange.x),
 				(int)Mathf.Pow(2f, starPowerRange.y));
@@ -334,6 +344,7 @@ public class SceneryController : MonoBehaviour
 			}
 
 			//wait until texture generation is done
+			Debug.Log($"Beginning thread work. {maxFreeWorkers} workers available.");
 			while (true)
 			{
 				bool allWorkDone = false;
@@ -352,8 +363,10 @@ public class SceneryController : MonoBehaviour
 					//where does the worker start in the texture?
 					int start = completedLines % textureSize.y;
 					//start working
-					this.StartCoroutineAsync(GenerateTexture(systems[textureCounter], tex[textureCounter],
-						start, linesPerJob));
+					Debug.Log($"Starting new work. Texture {textureCounter}, line {start}");
+					this.StartCoroutineAsync(GenerateTexture(systems[textureCounter], tex[textureCounter], start, linesPerJob));
+					//EZThread.ExecuteInBackground(() => GenerateTexture(systems[textureCounter], tex[textureCounter],
+					//	start, linesPerJob));
 					completedLines += linesPerJob;
 				}
 				//if all textures are complete and all workers are free
@@ -363,9 +376,11 @@ public class SceneryController : MonoBehaviour
 				}
 				yield return null;
 			}
+			Debug.Log("Finished thread work");
 
 			//apply all textures and turn them into sprites
 			Directory.CreateDirectory(folderPath);
+			Directory.CreateDirectory(lessFrequentImageFolderPath);
 			for (int i = 0; i < tex.Length; i++)
 			{
 				Texture2D t = new Texture2D(textureSize.x, textureSize.y, TextureFormat.RGBA32,
@@ -381,10 +396,14 @@ public class SceneryController : MonoBehaviour
 				if (i % 3 == 0) yield return null;
 			}
 		}
+		else
+		{
+			Debug.Log("Adding existing Star Systems");
+		}
 		texturesGenerated = true;
 
 		//run mandatory action, probably to signal that it's finished
-		if (a != null) a();
+		a?.Invoke();
 	}
 
 	private IEnumerator GenerateTexture(Star[] stars, Color[] tex, int start,
@@ -504,9 +523,15 @@ public class SceneryController : MonoBehaviour
 
 	private IEnumerator CheckForExistingStars()
 	{
+		Debug.Log("Checking for existing Star Systems");
 		done = false;
 		found = false;
-		if (!Directory.Exists(folderPath)) yield break;
+		if (!Directory.Exists(folderPath))
+		{
+			Debug.Log("No existing Star Systems found");
+			done = true;
+			yield break;
+		}
 		//get common type images
 		StartCoroutine(SearchForImages(folderPath, "*.png", types));
 		while (!searchCompleted) yield return null;
@@ -527,6 +552,8 @@ public class SceneryController : MonoBehaviour
 	private IEnumerator SearchForImages(string path, string filename, List<Sprite> spriteList)
 	{
 		searchAmount = 0;
+		if (!Directory.Exists(path)) yield break;
+
 		searchCompleted = false;
 		string[] images = Directory.GetFiles(path, filename);
 		for (int i = 0; i < images.Length; i++)

@@ -67,6 +67,7 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 	}
 	//efficiency with the searching algorithm used by the auto pilot
 	private float autoPilotTimer;
+	private List<Entity> asteroids = new List<Entity>();
 	//transform for the auto pilot to follow
 	private Transform followTarget;
 	//used to adjust speed temporarily
@@ -134,6 +135,7 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 	private float resourceCollectedPitchIncreaseAmount = 0.2f;
 	[SerializeField]
 	public AudioSO collisionSounds;
+	private ContactPoint2D[] contacts = new ContactPoint2D[1];
 	#endregion
 
 	public override void Awake()
@@ -356,11 +358,11 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 		autoPilotTimer = Pause.timeSinceOpen;
 
 		int searchRange = 1;
-		List<Entity> asteroids = new List<Entity>();
+		asteroids.Clear();
 
 		while (asteroids.Count == 0)
 		{
-			asteroids = EntityNetwork.GetEntitiesInRange(_coords, searchRange, EntityType.Asteroid);
+			EntityNetwork.GetEntitiesInRange(_coords, searchRange, EntityType.Asteroid, addToList: asteroids);
 			searchRange++;
 		}
 
@@ -500,7 +502,6 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 	{
 		Collider2D other = collision.collider;
 		int otherLayer = other.gameObject.layer;
-		ContactPoint2D[] contacts = new ContactPoint2D[1];
 		collision.GetContacts(contacts);
 		Vector2 contactPoint = contacts[0].point;
 

@@ -39,6 +39,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable, IStunnable, ICom
 	private Animator anim;
 	[SerializeField]
 	private AudioSO collisionSounds;
+	private ContactPoint2D[] contacts = new ContactPoint2D[1];
 
 	//fields
 	[SerializeField]
@@ -236,8 +237,8 @@ public class GatherBot : Entity, IDrillableObject, IDamageable, IStunnable, ICom
 				entitiesScanned.Clear();
 				new Thread(() =>
 				{
-					entitiesScanned = EntityNetwork.GetEntitiesInRange(_coords, 1,
-						exclusions: new List<Entity> { this });
+					EntityNetwork.GetEntitiesInRange(_coords, 1,
+						exclusions: new List<Entity> { this }, addToList: entitiesScanned);
 				}).Start();
 			}
 			else
@@ -313,7 +314,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable, IStunnable, ICom
 			float distLeft = Vector2.Distance(transform.position, targetPos);
 			if (distLeft <= 1f)
 			{
-				if (drillableTarget.TakeDrillDamage(DrillDamageQuery(false), drill.transform.position, this))
+				if (drillableTarget != null && drillableTarget.TakeDrillDamage(DrillDamageQuery(false), drill.transform.position, this))
 				{
 					DrillComplete();
 				}
@@ -637,7 +638,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable, IStunnable, ICom
 
 		while (surroundingEntities.Count == 0)
 		{
-			surroundingEntities = EntityNetwork.GetEntitiesInRange(_coords, searchRange);
+			EntityNetwork.GetEntitiesInRange(_coords, searchRange, addToList: surroundingEntities);
 
 			for (int i = 0; i < surroundingEntities.Count; i++)
 			{
@@ -735,24 +736,25 @@ public class GatherBot : Entity, IDrillableObject, IDamageable, IStunnable, ICom
 		}
 	}
 
+	private Vector2[] dirs = new Vector2[5];
+	private List<RaycastHit2D> hits = new List<RaycastHit2D>();
+	private RaycastHit2D[] checks = new RaycastHit2D[2];
 	private float RaycastDivert(float angleTo, float DistLeft)
 	{
-		Vector2[] dirs = new Vector2[]
-		{
-			new Vector2(Mathf.Sin(Mathf.Deg2Rad * (angleTo - 30f)), Mathf.Cos(Mathf.Deg2Rad * (angleTo - 30f))),
-			new Vector2(Mathf.Sin(Mathf.Deg2Rad * (angleTo - 15f)), Mathf.Cos(Mathf.Deg2Rad * (angleTo - 15f))),
-			new Vector2(Mathf.Sin(Mathf.Deg2Rad * angleTo), Mathf.Cos(Mathf.Deg2Rad * angleTo)),
-			new Vector2(Mathf.Sin(Mathf.Deg2Rad * (angleTo + 15f)), Mathf.Cos(Mathf.Deg2Rad * (angleTo + 15f))),
-			new Vector2(Mathf.Sin(Mathf.Deg2Rad * (angleTo + 30f)), Mathf.Cos(Mathf.Deg2Rad * (angleTo + 30f)))
-		};
-		RaycastHit2D[] hits = new RaycastHit2D[dirs.Length];
+		dirs[0] = new Vector2(Mathf.Sin(Mathf.Deg2Rad * (angleTo - 30f)), Mathf.Cos(Mathf.Deg2Rad * (angleTo - 30f)));
+		dirs[1] = new Vector2(Mathf.Sin(Mathf.Deg2Rad * (angleTo - 15f)), Mathf.Cos(Mathf.Deg2Rad * (angleTo - 15f)));
+		dirs[2] = new Vector2(Mathf.Sin(Mathf.Deg2Rad * angleTo), Mathf.Cos(Mathf.Deg2Rad * angleTo));
+		dirs[3] = new Vector2(Mathf.Sin(Mathf.Deg2Rad * (angleTo + 15f)), Mathf.Cos(Mathf.Deg2Rad * (angleTo + 15f)));
+		dirs[4] = new Vector2(Mathf.Sin(Mathf.Deg2Rad * (angleTo + 30f)), Mathf.Cos(Mathf.Deg2Rad * (angleTo + 30f)));
+
+		hits.Clear();
 		float dist = Mathf.Min(distanceCheck, DistLeft);
 		for (int i = 0; i < dirs.Length; i++)
 		{
 			dirs[i].Normalize();
 			Debug.DrawLine(transform.position, (Vector2)transform.position + dirs[i] * dist);
-			RaycastHit2D[] checks = Physics2D.RaycastAll(transform.position, dirs[i], dist);
-			hits[i] = GetClosestHit(checks);
+			int hitCount = Physics2D.RaycastNonAlloc(transform.position, dirs[i], checks, dist);
+			hits.Add(GetClosestHit(checks, hitCount));
 		}
 
 		if (FacingWall(hits))
@@ -762,7 +764,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable, IStunnable, ICom
 		}
 
 		float change = 0f;
-		for (int i = 0; i < hits.Length; i++)
+		for (int i = 0; i < hits.Count; i++)
 		{
 			RaycastHit2D hit = hits[i];
 			if (hit.collider != null && !IsTarget(hit))
@@ -795,42 +797,50 @@ public class GatherBot : Entity, IDrillableObject, IDamageable, IStunnable, ICom
 		return angleTo + change;
 	}
 
-	private bool FacingWall(RaycastHit2D[] hits)
+	private List<Rigidbody2D> obstacles = new List<Rigidbody2D>();
+	private int[] obstacleCounts = new int[5];
+	private bool FacingWall(List<RaycastHit2D> hits)
 	{
 		//look at all the objects being seen by the raycasts
 		//if there are too many hits on the same object then assume it is a wall or large object
-		List<Rigidbody2D> obstacles = new List<Rigidbody2D>();
+		obstacles.Clear();
 		foreach (RaycastHit2D hit in hits)
 		{
 			if (hit.collider == null) continue;
 			obstacles.Add(hit.collider.attachedRigidbody);
 		}
-		int[] counts = new int[obstacles.Count];
+		//clear counters
+		for (int i = 0; i < obstacleCounts.Length; i++)
+		{
+			obstacleCounts[i] = 0;
+		}
+
 		for (int i = 0; i < obstacles.Count; i++)
 		{
 			for (int j = 0; j < obstacles.Count; j++)
 			{
 				if (obstacles[i] == obstacles[j])
 				{
-					if (counts[i] >= 2) return true;
-					counts[i] += 1;
+					if (obstacleCounts[i] >= 2) return true;
+					obstacleCounts[i] += 1;
 				}
 			}
 		}
 		return false;
 	}
 
-	private RaycastHit2D GetClosestHit(RaycastHit2D[] hits)
+	private RaycastHit2D GetClosestHit(RaycastHit2D[] hits, int hitCount)
 	{
 		RaycastHit2D closest = new RaycastHit2D();
 		float distance = Mathf.Infinity;
-		foreach (RaycastHit2D hit in hits)
+		for (int i = 0; i < hitCount && i < hits.Length; i++)
 		{
-			if (hit.collider.attachedRigidbody == Rb) continue;
-			float dist = Vector2.Distance(transform.position, hit.collider.attachedRigidbody.transform.position);
+			if (hits[i].collider == null) continue;
+			if (hits[i].collider.attachedRigidbody == Rb) continue;
+			float dist = Vector2.Distance(transform.position, hits[i].collider.attachedRigidbody.transform.position);
 			if (dist < distance)
 			{
-				closest = hit;
+				closest = hits[i];
 				distance = dist;
 			}
 		}
@@ -1097,7 +1107,6 @@ public class GatherBot : Entity, IDrillableObject, IDamageable, IStunnable, ICom
 	{
 		Collider2D other = collision.collider;
 		int otherLayer = other.gameObject.layer;
-		ContactPoint2D[] contacts = new ContactPoint2D[1];
 		collision.GetContacts(contacts);
 		Vector2 contactPoint = contacts[0].point;
 		float angle = -Vector2.SignedAngle(Vector2.up, contactPoint - (Vector2)transform.position);

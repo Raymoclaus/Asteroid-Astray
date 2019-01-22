@@ -8,6 +8,8 @@ public class CustomScreenEffect : MonoBehaviour
 	[SerializeField]
 	private bool[] noBlit;
 	public Camera cam;
+	private List<Material> effectsToBlit = new List<Material>();
+	private List<RenderTexture> rts = new List<RenderTexture>();
 
 	private void Awake()
 	{
@@ -16,7 +18,8 @@ public class CustomScreenEffect : MonoBehaviour
 
 	private void OnRenderImage(RenderTexture source, RenderTexture destination)
 	{
-		List<Material> effectsToBlit = new List<Material>();
+		effectsToBlit.Clear();
+
 		for (int i = 0; i < effects.Length; i++)
 		{
 			if (noBlit[i] || effects[i] == null) continue;
@@ -35,8 +38,8 @@ public class CustomScreenEffect : MonoBehaviour
 			Graphics.Blit(source, destination, effectsToBlit[0]);
 			return;
 		}
-		
-		RenderTexture[] rts = new RenderTexture[effectsToBlit.Count];
+
+		rts.Clear();
 
 		for (int i = 0; i < effectsToBlit.Count; i++)
 		{

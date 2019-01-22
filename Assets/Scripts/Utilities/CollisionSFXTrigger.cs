@@ -11,12 +11,12 @@ public class CollisionSFXTrigger : MonoBehaviour
 	private float ignoreRange = 15f;
 	[SerializeField]
 	private CameraCtrlTracker camTrackerSO;
+	private ContactPoint2D[] contacts = new ContactPoint2D[1];
 
 	private void OnCollisionEnter2D(Collision2D collision)
 	{
 		if (!collisionSounds) return;
 
-		ContactPoint2D[] contacts = new ContactPoint2D[1];
 		collision.GetContacts(contacts);
 		Vector2 contactPoint = contacts[0].point;
 		if (Vector2.Distance(contactPoint, camTrackerSO.position) > ignoreRange) return;

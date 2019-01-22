@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using System.Threading;
+using CielaSpike;
 using System;
 using UnityEngine;
 using System.Collections;
@@ -37,6 +37,11 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 	private List<GTime> emptyCoordTimes = new List<GTime>();
 	private float emptyCoordWaitTime = 300f;
 	public WaitForSeconds maintenanceTime = new WaitForSeconds(3f);
+
+	//cache
+	private List<ChunkCoords> botOccupiedCoords = new List<ChunkCoords>();
+	private List<ChunkCoords> searchCoords = new List<ChunkCoords>();
+	private ContactPoint2D[] contacts = new ContactPoint2D[1];
 
 	private void Start()
 	{
@@ -129,10 +134,7 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 		bot.transform.rotation = docks[dockID].rotation;
 		bot.transform.parent = transform.parent;
 		childBots.Add(bot);
-		new Thread(() =>
-		{
-			AssignUnoccupiedCoords(bot);
-		}).Start();
+		this.StartCoroutineAsync(AssignUnoccupiedCoords(bot));
 		return bot;
 	}
 
@@ -172,50 +174,55 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 		return docks[bot.dockID];
 	}
 
-	public void AssignUnoccupiedCoords(GatherBot b)
+	public IEnumerator AssignUnoccupiedCoords(GatherBot b)
 	{
+		Debug.Log($"bot {b.dockID}: Looking for coordinates.");
 		CheckEmptyMarkedCoords();
-		List<ChunkCoords> occupiedCoords = new List<ChunkCoords>(emptyCoords);
+		botOccupiedCoords.Clear();
+		botOccupiedCoords.AddRange(emptyCoords);
 
-		foreach (GatherBot bot in childBots)
+		for (int i = 0; i < childBots.Count; i++)
 		{
-			if (b == null) return;
-			EntityNetwork.GetCoordsInRange(bot.GetIntendedCoords(), 1, occupiedCoords);
+			if (b == null) yield break; ;
+			EntityNetwork.GetCoordsInRange(childBots[i].GetIntendedCoords(), 1, botOccupiedCoords);
 		}
 
 		int searchRange = 1;
-		List<ChunkCoords> searchCoords = new List<ChunkCoords>();
+		searchCoords.Clear();
 
 		ChunkCoords location = ChunkCoords.Zero;
 		bool finished = false;
 		while (!finished)
 		{
-			if (b == null) return;
-			searchCoords = EntityNetwork.GetCoordsOnRangeBorder(_coords, searchRange);
+			if (b == null) yield break;
+			EntityNetwork.GetCoordsOnRangeBorder(_coords, searchRange, searchCoords);
 			searchRange++;
 
 			for (int i = searchCoords.Count - 1; i >= 0; i--)
 			{
 				ChunkCoords c = searchCoords[i];
-				for (int j = 0; j < occupiedCoords.Count; j++)
+				for (int j = 0; j < botOccupiedCoords.Count; j++)
 				{
-					ChunkCoords cc = searchCoords[i];
+					ChunkCoords cc = botOccupiedCoords[j];
 					if (c == cc)
 					{
 						searchCoords.RemoveAt(i);
+						break;
 					}
 				}
 			}
 			if (searchCoords.Count > 0)
 			{
 				finished = true;
-				location = searchCoords[UnityEngine.Random.Range(0, searchCoords.Count)];
+				location = searchCoords[new System.Random().Next(searchCoords.Count)];
 			}
+			yield return null;
 		}
 
 		Vector2 pos = ChunkCoords.GetCenterCell(location);
-		if (b == null) return;
+		if (b == null) yield break;
 		b.HiveOrders(pos);
+		Debug.Log($"bot {b.dockID}: Found coordinates.");
 	}
 
 	public bool SplitUpGatheringUnits(GatherBot b)
@@ -292,7 +299,6 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 	{
 		Collider2D other = collision.collider;
 		int otherLayer = other.gameObject.layer;
-		ContactPoint2D[] contacts = new ContactPoint2D[1];
 		collision.GetContacts(contacts);
 		Vector2 contactPoint = contacts[0].point;
 
