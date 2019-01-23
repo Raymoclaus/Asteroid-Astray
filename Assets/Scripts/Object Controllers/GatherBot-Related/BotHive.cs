@@ -134,7 +134,7 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 		bot.transform.rotation = docks[dockID].rotation;
 		bot.transform.parent = transform.parent;
 		childBots.Add(bot);
-		this.StartCoroutineAsync(AssignUnoccupiedCoords(bot));
+		AssignUnoccupiedCoords(bot);
 		return bot;
 	}
 
@@ -174,16 +174,15 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 		return docks[bot.dockID];
 	}
 
-	public IEnumerator AssignUnoccupiedCoords(GatherBot b)
+	public void AssignUnoccupiedCoords(GatherBot b)
 	{
-		Debug.Log($"bot {b.dockID}: Looking for coordinates.");
 		CheckEmptyMarkedCoords();
 		botOccupiedCoords.Clear();
 		botOccupiedCoords.AddRange(emptyCoords);
 
 		for (int i = 0; i < childBots.Count; i++)
 		{
-			if (b == null) yield break; ;
+			if (b == null) return;
 			EntityNetwork.GetCoordsInRange(childBots[i].GetIntendedCoords(), 1, botOccupiedCoords);
 		}
 
@@ -194,7 +193,7 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 		bool finished = false;
 		while (!finished)
 		{
-			if (b == null) yield break;
+			if (b == null) return;
 			EntityNetwork.GetCoordsOnRangeBorder(_coords, searchRange, searchCoords);
 			searchRange++;
 
@@ -216,13 +215,11 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 				finished = true;
 				location = searchCoords[new System.Random().Next(searchCoords.Count)];
 			}
-			yield return null;
 		}
 
 		Vector2 pos = ChunkCoords.GetCenterCell(location);
-		if (b == null) yield break;
+		if (b == null) return;
 		b.HiveOrders(pos);
-		Debug.Log($"bot {b.dockID}: Found coordinates.");
 	}
 
 	public bool SplitUpGatheringUnits(GatherBot b)

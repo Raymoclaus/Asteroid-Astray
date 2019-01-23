@@ -15,6 +15,7 @@ public static class EntityGenerator
 	private static List<ChunkCoords> chunkBatches = new List<ChunkCoords>(100);
 	//maximum amount of chunks to fill per frame
 	private static int maxChunkBatchFill = 2;
+	private static List<SpawnableEntity> toSpawn = new List<SpawnableEntity>();
 	#endregion
 
 	public static void FillChunk(ChunkCoords cc, bool excludePriority = false)
@@ -29,8 +30,8 @@ public static class EntityGenerator
 		Column(cc)[cc.Y] = true;
 
 		//look through the space priority entities and check if one may spawn
-		List<SpawnableEntity> toSpawn = ChooseEntitiesToSpawn(
-			ChunkCoords.GetCenterCell(cc).magnitude, excludePriority);
+		toSpawn.Clear();
+		ChooseEntitiesToSpawn(ChunkCoords.GetCenterCell(cc).magnitude, excludePriority, toSpawn);
 
 		//determine area to spawn in
 		Vector2Pair range = ChunkCoords.GetCellArea(cc);
@@ -58,9 +59,9 @@ public static class EntityGenerator
 		}
 	}
 
-	private static List<SpawnableEntity> ChooseEntitiesToSpawn(float distance, bool excludePriority = false)
+	private static List<SpawnableEntity> ChooseEntitiesToSpawn(float distance, bool excludePriority = false, List<SpawnableEntity> addToList = null)
 	{
-		List<SpawnableEntity> list = new List<SpawnableEntity>();
+		addToList = addToList ?? new List<SpawnableEntity>();
 		float chance = Random.value;
 		if (!excludePriority)
 		{
@@ -70,14 +71,14 @@ public static class EntityGenerator
 
 				if (e.GetChance(distance) >= chance)
 				{
-					list.Add(e);
+					addToList.Add(e);
 					break;
 				}
 			}
 		}
 
 		//if a priority entity was chosen then only return that
-		if (list.Count > 0) return list;
+		if (addToList.Count > 0) return addToList;
 
 		//choose which non priority entities to spawn
 		foreach (SpawnableEntity e in prefabs.spawnableEntities)
@@ -86,11 +87,11 @@ public static class EntityGenerator
 
 			if (e.GetChance(distance) >= chance)
 			{
-				list.Add(e);
+				addToList.Add(e);
 			}
 		}
 
-		return list;
+		return addToList;
 	}
 
 	public static void InstantFillChunks(List<ChunkCoords> coords)

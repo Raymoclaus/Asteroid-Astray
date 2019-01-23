@@ -14,6 +14,10 @@ public class CustomScreenEffect : MonoBehaviour
 	private void Awake()
 	{
 		enabled = effects.Length > 0;
+		if (enabled)
+		{
+			noBlit = new bool[effects.Length];
+		}
 	}
 
 	private void OnRenderImage(RenderTexture source, RenderTexture destination)
@@ -43,7 +47,7 @@ public class CustomScreenEffect : MonoBehaviour
 
 		for (int i = 0; i < effectsToBlit.Count; i++)
 		{
-			rts[i] = i == 0 ? new RenderTexture(Screen.width, Screen.height, 0) : new RenderTexture(rts[i - 1]);
+			rts.Add(i == 0 ? new RenderTexture(Screen.width, Screen.height, 0) : new RenderTexture(rts[i - 1]));
 			rts[i].filterMode = FilterMode.Point;
 			Graphics.Blit(source, rts[i], effectsToBlit[i]);
 			source = rts[i];

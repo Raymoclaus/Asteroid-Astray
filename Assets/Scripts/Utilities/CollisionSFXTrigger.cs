@@ -24,7 +24,7 @@ public class CollisionSFXTrigger : MonoBehaviour
 		float collisionStrength = collision.relativeVelocity.magnitude * volumeMultiplier;
 		if (collisionStrength < 0.05f) return;
 
-		audioManager = audioManager ?? FindObjectOfType<AudioManager>();
+		//audioManager = audioManager ?? FindObjectOfType<AudioManager>();
 		if (audioManager)
 		{
 			audioManager.PlaySFX(collisionSounds.PickRandomClip(), contactPoint, null,

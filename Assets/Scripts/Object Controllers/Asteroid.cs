@@ -102,6 +102,11 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		initialised = true;
 	}
 
+	public void OnEnable()
+	{
+		RandomMovement();
+	}
+
 	private void RandomMovement()
 	{
 		//picks a random speed to spin at within a given range with chance favoring lower values
@@ -173,7 +178,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	{
 		if (!isActive || Pause.IsPaused) return;
 
-		particleGenerator = particleGenerator ?? FindObjectOfType<ParticleGenerator>();
+		//particleGenerator = particleGenerator ?? FindObjectOfType<ParticleGenerator>();
 		if (!particleGenerator) return;
 
 		for (int i = 0; i < amount; i++)
@@ -193,9 +198,9 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	private void UpdateSprite()
 	{
 		particleGenerator = particleGenerator ?? FindObjectOfType<ParticleGenerator>();
-		if (!particleGenerator) return;
+		if (!particleGenerator ||this == null) return;
 
-		if (Health <= 0f && this != null)
+		if (Health <= 0f)
 		{
 			particleGenerator.GenerateParticle(GetCurrentSpriteSettings()[GetCurrentSpriteSettings().Length - 1],
 				transform.position, fadeOut: false, lifeTime: 0.05f,
@@ -320,11 +325,6 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	public override EntityType GetEntityType()
 	{
 		return EntityType.Asteroid;
-	}
-
-	public override void PhysicsReEnabled()
-	{
-		RandomMovement();
 	}
 
 	private void OnCollisionEnter2D(Collision2D collision)

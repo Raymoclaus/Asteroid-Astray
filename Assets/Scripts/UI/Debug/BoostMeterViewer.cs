@@ -8,12 +8,15 @@ public class BoostMeterViewer : MonoBehaviour
 	private RawImage bar;
 	[SerializeField]
 	private ShuttleTrackers shuttleTrackerSO;
+	private float previousDelta = 1f;
 
-	private void OnGUI()
+	private void Update()
 	{
 		if (!shuttleTrackerSO) return;
 
 		float delta = shuttleTrackerSO.boostRemaining;
+		if (Mathf.Approximately(previousDelta, delta)) return;
+		previousDelta = delta;
 		Vector3 scl = Vector3.one;
 		scl.x = delta;
 		bar.transform.localScale = scl;

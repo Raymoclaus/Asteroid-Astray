@@ -275,7 +275,6 @@ public class SceneryController : MonoBehaviour
 
 	public IEnumerator CreateStarSystems(System.Action a)
 	{
-		Debug.Log("Star Systems method executed");
 		yield return null;
 
 		//ensure this class is setup properly first
@@ -283,8 +282,7 @@ public class SceneryController : MonoBehaviour
 
 		//if textures have already been generated then don't worry about making more
 		if (texturesGenerated) yield break;
-
-		Debug.Log("Creating Star Systems");
+		
 
 		StartCoroutine(CheckForExistingStars());
 
