@@ -14,16 +14,13 @@ public class CustomScreenEffect : MonoBehaviour
 	private void Awake()
 	{
 		enabled = effects.Length > 0;
-		if (enabled)
-		{
-			noBlit = new bool[effects.Length];
-		}
 	}
 
 	private void OnRenderImage(RenderTexture source, RenderTexture destination)
 	{
+		CheckRTSCount();
 		effectsToBlit.Clear();
-
+		
 		for (int i = 0; i < effects.Length; i++)
 		{
 			if (noBlit[i] || effects[i] == null) continue;
@@ -43,26 +40,40 @@ public class CustomScreenEffect : MonoBehaviour
 			return;
 		}
 
-		rts.Clear();
-
-		for (int i = 0; i < effectsToBlit.Count; i++)
+		if (effectsToBlit.Count > 1)
 		{
-			rts.Add(i == 0 ? new RenderTexture(Screen.width, Screen.height, 0) : new RenderTexture(rts[i - 1]));
-			rts[i].filterMode = FilterMode.Point;
-			Graphics.Blit(source, rts[i], effectsToBlit[i]);
-			source = rts[i];
+			for (int i = 0; i < effectsToBlit.Count; i++)
+			{
+				Graphics.Blit(source, rts[i], effectsToBlit[i]);
+				source = rts[i];
+			}
+			Graphics.Blit(source, destination);
 		}
-		Graphics.Blit(source, destination);
-		
+
+		RenderTexture currentRT = RenderTexture.active;
 		foreach (RenderTexture rt in rts)
 		{
+			RenderTexture.active = rt;
+			GL.Clear(false, true, Color.clear);
+			rt.DiscardContents();
 			rt.Release();
 		}
+		RenderTexture.active = currentRT;
 	}
 
 	public void SetNoBlit(int index, bool shouldNotBlit)
 	{
 		noBlit[index] = shouldNotBlit;
 		if (!shouldNotBlit) enabled = true;
+	}
+
+	private void CheckRTSCount()
+	{
+		if (rts.Count >= effects.Length) return;
+
+		for (int i = rts.Count; i < effects.Length; i++)
+		{
+			rts.Add(new RenderTexture(Screen.width, Screen.height, 0));
+		}
 	}
 }

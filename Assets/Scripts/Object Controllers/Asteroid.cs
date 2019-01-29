@@ -120,6 +120,8 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 
 	private void DestroySelf(bool explode, Entity destroyer, int dropModifier = 0)
 	{
+		if (this == null) return;
+
 		if (explode)
 		{
 			//particle effect
@@ -329,11 +331,13 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 
 	private void OnCollisionEnter2D(Collision2D collision)
 	{
+		float collisionStrength = collision.relativeVelocity.magnitude;
+		if (collisionStrength < 0.1f) return;
+
 		Collider2D other = collision.collider;
 		int otherLayer = other.gameObject.layer;
 		collision.GetContacts(contacts);
 		Vector2 contactPoint = contacts[0].point;
-		float collisionStrength = collision.relativeVelocity.magnitude;
 		float angle = -Vector2.SignedAngle(Vector2.up, contactPoint - (Vector2)transform.position);
 
 		//dust particle effect

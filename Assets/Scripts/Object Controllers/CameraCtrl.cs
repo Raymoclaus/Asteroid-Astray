@@ -45,8 +45,6 @@ public class CameraCtrl : MonoBehaviour
 		Cam = Cam ?? GetComponent<Camera>();
 		//get ref to ChunkFiller component
 		chunkFiller = chunkFiller ?? GetComponent<ChunkFiller>();
-		//ensure the chunk filler has created chunks first
-		chunkFiller.CheckForMovement();
 		//get camera's coordinates on the grid
 		coords = new ChunkCoords(transform.position);
 		//get list of entities that are within the camera's view range
@@ -97,7 +95,6 @@ public class CameraCtrl : MonoBehaviour
 	/// Only called if the camera's coordinates change
 	private void CoordsChanged(ChunkCoords newCoords)
 	{
-		chunkFiller.CheckForMovement();
 		GetEntitiesInView(newCoords);
 	}
 

@@ -5,30 +5,33 @@ public class DialoguePopupUI : PopupUI
 {
 	[SerializeField]
 	private RectTransform leftPopupPrefab, rightPopupPrefab;
-	private List<DialoguePopupObject> activePopups = new List<DialoguePopupObject>();
-	private List<DialoguePopupObject> inactivePopups = new List<DialoguePopupObject>();
-	private List<int> speakerIDs = new List<int>();
+	protected List<DialoguePopupObject> activePopups = new List<DialoguePopupObject>();
+	protected List<DialoguePopupObject> inactivePopups = new List<DialoguePopupObject>();
+	protected List<int> speakerIDs = new List<int>();
+
+	public bool hasName = true, hasLine = true, hasFace = true;
 
 	private void Awake()
 	{
+		int amountOfPopupsToCreate = (popupViewLimit + 1) * 2;
 		for (int i = 0; i < (popupViewLimit + 1) * 2; i++)
 		{
-			RectTransform popup = Instantiate(i < 3 ? leftPopupPrefab : rightPopupPrefab);
+			RectTransform popup = Instantiate(i < amountOfPopupsToCreate / 2 ? leftPopupPrefab : rightPopupPrefab);
 			popup.gameObject.SetActive(false);
 			popup.SetParent(transform, false);
 			DialoguePopupObject po = new DialoguePopupObject(
 				popup,
-				popup.GetComponentInChildren<DialogueNameUI>(),
-				popup.GetComponentInChildren<DialogueLineUI>(),
-				popup.GetComponentInChildren<DialogueFaceUI>(),
+				hasName ? popup.GetComponentInChildren<DialogueNameUI>() : null,
+				hasLine ? popup.GetComponentInChildren<DialogueLineUI>() : null,
+				hasFace ? popup.GetComponentInChildren<DialogueFaceUI>() : null,
 				popup.GetComponent<CanvasGroup>(),
-				i < 3);
+				i < amountOfPopupsToCreate / 2);
 			inactivePopups.Add(po);
 		}
 		popupHeight = ((RectTransform)transform.GetChild(0)).rect.height;
 	}
 
-	private void Update()
+	protected virtual void Update()
 	{
 		if (loadingTrackerSO.isLoading) return;
 
@@ -77,7 +80,7 @@ public class DialoguePopupUI : PopupUI
 		}
 	}
 
-	public void GeneratePopup(string name, string line, Sprite face, int speakerID)
+	public virtual void GeneratePopup(string name, string line, Sprite face, int speakerID)
 	{
 		bool useLeftSide = speakerID == 0;
 		if (activePopups.Count == 0)
@@ -100,7 +103,7 @@ public class DialoguePopupUI : PopupUI
 		po.transform.gameObject.SetActive(true);
 	}
 
-	private void AddSpeakerID(int speakerID)
+	protected void AddSpeakerID(int speakerID)
 	{
 		foreach (int id in speakerIDs)
 		{
@@ -112,7 +115,7 @@ public class DialoguePopupUI : PopupUI
 		speakerIDs.Add(speakerID);
 	}
 
-	private DialoguePopupObject GetInactivePopup(bool leftSidePopup)
+	protected DialoguePopupObject GetInactivePopup(bool leftSidePopup)
 	{
 		foreach (DialoguePopupObject popup in inactivePopups)
 		{
@@ -124,7 +127,7 @@ public class DialoguePopupUI : PopupUI
 		return null;
 	}
 
-	private class DialoguePopupObject : PopupObject
+	protected class DialoguePopupObject : PopupObject
 	{
 		public DialogueNameUI name;
 		public DialogueLineUI line;
@@ -150,16 +153,22 @@ public class DialoguePopupUI : PopupUI
 
 		public void SetName(string name)
 		{
+			if (this.name == null) return;
+
 			this.name.nameText.text = name;
 		}
 
 		public void SetLine(string line)
 		{
+			if (this.line == null) return;
+
 			this.line.lineText.text = line;
 		}
 
 		public void SetFace(Sprite face)
 		{
+			if (this.face == null) return;
+
 			this.face.faceImage.sprite = face;
 		}
 

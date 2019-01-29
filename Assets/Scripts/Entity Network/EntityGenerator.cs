@@ -16,6 +16,7 @@ public static class EntityGenerator
 	//maximum amount of chunks to fill per frame
 	private static int maxChunkBatchFill = 2;
 	private static List<SpawnableEntity> toSpawn = new List<SpawnableEntity>();
+	private static bool batcherRunning = false;
 	#endregion
 
 	public static void FillChunk(ChunkCoords cc, bool excludePriority = false)
@@ -104,21 +105,30 @@ public static class EntityGenerator
 
 	public static IEnumerator ChunkBatchOrder()
 	{
+		batcherRunning = true;
 		while (true)
 		{
-			if (chunkBatches.Count == 0) yield return null;
 			for (int i = 0; i < maxChunkBatchFill && chunkBatches.Count > 0; i++)
 			{
 				FillChunk(chunkBatches[0]);
 				chunkBatches.RemoveAt(0);
 			}
+			if (chunkBatches.Count == 0)
+			{
+				batcherRunning = false;
+				yield break;
+			}
 			yield return null;
 		}
 	}
 
-	public static void EnqueueBatchOrder(List<ChunkCoords> coords)
+	public static void EnqueueBatchOrder(List<ChunkCoords> coords, MonoBehaviour mono)
 	{
 		chunkBatches.AddRange(coords);
+		if (!batcherRunning)
+		{
+			mono.StartCoroutine(ChunkBatchOrder());
+		}
 	}
 
 	/// Increases capacity of the fill trigger list to accomodate given coordinates
@@ -227,7 +237,7 @@ public static class EntityGenerator
 		{
 			holders.Add(e.name, new GameObject(e.name));
 		}
-		if (a != null) a();
+		a?.Invoke();
 	}
 
 	#region Convenient short-hand methods for accessing the grid

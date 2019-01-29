@@ -4,23 +4,70 @@ using UnityEngine;
 public class DialogueController : MonoBehaviour
 {
 	[SerializeField]
-	private DialoguePopupUI dialogueUI;
+	private DialoguePopupUI dialogueUI, chatUI;
 	private ConversationEvent currentConversation;
 	private DialogueLineEvent[] currentLines;
 	private EntityProfile[] speakers;
 	private int currentPosition = -1;
-	private bool dialogueIsRunning;
+	private bool dialogueIsRunning, chatIsRunning;
+	[SerializeField]
+	private ConversationEvent testDialogue;
+	private List<ConversationEvent> chatQueue = new List<ConversationEvent>();
+	private float chatQueueTimer = 0f;
+	[SerializeField]
+	private float chatQueueWaitDuration = 4f;
+	private float chatContinueTimer = 0f;
+	[SerializeField]
+	private float chatContinueWaitDuration = 2f;
 
 	private void Awake()
 	{
 		dialogueUI = dialogueUI ?? FindObjectOfType<DialoguePopupUI>();
+		chatUI = chatUI ?? FindObjectOfType<CommPopupUI>();
 	}
 
 	private void Update()
 	{
+		if (testDialogue != null)
+		{
+			if (Input.GetKeyDown(KeyCode.T))
+			{
+				StartDialogue(testDialogue);
+			}
+			if (Input.GetKeyDown(KeyCode.Y))
+			{
+				StartChat(testDialogue);
+			}
+		}
+
 		if (dialogueIsRunning && (Input.GetKeyDown(KeyCode.Return) || Input.GetMouseButtonDown(0)))
 		{
 			GetNextLine();
+		}
+
+		if (!dialogueIsRunning && !chatIsRunning)
+		{
+			chatQueueTimer += Time.deltaTime;
+			if (chatQueueTimer >= chatQueueWaitDuration)
+			{
+				chatQueueTimer = 0f;
+				if (chatQueue.Count > 0)
+				{
+					ConversationEvent nextChat = chatQueue[0];
+					StartChat(nextChat);
+					chatQueue.RemoveAt(0);
+				}
+			}
+		}
+
+		if (chatIsRunning)
+		{
+			chatContinueTimer += Time.deltaTime;
+			if (chatContinueTimer >= chatContinueWaitDuration)
+			{
+				chatContinueTimer = 0f;
+				GetNextLine();
+			}
 		}
 	}
 
@@ -42,9 +89,17 @@ public class DialogueController : MonoBehaviour
 				currentPosition = -1;
 				currentLines = null;
 				speakers = null;
-				dialogueIsRunning = false;
-				dialogueUI.RemoveAllPopups();
-				Pause.InstantPause(false);
+				if (dialogueIsRunning)
+				{
+					Pause.InstantPause(false);
+					dialogueIsRunning = false;
+					dialogueUI.RemoveAllPopups();
+				}
+				if (chatIsRunning)
+				{
+					chatIsRunning = false;
+					chatUI.RemoveAllPopups();
+				}
 			}
 		}
 		SendPopup();
@@ -58,17 +113,44 @@ public class DialogueController : MonoBehaviour
 		string name = speakers[speakerID].entityName;
 		string line = currentLines[currentPosition].GetLine();
 		Sprite face = speakers[speakerID].face;
-		dialogueUI.GeneratePopup(name, line, face, speakerID);
+		if (dialogueIsRunning)
+		{
+			dialogueUI.GeneratePopup(name, line, face, speakerID);
+			return;
+		}
+		if (chatIsRunning)
+		{
+			chatUI.GeneratePopup(name, line, face, speakerID);
+			return;
+		}
 	}
 
 	public void StartDialogue(ConversationEvent newDialogue)
 	{
+		if (dialogueIsRunning) return;
+
 		dialogueIsRunning = true;
 		currentConversation = newDialogue;
 		currentLines = currentConversation.conversation;
 		speakers = currentConversation.speakers;
 		currentPosition = 0;
 		Pause.InstantPause(true);
+		SendPopup();
+	}
+
+	public void StartChat(ConversationEvent newDialogue)
+	{
+		if (dialogueIsRunning || chatIsRunning)
+		{
+			chatQueue.Add(newDialogue);
+			return;
+		}
+		chatIsRunning = true;
+		chatQueueTimer = 0f;
+		currentConversation = newDialogue;
+		currentLines = currentConversation.conversation;
+		speakers = currentConversation.speakers;
+		currentPosition = 0;
 		SendPopup();
 	}
 }

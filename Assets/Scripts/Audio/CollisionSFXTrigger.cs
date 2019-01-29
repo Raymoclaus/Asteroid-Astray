@@ -12,19 +12,25 @@ public class CollisionSFXTrigger : MonoBehaviour
 	[SerializeField]
 	private CameraCtrlTracker camTrackerSO;
 	private ContactPoint2D[] contacts = new ContactPoint2D[1];
+	[SerializeField]
+	private float ignoreCollisionStrength = 0.05f;
 
 	private void OnCollisionEnter2D(Collision2D collision)
 	{
 		if (!collisionSounds) return;
-
-		collision.GetContacts(contacts);
-		Vector2 contactPoint = contacts[0].point;
-		if (Vector2.Distance(contactPoint, camTrackerSO.position) > ignoreRange) return;
-
 		float collisionStrength = collision.relativeVelocity.magnitude * volumeMultiplier;
-		if (collisionStrength < 0.05f) return;
+		if (collisionStrength < ignoreCollisionStrength) return;
 
-		//audioManager = audioManager ?? FindObjectOfType<AudioManager>();
+
+		//collision.GetContacts(contacts);
+		//Vector2 contactPoint = contacts[0].point;
+		Vector2 contactPoint = (collision.collider.transform.position
+			- collision.otherCollider.transform.position) / 2f
+			+ collision.otherCollider.transform.position;
+		float distance = Vector2.Distance(contactPoint, camTrackerSO.position);
+		if (distance > ignoreRange) return;
+
+		audioManager = audioManager ?? FindObjectOfType<AudioManager>();
 		if (audioManager)
 		{
 			audioManager.PlaySFX(collisionSounds.PickRandomClip(), contactPoint, null,
