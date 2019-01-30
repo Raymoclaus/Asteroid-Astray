@@ -1107,8 +1107,11 @@ public class GatherBot : Entity, IDrillableObject, IDamageable, IStunnable, ICom
 	{
 		Collider2D other = collision.collider;
 		int otherLayer = other.gameObject.layer;
-		collision.GetContacts(contacts);
-		Vector2 contactPoint = contacts[0].point;
+		//collision.GetContacts(contacts);
+		//Vector2 contactPoint = contacts[0].point;
+		Vector2 contactPoint = (collision.collider.transform.position
+			- collision.otherCollider.transform.position) / 2f
+			+ collision.otherCollider.transform.position;
 		float angle = -Vector2.SignedAngle(Vector2.up, contactPoint - (Vector2)transform.position);
 
 		if (otherLayer == layerProjectile)

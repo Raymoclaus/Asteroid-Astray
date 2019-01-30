@@ -9,7 +9,7 @@ public class AudioManager : MonoBehaviour
 
 	private const int poolReserve = 400;
 	private Queue<AudioSource> pool = new Queue<AudioSource>(poolReserve);
-	private List<AudioSource> active = new List<AudioSource>(poolReserve);
+	private List<SourceManager> active = new List<SourceManager>(poolReserve);
 	private const float MIN_DISTANCE = 1f / 3f, MAX_DISTANCE = 30f;
 	public static Transform holder;
 
@@ -22,6 +22,20 @@ public class AudioManager : MonoBehaviour
 	private void Update()
 	{
 		masterMixer.audioMixer.SetFloat("Pitch", Time.timeScale);
+
+		for (int i = 0; i < active.Count; i++)
+		{
+			SourceManager srcM = active[i];
+			if (srcM.timer <= 0f)
+			{
+				Recycle(srcM);
+				i--;
+			}
+			else
+			{
+				srcM.SubtractTimer(Time.deltaTime);
+			}
+		}
 	}
 
 	public void PlaySFX(AudioClip clip, Vector3 position, Transform parent = null, float volume = 1f,
@@ -30,7 +44,7 @@ public class AudioManager : MonoBehaviour
 		if (!clip) return;
 
 		AudioSource src = pool.Dequeue();
-		active.Add(src);
+		active.Add(new SourceManager(src, clip.length));
 		GameObject obj = src.gameObject;
 		obj.SetActive(true);
 		obj.transform.position = position;
@@ -39,20 +53,14 @@ public class AudioManager : MonoBehaviour
 		src.volume = volume;
 		src.pitch = pitch;
 		src.Play();
-		StartCoroutine(Lifetime(src, clip.length));
 	}
 
-	private IEnumerator Lifetime(AudioSource src, float time)
+	private void Recycle(SourceManager src)
 	{
-		while (time > 0f)
-		{
-			time -= Time.deltaTime;
-			yield return null;
-		}
-		src.gameObject.SetActive(false);
-		src.transform.parent = holder;
+		src.source.gameObject.SetActive(false);
+		src.source.transform.parent = holder;
 		active.Remove(src);
-		pool.Enqueue(src);
+		pool.Enqueue(src.source);
 	}
 
 	private void SetUpPoolReserve()
@@ -68,6 +76,23 @@ public class AudioManager : MonoBehaviour
 			src.minDistance = MIN_DISTANCE;
 			src.maxDistance = MAX_DISTANCE;
 			pool.Enqueue(src);
+		}
+	}
+
+	private struct SourceManager
+	{
+		public AudioSource source;
+		public float timer;
+
+		public SourceManager(AudioSource source, float timer)
+		{
+			this.source = source;
+			this.timer = timer;
+		}
+
+		public float SubtractTimer(float subtraction)
+		{
+			return timer -= subtraction;
 		}
 	}
 }

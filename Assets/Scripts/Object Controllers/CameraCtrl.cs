@@ -177,7 +177,15 @@ public class CameraCtrl : MonoBehaviour
 		newCoords.AddRange(newCoordsInView);
 		for (int i = notInViewAnymore.Count - 1; i >= 0; i--)
 		{
-			int index = newCoords.IndexOf(notInViewAnymore[i]);
+			int index = -1;
+			for (int j = 0; j < newCoords.Count; j++)
+			{
+				if (newCoords[j] == notInViewAnymore[i])
+				{
+					index = j;
+					break;
+				}
+			}
 			if (index != -1)
 			{
 				notInViewAnymore.RemoveAt(i);

@@ -16,13 +16,13 @@ public static class EntityNetwork
 	//network of entities
 	private static List<List<List<List<Entity>>>> _grid = new List<List<List<List<Entity>>>>(QuadrantNumber);
 	//list of coordinates that contain any entities
-	private static List<ChunkCoords> occupiedCoords = new List<ChunkCoords>(ReserveSize * ReserveSize);
+	private static List<ChunkCoords> occupiedCoords = new List<ChunkCoords>(ReserveSize * ReserveSize * 4);
 	//number of chunks to check each frame. Better than checking all at once, for performance
 	private const int ENTITY_CHECKUP_NUMBER = 100;
 	//some large number of reserve to avoid List resizing lag
 	public const int ReserveSize = 1000;
 	//another large number for each individual cell in the grid
-	public const int CellReserve = 10;
+	public const int CellReserve = 15;
 	//check if grid has already been created
 	public static bool ready = false;
 	//Entities and other stuff that might be create before the grid is initialised can store functions here
@@ -70,10 +70,12 @@ public static class EntityNetwork
 	}
 
 	/// Returns a list of all entities located in cells within range of the given coordinates
+	private static List<ChunkCoords> coordsInRangeCache = new List<ChunkCoords>();
 	public static List<Entity> GetEntitiesInRange(ChunkCoords center, int range, EntityType? type = null,
 		List<Entity> exclusions = null, List<Entity> addToList = null)
 	{
-		List<ChunkCoords> coordsInRange = GetCoordsInRange(center, range);
+		coordsInRangeCache.Clear();
+		List<ChunkCoords> coordsInRange = GetCoordsInRange(center, range, coordsInRangeCache);
 		//declare a list to be filled and reserve some room
 		return GetEntitiesAtCoords(coordsInRange, type, exclusions, addToList);
 	}

@@ -71,23 +71,26 @@ public class ChunkFiller : MonoBehaviour
 		FillChunks(newCc, true);
 	}
 
+	private List<ChunkCoords> chunksToFill = new List<ChunkCoords>();
 	private void FillChunks(ChunkCoords center, bool batchOrder = false)
 	{
-		List<ChunkCoords> coords = GetChunkFillList(center);
+		chunksToFill.Clear();
+		GetChunkFillList(center, chunksToFill);
 		if (!batchOrder)
 		{
-			EntityGenerator.InstantFillChunks(coords);
+			EntityGenerator.InstantFillChunks(chunksToFill);
 		}
 		else
 		{
-			EntityGenerator.EnqueueBatchOrder(coords, this);
+			EntityGenerator.EnqueueBatchOrder(chunksToFill, this);
 		}
 	}
 
-	private List<ChunkCoords> GetChunkFillList(ChunkCoords center)
+	private List<ChunkCoords> GetChunkFillList(ChunkCoords center, List<ChunkCoords> addToList = null)
 	{
-		List<ChunkCoords> coords = new List<ChunkCoords>(100);
 		int r = FillRange + RangeIncrease;
+		int listSize = ((r + 1) * 2) * ((r + 1) * 2);
+		List<ChunkCoords> coords = addToList ?? new List<ChunkCoords>(listSize);
 
 		for (int i = -r; i <= r; i++)
 		{

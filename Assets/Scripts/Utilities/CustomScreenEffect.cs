@@ -55,10 +55,10 @@ public class CustomScreenEffect : MonoBehaviour
 		{
 			RenderTexture.active = rt;
 			GL.Clear(false, true, Color.clear);
+			RenderTexture.active = currentRT;
 			rt.DiscardContents();
 			rt.Release();
 		}
-		RenderTexture.active = currentRT;
 	}
 
 	public void SetNoBlit(int index, bool shouldNotBlit)

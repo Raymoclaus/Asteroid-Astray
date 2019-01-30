@@ -50,10 +50,11 @@ public class ResourceDrop : MonoBehaviour
 		}
 
 		//set the position
+		float magnitude = velocity.magnitude * Time.deltaTime * 60f;
 		transform.position += (Vector3)velocity * Time.deltaTime * 60f;
 
 		//check if close enough to collect
-		if (Vector2.Distance(transform.position, follow.transform.position) < velocity.magnitude
+		if (Vector2.Distance(transform.position, follow.transform.position) < magnitude
 			&& aliveTime > delay)
 		{
 			//send messsage to follow target to collect resource

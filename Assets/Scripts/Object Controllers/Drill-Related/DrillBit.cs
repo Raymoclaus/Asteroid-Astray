@@ -53,6 +53,12 @@ public class DrillBit : MonoBehaviour
 
 	private void InflictDamage()
 	{
+		if (drillTarget == null)
+		{
+			IsDrilling = false;
+			return;
+		}
+
 		//query damage from parent
 		float damage = parent.DrillDamageQuery(firstHit);
 		//bigger effects for more damage
