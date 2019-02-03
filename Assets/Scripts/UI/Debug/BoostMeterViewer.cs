@@ -1,14 +1,19 @@
 ﻿using UnityEngine.UI;
 using UnityEngine;
 
-[RequireComponent(typeof(RawImage))]
+[RequireComponent(typeof(Image))]
 public class BoostMeterViewer : MonoBehaviour
 {
 	[SerializeField]
-	private RawImage bar;
+	private Image bar;
 	[SerializeField]
 	private ShuttleTrackers shuttleTrackerSO;
 	private float previousDelta = 1f;
+
+	private void Awake()
+	{
+		bar.fillMethod = Image.FillMethod.Horizontal;
+	}
 
 	private void Update()
 	{
@@ -17,9 +22,7 @@ public class BoostMeterViewer : MonoBehaviour
 		float delta = shuttleTrackerSO.boostRemaining;
 		if (Mathf.Approximately(previousDelta, delta)) return;
 		previousDelta = delta;
-		Vector3 scl = Vector3.one;
-		scl.x = delta;
-		bar.transform.localScale = scl;
+		bar.fillAmount = delta;
 		bar.color = delta == 1f ? Color.yellow : Color.white;
 	}
 }

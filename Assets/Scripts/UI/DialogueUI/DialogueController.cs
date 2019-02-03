@@ -130,12 +130,8 @@ public class DialogueController : MonoBehaviour
 		if (dialogueIsRunning) return;
 
 		dialogueIsRunning = true;
-		currentConversation = newDialogue;
-		currentLines = currentConversation.conversation;
-		speakers = currentConversation.speakers;
-		currentPosition = 0;
+		Setup(newDialogue);
 		Pause.InstantPause(true);
-		SendPopup();
 	}
 
 	public void StartChat(ConversationEvent newDialogue)
@@ -147,7 +143,12 @@ public class DialogueController : MonoBehaviour
 		}
 		chatIsRunning = true;
 		chatQueueTimer = 0f;
-		currentConversation = newDialogue;
+		Setup(newDialogue);
+	}
+
+	private void Setup(ConversationEvent dialogue)
+	{
+		currentConversation = dialogue;
 		currentLines = currentConversation.conversation;
 		speakers = currentConversation.speakers;
 		currentPosition = 0;

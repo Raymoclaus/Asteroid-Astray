@@ -24,9 +24,9 @@ public class CollisionSFXTrigger : MonoBehaviour
 
 		//collision.GetContacts(contacts);
 		//Vector2 contactPoint = contacts[0].point;
-		Vector2 contactPoint = (collision.collider.transform.position
-			- collision.otherCollider.transform.position) / 2f
-			+ collision.otherCollider.transform.position;
+		Vector2 contactPoint = (collision.collider.bounds.center
+			- collision.otherCollider.bounds.center) / 2f
+			+ collision.otherCollider.bounds.center;
 		float distance = Vector2.Distance(contactPoint, camTrackerSO.position);
 		if (distance > ignoreRange) return;
 

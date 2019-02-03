@@ -298,9 +298,9 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 		int otherLayer = other.gameObject.layer;
 		//collision.GetContacts(contacts);
 		//Vector2 contactPoint = contacts[0].point;
-		Vector2 contactPoint = (collision.collider.transform.position
-			- collision.otherCollider.transform.position) / 2f
-			+ collision.otherCollider.transform.position;
+		Vector2 contactPoint = (collision.collider.bounds.center
+			- collision.otherCollider.bounds.center) / 2f
+			+ collision.otherCollider.bounds.center;
 
 		if (otherLayer == layerProjectile)
 		{

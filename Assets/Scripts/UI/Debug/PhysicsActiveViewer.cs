@@ -8,7 +8,7 @@ public class PhysicsActiveViewer : MonoBehaviour
 	private Text txt;
 	private int currentCount;
 	private string display = "Physics Active: {0}";
-	private StringBuilder sb;
+	private StringBuilder sb = new StringBuilder();
 
 	private void Awake()
 	{

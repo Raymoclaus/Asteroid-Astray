@@ -79,7 +79,7 @@ public class AudioManager : MonoBehaviour
 		}
 	}
 
-	private struct SourceManager
+	private class SourceManager
 	{
 		public AudioSource source;
 		public float timer;

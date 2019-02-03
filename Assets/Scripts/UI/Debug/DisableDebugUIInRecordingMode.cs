@@ -16,7 +16,7 @@ public class DisableDebugUIInRecordingMode : MonoBehaviour
 	private void Update()
 	{
 		debugUI = debugUI ?? GetComponentInChildren<DebugUI>();
-		if (!debugUI || recordingModeController.RecordingMode != recordingModeState) return;
+		if (!debugUI || recordingModeController.RecordingMode == recordingModeState) return;
 
 		debugUI.gameObject.SetActive(!recordingModeController.RecordingMode);
 		recordingModeState = recordingModeController.RecordingMode;

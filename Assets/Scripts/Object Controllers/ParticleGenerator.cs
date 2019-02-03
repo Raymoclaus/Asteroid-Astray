@@ -77,6 +77,7 @@ public class ParticleGenerator : MonoBehaviour
 			go.SetActive(false);
 			go.transform.parent = holder;
 			SpriteRenderer rend = go.AddComponent<SpriteRenderer>();
+			rend.spriteSortPoint = SpriteSortPoint.Pivot;
 			pool.Enqueue(rend);
 		}
 	}
@@ -88,7 +89,7 @@ public class ParticleGenerator : MonoBehaviour
 		rd.Create(popupUI, target, pos, type, amount);
 	}
 
-	private struct ParticlePropertyManager
+	private class ParticlePropertyManager
 	{
 		public SpriteRenderer rend;
 		private float time;
@@ -147,7 +148,7 @@ public class ParticleGenerator : MonoBehaviour
 			Color c = tint;
 			if (originalTime - time < fadeIn)
 			{
-				c.a = alpha * (originalTime - time) / fadeIn;
+				c.a = alpha * ((originalTime - time) / fadeIn);
 			}
 			else if (fadeOut)
 			{
@@ -168,6 +169,7 @@ public class ParticleGenerator : MonoBehaviour
 			rend.transform.eulerAngles += Vector3.forward * currentRotationSpeed * Time.deltaTime * 60f;
 			//adjust position
 			rend.transform.position += direction * currentSpeed * Time.deltaTime;
+			rend.sortingOrder = (int)((originalTime - time) * 100f);
 
 			done = time <= 0f;
 		}

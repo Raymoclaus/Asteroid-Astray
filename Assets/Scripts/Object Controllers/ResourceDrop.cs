@@ -33,6 +33,8 @@ public class ResourceDrop : MonoBehaviour
 
 	private void Update()
 	{
+		if (!follow) return;
+
 		float aliveTime = Pause.timeSinceOpen - spawnTime;
 
 		if (aliveTime < delay || follow == null)
