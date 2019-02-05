@@ -102,6 +102,13 @@ public class DialogueController : MonoBehaviour
 				}
 			}
 		}
+		else
+		{
+			if (currentConversation.conversation[currentPosition].hasAction)
+			{
+				currentConversation.conversation[currentPosition].action.Invoke();
+			}
+		}
 		SendPopup();
 	}
 

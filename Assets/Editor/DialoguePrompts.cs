@@ -45,18 +45,36 @@ public class DialoguePromptsEditor : PropertyDrawer
 
 				if (hasAction)
 				{
+					SerializedObject actionObject = new SerializedObject(prompt.conversation[i]);
+
 					Rect eventRect = new Rect(position.x + 15f, position.y + height,
 						position.width, DEFAULT_HEIGHT * 5);
-					SerializedProperty actionProperty = new SerializedObject(
-						prompt.conversation[i]).FindProperty("action");
-					if (EditorGUI.PropertyField(eventRect, actionProperty, true))
-					{
-
-					}
+					SerializedProperty actionProperty = actionObject.FindProperty("action");
+					EditorGUI.PropertyField(eventRect, actionProperty, true);
 					height += DEFAULT_HEIGHT * 5;
-					actionProperty.serializedObject.ApplyModifiedProperties();
+
+					Rect skipEventRect = new Rect(position.x + 15f, position.y + height,
+						position.width, DEFAULT_HEIGHT * 5);
+					SerializedProperty skipActionProperty = actionObject.FindProperty("skipAction");
+					EditorGUI.PropertyField(skipEventRect, skipActionProperty, true);
+					height += DEFAULT_HEIGHT * 5;
+
+					actionObject.ApplyModifiedProperties();
 				}
 			}
+
+			height += DEFAULT_HEIGHT;
+			Rect labelRect = new Rect(position.x, position.y + height,
+				position.width, DEFAULT_HEIGHT);
+			EditorGUI.LabelField(labelRect, "End of conversation action");
+			height += DEFAULT_HEIGHT;
+
+			Rect endEventRect = new Rect(position.x + 15f, position.y + height,
+				position.width, DEFAULT_HEIGHT * 5);
+			SerializedProperty eventProperty = new SerializedObject(prompt)
+				.FindProperty("conversationEndAction");
+			EditorGUI.PropertyField(endEventRect, eventProperty);
+			height += DEFAULT_HEIGHT * 5;
 		}
 
 		EditorGUI.indentLevel = indent;

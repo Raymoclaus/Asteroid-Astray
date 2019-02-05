@@ -8,10 +8,8 @@ public class DialogueLineEvent : ScriptableObject
 	[TextArea(1, 2)]
 	protected string[] textVariations;
 	public byte speakerID;
-	//[HideInInspector]
-	public bool hasAction;
-	//[HideInInspector]
-	public UnityEvent action;
+	[HideInInspector] public bool hasAction;
+	[HideInInspector] public UnityEvent action, skipAction;
 	public const string DEFAULT_LINE = "<No dialogue line available>";
 
 	public virtual string GetLine()

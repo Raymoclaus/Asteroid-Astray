@@ -1,11 +1,12 @@
 ﻿using UnityEngine;
+using UnityEngine.Events;
 
 [CreateAssetMenu(menuName = "Scriptable Objects/Dialogue/Basic Conversation")]
 public class ConversationEvent : ScriptableObject
 {
-	[SerializeField]
 	public DialogueLineEvent[] conversation;
 	public EntityProfile[] speakers;
+	[HideInInspector] public UnityEvent conversationEndAction;
 
 	public virtual ConversationEventPosition GetNextConversation()
 	{
