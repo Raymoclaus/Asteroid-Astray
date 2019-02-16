@@ -86,6 +86,10 @@ public class DialogueController : MonoBehaviour
 			}
 			else
 			{
+				if (currentConversation.conversationEndAction != null)
+				{
+					currentConversation.conversationEndAction.Invoke();
+				}
 				currentPosition = -1;
 				currentLines = null;
 				speakers = null;
@@ -130,6 +134,21 @@ public class DialogueController : MonoBehaviour
 			chatUI.GeneratePopup(name, line, face, speakerID);
 			return;
 		}
+	}
+
+	public void SkipEntireDialogue()
+	{
+		if (!dialogueIsRunning) return;
+
+		for (; currentPosition < currentLines.Length; currentPosition++)
+		{
+			if (currentConversation.conversation[currentPosition].hasAction)
+			{
+				currentConversation.conversation[currentPosition].skipAction.Invoke();
+			}
+		}
+
+		GetNextLine();
 	}
 
 	public void StartDialogue(ConversationEvent newDialogue)

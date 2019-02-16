@@ -22,15 +22,19 @@ public class SpotlightEffectController : ScriptableObject
 		currentCoroutine = Coroutines.Instance.StartCoroutine(Go(1.5f, 0.5f, time, true));
 	}
 
-	public void SetSpotlight(float hardValue, float softValue)
+	public void SetSpotlight(float hardValue, float softValue, bool cancelCoro = false)
 	{
+		if (cancelCoro)
+		{
+			CancelCoroutine();
+		}
 		spotlightMaterial.SetFloat(hardRadius, hardValue);
-		spotlightMaterial.SetFloat(softRadius, softValue);
+		spotlightMaterial.SetFloat(softRadius, softValue); 
 	}
 
 	public void SetSpotlight()
 	{
-		SetSpotlight(1.5f, 0.5f);
+		SetSpotlight(1.5f, 0.5f, true);
 	}
 
 	private IEnumerator Go(float hardVal, float softVal, float time, bool ignorePause)
@@ -44,7 +48,7 @@ public class SpotlightEffectController : ScriptableObject
 
 			float currentHardVal = Mathf.Lerp(originalHardVal, hardVal, timer / time);
 			float currentSoftVal = Mathf.Lerp(originalSoftVal, softVal, timer / time);
-			SetSpotlight(currentHardVal, currentSoftVal);
+			SetSpotlight(currentHardVal, currentSoftVal, false);
 			yield return null;
 		}
 	}
