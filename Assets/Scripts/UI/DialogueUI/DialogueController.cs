@@ -122,7 +122,7 @@ public class DialogueController : MonoBehaviour
 
 		int speakerID = currentLines[currentPosition].speakerID;
 		string name = speakers[speakerID].entityName;
-		string line = currentLines[currentPosition].GetLine();
+		string line = currentLines[currentPosition].line;
 		Sprite face = speakers[speakerID].face;
 		if (dialogueIsRunning)
 		{

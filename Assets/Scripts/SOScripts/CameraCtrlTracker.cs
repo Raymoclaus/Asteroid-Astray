@@ -16,6 +16,12 @@ public class CameraCtrlTracker : ScriptableObject
 	[HideInInspector]
 	public float constantSize = 2f;
 	[HideInInspector]
+	public bool useLookAheadModifier = false;
+	[HideInInspector]
+	public float distanceAheadModifier = 2f;
+	[HideInInspector]
+	public float moveAheadSpeedModifier = 2f;
+	[HideInInspector]
 	public Vector3 position;
 
 	public bool IsCoordInView(ChunkCoords coord)

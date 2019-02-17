@@ -1,0 +1,20 @@
+0|Ugh...My head.
+0|Partner, can your hear me?
+0|...
+0|Damn. Communication's out. What else is broken?
+0|It looks like the thruster systems are operational. At least we're not stuck.
+0|Navigation systems appear to be working, but without any points of reference nearby, it's useless.
+0|Maybe the ship is still close by. I could just look out the window.
+0|Wow! It's beautiful.
+0|I haven't seen anything like this. There are bright stars everywhere.
+1|NEGATIVE. SCANNERS INDICATE THERE ARE VERY FEW NEARBY STAR SYSTEMS.
+1|HOWEVER, THERE IS AN ABUNDANCE OF A VOLATILE LUMINESCENT COMPOUND.
+0|Shiny space dust, huh?
+1|CLOSE ENOUGH.
+0|Hmm, weird. There are asteroids bouncing around everywhere with no clear pattern or direction.
+0|It must be because of the irregular gravity readings around the wormhole we just came through.
+0|Maybe I can find some useful materials in those asteroids for repairs.
+0|I'm glad I left the drill on the shuttle. Looks like it's still working.
+1|FIRST ORE-DER OF BUSINESS:-
+0|*chuckles*
+1|REPAIR COMMUNICATIONS TO LOCATE DENDRO AND THE SHIP.

@@ -27,7 +27,9 @@ public class CameraCtrl : MonoBehaviour
 	public ChunkCoords coords;
 	private List<ChunkCoords> coordsInView = new List<ChunkCoords>(16);
 
-	public int TotalViewRange { get { return trackerSO.ENTITY_VIEW_RANGE + trackerSO.RangeModifier; } }
+	public int TotalViewRange {
+		get { return trackerSO.ENTITY_VIEW_RANGE + trackerSO.RangeModifier; }
+	}
 
 	public ChunkFiller chunkFiller;
 
@@ -103,16 +105,22 @@ public class CameraCtrl : MonoBehaviour
 	{
 		if (targetToFollow != null)
 		{
-			Vector2 aheadTarget = new Vector2(Mathf.Sin(-targetToFollow.eulerAngles.z * Mathf.Deg2Rad),
-				Mathf.Cos(-targetToFollow.eulerAngles.z * Mathf.Deg2Rad)) * distanceAhead;
+			Vector2 aheadTarget = new Vector2(
+				Mathf.Sin(-targetToFollow.eulerAngles.z * Mathf.Deg2Rad),
+				Mathf.Cos(-targetToFollow.eulerAngles.z * Mathf.Deg2Rad)) * distanceAhead
+				* (trackerSO.useLookAheadModifier ? trackerSO.distanceAheadModifier : 1f);
 			if (panView != null)
 			{
 				aheadTarget = (panView.position - transform.position) / 2f;
 			}
 			float difference = Vector2.Distance(aheadTarget, aheadVector) / distanceAhead / 2f;
-			aheadVector = Vector2.MoveTowards(aheadVector, aheadTarget, difference * distanceAhead * moveAheadSpeed
+			aheadVector = Vector2.MoveTowards(aheadVector, aheadTarget,
+				difference * distanceAhead * moveAheadSpeed
+				* (trackerSO.useLookAheadModifier ? trackerSO.moveAheadSpeedModifier : 1f)
 				* Time.deltaTime * 60f);
-			transform.localPosition = targetToFollow.position + (Vector3)aheadVector + Vector3.forward * -1f;
+			transform.localPosition = targetToFollow.position
+				+ (Vector3)aheadVector
+				+ Vector3.forward * -1f;
 		}
 	}
 
@@ -150,7 +158,8 @@ public class CameraCtrl : MonoBehaviour
 			//calculation to determine how quickly the camera zoom needs to change
 			float zoomDifference = targetSize - CamSize;
 			float zoomDifferenceAbs = zoomDifference > 0 ? zoomDifference : -zoomDifference;
-			float camZoomSpeedModifier = zoomDifferenceAbs > 1 && zoomDifference > 0 ? 1f : zoomDifferenceAbs;
+			float camZoomSpeedModifier = zoomDifferenceAbs > 1 && zoomDifference > 0 ?
+				1f : zoomDifferenceAbs;
 			CamSize = Mathf.MoveTowards(CamSize, targetSize, camZoomSpeed * camZoomSpeedModifier
 			* Time.deltaTime * 60f);
 		} 
@@ -169,7 +178,8 @@ public class CameraCtrl : MonoBehaviour
 		//keep track of coords previous in view
 		//query the EntityNetwork for a list of coordinates in view based on camera's size
 		newCoordsInView.Clear();
-		EntityNetwork.GetCoordsInRange(center, trackerSO.ENTITY_VIEW_RANGE + trackerSO.RangeModifier, newCoordsInView);
+		EntityNetwork.GetCoordsInRange(center,
+			trackerSO.ENTITY_VIEW_RANGE + trackerSO.RangeModifier, newCoordsInView);
 		//create a lists and filter out coordinates that are still in view
 		notInViewAnymore.Clear();
 		newCoords.Clear();
@@ -216,7 +226,8 @@ public class CameraCtrl : MonoBehaviour
 	private void CheckPhysicsRange(ChunkCoords center)
 	{
 		physicsRange.Clear();
-		EntityNetwork.GetEntitiesInRange(center, Constants.MAX_PHYSICS_RANGE, addToList: physicsRange);
+		EntityNetwork.GetEntitiesInRange(center, Constants.MAX_PHYSICS_RANGE,
+			addToList: physicsRange);
 
 		foreach(Entity e in physicsRange)
 		{
@@ -263,6 +274,13 @@ public class CameraCtrl : MonoBehaviour
 	{
 		trackerSO.useConstantSize = enable;
 		trackerSO.constantSize = size;
+	}
+
+	public void SetLookAheadDistance(bool enable = true, float distanceModifier = 2f, float speedModifier = 2f)
+	{
+		trackerSO.useLookAheadModifier = enable;
+		trackerSO.distanceAheadModifier = distanceModifier;
+		trackerSO.moveAheadSpeedModifier = speedModifier;
 	}
 
 	private void UpdateSO()

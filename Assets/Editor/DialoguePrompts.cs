@@ -23,6 +23,8 @@ public class DialoguePromptsEditor : PropertyDrawer
 
 		if (prompt != null)
 		{
+			SerializedObject convoObject = new SerializedObject(property.objectReferenceValue);
+			SerializedProperty conversationProperty = convoObject.FindProperty("conversation");
 			int length = prompt.conversation.Length;
 			height = DEFAULT_HEIGHT;
 			for (int i = 0; i < length; i++)
@@ -38,28 +40,26 @@ public class DialoguePromptsEditor : PropertyDrawer
 				{
 					prompt.conversation[i].hasAction = !hasAction;
 				}
-				string text = prompt.conversation[i].GetLine(0);
+				string text = prompt.conversation[i].line;
 				GUIContent textLabel = new GUIContent(text);
 				EditorGUI.LabelField(textRect, textLabel);
 				height += EditorStyles.label.CalcHeight(textLabel, textWidth);
 
 				if (hasAction)
 				{
-					SerializedObject actionObject = new SerializedObject(prompt.conversation[i]);
+					SerializedProperty lineProperty = conversationProperty.GetArrayElementAtIndex(i);
 
 					Rect eventRect = new Rect(position.x + 15f, position.y + height,
 						position.width - 20f, DEFAULT_HEIGHT * 5);
-					SerializedProperty actionProperty = actionObject.FindProperty("action");
+					SerializedProperty actionProperty = lineProperty.FindPropertyRelative("action");
 					EditorGUI.PropertyField(eventRect, actionProperty, true);
 					height += EditorGUI.GetPropertyHeight(actionProperty);
 
 					Rect skipEventRect = new Rect(position.x + 15f, position.y + height,
 						position.width - 20f, DEFAULT_HEIGHT * 5);
-					SerializedProperty skipActionProperty = actionObject.FindProperty("skipAction");
+					SerializedProperty skipActionProperty = lineProperty.FindPropertyRelative("skipAction");
 					EditorGUI.PropertyField(skipEventRect, skipActionProperty, true);
 					height += EditorGUI.GetPropertyHeight(skipActionProperty);
-
-					actionObject.ApplyModifiedProperties();
 				}
 			}
 
@@ -77,6 +77,7 @@ public class DialoguePromptsEditor : PropertyDrawer
 			EditorGUI.PropertyField(endEventRect, eventProperty);
 			height += EditorGUI.GetPropertyHeight(eventProperty);
 
+			convoObject.ApplyModifiedProperties();
 			endActionObject.ApplyModifiedProperties();
 		}
 

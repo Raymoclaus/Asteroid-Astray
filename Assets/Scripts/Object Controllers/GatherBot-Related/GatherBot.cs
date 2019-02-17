@@ -634,16 +634,15 @@ public class GatherBot : Entity, IDrillableObject, IDamageable, IStunnable, ICom
 	private void SearchForNearestAsteroid()
 	{
 		int searchRange = 1;
-		surroundingEntities = new List<Entity>();
+		surroundingEntities.Clear();
 
 		while (surroundingEntities.Count == 0)
 		{
-			EntityNetwork.GetEntitiesInRange(_coords, searchRange, addToList: surroundingEntities);
+			EntityNetwork.GetEntitiesInRange(_coords, searchRange, EntityType.Asteroid, addToList: surroundingEntities);
 
 			for (int i = 0; i < surroundingEntities.Count; i++)
 			{
-				if (surroundingEntities[i].GetEntityType() != EntityType.Asteroid
-					|| !hive.VerifyGatheringTarget(this, surroundingEntities[i]))
+				if (!hive.VerifyGatheringTarget(this, surroundingEntities[i]))
 				{
 					surroundingEntities.RemoveAt(i);
 					i--;

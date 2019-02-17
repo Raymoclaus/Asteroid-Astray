@@ -99,7 +99,7 @@ public class LaserBlast : MonoBehaviour, IProjectile
 			{
 				convergePoint = transform.position;
 				sprRend.sprite = boostedBullet;
-				float angle = -Vector2.SignedAngle(Vector2.up, vel);
+				float angle = Vector2.SignedAngle(Vector2.up, vel);
 				transform.eulerAngles = Vector3.forward * angle;
 				//signal weapon system to create sonic boom effects
 				weaponSystem.LaserConvergeEffect(sharedID, convergePoint, angle);

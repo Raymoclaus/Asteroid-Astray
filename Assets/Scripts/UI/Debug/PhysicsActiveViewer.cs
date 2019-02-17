@@ -8,7 +8,6 @@ public class PhysicsActiveViewer : MonoBehaviour
 	private Text txt;
 	private int currentCount;
 	private string display = "Physics Active: {0}";
-	private StringBuilder sb = new StringBuilder();
 
 	private void Awake()
 	{
@@ -20,9 +19,7 @@ public class PhysicsActiveViewer : MonoBehaviour
 		int count = Entity.GetActive();
 		if (count != currentCount)
 		{
-			sb.Clear();
-			sb.AppendFormat(display, count);
-			txt.text = sb.ToString();
+			txt.text = string.Format(display, count);
 			currentCount = count;
 		}
 	}

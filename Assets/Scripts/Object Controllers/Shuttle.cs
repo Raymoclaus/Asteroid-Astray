@@ -86,6 +86,8 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 	private float stunDuration = 2f;
 	[SerializeField]
 	private float launchZoomOutSize = 5f;
+	[SerializeField]
+	private float launchLookAheadDistance = 5f;
 	private List<ICombat> enemies = new List<ICombat>();
 	public Inventory storage;
 	[SerializeField]
@@ -404,6 +406,7 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 			if (cameraCtrl)
 			{
 				cameraCtrl.SetConstantSize(true, launchZoomOutSize);
+				cameraCtrl.SetLookAheadDistance(true, launchLookAheadDistance);
 			}
 		}
 		else
@@ -412,6 +415,7 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 			if (cameraCtrl)
 			{
 				cameraCtrl.SetConstantSize(false);
+				cameraCtrl.SetLookAheadDistance(false);
 			}
 		}
 
