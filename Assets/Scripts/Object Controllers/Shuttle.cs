@@ -1,15 +1,13 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-public class Shuttle : Entity, IDamageable, IStunnable, ICombat
+public class Shuttle : Entity, IDamageable, IStunnable, ICombat, IQuester
 {
 	#region Fields
 
 	[Header("Required references")]
-	[SerializeField]
-	private ShuttleTrackers trackerSO;
-	[SerializeField]
-	private CameraCtrl cameraCtrl;
+	[SerializeField] private ShuttleTrackers trackerSO;
+	[SerializeField] private CameraCtrl cameraCtrl;
 	public Entity GetEntity { get { return this; } }
 	[Tooltip("Requires reference to the SpriteRenderer of the shuttle.")]
 	public SpriteRenderer SprRend;
@@ -25,13 +23,11 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 	[Tooltip("When drilling, this is multiplied with the speed limit to allow for faster boost after drilling" +
 		" completes.")]
 	public float DrillBoost = 2f;
-	[SerializeField]
-	private float drillDamageMultiplier = 0.5f;
+	[SerializeField] private float drillDamageMultiplier = 0.5f;
 	[Tooltip("Controls how quickly the shuttle can rotate.")]
 	public float MaxRotSpeed = 10f;
 	[Tooltip("Controls how effective the shuttle's deceleration mechanism is.")]
-	[Range(0f, 1f)]
-	public float decelerationEffectiveness = 0.01f;
+	[Range(0f, 1f)] public float decelerationEffectiveness = 0.01f;
 	//used as a temporary storage for rigidbody velocity when the constraints are frozen
 	public Vector3 velocity;
 	//the rotation that the shuttle should be at
@@ -74,51 +70,38 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 	private float speedMultiplier = 1f;
 	//whether the shuttle can perform a drill launch
 	public float drillLaunchSpeed = 10f;
-	[SerializeField]
-	private float drillLaunchMaxAngle = 60f;
-	[SerializeField]
-	private SpriteRenderer drillLaunchArcSprite;
-	[SerializeField]
-	private GameObject drillLaunchImpact;
-	[SerializeField]
-	private LaunchTrailController launchTrail;
+	[SerializeField] private float drillLaunchMaxAngle = 60f;
+	[SerializeField] private SpriteRenderer drillLaunchArcSprite;
+	[SerializeField] private GameObject drillLaunchImpact;
+	[SerializeField] private LaunchTrailController launchTrail;
 	private bool stunned = false;
 	private float stunDuration = 2f;
-	[SerializeField]
-	private float launchZoomOutSize = 5f;
-	[SerializeField]
-	private float launchLookAheadDistance = 5f;
+	[SerializeField] private float launchZoomOutSize = 5f;
+	[SerializeField] private float launchLookAheadDistance = 5f;
 	private List<ICombat> enemies = new List<ICombat>();
 	public Inventory storage;
-	[SerializeField]
-	private ShipInventory shipStorage;
+	[SerializeField] private ShipInventory shipStorage;
+	[SerializeField] private ItemPopupUI popupUI;
 	#region Boost
 	//whether boost capability is available
-	[SerializeField]
-	private readonly bool boostAvailable = true;
+	[SerializeField] private readonly bool boostAvailable = true;
 	//how long a boost can last
-	[SerializeField]
-	private float boostCapacity = 1f;
+	[SerializeField] private float boostCapacity = 1f;
 	//represents how much boost is currently available
 	private float boostLevel;
 	//how much a boost affects speed
-	[SerializeField]
-	private float boostMultiplier = 2f;
+	[SerializeField] private float boostMultiplier = 2f;
 	//how long it takes before boost fuel begins recharging
-	[SerializeField]
-	private float boostRechargeTime = 2f;
+	[SerializeField] private float boostRechargeTime = 2f;
 	private float rechargeTimer;
 	//how quickly the boost fuel recharges
-	[SerializeField]
-	private float rechargeSpeed = 1f;
+	[SerializeField] private float rechargeSpeed = 1f;
 	//how much boosting ignores existing momentum
-	[SerializeField]
-	private float boostCounterVelocity = 0.1f;
+	[SerializeField] private float boostCounterVelocity = 0.1f;
 	//whether the shuttle is boosting or not
 	private bool isBoosting = false;
 	//reference to sonic boom animation
-	[SerializeField]
-	private GameObject sonicBoomBoostEffect;
+	[SerializeField] private GameObject sonicBoomBoostEffect;
 	public float boostInvulnerabilityTime = 0.2f;
 	private bool isInvulnerable = false;
 	#endregion Boost
@@ -130,13 +113,11 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 	#endregion
 
 	#region Sound Stuff
-	[SerializeField]
-	private AudioClip collectResourceSound;
+	[SerializeField] private AudioClip collectResourceSound;
 	private float resourceCollectedTime;
 	private float resourceCollectedPitch = 1f;
 	private float resourceCollectedPitchIncreaseAmount = 0.2f;
-	[SerializeField]
-	public AudioSO collisionSounds;
+	[SerializeField] public AudioSO collisionSounds;
 	private ContactPoint2D[] contacts = new ContactPoint2D[1];
 	#endregion
 
@@ -169,6 +150,8 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 	//Checks for input related to movement and calculates acceleration
 	private void GetMovementInput()
 	{
+		if (!trackerSO.hasControl) return;
+
 		//Check if the player is attempting to boost
 		if (!trackerSO.autoPilot) Boost(InputHandler.GetInput("Boost") > 0f);
 		//used for artificially adjusting speed, used by the auto pilot only
@@ -259,6 +242,7 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 	//use calculated rotation and speed to determine where to move to
 	private void CalculateForces()
 	{
+		Rb.bodyType = trackerSO.isKinematic ? RigidbodyType2D.Kinematic : RigidbodyType2D.Dynamic;
 		//calculate drag factor
 		float checkSpeed = SpeedCheck;
 		float decelerationModifier = 1f;
@@ -332,9 +316,9 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 		return ld;
 	}
 
-	public override void CollectResources(ResourceDrop r)
+	public override void CollectResources(Item.Type type, int amount)
 	{
-		storage.AddItem(Item.Type.Stone);
+		storage.AddItem(type, num: amount);
 
 		//increase pitch of sound for successive resource collection, reset after a break
 		if (Pause.timeSinceOpen - resourceCollectedTime < 1f)
@@ -351,6 +335,11 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 		if (audioManager)
 		{
 			audioManager.PlaySFX(collectResourceSound, transform.position, transform, pitch: resourceCollectedPitch);
+		}
+		popupUI = popupUI ?? FindObjectOfType<ItemPopupUI>();
+		if (popupUI)
+		{
+			popupUI.GeneratePopup(type, amount);
 		}
 
 	}
@@ -391,6 +380,8 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 
 	public override float DrillDamageQuery(bool firstHit)
 	{
+		if (InputHandler.GetInputUp("Stop") > 0f || !trackerSO.hasControl) return 0f;
+
 		if (InputHandler.GetInput("Stop") > 0f)
 		{
 			GameObject launchCone = drillLaunchArcSprite.gameObject;
@@ -418,8 +409,6 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 				cameraCtrl.SetLookAheadDistance(false);
 			}
 		}
-
-		if (InputHandler.GetInputUp("Stop") > 0f) return 0f;
 
 		if (firstHit && velocity.magnitude >= SpeedLimit + 0.5f)
 		{
@@ -450,7 +439,8 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 	{
 		return canDrillLaunch
 			&& velocity.sqrMagnitude >= Mathf.Pow(SpeedLimit * DrillBoost, 2f) * 0.9f
-			&& InputHandler.GetInputUp("Stop") > 0f;
+			&& InputHandler.GetInputUp("Stop") > 0f
+			&& trackerSO.hasControl;
 	}
 
 	public void Stun()
@@ -611,12 +601,14 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 
 	public override bool CanFireLaser()
 	{
-		return laserAttached && !isBoosting && InputHandler.GetInput("Shoot") > 0f;
+		return laserAttached && !isBoosting && InputHandler.GetInput("Shoot") > 0f
+			&& !Pause.IsPaused && trackerSO.hasControl;
 	}
 
 	public override bool CanFireStraightWeapon()
 	{
-		return straightWeaponAttached && !isBoosting && InputHandler.GetInput("Shoot") > 0f;
+		return straightWeaponAttached && !isBoosting && InputHandler.GetInput("Shoot") > 0f
+			&& !Pause.IsPaused && trackerSO.hasControl;
 	}
 
 	public override GameObject GetLaunchImpactAnimation()
@@ -631,11 +623,16 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 
 	public override Vector2 LaunchDirection(Transform launchableObject)
 	{
+		float shuttleAngle = -Vector2.SignedAngle(Vector2.up, transform.up);
+		if (!trackerSO.hasControl)
+		{
+			shuttleAngle *= Mathf.Deg2Rad;
+			return new Vector2(Mathf.Sin(shuttleAngle), Mathf.Cos(shuttleAngle));
+		}
 		float launchAngle = InputHandler.GetLookDirection(transform.position);
 		if (float.IsPositiveInfinity(launchAngle)) launchAngle = lastLookDirection;
 		float launchAngleRad = launchAngle * Mathf.Deg2Rad;
 		Vector2 launchDir = new Vector2(Mathf.Sin(launchAngleRad), Mathf.Cos(launchAngleRad));
-		float shuttleAngle = -Vector2.SignedAngle(Vector2.up, transform.up);
 		float deltaAngle = Mathf.Abs(Mathf.DeltaAngle(launchAngle, shuttleAngle));
 		if (deltaAngle > drillLaunchMaxAngle / 2f)
 		{
@@ -705,5 +702,10 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat
 	public override ICombat GetICombat()
 	{
 		return this;
+	}
+
+	public void ReceiveItemReward(Item.Type type, int amount)
+	{
+		CollectResources(type, amount);
 	}
 }

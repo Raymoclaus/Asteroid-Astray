@@ -14,7 +14,7 @@ public static class EntityGenerator
 	//chunks to fill in batches
 	private static List<ChunkCoords> chunkBatches = new List<ChunkCoords>(100);
 	//maximum amount of chunks to fill per frame
-	private static int maxChunkBatchFill = 2;
+	private static int maxChunkBatchFill = 1;
 	private static List<SpawnableEntity> toSpawn = new List<SpawnableEntity>();
 	private static bool batcherRunning = false;
 	#endregion

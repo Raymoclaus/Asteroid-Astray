@@ -30,6 +30,34 @@ public static class Item
 
 	public const int MAX_RARITY = 10;
 
+	public static string TypeName(Type type)
+	{
+		switch (type)
+		{
+			case Type.Blank: return "Blank";
+			case Type.PureCorvorite: return "Pure Corvorite";
+			case Type.Stone: return "Stone";
+			case Type.CorruptedCorvorite: return "Corrupted Corvorite";
+			case Type.WarpCoreBattery: return "Warp Core Battery";
+			case Type.IronAlloy: return "Iron Alloy";
+			case Type.BugFood: return "Bug Food";
+			case Type.ProximityMine: return "Proximity Mine";
+			case Type.UnstableAcid: return "Unstable Acid";
+			case Type.EnergyDrink: return "Energy Drink";
+			case Type.DataChip: return "Data Chip";
+			case Type.HeatResistantIce: return "Heat Resistant Ice";
+			case Type.Amber: return "Amber";
+			case Type.Probe: return "Probe";
+			case Type.Beacon: return "Beacon";
+			case Type.ShieldGenerator: return "Shield Generator";
+			case Type.SpareParts: return "Spare Parts";
+			case Type.RepairKit: return "Repair Kit";
+			case Type.NioleriumCrystals: return "Niolerium Crystals";
+			case Type.NiolerDung: return "Nioler Dung";
+			default: return "<Unnamed>";
+		}
+	}
+
 	public static int TypeRarity(Type type)
 	{
 		switch (type)

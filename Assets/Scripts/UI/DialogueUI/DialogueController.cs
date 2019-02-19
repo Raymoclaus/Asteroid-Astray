@@ -106,13 +106,6 @@ public class DialogueController : MonoBehaviour
 				}
 			}
 		}
-		else
-		{
-			if (currentConversation.conversation[currentPosition].hasAction)
-			{
-				currentConversation.conversation[currentPosition].action.Invoke();
-			}
-		}
 		SendPopup();
 	}
 
@@ -124,6 +117,12 @@ public class DialogueController : MonoBehaviour
 		string name = speakers[speakerID].entityName;
 		string line = currentLines[currentPosition].line;
 		Sprite face = speakers[speakerID].face;
+
+		if (currentConversation.conversation[currentPosition].hasAction)
+		{
+			currentConversation.conversation[currentPosition].action.Invoke();
+		}
+
 		if (dialogueIsRunning)
 		{
 			dialogueUI.GeneratePopup(name, line, face, speakerID);
@@ -153,7 +152,7 @@ public class DialogueController : MonoBehaviour
 
 	public void StartDialogue(ConversationEvent newDialogue)
 	{
-		if (dialogueIsRunning) return;
+		if (dialogueIsRunning || !newDialogue) return;
 
 		dialogueIsRunning = true;
 		Setup(newDialogue);

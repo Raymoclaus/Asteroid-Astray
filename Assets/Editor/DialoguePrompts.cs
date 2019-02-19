@@ -9,7 +9,6 @@ public class DialoguePromptsEditor : PropertyDrawer
 
 	public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
 	{
-		property.serializedObject.Update();
 		Object target = property.serializedObject.targetObject;
 		ConversationEvent prompt = (ConversationEvent)fieldInfo.GetValue(target);
 

@@ -26,8 +26,8 @@ public class MainHatchPrompt : MonoBehaviour, IPromptRespone
 
 	public void Exit()
 	{
-		shipEntryUI = shipEntryUI ?? FindObjectOfType<ShipEntryPanel>();
-		shipEntryUI.gameObject.SetActive(false);
+		//shipEntryUI = shipEntryUI ?? FindObjectOfType<ShipEntryPanel>();
+		//shipEntryUI.gameObject.SetActive(false);
 	}
 
 	public string InteractString()

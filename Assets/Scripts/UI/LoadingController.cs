@@ -15,6 +15,7 @@ public class LoadingController : MonoBehaviour
 	private GameObject holder;
 	[HideInInspector]
 	public bool finishedLoading = false;
+	private List<System.Action> postLoadActions = new List<System.Action>();
 
 	private void Awake()
 	{
@@ -72,7 +73,7 @@ public class LoadingController : MonoBehaviour
 
 		foreach (System.Action a in preLoadActions)
 		{
-			a();
+			a?.Invoke();
 		}
 	}
 
@@ -86,6 +87,11 @@ public class LoadingController : MonoBehaviour
 			trackerSO.isLoading = false;
 			holder.SetActive(false);
 			finishedLoading = true;
+
+			foreach (System.Action a in postLoadActions)
+			{
+				a?.Invoke();
+			}
 		}
 	}
 
@@ -96,5 +102,17 @@ public class LoadingController : MonoBehaviour
 			if (!b) return false;
 		}
 		return true;
+	}
+
+	public void AddPostLoadAction(System.Action action)
+	{
+		if (finishedLoading)
+		{
+			action?.Invoke();
+		}
+		else
+		{
+			postLoadActions.Add(action);
+		}
 	}
 }

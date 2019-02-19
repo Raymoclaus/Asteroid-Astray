@@ -72,7 +72,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable, IStunnable, ICom
 	//gathering variables
 	private float searchTimer, scanInterval = 0.3f;
 	private int drillCount, drillLimit = 3;
-	private List<Entity> surroundingEntities;
+	private List<Entity> surroundingEntities = new List<Entity>();
 	private IDrillableObject drillableTarget;
 	[SerializeField]
 	private int storageCapacity = 10;
@@ -1261,10 +1261,10 @@ public class GatherBot : Entity, IDrillableObject, IDamageable, IStunnable, ICom
 		return speedLimit;
 	}
 
-	public override void CollectResources(ResourceDrop r)
+	public override void CollectResources(Item.Type type, int amount)
 	{
-		storage.AddItem(Item.Type.Stone);
-		itemsCollected++;
+		storage.AddItem(type, num: amount);
+		itemsCollected += amount;
 		if (itemsCollected >= storageCapacity)
 		{
 			state = AIState.Storing;

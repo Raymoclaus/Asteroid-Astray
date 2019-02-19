@@ -10,8 +10,6 @@ public class ParticleGenerator : MonoBehaviour
 	private List<ParticlePropertyManager> active = new List<ParticlePropertyManager>(poolReserve);
 
 	public ResourceDrop dropPrefab;
-	[SerializeField]
-	private ItemPopupUI popupUI;
 
 	private void Awake()
 	{
@@ -85,8 +83,7 @@ public class ParticleGenerator : MonoBehaviour
 	public void DropResource(Entity target, Vector2 pos, Item.Type type = Item.Type.Stone, int amount = 1)
 	{
 		ResourceDrop rd = Instantiate(dropPrefab);
-		popupUI = popupUI ?? FindObjectOfType<ItemPopupUI>();
-		rd.Create(popupUI, target, pos, type, amount);
+		rd.Create(target, pos, type, amount);
 	}
 
 	private class ParticlePropertyManager

@@ -193,7 +193,7 @@ public class Entity : MonoBehaviour
 		}
 	}
 
-	public virtual void CollectResources(ResourceDrop r)
+	public virtual void CollectResources(Item.Type type, int amount)
 	{
 
 	}
