@@ -12,11 +12,7 @@ public class CameraCtrlTracker : ScriptableObject
 	public ChunkCoords coords;
 	public readonly int ENTITY_VIEW_RANGE = 1;
 	[HideInInspector]
-	public bool useConstantSize = false;
-	[HideInInspector]
 	public float constantSize = 2f;
-	[HideInInspector]
-	public bool useLookAheadModifier = false;
 	[HideInInspector]
 	public float distanceAheadModifier = 2f;
 	[HideInInspector]

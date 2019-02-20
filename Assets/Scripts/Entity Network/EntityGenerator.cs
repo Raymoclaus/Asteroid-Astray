@@ -184,28 +184,6 @@ public static class EntityGenerator
 		if (a != null) a();
 	}
 
-	/// Removes and destroys all asteroids in the entity network then sets all fill triggers to false
-	public static void DestroyAllAsteroids()
-	{
-		//destroy all asteroid entities
-		EntityNetwork.DestroyAllEntities(EntityType.Asteroid);
-
-		//set all fill triggers to false
-		ChunkCoords check = ChunkCoords.Zero;
-		for (int dir = 0; dir < _wasFilled.Count; dir++)
-		{
-			check.Direction = (Quadrant) dir;
-			for (int x = 0; x < Direction(check).Count; x++)
-			{
-				check.X = x;
-				for (int y = 0; y < Column(check).Count; y++)
-				{
-					Column(check)[y] = false;
-				}
-			}
-		}
-	}
-
 	public static IEnumerator SetPrefabs(EntityPrefabDB prf, System.Action a)
 	{
 		prefabs = prf;

@@ -9,6 +9,7 @@ public class DialoguePromptsEditor : PropertyDrawer
 
 	public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
 	{
+
 		Object target = property.serializedObject.targetObject;
 		ConversationEvent prompt = (ConversationEvent)fieldInfo.GetValue(target);
 
@@ -20,12 +21,15 @@ public class DialoguePromptsEditor : PropertyDrawer
 		EditorGUI.PropertyField(position, property, label, true);
 		EditorGUI.indentLevel++;
 
-		if (prompt != null)
+		height = DEFAULT_HEIGHT;
+		Rect foldoutRect = new Rect(position.x, position.y + height, position.width, DEFAULT_HEIGHT);
+		height += DEFAULT_HEIGHT;
+		property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, label);
+		if (property.isExpanded && prompt != null)
 		{
 			SerializedObject convoObject = new SerializedObject(property.objectReferenceValue);
 			SerializedProperty conversationProperty = convoObject.FindProperty("conversation");
 			int length = prompt.conversation.Length;
-			height = DEFAULT_HEIGHT;
 			for (int i = 0; i < length; i++)
 			{
 				Rect toggleRect = new Rect(position.x, position.y + height,

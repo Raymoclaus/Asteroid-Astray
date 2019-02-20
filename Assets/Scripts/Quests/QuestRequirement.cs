@@ -3,28 +3,15 @@
 public abstract class QuestRequirement
 {
 	private const string NO_DESCRIPTION = "This goal has no description.";
+	protected bool completed = false;
 
 	public delegate void QuestRequirementUpdatedEventHandler();
 	public event QuestRequirementUpdatedEventHandler OnQuestRequirementUpdated;
 	public void QuestRequirementUpdated() => OnQuestRequirementUpdated?.Invoke();
 
-	public virtual string GetDescription()
-	{
-		return NO_DESCRIPTION;
-	}
+	public virtual string GetDescription() => NO_DESCRIPTION;
 
-	protected virtual void AssignListener()
-	{
+	public virtual bool IsComplete() => completed;
 
-	}
-
-	public virtual bool IsComplete()
-	{
-		return false;
-	}
-
-	public virtual Transform TargetLocation()
-	{
-		return null;
-	}
+	public virtual Transform TargetLocation() => null;
 }

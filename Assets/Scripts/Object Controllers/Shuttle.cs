@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-public class Shuttle : Entity, IDamageable, IStunnable, ICombat, IQuester
+public class Shuttle : Character, IDamageable, IStunnable, ICombat
 {
 	#region Fields
 
@@ -82,6 +82,9 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat, IQuester
 	public Inventory storage;
 	[SerializeField] private ShipInventory shipStorage;
 	[SerializeField] private ItemPopupUI popupUI;
+	private bool isInvulnerable = false;
+	private QuestLog questLog = new QuestLog();
+
 	#region Boost
 	//whether boost capability is available
 	[SerializeField] private readonly bool boostAvailable = true;
@@ -103,8 +106,8 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat, IQuester
 	//reference to sonic boom animation
 	[SerializeField] private GameObject sonicBoomBoostEffect;
 	public float boostInvulnerabilityTime = 0.2f;
-	private bool isInvulnerable = false;
 	#endregion Boost
+
 	#endregion Fields
 
 	#region Attachments
@@ -318,7 +321,11 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat, IQuester
 
 	public override void CollectResources(Item.Type type, int amount)
 	{
-		storage.AddItem(type, num: amount);
+		int collectedAmount = amount - storage.AddItem(type, num: amount);
+		if (collectedAmount > 0)
+		{
+			GameEvents.ItemCollected(type, collectedAmount);
+		}
 
 		//increase pitch of sound for successive resource collection, reset after a break
 		if (Pause.timeSinceOpen - resourceCollectedTime < 1f)
@@ -380,7 +387,15 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat, IQuester
 
 	public override float DrillDamageQuery(bool firstHit)
 	{
-		if (InputHandler.GetInputUp("Stop") > 0f || !trackerSO.hasControl) return 0f;
+		if (InputHandler.GetInputUp("Stop") > 0f || !trackerSO.hasControl)
+		{
+			if (cameraCtrl)
+			{
+				cameraCtrl.SetConstantSize(false);
+				cameraCtrl.SetLookAheadDistance(false);
+			}
+			return 0f;
+		}
 
 		if (InputHandler.GetInput("Stop") > 0f)
 		{
@@ -403,11 +418,6 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat, IQuester
 		else
 		{
 			DrillLaunchArcDisable();
-			if (cameraCtrl)
-			{
-				cameraCtrl.SetConstantSize(false);
-				cameraCtrl.SetLookAheadDistance(false);
-			}
 		}
 
 		if (firstHit && velocity.magnitude >= SpeedLimit + 0.5f)
@@ -433,6 +443,8 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat, IQuester
 	public override void DrillComplete()
 	{
 		DrillLaunchArcDisable();
+		cameraCtrl.SetConstantSize(false);
+		cameraCtrl.SetLookAheadDistance(false);
 	}
 
 	public override bool ShouldLaunch()
@@ -579,6 +591,8 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat, IQuester
 
 	public override void DestroyedAnEntity(Entity target)
 	{
+		GameEvents.EntityDestroyed(target.GetEntityType());
+
 		switch (target.GetEntityType())
 		{
 			case EntityType.BotHive:
@@ -704,8 +718,18 @@ public class Shuttle : Entity, IDamageable, IStunnable, ICombat, IQuester
 		return this;
 	}
 
-	public void ReceiveItemReward(Item.Type type, int amount)
+	public override void ReceiveItemReward(Item.Type type, int amount)
 	{
 		CollectResources(type, amount);
+	}
+
+	public override void AcceptQuest(Quest quest)
+	{
+		Debug.Log($"Accepted Quest: {quest.Name}");
+		foreach (QuestRequirement req in quest.Requirements)
+		{
+			Debug.Log(req.GetDescription());
+		}
+		questLog.AddQuest(quest);
 	}
 }

@@ -48,7 +48,7 @@
 			fixed4 frag (v2f i) : SV_Target
 			{
 				fixed4 col = tex2D(_MainTex, i.uv);
-				fixed4 black = (0, 0, 0, 0);
+				fixed4 black = fixed4(0, 0, 0, 0);
 				float scl = _ScreenParams.y / _ScreenParams.x;
 				float2 pos = float2(i.uv.x, i.uv.y);
 				float2 difference = float2(pos.x - _PositionX, (pos.y - _PositionY) * scl);

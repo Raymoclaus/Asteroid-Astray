@@ -1,11 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 public class Quest
 {
 	public string Name { get; private set; }
 	public string Description { get; private set; }
-	public IQuester Quester { get; private set; }
+	public Character Quester { get; private set; }
 	public EntityProfile Issuer { get; private set; }
 	public List<QuestReward> Rewards { get; private set; }
 	public List<QuestRequirement> Requirements { get; private set; }
@@ -14,7 +15,7 @@ public class Quest
 	public event QuestCompleteEventHandler OnQuestComplete;
 	public void QuestComplete(Quest quest) => OnQuestComplete?.Invoke(quest);
 
-	public Quest(string name, string description, IQuester quester, EntityProfile issuer,
+	public Quest(string name, string description, Character quester, EntityProfile issuer,
 		List<QuestReward> rewards, List<QuestRequirement> requirements)
 	{
 		Name = name;
@@ -34,6 +35,7 @@ public class Quest
 	{
 		if (IsComplete())
 		{
+			Debug.Log($"Quest Complete: {Name}");
 			QuestComplete(this);
 			foreach (QuestReward reward in Rewards)
 			{

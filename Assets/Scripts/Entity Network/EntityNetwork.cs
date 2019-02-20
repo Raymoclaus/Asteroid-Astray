@@ -226,25 +226,6 @@ public static class EntityNetwork
 		return false;
 	}
 
-	/// Removes an entity from the network and then destroys it if successful
-	public static bool DestroyEntity(Entity e)
-	{
-		if (!RemoveEntity(e))
-		{
-			Debug.LogWarning("Entity: " + e + " could not be removed.");
-			return false;
-		}
-
-		e.DestroySelf();
-		return true;
-	}
-
-	/// Destroys all entities
-	public static void DestroyAllEntities(EntityType? type = null)
-	{
-		AccessAllEntities(e => { DestroyEntity(e); }, type);
-	}
-
 	/// Iterates through all entities and performs the action once for each entity
 	public static void AccessAllEntities(Action<Entity> act, EntityType? onlyType = null)
 	{

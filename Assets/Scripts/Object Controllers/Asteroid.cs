@@ -143,8 +143,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 			//drop resources
 			DropLoot(destroyer, transform.position, dropModifier);
 		}
-		destroyer.DestroyedAnEntity(this);
-		base.DestroySelf();
+		base.DestroySelf(destroyer);
 	}
 
 	private void DropLoot(Entity destroyer, Vector2 pos, int dropModifier = 0)

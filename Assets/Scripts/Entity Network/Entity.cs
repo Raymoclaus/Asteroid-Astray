@@ -203,8 +203,12 @@ public class Entity : MonoBehaviour
 		return EntityType.Entity;
 	}
 
-	public virtual void DestroySelf()
+	public virtual void DestroySelf(Entity destroyer)
 	{
+		if (destroyer)
+		{
+			destroyer.DestroyedAnEntity(this);
+		}
 		if (EntityNetwork.ConfirmLocation(this, _coords))
 		{
 			EntityNetwork.RemoveEntity(this);

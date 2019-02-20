@@ -10,14 +10,18 @@ public class GatheringQRec : QuestRequirement
 	public string description;
 	private string formattedDescription = "{0}: {1} / {2}";
 
+	public GatheringQRec(Item.Type typeNeeded, int amountNeeded, string description)
+	{
+		this.typeNeeded = typeNeeded;
+		this.amountNeeded = amountNeeded;
+		this.description = description.Replace("#", amountNeeded.ToString()).Replace("?", Item.TypeName(typeNeeded));
+
+		GameEvents.OnItemCollected += EvaluateEvent;
+	}
+
 	public override string GetDescription()
 	{
 		return string.Format(formattedDescription, description, currentAmount, amountNeeded);
-	}
-
-	public override bool IsComplete()
-	{
-		return currentAmount >= amountNeeded;
 	}
 
 	public override Transform TargetLocation()
@@ -25,19 +29,18 @@ public class GatheringQRec : QuestRequirement
 		return null;
 	}
 
-	protected override void AssignListener()
-	{
-		GameEvents.OnItemCollected += EvaluateEvent;
-	}
-
 	private void EvaluateEvent(Item.Type type, int amount)
 	{
+		if (completed) return;
+
 		if (type == typeNeeded)
 		{
 			currentAmount += amount;
-			if (IsComplete())
+			Debug.Log($"Quest requirement updated: {GetDescription()}");
+			if (completed = currentAmount >= amountNeeded)
 			{
 				QuestRequirementUpdated();
+				GameEvents.OnItemCollected -= EvaluateEvent;
 			}
 		}
 	}

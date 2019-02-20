@@ -7,7 +7,7 @@
 		return NO_REWARD;
 	}
 
-	public virtual void GiveReward(IQuester e)
+	public virtual void GiveReward(Character c)
 	{
 
 	}

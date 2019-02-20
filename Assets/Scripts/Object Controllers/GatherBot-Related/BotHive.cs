@@ -5,7 +5,7 @@ using UnityEngine;
 using System.Collections;
 
 [RequireComponent(typeof(HiveInventory))]
-public class BotHive : Entity, IDrillableObject, IDamageable
+public class BotHive : Character, IDrillableObject, IDamageable
 {
 	//references
 	[SerializeField]
@@ -358,8 +358,7 @@ public class BotHive : Entity, IDrillableObject, IDamageable
 				childBots[i].DestroySelf(explode, destroyer, dropModifier);
 			}
 		}
-		destroyer.DestroyedAnEntity(this);
-		base.DestroySelf();
+		base.DestroySelf(destroyer);
 	}
 
 	public void MarkCoordAsEmpty(ChunkCoords c)

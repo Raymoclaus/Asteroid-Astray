@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 
-public class GatherBot : Entity, IDrillableObject, IDamageable, IStunnable, ICombat
+public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, ICombat
 {
 	private enum AIState
 	{
@@ -216,7 +216,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable, IStunnable, ICom
 		Vector2 targetPos = dock.position - dock.up * dockDistance;
 		if (GoToLocation(targetPos))
 		{
-			if (Rb.velocity.sqrMagnitude < Mathf.Epsilon)
+			if (Rb.velocity.sqrMagnitude < 0.01f)
 			{
 				StartExploring(true);
 			}
@@ -225,7 +225,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable, IStunnable, ICom
 
 	private void Scanning()
 	{
-		if (Rb.velocity.sqrMagnitude < Mathf.Epsilon)
+		if (Rb.velocity.sqrMagnitude < 0.01f)
 		{
 			if (!scanStarted)
 			{
@@ -1213,7 +1213,6 @@ public class GatherBot : Entity, IDrillableObject, IDamageable, IStunnable, ICom
 		{
 			drill.drillTarget.StopDrilling();
 		}
-		destroyer.DestroyedAnEntity(this);
 		DestroySelf(true, destroyer, dropModifier);
 		return currentHealth <= 0f;
 	}
@@ -1234,7 +1233,7 @@ public class GatherBot : Entity, IDrillableObject, IDamageable, IStunnable, ICom
 			enemy.DisengageInCombat(this);
 		}
 		if (hive) hive.BotDestroyed(this);
-		base.DestroySelf();
+		base.DestroySelf(destroyer);
 	}
 
 	private void DropLoot(Entity destroyer, Vector2 pos, int dropModifier = 0)

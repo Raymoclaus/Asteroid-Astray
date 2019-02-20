@@ -26,6 +26,8 @@ public class CameraCtrl : MonoBehaviour
 	private float distanceAhead = 0.5f, moveAheadSpeed = 0.05f;
 	public ChunkCoords coords;
 	private List<ChunkCoords> coordsInView = new List<ChunkCoords>(16);
+	private bool useConstantSize = false;
+	private bool useLookAheadModifier = false;
 
 	public int TotalViewRange {
 		get { return trackerSO.ENTITY_VIEW_RANGE + trackerSO.RangeModifier; }
@@ -108,7 +110,7 @@ public class CameraCtrl : MonoBehaviour
 			Vector2 aheadTarget = new Vector2(
 				Mathf.Sin(-targetToFollow.eulerAngles.z * Mathf.Deg2Rad),
 				Mathf.Cos(-targetToFollow.eulerAngles.z * Mathf.Deg2Rad)) * distanceAhead
-				* (trackerSO.useLookAheadModifier ? trackerSO.distanceAheadModifier : 1f);
+				* (useLookAheadModifier ? trackerSO.distanceAheadModifier : 1f);
 			if (panView != null)
 			{
 				aheadTarget = (panView.position - transform.position) / 2f;
@@ -116,7 +118,7 @@ public class CameraCtrl : MonoBehaviour
 			float difference = Vector2.Distance(aheadTarget, aheadVector) / distanceAhead / 2f;
 			aheadVector = Vector2.MoveTowards(aheadVector, aheadTarget,
 				difference * distanceAhead * moveAheadSpeed
-				* (trackerSO.useLookAheadModifier ? trackerSO.moveAheadSpeedModifier : 1f)
+				* (useLookAheadModifier ? trackerSO.moveAheadSpeedModifier : 1f)
 				* Time.deltaTime * 60f);
 			transform.localPosition = targetToFollow.position
 				+ (Vector3)aheadVector
@@ -127,7 +129,7 @@ public class CameraCtrl : MonoBehaviour
 	/// Zooms out based on the shuttles speed.
 	private void AdjustSize()
 	{
-		if (followTarget.IsDrilling && !trackerSO.useConstantSize)
+		if (followTarget.IsDrilling && !useConstantSize)
 		{
 			//gradually zoom in
 			float difference = Mathf.Abs(CamSize - minCamSize / 2f);
@@ -151,7 +153,7 @@ public class CameraCtrl : MonoBehaviour
 					}
 				}
 			}
-			if (trackerSO.useConstantSize)
+			if (useConstantSize)
 			{
 				targetSize = trackerSO.constantSize;
 			}
@@ -272,13 +274,13 @@ public class CameraCtrl : MonoBehaviour
 
 	public void SetConstantSize(bool enable = true, float size = 2f)
 	{
-		trackerSO.useConstantSize = enable;
+		useConstantSize = enable;
 		trackerSO.constantSize = size;
 	}
 
 	public void SetLookAheadDistance(bool enable = true, float distanceModifier = 2f, float speedModifier = 2f)
 	{
-		trackerSO.useLookAheadModifier = enable;
+		useLookAheadModifier = enable;
 		trackerSO.distanceAheadModifier = distanceModifier;
 		trackerSO.moveAheadSpeedModifier = speedModifier;
 	}
