@@ -7,6 +7,8 @@ public static class EntityGenerator
 	#region Fields
 	//references to all kinds of spawnable entities
 	private static EntityPrefabDB prefabs;
+	//store chance values from prefabs
+	private static List<float> chances = new List<float>();
 	//keeps track of whether chunks have been filled already. Prevents chunk from refilling if emptied by player
 	private static List<List<List<bool>>> _wasFilled = new List<List<List<bool>>>();
 	//List of empty game objects to store entities in and keep the hierarchy organised
@@ -63,35 +65,31 @@ public static class EntityGenerator
 	private static List<SpawnableEntity> ChooseEntitiesToSpawn(float distance, bool excludePriority = false, List<SpawnableEntity> addToList = null)
 	{
 		addToList = addToList ?? new List<SpawnableEntity>();
-		float chance = Random.value;
-		if (!excludePriority)
-		{
-			foreach (SpawnableEntity e in prefabs.spacePriorityEntities)
-			{
-				if (e.ignore) continue;
-
-				if (e.GetChance(distance) >= chance)
-				{
-					addToList.Add(e);
-					break;
-				}
-			}
-		}
-
-		//if a priority entity was chosen then only return that
-		if (addToList.Count > 0) return addToList;
-
+		bool usingSpacePriority = false;
 		//choose which non priority entities to spawn
 		foreach (SpawnableEntity e in prefabs.spawnableEntities)
 		{
-			if (e.ignore) continue;
+			if (e.ignore || (excludePriority && e.spacePriority) || (usingSpacePriority && !e.spacePriority)) continue;
 
+			float chance = Random.value;
 			if (e.GetChance(distance) >= chance)
 			{
+				if (e.spacePriority && !usingSpacePriority)
+				{
+					addToList.Clear();
+					usingSpacePriority = true;
+				}
 				addToList.Add(e);
 			}
 		}
 
+		if (usingSpacePriority && addToList.Count > 0)
+		{
+			SpawnableEntity e = addToList[Random.Range(0, addToList.Count)];
+			addToList.Clear();
+			addToList.Add(e);
+
+		}
 		return addToList;
 	}
 
@@ -181,14 +179,14 @@ public static class EntityGenerator
 			}
 			yield return null;
 		}
-		if (a != null) a();
+		a?.Invoke();
 	}
 
 	public static IEnumerator SetPrefabs(EntityPrefabDB prf, System.Action a)
 	{
 		prefabs = prf;
 		//sort the space priority entities by lowest rarity to highest
-		List<SpawnableEntity> list = prefabs.spacePriorityEntities;
+		List<SpawnableEntity> list = prefabs.spawnableEntities;
 		for (int i = 1; i < list.Count; i += 0)
 		{
 			SpawnableEntity e = list[i];
@@ -206,12 +204,6 @@ public static class EntityGenerator
 		yield return null;
 
 		foreach (SpawnableEntity e in list)
-		{
-			holders.Add(e.name, new GameObject(e.name));
-		}
-		yield return null;
-
-		foreach (SpawnableEntity e in prefabs.spawnableEntities)
 		{
 			holders.Add(e.name, new GameObject(e.name));
 		}

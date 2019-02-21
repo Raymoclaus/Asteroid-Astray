@@ -318,6 +318,8 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 
 	public void StopDrilling()
 	{
+		if (!Rb) return;
+
 		Rb.constraints = RigidbodyConstraints2D.None;
 		ShakeFX.Stop();
 	}

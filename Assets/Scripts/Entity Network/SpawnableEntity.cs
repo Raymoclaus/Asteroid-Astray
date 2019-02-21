@@ -23,6 +23,8 @@ public class SpawnableEntity
 	public SpawnPosition posType = SpawnPosition.Random;
 	//convenient off switch for telling the entity generator to ignore this
 	public bool ignore = false;
+	//should not spawn in the same chunk as other entities
+	public bool spacePriority = false;
 
 	public enum SpawnPosition
 	{
