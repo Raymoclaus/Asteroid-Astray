@@ -6,7 +6,7 @@ public class ParticleGenerator : MonoBehaviour
 {
 	public static Transform holder;
 	private const int poolReserve = 2000;
-	private Queue<SpriteRenderer> pool = new Queue<SpriteRenderer>(poolReserve);
+	private Queue<ParticlePropertyManager> pool = new Queue<ParticlePropertyManager>(poolReserve);
 	private List<ParticlePropertyManager> active = new List<ParticlePropertyManager>(poolReserve);
 
 	public ResourceDrop dropPrefab;
@@ -41,7 +41,8 @@ public class ParticleGenerator : MonoBehaviour
 		Color? tint = null, float fadeIn = 0f, int sortingLayer = 0, int sortingOrder = 0,
 		float growthOverLifetime = 1f)
 	{
-		SpriteRenderer rend = pool.Dequeue();
+		ParticlePropertyManager ppm = pool.Dequeue();
+		SpriteRenderer rend = ppm.rend;
 		rend.sprite = spr;
 		rend.sortingLayerID = sortingLayer;
 		rend.sortingOrder = sortingOrder;
@@ -53,8 +54,8 @@ public class ParticleGenerator : MonoBehaviour
 		obj.transform.eulerAngles = Vector3.forward * rotationDeg;
 		obj.transform.localScale = Vector2.one * size;
 		obj.transform.parent = parent == null ? holder : parent;
-		ParticlePropertyManager ppm = new ParticlePropertyManager(rend, lifeTime, fadeOut, speed,
-			slowDown, rotationSpeed, rotationDecay, alpha, tintFix, fadeIn, growthOverLifetime);
+		ppm.Set(lifeTime, fadeOut, speed, slowDown, rotationSpeed, rotationDecay, alpha,
+			tintFix, fadeIn, growthOverLifetime);
 		active.Add(ppm);
 	}
 
@@ -64,7 +65,7 @@ public class ParticleGenerator : MonoBehaviour
 		ppm.rend.gameObject.SetActive(false);
 		ppm.rend.transform.parent = holder;
 		active.Remove(ppm);
-		pool.Enqueue(ppm.rend);
+		pool.Enqueue(ppm);
 	}
 
 	private void SetUpPoolReserve()
@@ -76,7 +77,7 @@ public class ParticleGenerator : MonoBehaviour
 			go.transform.parent = holder;
 			SpriteRenderer rend = go.AddComponent<SpriteRenderer>();
 			rend.spriteSortPoint = SpriteSortPoint.Pivot;
-			pool.Enqueue(rend);
+			pool.Enqueue(new ParticlePropertyManager(rend));
 		}
 	}
 
@@ -105,11 +106,15 @@ public class ParticleGenerator : MonoBehaviour
 
 		public bool done;
 
-		public ParticlePropertyManager(SpriteRenderer rend, float time, bool fadeOut,
-			float originalSpeed, bool slowDown, float originalRotationSpeed, bool rotationDecay,
-			float alpha, Color tint, float fadeIn, float growthOverLifetime)
+		public ParticlePropertyManager(SpriteRenderer rend)
 		{
 			this.rend = rend;
+		}
+
+		public void Set(float time, bool fadeOut, float originalSpeed, bool slowDown,
+			float originalRotationSpeed, bool rotationDecay, float alpha, Color tint, float fadeIn,
+			float growthOverLifetime)
+		{
 			this.time = time;
 			this.fadeOut = fadeOut;
 			this.originalSpeed = originalSpeed;

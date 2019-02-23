@@ -119,7 +119,7 @@ public class LaserWeapon : MonoBehaviour
 		//sonic boom particle effect
 		GameObject sBoom = Instantiate(sonicBoom, ParticleGenerator.holder);
 		sBoom.transform.position = position;
-		sBoom.transform.eulerAngles = Vector3.forward * -angle;
+		sBoom.transform.eulerAngles = Vector3.forward * angle;
 		//play sonic boom sound
 		audioManager = audioManager ?? FindObjectOfType<AudioManager>();
 		if (audioManager)

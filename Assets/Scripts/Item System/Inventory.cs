@@ -57,6 +57,16 @@ public class Inventory : MonoBehaviour
 		return num;
 	}
 
+	public List<ItemStack> AddItems(List<ItemStack> items)
+	{
+		for (int i = 0; i < items.Count; i++)
+		{
+			if (items[i].GetItemType() == Item.Type.Blank) continue;
+			items[i].SetAmount(AddItem(items[i].GetItemType(), items[i].GetAmount()));
+		}
+		return items;
+	}
+
 	private int SetBlank(Item.Type type, int num, List<ItemStack> inv = null)
 	{
 		inv = inv != null ? inv : inventory;
@@ -73,16 +83,6 @@ public class Inventory : MonoBehaviour
 		}
 
 		return num;
-	}
-
-	public List<ItemStack> AddItems(List<ItemStack> items)
-	{
-		for (int i = 0; i < items.Count; i++)
-		{
-			if (items[i].GetItemType() == Item.Type.Blank) continue;
-			items[i].SetAmount(AddItem(items[i].GetItemType(), items[i].GetAmount()));
-		}
-		return items;
 	}
 
 	public bool RemoveItem(Item.Type type, int num = 1)
@@ -174,6 +174,82 @@ public class Inventory : MonoBehaviour
 		if (amount > 0)
 		{
 			Debug.Log(string.Format("Unable to remove {0} items with {1} rarity.", amount, rarity));
+		}
+	}
+
+	public void Swap(int a, int b)
+	{
+		if (a < 0 || b < 0 || a >= inventory.Count || b >= inventory.Count || a == b) return;
+
+		//Item.Type typeA = inventory[a].GetItemType();
+		//int amountA = inventory[a].GetAmount();
+		//Item.Type typeB = inventory[b].GetItemType();
+		//int amountB = inventory[b].GetAmount();
+
+		//inventory[a].SetItemType(typeB);
+		//inventory[a].SetAmount(amountB);
+		//inventory[b].SetItemType(typeA);
+		//inventory[b].SetAmount(amountA);
+		ItemStack temp = inventory[a];
+		inventory[a] = inventory[b];
+		inventory[b] = temp;
+	}
+
+	public bool Insert(Item.Type type, int amount, int place)
+	{
+		if (place < 0 || place >= inventory.Count) return false;
+		
+		if (inventory[place].GetItemType() == Item.Type.Blank)
+		{
+			inventory[place].SetItemType(type);
+			inventory[place].SetAmount(amount);
+			return true;
+		}
+		else
+		{
+			bool forward = false;
+			int i = place + 1;
+			for (; i < inventory.Count; i++)
+			{
+				if (inventory[i].GetItemType() == Item.Type.Blank)
+				{
+					forward = true;
+					break;
+				}
+			}
+
+			bool backward = false;
+			if (!forward)
+			{
+				i = place - 1;
+				for (; i >= 0; i--)
+				{
+					if (inventory[i].GetItemType() == Item.Type.Blank)
+					{
+						backward = true;
+						break;
+					}
+				}
+			}
+
+			if (!forward && !backward)
+			{
+				return false;
+			}
+			else
+			{
+				for (; ; i += forward ? -1 : 1)
+				{
+					if (i == place)
+					{
+						inventory[place].SetItemType(type);
+						inventory[place].SetAmount(amount);
+						break;
+					}
+					Swap(i, i + (forward ? -1 : 1));
+				}
+				return true;
+			}
 		}
 	}
 }

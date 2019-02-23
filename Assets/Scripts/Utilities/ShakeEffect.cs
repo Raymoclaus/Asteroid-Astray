@@ -16,7 +16,8 @@ public class ShakeEffect : MonoBehaviour
 			if (Pause.IsPaused) yield return null;
 
 			//shift intensity towards the goal but don't surpass the limit
-			intensity = Mathf.MoveTowards(intensity, intensityGoal > INTENSITY_LIMIT ? INTENSITY_LIMIT : intensityGoal, intensityShift);
+			intensity = Mathf.MoveTowards(intensity,
+				intensityGoal > INTENSITY_LIMIT ? INTENSITY_LIMIT : intensityGoal, intensityShift);
 			//set random position
 			transform.localPosition = new Vector2(
 				Mathf.Sin(Random.value * 2f * Mathf.PI),
@@ -27,7 +28,8 @@ public class ShakeEffect : MonoBehaviour
 		}
 	}
 
-	public void Begin(float intensityValue = 0f, float intensityGoalValue = 0f, float intensityShiftValue = 0.01f)
+	public void Begin(float intensityValue = 0f, float intensityGoalValue = 0f,
+		float intensityShiftValue = 0.01f)
 	{
 		Stop();
 		coro = StartCoroutine(Shake());

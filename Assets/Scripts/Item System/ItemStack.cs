@@ -16,6 +16,11 @@ public class ItemStack
 		this.amount = num < 0 ? 0 : num;
 	}
 
+	public ItemStack()
+	{
+		SetBlank();
+	}
+
 	public Item.Type GetItemType()
 	{
 		return type;
@@ -72,5 +77,11 @@ public class ItemStack
 	public override string ToString()
 	{
 		return string.Format("{0}x {1}", amount, type.ToString());
+	}
+
+	public void SetBlank()
+	{
+		type = Item.Type.Blank;
+		amount = 0;
 	}
 }

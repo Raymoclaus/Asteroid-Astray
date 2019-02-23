@@ -26,6 +26,7 @@ public class ItemPopupUI : PopupUI
 				popup.GetChild(1).GetChild(0).GetComponent<Text>(),
 				popup.GetChild(1).GetChild(1).GetComponent<Text>());
 			inactivePopups.Add(po);
+			ActivateUIDetails(po, false);
 		}
 		popupHeight = ((RectTransform)transform.GetChild(0)).rect.height;
 		xPos = ((RectTransform)transform.GetChild(0)).anchoredPosition.x;
@@ -67,6 +68,7 @@ public class ItemPopupUI : PopupUI
 				po.UpdateData(popupsToShow[0].type);
 				popupsToShow.RemoveAt(0);
 				po.UIimg.material.SetFloat("_Radius", 0f);
+				po.transform.gameObject.SetActive(true);
 			}
 		}
 
@@ -75,16 +77,20 @@ public class ItemPopupUI : PopupUI
 			ItemPopupObject po = activePopups[i];
 			po.UIimg.material.SetFloat("_Flash", 1f);
 			float delta = po.UIimg.material.GetFloat("_Radius");
-			delta = Mathf.MoveTowards(delta, 1f, recordingModeTrackerSO.UnscaledDeltaTime * popupEntrySpeed);
-			po.UIimg.material.SetFloat("_Radius", delta);
-			po.transform.anchoredPosition = Vector2.Lerp(po.transform.anchoredPosition,
-				new Vector2(xPos, -popupHeight / 2f - popupHeight * (popupViewLimit - i - 1)),
-				recordingModeTrackerSO.UnscaledDeltaTime * popupMoveSpeed);
-			if (delta >= 0.833f)
+			float yPos = -popupHeight / 2f - popupHeight * (popupViewLimit - i - 1);
+			if (!Mathf.Approximately(delta, 1f) || !Mathf.Approximately(po.transform.anchoredPosition.y, yPos))
 			{
-				ActivateUIDetails(po, true);
-				po.name.color = po.description.color =
-					Color.Lerp(Color.white, textColor, (delta - 0.833f) / textFadeSpeed);
+				delta = Mathf.MoveTowards(delta, 1f, recordingModeTrackerSO.UnscaledDeltaTime * popupEntrySpeed);
+				po.UIimg.material.SetFloat("_Radius", delta);
+				po.transform.anchoredPosition = Vector2.Lerp(po.transform.anchoredPosition,
+					new Vector2(xPos, yPos),
+					recordingModeTrackerSO.UnscaledDeltaTime * popupMoveSpeed);
+				if (delta >= 0.833f)
+				{
+					ActivateUIDetails(po, true);
+					po.name.color = po.description.color =
+						Color.Lerp(Color.white, textColor, (delta - 0.833f) / textFadeSpeed);
+				}
 			}
 
 			po.AddTimer(recordingModeTrackerSO.UnscaledDeltaTime);
@@ -99,11 +105,18 @@ public class ItemPopupUI : PopupUI
 			ItemPopupObject po = inactivePopups[i];
 			po.UIimg.material.SetFloat("_Flash", 0f);
 			float delta = po.UIimg.material.GetFloat("_Radius");
-			po.UIimg.material.SetFloat("_Radius",
-				Mathf.MoveTowards(delta, 0f, recordingModeTrackerSO.UnscaledDeltaTime));
-			po.transform.anchoredPosition = Vector2.Lerp(po.transform.anchoredPosition,
-				new Vector2(xPos, po.transform.anchoredPosition.y),
-				recordingModeTrackerSO.UnscaledDeltaTime * popupMoveSpeed);
+			if (!Mathf.Approximately(delta, 0f))
+			{
+				po.UIimg.material.SetFloat("_Radius",
+					Mathf.MoveTowards(delta, 0f, recordingModeTrackerSO.UnscaledDeltaTime));
+				po.transform.anchoredPosition = Vector2.Lerp(po.transform.anchoredPosition,
+					new Vector2(xPos, po.transform.anchoredPosition.y),
+					recordingModeTrackerSO.UnscaledDeltaTime * popupMoveSpeed);
+				if (delta <= 0f)
+				{
+					po.transform.gameObject.SetActive(false);
+				}
+			}
 		}
 	}
 
@@ -117,9 +130,9 @@ public class ItemPopupUI : PopupUI
 
 	private void ActivateUIDetails(ItemPopupObject po, bool activate)
 	{
-		po.spr.gameObject.SetActive(activate);
-		po.name.gameObject.SetActive(activate);
-		po.description.gameObject.SetActive(activate);
+		po.spr.enabled = activate;
+		po.name.enabled = activate;
+		po.description.enabled = activate;
 	}
 
 	public void GeneratePopup(Item.Type type, int amount = 1)
@@ -212,15 +225,8 @@ public class ItemPopupUI : PopupUI
 		public PopupData(ItemSprites sprites, Item.Type type, int amount = 1)
 		{
 			this.type = type;
-			if (sprites)
-			{
-				spr = sprites.GetItemSprite(type);
-			}
-			else
-			{
-				spr = null;
-			}
-			name = type.ToString();
+			spr = sprites ? sprites.GetItemSprite(type) : null;
+			name = Item.TypeName(type);
 			description = Item.ItemDescription(type);
 			this.amount = amount;
 		}

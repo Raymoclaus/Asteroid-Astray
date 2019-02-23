@@ -8,11 +8,10 @@ public class ExpandingCircle : MonoBehaviour
 	private LineRenderer lr;
 	public float maxRadius = 3f;
 	public float arcSize = 360f;
-	public int arcDetail = 360;
+	public int arcDetail = 60;
 	public float rot = 0f;
 	private float currentTimer;
 	public float lifeTime = 3f;
-	private List<Vector3> points;
 	private Vector2 origin;
 	public Color startColor, endColor;
 	public bool loop = true;
@@ -32,7 +31,8 @@ public class ExpandingCircle : MonoBehaviour
 			lr.colorGradient.colorKeys[i].color = startColor;
 		}
 		origin = transform.position;
-		FillPoints();
+		lr.positionCount = arcDetail;
+		lr.SetPositions(new Vector3[arcDetail]);
 	}
 
 	private void Update()
@@ -54,22 +54,10 @@ public class ExpandingCircle : MonoBehaviour
 	{
 		for (int i = 0; i < lr.positionCount; i++)
 		{
-			float angle = (i + rot) * (arcSize / arcDetail);
-			//float angle = i + rot - arcSize / 2f;
+			float angle = (i + rot) * (arcSize / lr.positionCount);
 			angle *= Mathf.Deg2Rad;
 			Vector2 pos = origin + new Vector2(Mathf.Sin(angle), Mathf.Cos(angle)) * currentRadius;
 			lr.SetPosition(i, pos);
 		}
-	}
-
-	private void FillPoints()
-	{
-		points = new List<Vector3>(arcDetail);
-		lr.positionCount = arcDetail;
-		for (int i = 0; i < arcDetail; i++)
-		{
-			points.Add(Vector2.zero);
-		}
-		lr.SetPositions(points.ToArray());
 	}
 }

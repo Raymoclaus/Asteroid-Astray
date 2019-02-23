@@ -44,7 +44,7 @@ public class NarrativeManager : MonoBehaviour
 		if (mainChar == null) return;
 
 		List<QuestReward> qRewards = new List<QuestReward>();
-		qRewards.Add(new ItemQReward(Item.Type.Stone, 10));
+		qRewards.Add(new ItemQReward(Item.Type.Copper, 10));
 
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
 		qReqs.Add(new GatheringQRec(Item.Type.Stone, 5, "Obtain # ? from asteroids"));
@@ -52,6 +52,6 @@ public class NarrativeManager : MonoBehaviour
 		Quest q = new Quest("Repair Communications", "We need some materials so that we can repair" +
 			" our communications system. Once that is done, we should be able to find our way back" +
 			" to Dendro and the ship.", mainChar, claire, qRewards, qReqs);
-		mainChar.AcceptQuest(q);
+		//mainChar.AcceptQuest(q);
 	}
 }

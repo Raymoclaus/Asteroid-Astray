@@ -212,15 +212,19 @@ public static class EntityNetwork
 		ChunkCoords cc = e.GetCoords();
 		if (!ChunkExists(cc)) return false;
 
-		if (Chunk(cc).Remove(e))
+		List<Entity> chunk = Chunk(cc);
+		for (int i = 0; i < chunk.Count; i++)
 		{
-			numEntities--;
-			//update list of occupied coordinates
-			if (Chunk(cc).Count == 0)
+			if (chunk[i] == e)
 			{
-				occupiedCoords.Remove(cc);
+				chunk.RemoveAt(i);
+				numEntities--;
+				if (chunk.Count == 0)
+				{
+					occupiedCoords.Remove(cc);
+				}
+				return true;
 			}
-			return true;
 		}
 
 		return false;

@@ -5,8 +5,10 @@ public static class Item
 	public enum Type
 	{
 		Blank,
-		PureCorvorite,
 		Stone,
+		Iron,
+		Copper,
+		PureCorvorite,
 		CorruptedCorvorite,
 		WarpCoreBattery,
 		IronAlloy,
@@ -35,8 +37,11 @@ public static class Item
 		switch (type)
 		{
 			case Type.Blank: return "Blank";
-			case Type.PureCorvorite: return "Pure Corvorite";
+
 			case Type.Stone: return "Stone";
+			case Type.Iron: return "Iron";
+			case Type.Copper: return "Copper";
+			case Type.PureCorvorite: return "Pure Corvorite";
 			case Type.CorruptedCorvorite: return "Corrupted Corvorite";
 			case Type.WarpCoreBattery: return "Warp Core Battery";
 			case Type.IronAlloy: return "Iron Alloy";
@@ -54,6 +59,7 @@ public static class Item
 			case Type.RepairKit: return "Repair Kit";
 			case Type.NioleriumCrystals: return "Niolerium Crystals";
 			case Type.NiolerDung: return "Nioler Dung";
+
 			default: return "<Unnamed>";
 		}
 	}
@@ -63,8 +69,11 @@ public static class Item
 		switch (type)
 		{
 			case Type.Blank: return 0;
-			case Type.PureCorvorite: return 8;
+
 			case Type.Stone: return 1;
+			case Type.Iron: return 2;
+			case Type.Copper: return 2;
+			case Type.PureCorvorite: return 8;
 			case Type.CorruptedCorvorite: return 6;
 			case Type.WarpCoreBattery: return 5;
 			case Type.IronAlloy: return 2;
@@ -82,6 +91,7 @@ public static class Item
 			case Type.RepairKit: return 3;
 			case Type.NioleriumCrystals: return 3;
 			case Type.NiolerDung: return 6;
+
 			default: return 1;
 		}
 	}
@@ -91,8 +101,11 @@ public static class Item
 		switch (type)
 		{
 			case Type.Blank: return 0;
-			case Type.PureCorvorite: return 5;
+
 			case Type.Stone: return 100;
+			case Type.Iron: return 100;
+			case Type.Copper: return 100;
+			case Type.PureCorvorite: return 5;
 			case Type.CorruptedCorvorite: return 30;
 			case Type.WarpCoreBattery: return 1;
 			case Type.IronAlloy: return 100;
@@ -110,18 +123,28 @@ public static class Item
 			case Type.RepairKit: return 10;
 			case Type.NioleriumCrystals: return 30;
 			case Type.NiolerDung: return 30;
-			default: return 1;
+
+			default: return 100;
 		}
 	}
 
+	//limit to ~80 characters
 	public static string ItemDescription(Type type)
 	{
 		switch (type)
 		{
 			case Type.Blank: return string.Empty;
-			case Type.PureCorvorite: return string.Empty;
-			case Type.Stone: return "A lump of rock. Can be used in crafting.";
-			case Type.CorruptedCorvorite: return string.Empty;
+
+			case Type.Stone: return "A lump of rock. Can be broken down for a chance to find" +
+					" other items.";
+			case Type.Iron: return "A refined metal. Can be used in crafting more complex items.";
+			case Type.Copper: return "A refined metal. Can be used in crafting more complex" +
+					" items.";
+			case Type.PureCorvorite: return "A mysteriously rare mineral with uniquely powerful" +
+					" properties.";
+			case Type.CorruptedCorvorite:
+				return "An impure source of energy resource derived from the legend known as" +
+					" \"Pure Corvorite\".";
 			case Type.WarpCoreBattery: return string.Empty;
 			case Type.IronAlloy: return string.Empty;
 			case Type.BugFood: return string.Empty;
@@ -138,6 +161,7 @@ public static class Item
 			case Type.RepairKit: return string.Empty;
 			case Type.NioleriumCrystals: return string.Empty;
 			case Type.NiolerDung: return string.Empty;
+
 			default: return string.Empty;
 		}
 	}
@@ -147,9 +171,22 @@ public static class Item
 		switch (type)
 		{
 			case Type.Blank: return string.Empty;
-			case Type.PureCorvorite: return string.Empty;
-			case Type.Stone: return "\"Charged with two counts of murder by the Avian Court of Caw Law.\"";
-			case Type.CorruptedCorvorite: return string.Empty;
+
+			case Type.Stone: return "\"Charged with two counts of murder by the Avian Court of" +
+					" Caw Law.\"";
+			case Type.Iron: return "\"Not quite as effective at removing creases from clothing" +
+					" as you might think\"";
+			case Type.Copper: return string.Empty;
+			case Type.PureCorvorite: return "Pure Corvorite can be used as a hugely efficient" +
+					" energy source however, it has only been found in trace amounts within" +
+					" abandoned Gather Bot hives.";
+			case Type.CorruptedCorvorite:
+				return "Useful as an energy source however, due to the dangers involved with" +
+					" obtaining it from fighting Gather Bots, it is too expensive compared to" +
+					" more traditional fuel sources. It can be sold to researchers for a high" +
+					" price. It is theorised that Gather Bot hives recharge their bots regularly" +
+					" with only small amounts of energy from Pure Corvorite to minimise losses" +
+					" if the Gather Bots are attacked.";
 			case Type.WarpCoreBattery: return string.Empty;
 			case Type.IronAlloy: return string.Empty;
 			case Type.BugFood: return string.Empty;
@@ -166,6 +203,7 @@ public static class Item
 			case Type.RepairKit: return string.Empty;
 			case Type.NioleriumCrystals: return string.Empty;
 			case Type.NiolerDung: return string.Empty;
+
 			default: return string.Empty;
 		}
 	}

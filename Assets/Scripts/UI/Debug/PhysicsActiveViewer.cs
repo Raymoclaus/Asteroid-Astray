@@ -1,13 +1,12 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
-using System.Text;
 
 [RequireComponent(typeof(Text))]
 public class PhysicsActiveViewer : MonoBehaviour
 {
 	private Text txt;
 	private int currentCount;
-	private string display = "Physics Active: {0}";
+	private const string display = "Physics Active: ";
 
 	private void Awake()
 	{
@@ -19,7 +18,7 @@ public class PhysicsActiveViewer : MonoBehaviour
 		int count = Entity.GetActive();
 		if (count != currentCount)
 		{
-			txt.text = string.Format(display, count);
+			txt.text = display + count;
 			currentCount = count;
 		}
 	}

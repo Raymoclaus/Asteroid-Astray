@@ -72,7 +72,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 	//gathering variables
 	private float searchTimer, scanInterval = 0.3f;
 	private int drillCount, drillLimit = 3;
-	private List<Entity> surroundingEntities = new List<Entity>();
+	private List<Entity> surroundingEntities = new List<Entity>(100);
 	private IDrillableObject drillableTarget;
 	[SerializeField]
 	private int storageCapacity = 10;
