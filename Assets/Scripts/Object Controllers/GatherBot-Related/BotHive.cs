@@ -127,8 +127,8 @@ public class BotHive : Character, IDrillableObject, IDamageable
 		toBeSpent -= botCreationCost;
 		inventory.RemoveItem(Item.Type.PureCorvorite, botCreationCost);
 		GatherBot bot = Instantiate(botPrefab);
-		bot.gameObject.SetActive(false);
 		bot.Create(this, botBaseHP, dockID);
+		bot.Activate(false);
 		occupiedDocks[dockID] = true;
 		bot.transform.position = docks[dockID].position;
 		bot.transform.rotation = docks[dockID].rotation;
@@ -146,16 +146,15 @@ public class BotHive : Character, IDrillableObject, IDamageable
 		inventory.RemoveItem(Item.Type.PureCorvorite, botUpgradeCost);
 	}
 
-	public IEnumerator ActivateBot(int ID, Vector2 position)
+	public void ActivateBot(int ID, Vector2 position)
 	{
-		yield return null;
 		foreach (GatherBot bot in childBots)
 		{
 			if (bot.dockID == ID)
 			{
 				bot.transform.position = position;
-				bot.gameObject.SetActive(true);
-				yield break;
+				bot.Activate(true);
+				return;
 			}
 		}
 	}
@@ -324,7 +323,7 @@ public class BotHive : Character, IDrillableObject, IDamageable
 
 	}
 
-	public bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer, int dropModifier = 0)
+	public bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer, int dropModifier = 0, bool flash = true)
 	{
 		currentHealth -= damage;
 

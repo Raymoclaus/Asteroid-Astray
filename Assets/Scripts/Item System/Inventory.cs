@@ -5,16 +5,16 @@ using UnityEngine;
 public class Inventory : MonoBehaviour
 {
 	public int size = 10;
-	public List<ItemStack> inventory = new List<ItemStack>();
+	public List<ItemStack> stacks = new List<ItemStack>();
 	private bool initialised = false;
 
 	protected virtual void Awake()
 	{
 		if (initialised) return;
 
-		while (inventory.Count < size)
+		while (stacks.Count < size)
 		{
-			inventory.Add(new ItemStack(Item.Type.Blank, 0));
+			stacks.Add(new ItemStack(Item.Type.Blank, 0));
 		}
 
 		initialised = true;
@@ -23,7 +23,7 @@ public class Inventory : MonoBehaviour
 	public int ContainsItem(Item.Type type)
 	{
 		int amount = 0;
-		foreach (ItemStack stack in inventory)
+		foreach (ItemStack stack in stacks)
 		{
 			if (stack.GetItemType() == type)
 			{
@@ -38,7 +38,7 @@ public class Inventory : MonoBehaviour
 		if (num <= 0) return -1;
 		if (type == Item.Type.Blank) return 0;
 
-		inv = inv != null ? inv : inventory;
+		inv = inv != null ? inv : stacks;
 		foreach (ItemStack stack in inv)
 		{
 			if (stack.GetItemType() == type)
@@ -69,7 +69,7 @@ public class Inventory : MonoBehaviour
 
 	private int SetBlank(Item.Type type, int num, List<ItemStack> inv = null)
 	{
-		inv = inv != null ? inv : inventory;
+		inv = inv != null ? inv : stacks;
 		foreach (ItemStack stack in inv)
 		{
 			if (stack.GetItemType() == Item.Type.Blank)
@@ -89,12 +89,12 @@ public class Inventory : MonoBehaviour
 	{
 		if (num <= 0) return true;
 
-		for (int i = inventory.Count - 1; i >= 0; i--)
+		for (int i = stacks.Count - 1; i >= 0; i--)
 		{
-			if (inventory[i].GetItemType() == type)
+			if (stacks[i].GetItemType() == type)
 			{
-				int amount = inventory[i].GetAmount();
-				int leftover = inventory[i].RemoveAmount(num);
+				int amount = stacks[i].GetAmount();
+				int leftover = stacks[i].RemoveAmount(num);
 				num -= amount - leftover;
 			}
 			if (num <= 0) return true;
@@ -106,7 +106,7 @@ public class Inventory : MonoBehaviour
 	public bool CanFit(List<ItemStack> items)
 	{
 		List<ItemStack> tempItems = new List<ItemStack>(items);
-		List<ItemStack> tempInventory = new List<ItemStack>(inventory);
+		List<ItemStack> tempInventory = new List<ItemStack>(stacks);
 
 		for (int i = 0; i < tempItems.Count; i++)
 		{
@@ -125,7 +125,7 @@ public class Inventory : MonoBehaviour
 
 		if (include == Item.Type.Blank) return 0;
 
-		foreach (ItemStack stack in inventory)
+		foreach (ItemStack stack in stacks)
 		{
 			if (fltr && stack.GetItemType() != include) continue;
 			int rarity = Item.TypeRarity(stack.GetItemType());
@@ -141,7 +141,7 @@ public class Inventory : MonoBehaviour
 		int[] counts = new int[Item.MAX_RARITY + 1];
 		bool fltr = exclude != null;
 
-		foreach (ItemStack stack in inventory)
+		foreach (ItemStack stack in stacks)
 		{
 			if (fltr && stack.GetItemType() == exclude) continue;
 			int rarity = Item.TypeRarity(stack.GetItemType());
@@ -153,18 +153,18 @@ public class Inventory : MonoBehaviour
 
 	public void RemoveByRarity(int rarity, int amount, Item.Type? exclude = null)
 	{
-		for (int i = inventory.Count - 1; i >= 0; i--)
+		for (int i = stacks.Count - 1; i >= 0; i--)
 		{
-			Item.Type type = inventory[i].GetItemType();
+			Item.Type type = stacks[i].GetItemType();
 			if (type == exclude) continue;
 
 			if (Item.TypeRarity(type) == rarity)
 			{
-				int stackAmount = inventory[i].GetAmount();
+				int stackAmount = stacks[i].GetAmount();
 				if (stackAmount > 0)
 				{
-					inventory[i].SetAmount(stackAmount - amount);
-					amount -= stackAmount - inventory[i].GetAmount();
+					stacks[i].SetAmount(stackAmount - amount);
+					amount -= stackAmount - stacks[i].GetAmount();
 				}
 			}
 
@@ -179,7 +179,7 @@ public class Inventory : MonoBehaviour
 
 	public void Swap(int a, int b)
 	{
-		if (a < 0 || b < 0 || a >= inventory.Count || b >= inventory.Count || a == b) return;
+		if (a < 0 || b < 0 || a >= stacks.Count || b >= stacks.Count || a == b) return;
 
 		//Item.Type typeA = inventory[a].GetItemType();
 		//int amountA = inventory[a].GetAmount();
@@ -190,28 +190,28 @@ public class Inventory : MonoBehaviour
 		//inventory[a].SetAmount(amountB);
 		//inventory[b].SetItemType(typeA);
 		//inventory[b].SetAmount(amountA);
-		ItemStack temp = inventory[a];
-		inventory[a] = inventory[b];
-		inventory[b] = temp;
+		ItemStack temp = stacks[a];
+		stacks[a] = stacks[b];
+		stacks[b] = temp;
 	}
 
 	public bool Insert(Item.Type type, int amount, int place)
 	{
-		if (place < 0 || place >= inventory.Count) return false;
+		if (place < 0 || place >= stacks.Count) return false;
 		
-		if (inventory[place].GetItemType() == Item.Type.Blank)
+		if (stacks[place].GetItemType() == Item.Type.Blank)
 		{
-			inventory[place].SetItemType(type);
-			inventory[place].SetAmount(amount);
+			stacks[place].SetItemType(type);
+			stacks[place].SetAmount(amount);
 			return true;
 		}
 		else
 		{
 			bool forward = false;
 			int i = place + 1;
-			for (; i < inventory.Count; i++)
+			for (; i < stacks.Count; i++)
 			{
-				if (inventory[i].GetItemType() == Item.Type.Blank)
+				if (stacks[i].GetItemType() == Item.Type.Blank)
 				{
 					forward = true;
 					break;
@@ -224,7 +224,7 @@ public class Inventory : MonoBehaviour
 				i = place - 1;
 				for (; i >= 0; i--)
 				{
-					if (inventory[i].GetItemType() == Item.Type.Blank)
+					if (stacks[i].GetItemType() == Item.Type.Blank)
 					{
 						backward = true;
 						break;
@@ -242,8 +242,8 @@ public class Inventory : MonoBehaviour
 				{
 					if (i == place)
 					{
-						inventory[place].SetItemType(type);
-						inventory[place].SetAmount(amount);
+						stacks[place].SetItemType(type);
+						stacks[place].SetAmount(amount);
 						break;
 					}
 					Swap(i, i + (forward ? -1 : 1));
@@ -251,5 +251,12 @@ public class Inventory : MonoBehaviour
 				return true;
 			}
 		}
+	}
+
+	public ItemStack Replace(ItemStack stack, int place)
+	{
+		ItemStack temp = stacks[place];
+		stacks[place] = stack;
+		return temp;
 	}
 }

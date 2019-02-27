@@ -7,6 +7,6 @@
 
 	public virtual void AcceptQuest(Quest quest)
 	{
-
+		quest.Activate();
 	}
 }

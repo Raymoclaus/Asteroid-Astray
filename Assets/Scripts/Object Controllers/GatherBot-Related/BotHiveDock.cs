@@ -9,7 +9,7 @@ public class BotHiveDock : MonoBehaviour
 
 	public void ActivateBot()
 	{
-		StartCoroutine(hive.ActivateBot(ID, transform.position));
+		hive.ActivateBot(ID, transform.position);
 	}
 
 	public void StartMaintenanceTimer()

@@ -251,7 +251,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		return transform.position;
 	}
 
-	public bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer, int dropModifier = 0)
+	public bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer, int dropModifier = 0, bool flash = true)
 	{
 		//take damage
 		Health -= damage;

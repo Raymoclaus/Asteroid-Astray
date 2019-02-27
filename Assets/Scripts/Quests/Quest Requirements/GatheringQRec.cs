@@ -31,7 +31,7 @@ public class GatheringQRec : QuestRequirement
 
 	private void EvaluateEvent(Item.Type type, int amount)
 	{
-		if (completed) return;
+		if (completed || active) return;
 
 		if (type == typeNeeded)
 		{

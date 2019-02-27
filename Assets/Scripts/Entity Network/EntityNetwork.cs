@@ -5,16 +5,18 @@ using UnityEngine;
 using Utilities;
 
 /// Keeps track of all entities in an organised network based on their position.
+/// Allows entities to be placed pseudo-infinitely in any 2D direction, although it can be upgraded to include 3D.
 /// Useful in case you only want access to entities in a certain area. It's faster than checking every single one.
+/// Intended for use with procedurally-generated content.
 public static class EntityNetwork
 {
 	#region Fields
 	//4 directions in the grid
-	public const int QuadrantNumber = 4;
+	public const int QUADRANT_COUNT = 4;
 	//Determines the physical size of cells in the grid
-	public const float CHUNK_SIZE = 10;
+	public const float CHUNK_SIZE = 10f;
 	//network of entities
-	private static List<List<List<List<Entity>>>> _grid = new List<List<List<List<Entity>>>>(QuadrantNumber);
+	private static List<List<List<List<Entity>>>> _grid = new List<List<List<List<Entity>>>>(QUADRANT_COUNT);
 	//list of coordinates that contain any entities
 	private static List<ChunkCoords> occupiedCoords = new List<ChunkCoords>(ReserveSize * ReserveSize * 4);
 	//number of chunks to check each frame. Better than checking all at once, for performance
@@ -31,7 +33,12 @@ public static class EntityNetwork
 	#endregion
 
 	#region Stat Tracking
+	//Used to keep track of the amount of active entities. Debugging tool
 	private static int numEntities;
+	#endregion
+
+	#region Caching
+	private static List<ChunkCoords> coordsInRangeCache = new List<ChunkCoords>();
 	#endregion
 
 	/// Constructs and reserves a large amount of space for the grid
@@ -41,7 +48,7 @@ public static class EntityNetwork
 
 		//reserve space in each direction
 		//takes ~1.5 seconds for 1000 * 1000 * 10
-		for (int dir = 0; dir < QuadrantNumber; dir++)
+		for (int dir = 0; dir < QUADRANT_COUNT; dir++)
 		{
 			_grid.Add(new List<List<List<Entity>>>(ReserveSize));
 			for (int x = 0; x < ReserveSize; x++)
@@ -50,7 +57,6 @@ public static class EntityNetwork
 				for (int y = 0; y < ReserveSize; y++)
 				{
 					_grid[dir][x].Add(new List<Entity>(CellReserve));
-					//no actual entities are created yet
 				}
 			}
 			yield return null;
@@ -58,8 +64,11 @@ public static class EntityNetwork
 
 		ready = true;
 		a?.Invoke();
+		RunInitialisationActions();
 	}
 
+	/// Other classes that needed to use the network before the network was initialised could store actions
+	/// This will call those actions
 	public static void RunInitialisationActions()
 	{
 		for (int i = 0; postInitActions.Count > 0;)
@@ -70,7 +79,6 @@ public static class EntityNetwork
 	}
 
 	/// Returns a list of all entities located in cells within range of the given coordinates
-	private static List<ChunkCoords> coordsInRangeCache = new List<ChunkCoords>();
 	public static List<Entity> GetEntitiesInRange(ChunkCoords center, int range, EntityType? type = null,
 		List<Entity> exclusions = null, List<Entity> addToList = null)
 	{
@@ -80,11 +88,11 @@ public static class EntityNetwork
 		return GetEntitiesAtCoords(coordsInRange, type, exclusions, addToList);
 	}
 
+	/// Returns a list of entities located in specified coordinates
 	public static List<Entity> GetEntitiesAtCoords(List<ChunkCoords> coordsList, EntityType? type = null,
 		List<Entity> exclusions = null, List<Entity> addToList = null)
 	{
 		List<Entity> entitiesInCoords = addToList ?? new List<Entity>(CellReserve * coordsList.Count);
-		EntityType filter = type ?? EntityType.Entity;
 		//loop through coordinates list and grab all entities at each coordinate
 		foreach (ChunkCoords coord in coordsList)
 		{
@@ -94,6 +102,7 @@ public static class EntityNetwork
 			}
 			else
 			{
+				EntityType filter = (EntityType)type;
 				foreach (Entity e in Chunk(coord))
 				{
 					if (e.GetEntityType() == filter && !EntityIsInSet(e, exclusions))
@@ -106,36 +115,36 @@ public static class EntityNetwork
 		return entitiesInCoords;
 	}
 
+	/// Iterates over a given list and checks if a given entity is within the set
 	private static bool EntityIsInSet(Entity e, List<Entity> set)
 	{
 		if (set == null) return false;
 
 		foreach (Entity entity in set)
 		{
-			if (entity == e)
-			{
-				return true;
-			}
+			if (entity == e) return true;
 		}
 		return false;
 	}
 
+	/// Returns a list of coordinates around a given center coordinate in a specified range
 	public static List<ChunkCoords> GetCoordsInRange(ChunkCoords center, int range,
-		List<ChunkCoords> coordsInRange = null, bool ignoreLackOfExistence = false)
+		List<ChunkCoords> coordsInRange = null, bool ignoreLackOfExistenceInGrid = false)
 	{
 		int r = range + 2;
 		coordsInRange = coordsInRange ?? new List<ChunkCoords>(r * r);
 		//loop through surrounding chunks
 		for (int i = 0; i <= range; i++)
 		{
-			GetCoordsOnRangeBorder(center, i, coordsInRange, ignoreLackOfExistence);
+			GetCoordsOnRangeBorder(center, i, coordsInRange, ignoreLackOfExistenceInGrid);
 		}
 
 		return coordsInRange;
 	}
 
+	/// Returns a list of coordinates that are a specified distance from a given center coordinate
 	public static List<ChunkCoords> GetCoordsOnRangeBorder(ChunkCoords center, int range,
-		List<ChunkCoords> addToList = null, bool ignoreLackOfExistence = false)
+		List<ChunkCoords> addToList = null, bool ignoreLackOfExistenceInGrid = false)
 	{
 		int r = range * 8;
 		addToList = addToList ?? new List<ChunkCoords>(r);
@@ -152,7 +161,7 @@ public static class EntityNetwork
 				//validate will adjust for edge cases
 				ChunkCoords validCc = c;
 				validCc.Validate();
-				if (ignoreLackOfExistence || ChunkExists(validCc))
+				if (ignoreLackOfExistenceInGrid || ChunkExists(validCc))
 				{
 					addToList.Add(validCc);
 				}
@@ -160,29 +169,6 @@ public static class EntityNetwork
 		}
 
 		return addToList;
-	}
-
-	public static int CountInRange(ChunkCoords center, int range)
-	{
-		int count = 0;
-		ChunkCoords c = center;
-		//loop through surrounding chunks
-		for (int i = -range; i <= range; i++)
-		{
-			c.X = center.X + i;
-			for (int j = -range; j <= range; j++)
-			{
-				c.Y = center.Y + j;
-				//validate will adjust for edge cases
-				ChunkCoords validCc = c;
-				validCc.Validate();
-				if (ChunkExists(validCc))
-				{
-					count += Chunk(validCc).Count;
-				}
-			}
-		}
-		return count;
 	}
 
 	/// Adds a given entity to the list at given coordinates
@@ -262,9 +248,13 @@ public static class EntityNetwork
 		}
 	}
 
+	public static void DestroyAllEntities()
+	{
+		AccessAllEntities((Entity e) => e.DestroySelf(null));
+	}
+
 	/// Removes an entity from its position in the network and replaces it and the given destination
-	/// This will mostly be used by entities themselves as they are responsible for determining their place in the
-	/// network
+	/// This will mostly be used by entities themselves as they are responsible for determining their place in the network
 	public static bool Reposition(Entity e, ChunkCoords destChunk)
 	{
 		if (!destChunk.IsValid())
@@ -315,6 +305,7 @@ public static class EntityNetwork
 		Debug.LogWarning("Starting full search for: " + e);
 		ChunkCoords search = ChunkCoords.Zero;
 		FunctionTimer timer = new FunctionTimer();
+		bool found = false;
 		foreach (List<List<List<Entity>>> dir in _grid)
 		{
 			foreach (List<List<Entity>> col in dir)
@@ -325,120 +316,55 @@ public static class EntityNetwork
 					{
 						if (ent == e)
 						{
-							return search;
+							found = true;
 						}
 					}
-					search.Y++;
+					if (found) break;
+					else search.Y++;
 				}
-				search.X++;
+				if (found) break;
+				else search.X++;
 			}
-			search.Direction++;
+			if (found) break;
+			else search.Direction++;
 		}
-		ChunkCoords result = FullSearch(e, ChunkCoords.Zero);
-		Debug.LogWarning("Full search for: " + e + " completed in " + timer.Log() + " seconds.");
-		return result;
-	}
-	
-	/// This is slow so keep this for emergencies if you lose an entity
-	private static ChunkCoords FullSearch(Entity e, ChunkCoords search)
-	{
-		if (ConfirmLocation(e, search))
-		{
-			//if found, return the coordinates the entity was found at
-			return search;
-		}
-
-		//else adjust the search and try again
-		search.Y++;
-		if (search.Y >= Column(search).Count)
-		{
-			search.Y = 0;
-			search.X++;
-			if (search.X >= Direction(search).Count)
-			{
-				search.X = 0;
-				search.Direction++;
-				//if every element has been checked, return invalid coordinates
-				if ((int) search.Direction >= _grid.Count)
-				{
-					Debug.LogWarning("Entity not found in grid.");
-					return ChunkCoords.Invalid;
-				}
-			}
-		}
-
-		return FullSearch(e, search);
+		Debug.LogWarning($"Full search for: {e} completed {(found ? "" : "un")}successfully in {timer.Log()} seconds.");
+		return search;
 	}
 
 	/// Returns whether a given chunk is valid and exists in the network
 	public static bool ChunkExists(ChunkCoords cc)
 	{
 		//if coordinates are invalid then chunk definitely doesn't exist
-		if (!cc.IsValid())
-		{
-			return false;
-		}
+		if (!cc.IsValid()) return false;
 
 		//if the quadrant doesn't have x amount of columns or that column doesn't have y amount of cells,
 		//the chunk doesn't exist
 		if ((int) cc.Direction >= _grid.Count
 		    || cc.X >= Direction(cc).Count
-		    || cc.Y >= Column(cc).Count)
-		{
-			return false;
-		}
+		    || cc.Y >= Column(cc).Count) return false;
 
 		return true;
 	}
 
-	private static ChunkCoords Next(ChunkCoords c)
-	{
-		if (c.X < Column(c).Count - 1)
-		{
-			c.X += 1;
-			return c;
-		}
-
-		c.X = 0;
-		if (c.Y < Direction(c).Count - 1)
-		{
-			c.Y += 1;
-			return c;
-		}
-
-		c.Y = 0;
-		if ((int)c.Direction < _grid.Count - 1)
-		{
-			c.Direction += 1;
-			return c;
-		}
-
-		c.Direction = 0;
-		return c;
-	}
-
+	/// Returns whether an entity is at a specific location
 	public static bool ConfirmLocation(Entity e, ChunkCoords c)
 	{
 		foreach (Entity ent in Chunk(c))
 		{
-			if (ent == e)
-			{
-				return true;
-			}
+			if (ent == e) return true;
 		}
 		return false;
 	}
 
-	public static bool ContainsType(EntityType type, ChunkCoords c, Entity entToExclude)
+	/// Returns whether a chunk contains any entities of a certain type
+	public static bool ContainsType(EntityType type, ChunkCoords c, Entity entToExclude = null)
 	{
 		if (!ChunkExists(c)) return false;
 
 		foreach (Entity e in Chunk(c))
 		{
-			if (e.GetEntityType() == type && e != entToExclude)
-			{
-				return true;
-			}
+			if (e.GetEntityType() == type && e != entToExclude) return true;
 		}
 		return false;
 	}

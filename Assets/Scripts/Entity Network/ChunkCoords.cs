@@ -150,7 +150,7 @@ public struct ChunkCoords
 	{
 		return this != Invalid
 		       && (int) Direction >= 0
-		       && (int) Direction < EntityNetwork.QuadrantNumber
+		       && (int) Direction < EntityNetwork.QUADRANT_COUNT
 		       && X >= 0
 		       && Y >= 0;
 	}
@@ -164,7 +164,7 @@ public struct ChunkCoords
 		}
 
 		//fix direction to be within bounds
-		Direction = (Quadrant) (Math.Abs((int) Direction) % EntityNetwork.QuadrantNumber);
+		Direction = (Quadrant) (Math.Abs((int) Direction) % EntityNetwork.QUADRANT_COUNT);
 		//adjust direction if x is not valid
 		if (X < 0)
 		{

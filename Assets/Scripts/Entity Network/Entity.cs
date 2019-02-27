@@ -175,13 +175,7 @@ public class Entity : MonoBehaviour
 			return;
 		}
 
-		foreach (Renderer r in rends)
-		{
-			if (r != null)
-			{
-				r.enabled = active;
-			}
-		}
+		ActivateRenderers(active);
 
 		//enable/disable all relevant components
 		foreach (MonoBehaviour script in ScriptComponents)
@@ -191,6 +185,21 @@ public class Entity : MonoBehaviour
 				script.enabled = active;
 			}
 		}
+	}
+
+	protected void ActivateRenderers(bool active)
+	{
+		if (active) active = ShouldBeVisible();
+
+		foreach (Renderer r in rends)
+		{
+			if (r != null) r.enabled = active;
+		}
+	}
+
+	protected virtual bool ShouldBeVisible()
+	{
+		return true;
 	}
 
 	public virtual void CollectResources(Item.Type type, int amount)

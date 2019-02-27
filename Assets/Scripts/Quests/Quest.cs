@@ -25,7 +25,7 @@ public class Quest
 		Rewards = rewards;
 		Requirements = requirements;
 
-		foreach (QuestRequirement requirement in requirements)
+		foreach (QuestRequirement requirement in Requirements)
 		{
 			requirement.OnQuestRequirementUpdated += EvaluateRequirements;
 		}
@@ -47,5 +47,13 @@ public class Quest
 	public bool IsComplete()
 	{
 		return Requirements.All(r => r.IsComplete());
+	}
+
+	public void Activate()
+	{
+		foreach (QuestRequirement requirement in Requirements)
+		{
+			requirement.Activate();
+		}
 	}
 }

@@ -50,6 +50,9 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 	public int upgradeLevel;
 	public int dockID = -1;
 
+	//spawning variables
+	private bool activated = false;
+
 	//movement variables
 	private Vector2 accel;
 	[SerializeField]
@@ -144,6 +147,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 	private List<Loot> loot;
 	private bool straightWeaponAttached = false;
 	private bool readyToFire = false;
+	[SerializeField] private ColorReplacement colorReplacement;
 
 	//signalling variables
 	private float signalTimer;
@@ -153,6 +157,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 		if (!hive) DestroySelf(false, null);
 		rot = transform.eulerAngles.z;
 		initialised = true;
+		ActivateRenderers(false);
 	}
 
 	private void Update()
@@ -212,6 +217,8 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 
 	private void Spawning()
 	{
+		if (!activated) return;
+
 		Transform dock = hive.GetDock(this);
 		Vector2 targetPos = dock.position - dock.up * dockDistance;
 		if (GoToLocation(targetPos))
@@ -314,7 +321,8 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 			float distLeft = Vector2.Distance(transform.position, targetPos);
 			if (distLeft <= 1f)
 			{
-				if (drillableTarget != null && drillableTarget.TakeDrillDamage(DrillDamageQuery(false), drill.transform.position, this))
+				if (drillableTarget != null && drillableTarget.TakeDrillDamage(DrillDamageQuery(false),
+					drill.transform.position, this))
 				{
 					DrillComplete();
 				}
@@ -352,7 +360,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 				{
 					//start disassembly animation
 					transform.position = dock.position;
-					hive.Store(storage.inventory, this);
+					hive.Store(storage.stacks, this);
 					itemsCollected = 0;
 					state = AIState.Spawning;
 					disassembling = false;
@@ -953,9 +961,20 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 		dockID = dockingID;
 	}
 
+	public void Activate(bool active)
+	{
+		activated = active;
+		ActivateRenderers(activated);
+	}
+
+	protected override bool ShouldBeVisible()
+	{
+		return activated;
+	}
+
 	public bool TakeDrillDamage(float drillDmg, Vector2 drillPos, Entity destroyer, int dropModifier = 0)
 	{
-		return TakeDamage(drillDmg / drillDamageResistance, drillPos, destroyer, dropModifier);
+		return TakeDamage(drillDmg / drillDamageResistance, drillPos, destroyer, dropModifier, false);
 	}
 
 	public IEnumerator ChargeForcePulse()
@@ -1159,13 +1178,17 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 		return ((GatherBot)e).hive == hive;
 	}
 
-	public bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer, int dropModifier = 0)
+	public bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer, int dropModifier = 0, bool flash = true)
 	{
 		//cannot be hit by projectiles from self or siblings
 		if (!IsSibling(destroyer))
 		{
 			currentHealth -= damage;
 			ICombat enemy = destroyer.GetICombat();
+			if (flash)
+			{
+				colorReplacement?.Flash(0.5f, Color.white);
+			}
 			if (enemy != null)
 			{
 				if (enemy.EngageInCombat(this))
@@ -1241,9 +1264,9 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 		particleGenerator = particleGenerator ?? FindObjectOfType<ParticleGenerator>();
 		if (!particleGenerator) return;
 
-		for (int i = 0; i < storage.inventory.Count; i++)
+		for (int i = 0; i < storage.stacks.Count; i++)
 		{
-			ItemStack stack = storage.inventory[i];
+			ItemStack stack = storage.stacks[i];
 			if (stack.GetItemType() == Item.Type.Blank) continue;
 			particleGenerator.DropResource(destroyer, pos, stack.GetItemType(), stack.GetAmount());
 		}

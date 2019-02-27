@@ -1,14 +1,25 @@
-﻿Shader "Custom/FullColourReplacement"
+﻿Shader "Custom/Full Color Replacement"
 {
 	Properties
 	{
-		_MainTex("Texture", 2D) = "white" {}
-		_Colour("Colour", Color) = (1, 1, 1, 1)
-		_BlendAmount("BlendAmount", Range(0, 1)) = 0
+		[PerRendererData] _MainTex ("Texture", 2D) = "white" {}
+		[PerRendererData] _Color ("Color", Color) = (1, 1, 1, 1)
+		[PerRendererData] _BlendAmount ("Blend Amount", Range(0, 1)) = 0
 	}
 	SubShader
 	{
-		BLEND SrcAlpha OneMinusSrcAlpha
+		Tags
+		{
+			"QUEUE" = "Transparent"
+			"IGNOREPROJECTOR" = "true"
+			"RenderType" = "Transparent"
+			"PreviewType" = "Plane"
+			"CanUseSpriteAtlas" = "true"
+		}
+		Cull Off
+		ZWrite Off
+		ZTest Always
+		Blend SrcAlpha OneMinusSrcAlpha
 
 		Pass
 		{
@@ -39,13 +50,13 @@
 			}
 
 			sampler2D _MainTex;
-			fixed4 _Colour;
+			fixed4 _Color;
 			float _BlendAmount;
 
 			fixed4 frag (v2f i) : SV_Target
 			{
 				fixed4 col = tex2D(_MainTex, i.uv);
-				fixed4 adjustedCol = lerp(col, _Colour, _BlendAmount);
+				fixed4 adjustedCol = lerp(col, _Color, _BlendAmount);
 				adjustedCol.a = col.a;
 				return adjustedCol;
 			}

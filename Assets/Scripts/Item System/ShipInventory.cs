@@ -19,8 +19,8 @@ public class ShipInventory : Inventory
 		PlayerPrefs.SetInt(SHIP_INVENTORY_SIZE, size);
 		for (int i = 0; i < size; i++)
 		{
-			PlayerPrefs.SetInt(string.Format(SHIP_SLOT_TYPE, i), (int)inventory[i].GetItemType());
-			PlayerPrefs.SetInt(string.Format(SHIP_SLOT_AMOUNT, i), inventory[i].GetAmount());
+			PlayerPrefs.SetInt(string.Format(SHIP_SLOT_TYPE, i), (int)stacks[i].GetItemType());
+			PlayerPrefs.SetInt(string.Format(SHIP_SLOT_AMOUNT, i), stacks[i].GetAmount());
 		}
 	}
 
@@ -34,7 +34,7 @@ public class ShipInventory : Inventory
 		{
 			int type = PlayerPrefs.GetInt(string.Format(SHIP_SLOT_TYPE, i));
 			int amount = PlayerPrefs.GetInt(string.Format(SHIP_SLOT_AMOUNT, i));
-			inventory[i] = new ItemStack((Item.Type)type, amount);
+			stacks[i] = new ItemStack((Item.Type)type, amount);
 		}
 	}
 

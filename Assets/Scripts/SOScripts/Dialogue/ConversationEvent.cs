@@ -61,6 +61,7 @@ public class ConversationEvent : ScriptableObject
 		}
 	}
 
+#if UNITY_EDITOR
 	public void Save()
 	{
 		StringBuilder sb = new StringBuilder();
@@ -71,4 +72,5 @@ public class ConversationEvent : ScriptableObject
 		File.WriteAllText(AssetDatabase.GetAssetPath(conversationFile), sb.ToString());
 		EditorUtility.SetDirty(conversationFile);
 	}
+#endif
 }

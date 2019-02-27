@@ -84,6 +84,7 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 	[SerializeField] private ItemPopupUI popupUI;
 	private bool isInvulnerable = false;
 	private QuestLog questLog = new QuestLog();
+	[SerializeField] private ColorReplacementGroup cRGroup;
 
 	#region Boost
 	//whether boost capability is available
@@ -478,7 +479,7 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 	public void StoreInShip()
 	{
 		shipStorage = shipStorage ?? FindObjectOfType<ShipInventory>();
-		if (shipStorage) shipStorage.Store(storage.inventory);
+		if (shipStorage) shipStorage.Store(storage.stacks);
 	}
 
 	public override bool VerifyDrillTarget(Entity target)
@@ -521,9 +522,11 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 		}
 	}
 
-	public bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer, int dropModifier = 0)
+	public bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer, int dropModifier = 0, bool flash = true)
 	{
 		if (destroyer == this || isInvulnerable) return false;
+		
+		cRGroup?.Flash(0.5f, Color.red);
 
 		return true;
 	}
@@ -725,6 +728,8 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 
 	public override void AcceptQuest(Quest quest)
 	{
+		base.AcceptQuest(quest);
+
 		Debug.Log($"Accepted Quest: {quest.Name}");
 		foreach (QuestRequirement req in quest.Requirements)
 		{

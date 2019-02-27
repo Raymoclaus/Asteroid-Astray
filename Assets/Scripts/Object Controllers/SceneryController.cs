@@ -42,9 +42,9 @@ public class SceneryController : MonoBehaviour
 	private int ViewDistance { get { return Mathf.CeilToInt(bgCamTrackerSO ? bgCamTrackerSO.fieldOfView : 1f); } }
 
 	private const int poolSize = 10000;
-	private Queue<SpriteRenderer> pool = new Queue<SpriteRenderer>(poolSize);
-	private Queue<SpriteRenderer> active = new Queue<SpriteRenderer>(poolSize);
-	private Queue<SpriteRenderer> transitionActive = new Queue<SpriteRenderer>(poolSize);
+	private Queue<StarFieldMaterialPropertyManager> pool = new Queue<StarFieldMaterialPropertyManager>(poolSize);
+	private Queue<StarFieldMaterialPropertyManager> active = new Queue<StarFieldMaterialPropertyManager>(poolSize);
+	private Queue<StarFieldMaterialPropertyManager> transitionActive = new Queue<StarFieldMaterialPropertyManager>(poolSize);
 
 	private ChunkCoords currentCoords = ChunkCoords.Invalid;
 	public Vector2Int cosmicDensity = new Vector2Int(10, 100);
@@ -55,6 +55,7 @@ public class SceneryController : MonoBehaviour
 	private Transform sceneryHolder;
 	private int backgroundLayer;
 	public Color nebulaFadeBackground;
+	[SerializeField] private Material customSpriteMaterial;
 
 	[Header("Texture Variables")]
 	private bool texturesGenerated;
@@ -141,7 +142,7 @@ public class SceneryController : MonoBehaviour
 
 		//activate or create new items to fill in the scenery
 		foreach (ChunkCoords c in
-			EntityNetwork.GetCoordsInRange(newCoords, ViewDistance, ignoreLackOfExistence: true))
+			EntityNetwork.GetCoordsInRange(newCoords, ViewDistance, ignoreLackOfExistenceInGrid: true))
 		{
 			//create new cosmic items
 			if (Chunk(c).Count == 0)
@@ -157,13 +158,17 @@ public class SceneryController : MonoBehaviour
 	{
 		foreach(CosmicItem item in Chunk(c))
 		{
-			GameObject obj;
+			StarFieldMaterialPropertyManager sfmpm;
 			SpriteRenderer rend;
+			Transform tr;
+			GameObject obj;
 
 			if (transitionActive.Count > 0)
 			{
-				rend = transitionActive.Dequeue();
-				obj = rend.gameObject;
+				sfmpm = transitionActive.Dequeue();
+				rend = sfmpm.rend;
+				tr = sfmpm.transform;
+				obj = sfmpm.obj;
 			}
 			else
 			{
@@ -171,12 +176,14 @@ public class SceneryController : MonoBehaviour
 				{
 					FillPool();
 				}
-				rend = pool.Dequeue();
-				obj = rend.gameObject;
+				sfmpm = pool.Dequeue();
+				rend = sfmpm.rend;
+				tr = sfmpm.transform;
+				obj = sfmpm.obj;
 				obj.SetActive(true);
 			}
 
-			obj.transform.position = item.pos;
+			tr.position = item.pos;
 			List<Sprite> listToUse = item.common ? types : lessFrequentTypes;
 			if (item.type >= listToUse.Count)
 			{
@@ -199,17 +206,17 @@ public class SceneryController : MonoBehaviour
 				col = Color.Lerp(Color.black, Color.white,
 					Mathf.Clamp(delta, imageBrightnessRange.x, imageBrightnessRange.y));
 			}
-			rend.color = col;
-			active.Enqueue(rend);
-			obj.transform.localScale = Vector2.one * item.size;
-			obj.transform.eulerAngles = Vector3.forward * item.rotation * 45f;
+			sfmpm.SetColor(col);
+			active.Enqueue(sfmpm);
+			tr.localScale = Vector2.one * item.size;
+			tr.eulerAngles = Vector3.forward * item.rotation * 45f;
 		}
 
 		while (transitionActive.Count > 0)
 		{
-			SpriteRenderer rend = transitionActive.Dequeue();
-			rend.gameObject.SetActive(false);
-			pool.Enqueue(rend);
+			StarFieldMaterialPropertyManager sfmpm = transitionActive.Dequeue();
+			sfmpm.obj.SetActive(false);
+			pool.Enqueue(sfmpm);
 		}
 	}
 
@@ -269,7 +276,10 @@ public class SceneryController : MonoBehaviour
 			obj.SetActive(false);
 
 			SpriteRenderer rend = obj.AddComponent<SpriteRenderer>();
-			pool.Enqueue(rend);
+			rend.material = customSpriteMaterial;
+
+			StarFieldMaterialPropertyManager sfmpm = new StarFieldMaterialPropertyManager(rend, obj.transform, obj);
+			pool.Enqueue(sfmpm);
 		}
 	}
 
@@ -455,7 +465,7 @@ public class SceneryController : MonoBehaviour
 		return new Color(r, g, b, alpha);
 	}
 
-	class Star
+	private class Star
 	{
 		public Vector2 pos;
 		public Color color;
@@ -567,6 +577,28 @@ public class SceneryController : MonoBehaviour
 		}
 		searchAmount = images.Length;
 		searchCompleted = true;
+	}
+
+	private class StarFieldMaterialPropertyManager
+	{
+		public MaterialPropertyBlock mpb = new MaterialPropertyBlock();
+		public SpriteRenderer rend;
+		public Transform transform;
+		public GameObject obj;
+
+		public StarFieldMaterialPropertyManager(SpriteRenderer rend, Transform transform, GameObject obj)
+		{
+			this.rend = rend;
+			this.transform = transform;
+			this.obj = obj;
+		}
+
+		public void SetColor(Color col)
+		{
+			rend.GetPropertyBlock(mpb);
+			mpb.SetColor("_Color", col);
+			rend.SetPropertyBlock(mpb);
+		}
 	}
 
 	#region Convenient short-hand methods for accessing the grid

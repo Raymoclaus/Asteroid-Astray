@@ -4,22 +4,18 @@ using UnityEngine.UI;
 
 public class InventoryUIController : MonoBehaviour
 {
-	[SerializeField]
-	private List<Image> slotSprites;
-	private List<Image> itemSprites = new List<Image>();
-	private List<Text> countTexts = new List<Text>();
-	private int selected = 0;
+	[SerializeField] private SlotGroup mainGroup, craftingInputGroup, craftingOutputGroup;
+
+	private SelectionContext currentContext = new SelectionContext(ContextInterface.Inventory, 0);
 
 	private ItemStack grabStack = new ItemStack(Item.Type.Blank, 0);
-	private int originalGrabPos = -1;
 	private bool grabbing = false;
 	[SerializeField] private Transform grabTransform;
 	[SerializeField] private Image grabImg;
 	[SerializeField] private Text grabCountText;
 
 	[SerializeField] private Camera cam;
-	[SerializeField] private Shuttle shuttle;
-	[SerializeField] private Inventory shuttleInventory;
+
 	[SerializeField] private Image previewImg;
 	[SerializeField] private Text previewName;
 	[SerializeField] private Text previewDesc;
@@ -29,39 +25,58 @@ public class InventoryUIController : MonoBehaviour
 
 	private void Awake()
 	{
-		foreach (Image img in slotSprites)
-		{
-			itemSprites.Add(img.transform.GetChild(0).GetComponent<Image>());
-			countTexts.Add(img.transform.GetChild(1).GetComponent<Text>());
-		}
+		mainGroup.FindImagesAndTexts();
+		craftingInputGroup.FindImagesAndTexts();
+		craftingOutputGroup.FindImagesAndTexts();
 	}
 
 	private void Update()
 	{
 		UpdateSlots();
 		UpdateGrabUI();
+		UpdatePreview();
 	}
 
 	private void UpdateSlots()
 	{
-		shuttle = shuttle ?? FindObjectOfType<Shuttle>();
-		if (!shuttle) return;
-		shuttleInventory = shuttleInventory ?? shuttle.storage;
+		UpdateSlotGroup(mainGroup);
+		UpdateSlotGroup(craftingInputGroup);
+		UpdateSlotGroup(craftingOutputGroup);
+	}
 
-		List<ItemStack> stacks = shuttleInventory.inventory;
+	private void UpdateSlotGroup(SlotGroup sg)
+	{
+		Inventory inv = sg.inventory;
+		List<ItemStack> stacks = inv.stacks;
 		for (int i = 0; i < stacks.Count; i++)
 		{
 			Item.Type type = stacks[i].GetItemType();
 			if (sprites)
 			{
-				itemSprites[i].sprite = sprites.GetItemSprite(type);
+				sg.slotImages[i].sprite = sprites.GetItemSprite(type);
 			}
-			itemSprites[i].color = type == Item.Type.Blank ? Color.clear : Color.white;
+			sg.slotImages[i].color = type == Item.Type.Blank ? Color.clear : Color.white;
 			int count = stacks[i].GetAmount();
-			countTexts[i].text = count <= 1 ? string.Empty : count.ToString();
+			sg.slotTexts[i].text = count > 1 ? count.ToString() : string.Empty;
 		}
+	}
 
-		Item.Type previewType = grabbing ? grabStack.GetItemType() : stacks[selected].GetItemType();
+	private void UpdateGrabUI()
+	{
+		if (!grabbing) return;
+		Vector3 pos = cam.ScreenToWorldPoint(Input.mousePosition);
+		pos.z = grabTransform.parent.position.z;
+		grabTransform.position = pos;
+		grabImg.sprite = sprites.GetItemSprite(grabStack.GetItemType());
+		int count = grabStack.GetAmount();
+		grabCountText.text = count > 1 ? count.ToString() : string.Empty;
+	}
+
+	private void UpdatePreview()
+	{
+		Item.Type previewType =
+			grabbing ? grabStack.GetItemType() : GetInventory(currentContext.context)
+			.stacks[currentContext.selected].GetItemType();
 		if (sprites)
 		{
 			previewImg.sprite = sprites.GetItemSprite(previewType);
@@ -72,66 +87,119 @@ public class InventoryUIController : MonoBehaviour
 		previewFlav.text = Item.ItemFlavourText(previewType);
 	}
 
-	private void UpdateGrabUI()
-	{
-		if (!grabbing) return;
-		Vector3 pos = cam.ScreenToWorldPoint(Input.mousePosition);
-		pos.z = grabTransform.parent.position.z;
-		grabTransform.position = pos;
-		grabImg.sprite = sprites.GetItemSprite(grabStack.GetItemType());
-		grabCountText.text = grabStack.GetAmount().ToString();
-	}
-
-	public void PointerEnter(Image slot)
+	public void PointerEnter(GameObject slot)
 	{
 		UpdateSelected(slot);
 	}
 
-	public void PointerClick(Image slot)
+	public void PointerClick(GameObject slot)
 	{
-
-		if (grabbing)
-		{
-			int id = FindSlotId(slot);
-			shuttleInventory.Swap(id, originalGrabPos);
-			shuttleInventory.Insert(grabStack.GetItemType(), grabStack.GetAmount(), id);
-			grabbing = false;
-			grabStack.SetBlank();
-			originalGrabPos = -1;
-		}
-		else if (shuttleInventory.inventory[selected].GetItemType() != Item.Type.Blank)
-		{
-			grabbing = true;
-			grabStack.SetItemType(shuttleInventory.inventory[selected].GetItemType());
-			grabStack.SetAmount(shuttleInventory.inventory[selected].GetAmount());
-			shuttleInventory.inventory[selected].SetBlank();
-			originalGrabPos = selected;
-		}
-
+		SelectionContext context = FindSlotId(slot);
+		Inventory currentInv = GetInventory(context.context);
+		if (context.selected < 0 || context.selected >= currentInv.size) return;
+		grabStack = currentInv.Replace(grabStack, context.selected);
+		grabbing = grabStack.GetItemType() != Item.Type.Blank;
 		grabTransform.gameObject.SetActive(grabbing);
 	}
 
-	private void UpdateSelected(Image slot)
+	private Inventory GetInventory(ContextInterface ci)
 	{
-		if (grabbing) return;
-
-		int id = FindSlotId(slot);
-		if (id >= 0 && id < slotSprites.Count
-			&& shuttleInventory.inventory[id].GetItemType() != Item.Type.Blank)
+		switch (ci)
 		{
-			selected = id;
+			case ContextInterface.Inventory: return mainGroup.inventory;
+			case ContextInterface.CraftingInput: return craftingInputGroup.inventory;
+			case ContextInterface.CraftingOutput: return craftingOutputGroup.inventory;
+			default: return null;
 		}
 	}
 
-	private int FindSlotId(Image slot)
+	private void UpdateSelected(GameObject slot)
 	{
-		for (int i = 0; i < slotSprites.Count; i++)
+		if (grabbing) return;
+
+		SelectionContext context = FindSlotId(slot);
+		Inventory inv = GetInventory(context.context);
+		if (context.selected < 0 || context.selected >= inv.size) return;
+		if (inv.stacks[context.selected].GetItemType() == Item.Type.Blank) return;
+
+		currentContext = context;
+	}
+
+	private SelectionContext FindSlotId(GameObject slot)
+	{
+		int i = 0;
+
+		for (i = 0; i < craftingInputGroup.slots.Count; i++)
 		{
-			if (slotSprites[i] == slot)
+			if (craftingInputGroup.slots[i] == slot)
 			{
-				return i;
+				return new SelectionContext(ContextInterface.CraftingInput, i);
 			}
 		}
-		return -1;
+
+		for (i = 0; i < craftingOutputGroup.slots.Count; i++)
+		{
+			if (craftingOutputGroup.slots[i] == slot)
+			{
+				return new SelectionContext(ContextInterface.CraftingOutput, i);
+			}
+		}
+
+		for (i = 0; i < mainGroup.slots.Count; i++)
+		{
+			if (mainGroup.slots[i] == slot)
+			{
+				return new SelectionContext(ContextInterface.Inventory, i);
+			}
+		}
+		return new SelectionContext(ContextInterface.Inventory, -1);
+	}
+
+	private enum ContextInterface { Inventory, CraftingInput, CraftingOutput }
+
+	private struct SelectionContext
+	{
+		public ContextInterface context;
+		public int selected;
+
+		public SelectionContext(ContextInterface context, int selected)
+		{
+			this.context = context;
+			this.selected = selected;
+		}
+
+		public static bool operator ==(SelectionContext a, SelectionContext b)
+			=> a.context == b.context && a.selected == b.selected;
+
+		public static bool operator !=(SelectionContext a, SelectionContext b)
+			=> a.context != b.context || a.selected != b.selected;
+
+		public override bool Equals(object obj)
+		{
+			return base.Equals(obj);
+		}
+
+		public override int GetHashCode()
+		{
+			return base.GetHashCode();
+		}
+	}
+
+	[System.Serializable]
+	private class SlotGroup
+	{
+		public List<GameObject> slots;
+		[HideInInspector] public List<Image> slotImages = new List<Image>(50);
+		[HideInInspector] public List<Text> slotTexts = new List<Text>(50);
+		public Inventory inventory;
+
+		public void FindImagesAndTexts()
+		{
+			foreach (GameObject obj in slots)
+			{
+				slotImages.Add(obj.transform.GetChild(0).GetComponent<Image>());
+				slotTexts.Add(obj.transform.GetChild(1).GetComponent<Text>());
+			}
+		}
 	}
 }

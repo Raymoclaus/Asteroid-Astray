@@ -166,7 +166,7 @@ public static class EntityGenerator
 	/// Fills up the list of fill triggers
 	public static IEnumerator FillTriggerList(System.Action a)
 	{
-		for (int dir = 0; dir < EntityNetwork.QuadrantNumber; dir++)
+		for (int dir = 0; dir < EntityNetwork.QUADRANT_COUNT; dir++)
 		{
 			_wasFilled.Add(new List<List<bool>>());
 			for (int x = 0; x < EntityNetwork.ReserveSize; x++)

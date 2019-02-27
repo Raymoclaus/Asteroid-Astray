@@ -40,7 +40,7 @@ public class ItemStack
 	{
 		if (value > 0)
 		{
-			amount = value % Item.StackLimit(type);
+			amount = Mathf.Min(value, Item.StackLimit(type));
 		}
 		else
 		{
