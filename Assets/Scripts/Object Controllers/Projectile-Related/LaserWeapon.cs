@@ -64,12 +64,12 @@ public class LaserWeapon : MonoBehaviour
 
 		float angle = Mathf.Deg2Rad * -parent.transform.eulerAngles.z;
 
-		if (parent.Rb != null)
+		if (parent.rb != null)
 		{
-			parent.Rb.velocity *= stoppingForce;
+			parent.rb.velocity *= stoppingForce;
 			Vector2 dir = new Vector2(Mathf.Sin(angle), Mathf.Cos(angle));
 			dir.Normalize();
-			parent.Rb.AddForce(-dir * recoil);
+			parent.rb.AddForce(-dir * recoil);
 		}
 
 		bool flipMuzzleFlash = true;

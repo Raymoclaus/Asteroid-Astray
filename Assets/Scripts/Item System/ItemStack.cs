@@ -18,7 +18,7 @@ public class ItemStack
 
 	public ItemStack()
 	{
-		SetBlank();
+
 	}
 
 	public Item.Type GetItemType()

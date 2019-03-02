@@ -140,7 +140,7 @@ public class CameraCtrl : MonoBehaviour
 		else
 		{
 			//calculates the zoom level the camera should be at
-			float targetSize = followTarget.Rb.velocity.magnitude * camSizeModifier + minCamSize;
+			float targetSize = followTarget.rb.velocity.magnitude * camSizeModifier + minCamSize;
 			if (panView != null)
 			{
 				float dist = Vector2.Distance(panView.position, targetToFollow.position) / 2f;

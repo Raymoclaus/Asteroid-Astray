@@ -130,9 +130,9 @@ public class PauseUIController : MonoBehaviour
 		int i = 0;
 		for (; i < mainCamEffects.effects.Length; i++)
 		{
-			if (mainCamEffects.effects[i] == uiRenderEffect)
+			if (mainCamEffects.effects[i].material == uiRenderEffect)
 			{
-				mainCamEffects.SetNoBlit(i, !activate);
+				mainCamEffects.SetBlit(i, activate);
 				break;
 			}
 		}

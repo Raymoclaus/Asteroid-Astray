@@ -41,7 +41,7 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 	{
 		get
 		{
-			Vector2 vel = Rb.velocity;
+			Vector2 vel = rb.velocity;
 			float sqrMag = vel.sqrMagnitude;
 			float spdLimit = SpeedLimit * SpeedLimit;
 
@@ -148,7 +148,7 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 
 	private void FixedUpdate()
 	{
-		Rb.AddForce(accel);
+		rb.AddForce(accel);
 	}
 
 	//Checks for input related to movement and calculates acceleration
@@ -246,7 +246,7 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 	//use calculated rotation and speed to determine where to move to
 	private void CalculateForces()
 	{
-		Rb.bodyType = trackerSO.isKinematic ? RigidbodyType2D.Kinematic : RigidbodyType2D.Dynamic;
+		rb.bodyType = trackerSO.isKinematic ? RigidbodyType2D.Kinematic : RigidbodyType2D.Dynamic;
 		//calculate drag factor
 		float checkSpeed = SpeedCheck;
 		float decelerationModifier = 1f;
@@ -260,7 +260,7 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 		if (IsDrilling)
 		{
 			//freeze constraints
-			Rb.constraints = RigidbodyConstraints2D.FreezeAll;
+			rb.constraints = RigidbodyConstraints2D.FreezeAll;
 			//add potential velocity
 			velocity += addForce / 10f;
 			//apply a continuous slowdown effect
@@ -278,16 +278,16 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 		else
 		{
 			//if just recently finished drilling then this will allow the shuttle to get its velocity back instantly
-			if (Rb.constraints == RigidbodyConstraints2D.FreezeAll)
+			if (rb.constraints == RigidbodyConstraints2D.FreezeAll)
 			{
-				Rb.velocity = velocity;
+				rb.velocity = velocity;
 			}
-			velocity = Rb.velocity;
+			velocity = rb.velocity;
 			//keep constraints unfrozen
-			Rb.constraints = RigidbodyConstraints2D.None | RigidbodyConstraints2D.FreezeRotation;
+			rb.constraints = RigidbodyConstraints2D.None | RigidbodyConstraints2D.FreezeRotation;
 			//apply deceleration
-			Rb.drag = Mathf.MoveTowards(
-				Rb.drag,
+			rb.drag = Mathf.MoveTowards(
+				rb.drag,
 				Deceleration * decelerationModifier,
 				decelerationEffectiveness);
 			//set rotation
@@ -462,7 +462,7 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 
 		drill.StopDrilling();
 		stunned = true;
-		Rb.constraints = RigidbodyConstraints2D.None;
+		rb.constraints = RigidbodyConstraints2D.None;
 		accel = Vector2.zero;
 		velocity = Vector3.zero;
 		pause = pause ?? FindObjectOfType<Pause>();
@@ -471,7 +471,7 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 			pause.DelayedAction(() =>
 			{
 				stunned = false;
-				Rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+				rb.constraints = RigidbodyConstraints2D.FreezeRotation;
 			}, stunDuration, true);
 		}
 	}
@@ -545,7 +545,7 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 				speedMultiplier *= boostMultiplier;
 				if (sonicBoomBoostEffect != null && !IsDrilling)
 				{
-					Rb.velocity = transform.up;
+					rb.velocity = transform.up;
 					shuttleAnimator.SetBool("IsBoosting", true);
 					Transform effect = Instantiate(sonicBoomBoostEffect).transform;
 					effect.parent = ParticleGenerator.holder;
@@ -569,11 +569,11 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 			}
 			else
 			{
-				Vector3 rbVel = Rb.velocity;
+				Vector3 rbVel = rb.velocity;
 				rbVel = Vector3.Lerp(rbVel, transform.up, boostCounterVelocity);
 				rbVel.Normalize();
 				rbVel *= SpeedLimit * speedMultiplier;
-				Rb.velocity = rbVel;
+				rb.velocity = rbVel;
 			}
 		}
 		else

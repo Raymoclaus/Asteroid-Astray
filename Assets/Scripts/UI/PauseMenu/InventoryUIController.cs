@@ -22,6 +22,8 @@ public class InventoryUIController : MonoBehaviour
 	[SerializeField] private Text previewFlav;
 	[SerializeField] private ItemSprites sprites;
 
+	[SerializeField] private Button collectButton;
+	private CraftingRecipe currentRecipe;
 
 	private void Awake()
 	{
@@ -77,6 +79,8 @@ public class InventoryUIController : MonoBehaviour
 		Item.Type previewType =
 			grabbing ? grabStack.GetItemType() : GetInventory(currentContext.context)
 			.stacks[currentContext.selected].GetItemType();
+		if (previewType == Item.Type.Blank) return;
+
 		if (sprites)
 		{
 			previewImg.sprite = sprites.GetItemSprite(previewType);
@@ -100,6 +104,33 @@ public class InventoryUIController : MonoBehaviour
 		grabStack = currentInv.Replace(grabStack, context.selected);
 		grabbing = grabStack.GetItemType() != Item.Type.Blank;
 		grabTransform.gameObject.SetActive(grabbing);
+		if (context.context == ContextInterface.CraftingInput)
+		{
+			CheckRecipes();
+		}
+	}
+
+	private void CheckRecipes()
+	{
+		CraftingRecipe? recipe = Crafting.CheckRecipes(craftingInputGroup.inventory.stacks);
+		if (recipe != null)
+		{
+			currentRecipe = (CraftingRecipe)recipe;
+			craftingOutputGroup.inventory.SetStacks(currentRecipe.GetResultStacks());
+		}
+		else
+		{
+			craftingOutputGroup.inventory.ClearAll();
+		}
+		collectButton.interactable = recipe != null;
+	}
+
+	public void Collect()
+	{
+		List<ItemStack> outputStacks = craftingOutputGroup.inventory.stacks;
+		mainGroup.inventory.AddItems(outputStacks);
+		craftingInputGroup.inventory.RemoveItems(currentRecipe.GetRecipeStacks());
+		CheckRecipes();
 	}
 
 	private Inventory GetInventory(ContextInterface ci)
@@ -118,6 +149,8 @@ public class InventoryUIController : MonoBehaviour
 		if (grabbing) return;
 
 		SelectionContext context = FindSlotId(slot);
+		if (context.selected < 0) return;
+
 		Inventory inv = GetInventory(context.context);
 		if (context.selected < 0 || context.selected >= inv.size) return;
 		if (inv.stacks[context.selected].GetItemType() == Item.Type.Blank) return;

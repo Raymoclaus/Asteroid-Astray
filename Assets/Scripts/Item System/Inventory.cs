@@ -11,12 +11,7 @@ public class Inventory : MonoBehaviour
 	protected virtual void Awake()
 	{
 		if (initialised) return;
-
-		while (stacks.Count < size)
-		{
-			stacks.Add(new ItemStack(Item.Type.Blank, 0));
-		}
-
+		TrimPadStacks();
 		initialised = true;
 	}
 
@@ -31,6 +26,19 @@ public class Inventory : MonoBehaviour
 			}
 		}
 		return amount;
+	}
+
+	private int EmptySlotCount()
+	{
+		int count = 0;
+		for (int i = 0; i < stacks.Count; i++)
+		{
+			if (stacks[i].GetItemType() == Item.Type.Blank)
+			{
+				count++;
+			}
+		}
+		return count;
 	}
 
 	public int AddItem(Item.Type type, int num = 1, List<ItemStack> inv = null)
@@ -103,8 +111,18 @@ public class Inventory : MonoBehaviour
 		return false;
 	}
 
+	public void RemoveItems(List<ItemStack> items)
+	{
+		for (int i = 0; i < items.Count; i++)
+		{
+			RemoveItem(items[i].GetItemType(), items[i].GetAmount());
+		}
+	}
+
 	public bool CanFit(List<ItemStack> items)
 	{
+		if (EmptySlotCount() >= items.Count) return true;
+
 		List<ItemStack> tempItems = new List<ItemStack>(items);
 		List<ItemStack> tempInventory = new List<ItemStack>(stacks);
 
@@ -134,6 +152,35 @@ public class Inventory : MonoBehaviour
 			count += stack.GetAmount();
 		}
 		return count;
+	}
+
+	public bool SetStacks(List<ItemStack> newStacks)
+	{
+		if (newStacks.Count > stacks.Count) return false;
+		stacks = newStacks;
+		TrimPadStacks();
+		return true;
+	}
+
+	private void TrimPadStacks()
+	{
+		while (stacks.Count < size)
+		{
+			stacks.Add(new ItemStack());
+		}
+
+		if (stacks.Count > size)
+		{
+			stacks.RemoveRange(size, stacks.Count - size);
+		}
+	}
+
+	public void ClearAll()
+	{
+		for (int i = 0; i < stacks.Count; i++)
+		{
+			stacks[i].SetBlank();
+		}
 	}
 
 	public int[] CountRarities(Item.Type? exclude = null)

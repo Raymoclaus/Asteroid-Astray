@@ -66,11 +66,11 @@ public class StraightWeapon : MonoBehaviour
 
 		angle *= Mathf.Deg2Rad;
 
-		if (parent.Rb != null)
+		if (parent.rb != null)
 		{
 			Vector2 dir = new Vector2(Mathf.Sin(angle), Mathf.Cos(angle));
 			dir.Normalize();
-			parent.Rb.AddForce(-dir * recoil);
+			parent.rb.AddForce(-dir * recoil);
 		}
 
 		for (int i = alternatingFire ? nextWeaponCounter : 0; i < weapons.Length; i++)

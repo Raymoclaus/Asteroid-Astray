@@ -4,30 +4,23 @@ using UnityEngine;
 public class Entity : MonoBehaviour
 {
 	[Header("Entity Fields")]
-	[SerializeField]
-	protected ChunkCoords _coords;
-	public Collider2D[] Col;
-	public Rigidbody2D Rb;
-	[SerializeField]
-	protected CameraCtrlTracker camTrackerSO;
-	[SerializeField]
-	private EntityPrefabDB prefabs;
-	[SerializeField]
-	protected static ParticleGenerator particleGenerator;
+	[SerializeField] protected ChunkCoords _coords;
+	public Collider2D[] col;
+	public Rigidbody2D rb;
+	[SerializeField] protected CameraCtrlTracker camTrackerSO;
+	[SerializeField] private EntityPrefabDB prefabs;
+	[SerializeField] protected static ParticleGenerator particleGenerator;
 	private static LoadingController loadingController;
-	[SerializeField]
-	private LoadingController loadingControllerPrefab;
+	[SerializeField] private LoadingController loadingControllerPrefab;
 	private static MainCanvas mainCanvas;
-	[SerializeField]
-	private MainCanvas mainCanvasPrefab;
+	[SerializeField] private MainCanvas mainCanvasPrefab;
 	protected static Pause pause;
 	protected static AudioManager audioManager;
-	[SerializeField]
-	protected ScreenRippleEffectController screenRippleSO;
+	[SerializeField] protected ScreenRippleEffectController screenRippleSO;
 	protected bool entityReady = false;
-	public bool ShouldDisablePhysicsOnDistance = true;
-	public bool ShouldDisableObjectOnDistance = true;
-	public bool ShouldDisableGameObjectOnShortDistance = true;
+	public bool shouldDisablePhysicsOnDistance = true;
+	public bool shouldDisableObjectOnDistance = true;
+	public bool shouldDisableGameObjectOnShortDistance = true;
 	public bool isActive = true;
 	public bool disabled = false;
 	public bool isInPhysicsRange = false;
@@ -110,7 +103,7 @@ public class Entity : MonoBehaviour
 
 		SetAllActivity(IsInView());
 		isInPhysicsRange = IsInPhysicsRange();
-		if (ShouldDisablePhysicsOnDistance)
+		if (shouldDisablePhysicsOnDistance)
 		{
 			if (isInPhysicsRange)
 			{
@@ -118,9 +111,9 @@ public class Entity : MonoBehaviour
 				entitiesActive++;
 				disabled = false;
 				gameObject.SetActive(true);
-				if (Rb != null)
+				if (rb != null)
 				{
-					Rb.simulated = true;
+					rb.simulated = true;
 				}
 				PhysicsReEnabled();
 			}
@@ -130,12 +123,12 @@ public class Entity : MonoBehaviour
 				if (repositioned && OnExitPhysicsRange()) return;
 				entitiesActive--;
 				disabled = true;
-				vel = Rb == null ? vel : (Vector3)Rb.velocity;
-				if (Rb != null)
+				vel = rb == null ? vel : (Vector3)rb.velocity;
+				if (rb != null)
 				{
-					Rb.simulated = !ShouldDisablePhysicsOnDistance;
+					rb.simulated = !shouldDisablePhysicsOnDistance;
 				}
-				gameObject.SetActive(!ShouldDisablePhysicsOnDistance);
+				gameObject.SetActive(!shouldDisablePhysicsOnDistance);
 			}
 		}
 	}
@@ -164,12 +157,12 @@ public class Entity : MonoBehaviour
 
 	public void SetAllActivity(bool active)
 	{
-		if (active == isActive || !ShouldDisableObjectOnDistance) return;
+		if (active == isActive || !shouldDisableObjectOnDistance) return;
 		if (needsInit && !initialised) return;
 
 		isActive = active;
 
-		if (ShouldDisableGameObjectOnShortDistance)
+		if (shouldDisableGameObjectOnShortDistance)
 		{
 			gameObject.SetActive(active);
 			return;
@@ -184,6 +177,14 @@ public class Entity : MonoBehaviour
 			{
 				script.enabled = active;
 			}
+		}
+	}
+
+	protected void ActivateAllColliders(bool activate)
+	{
+		for (int i = 0; i < col.Length; i++)
+		{
+			col[i].enabled = activate;
 		}
 	}
 

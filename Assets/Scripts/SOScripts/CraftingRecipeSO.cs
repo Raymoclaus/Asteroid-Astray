@@ -4,4 +4,9 @@
 public class CraftingRecipeSO : ScriptableObject
 {
 	public CraftingRecipe recipe;
+
+	public override string ToString()
+	{
+		return recipe.ToString();
+	}
 }

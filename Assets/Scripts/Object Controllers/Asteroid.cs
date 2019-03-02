@@ -77,20 +77,20 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 				//circle collider
 				default:
 				case 0:
-					((CircleCollider2D)Col[0]).radius = colInfo.size.x;
+					((CircleCollider2D)col[0]).radius = colInfo.size.x;
 					break;
 				//capsule collider
 				case 1:
-					GameObject obj = Col[0].gameObject;
-					Destroy(Col[0]);
+					GameObject obj = col[0].gameObject;
+					Destroy(col[0]);
 					CapsuleCollider2D newCol = obj.AddComponent<CapsuleCollider2D>();
 					newCol.size = colInfo.size;
 					newCol.offset = colInfo.offset;
 					obj.transform.localEulerAngles = Vector3.forward * colInfo.rotation;
-					Col[0] = newCol;
+					col[0] = newCol;
 					break;
 			}
-			Rb.mass *= 4f;
+			rb.mass *= 4f;
 			MaxHealth *= 4f;
 		}
 
@@ -110,9 +110,9 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	private void RandomMovement()
 	{
 		//picks a random speed to spin at within a given range with chance favoring lower values
-		Rb.AddTorque((Mathf.Pow(Random.Range(0f, 2f), 2f) * SpinSpeedRange - SpinSpeedRange));
+		rb.AddTorque((Mathf.Pow(Random.Range(0f, 2f), 2f) * SpinSpeedRange - SpinSpeedRange));
 		//picks a random direction and velocity within a given range with chance favoring lower values
-		Rb.velocity = new Vector2(
+		rb.velocity = new Vector2(
 			Mathf.Sin(Random.value * 2f * Mathf.PI),
 			Mathf.Cos(Random.value * 2f * Mathf.PI))
 			* (Mathf.Pow(Random.Range(0f, 2f), 2f) * VelocityRange - VelocityRange);
@@ -231,9 +231,9 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 
 	public override bool OnExitPhysicsRange()
 	{
-		Vector2 newDir = -Rb.velocity;
+		Vector2 newDir = -rb.velocity;
 		newDir.Normalize();
-		Rb.velocity = newDir * VelocityRange;
+		rb.velocity = newDir * VelocityRange;
 		return true;
 	}
 
@@ -281,7 +281,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 
 	public void StartDrilling()
 	{
-		Rb.constraints = RigidbodyConstraints2D.FreezeAll;
+		rb.constraints = RigidbodyConstraints2D.FreezeAll;
 		ShakeFX.Begin();
 	}
 	
@@ -318,9 +318,9 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 
 	public void StopDrilling()
 	{
-		if (!Rb) return;
+		if (!rb) return;
 
-		Rb.constraints = RigidbodyConstraints2D.None;
+		rb.constraints = RigidbodyConstraints2D.None;
 		ShakeFX.Stop();
 	}
 
@@ -391,7 +391,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	public void Launch(Vector2 launchDirection, Entity launcher)
 	{
 		this.launcher = launcher;
-		Rb.velocity = launchDirection;
+		rb.velocity = launchDirection;
 		launched = true;
 		ShakeFX.Begin(0.1f, 0f, 1f / 30f);
 		if (cameraCtrl) cameraCtrl.Pan(transform);

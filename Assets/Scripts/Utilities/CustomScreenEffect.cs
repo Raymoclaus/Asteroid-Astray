@@ -4,9 +4,7 @@ using System.Collections.Generic;
 [ExecuteInEditMode]
 public class CustomScreenEffect : MonoBehaviour
 {
-	public Material[] effects;
-	[SerializeField]
-	private bool[] noBlit;
+	public ScreenEffectMaterial[] effects;
 	public Camera cam;
 	private List<Material> effectsToBlit = new List<Material>();
 	private List<RenderTexture> rts = new List<RenderTexture>();
@@ -23,8 +21,8 @@ public class CustomScreenEffect : MonoBehaviour
 		
 		for (int i = 0; i < effects.Length; i++)
 		{
-			if (noBlit[i] || effects[i] == null) continue;
-			effectsToBlit.Add(effects[i]);
+			if (!effects[i].blit || effects[i].material == null) continue;
+			effectsToBlit.Add(effects[i].material);
 		}
 
 		if (effectsToBlit.Count == 0)
@@ -61,10 +59,10 @@ public class CustomScreenEffect : MonoBehaviour
 		}
 	}
 
-	public void SetNoBlit(int index, bool shouldNotBlit)
+	public void SetBlit(int index, bool shouldBlit)
 	{
-		noBlit[index] = shouldNotBlit;
-		if (!shouldNotBlit) enabled = true;
+		effects[index].blit = shouldBlit;
+		if (!shouldBlit) enabled = true;
 	}
 
 	private void CheckRTSCount()
@@ -76,4 +74,11 @@ public class CustomScreenEffect : MonoBehaviour
 			rts.Add(new RenderTexture(Screen.width, Screen.height, 0));
 		}
 	}
+}
+
+[System.Serializable]
+public class ScreenEffectMaterial
+{
+	public Material material;
+	public bool blit;
 }

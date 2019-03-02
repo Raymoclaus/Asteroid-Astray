@@ -26,28 +26,25 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 		//collecting spoils of a skirmish
 		Collecting,
 		//Running for backup when solo fight gets too intense
-		Escaping
+		Escaping,
+		//Dying
+		Dying
 	}
 
 	//references
 	private BotHive hive;
-	[SerializeField]
-	private ShakeEffect shakeFX;
-	[SerializeField]
-	private Inventory storage;
-	[SerializeField]
-	private Animator anim;
-	[SerializeField]
-	private AudioSO collisionSounds;
+	[SerializeField] private ShakeEffect shakeFX;
+	[SerializeField] private Inventory storage;
+	[SerializeField] private Animator anim;
+	[SerializeField] private SpriteRenderer sprRend;
+	[SerializeField] private AudioSO collisionSounds;
 	private ContactPoint2D[] contacts = new ContactPoint2D[1];
 
 	//fields
-	[SerializeField]
-	private AIState state;
+	[ReadOnly] private AIState state;
 	private float maxHealth = 2000f;
 	private float currentHealth;
-	[HideInInspector]
-	public int upgradeLevel;
+	[HideInInspector] public int upgradeLevel;
 	public int dockID = -1;
 
 	//spawning variables
@@ -55,9 +52,8 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 
 	//movement variables
 	private Vector2 accel;
-	[SerializeField]
-	private float engineStrength = 1f, speedLimit = 2f, deceleration = 2f, decelEffectiveness = 0.01f,
-		rotationSpeed = 3f;
+	[SerializeField] private float engineStrength = 1f, speedLimit = 2f, deceleration = 2f,
+		decelEffectiveness = 0.01f, rotationSpeed = 3f;
 	private float rot;
 	private Vector2 velocity;
 	private float maxSway = 45;
@@ -65,8 +61,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 	public Entity targetEntity;
 
 	//scanning variables
-	[SerializeField]
-	private ExpandingCircle scanningBeam;
+	[SerializeField] private ExpandingCircle scanningBeam;
 	private float scanTimer, scanDuration = 3f;
 	private bool scanStarted;
 	private List<Entity> entitiesScanned = new List<Entity>();
@@ -77,8 +72,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 	private int drillCount, drillLimit = 3;
 	private List<Entity> surroundingEntities = new List<Entity>(100);
 	private IDrillableObject drillableTarget;
-	[SerializeField]
-	private int storageCapacity = 10;
+	[SerializeField] private int storageCapacity = 10;
 	private int itemsCollected;
 	private bool waitingForResources;
 
@@ -99,58 +93,51 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 	private float intenseScanTimer = 0f;
 	private float intenseScanRange = 1.5f;
 	private List<ICombat> nearbySuspects = new List<ICombat>();
-	[SerializeField]
-	private ParticleSystem intenseScanner;
-	[SerializeField]
-	private SpriteRenderer radialMeterPrefab;
+	[SerializeField] private ParticleSystem intenseScanner;
+	[SerializeField] private SpriteRenderer radialMeterPrefab;
 	private SpriteRenderer suspicionMeter;
-	[SerializeField]
-	private Vector2 meterRelativePosition = Vector2.one * 0.2f;
+	[SerializeField] private Vector2 meterRelativePosition = Vector2.one * 0.2f;
 
 	//combat variables
-	[SerializeField]
-	private StraightWeapon straightWeapon;
+	[SerializeField] private StraightWeapon straightWeapon;
 	private bool beingDrilled;
 	private List<ICombat> enemies = new List<ICombat>();
 	private float chaseRange = 16f;
-	[SerializeField]
-	private float outOfRangeCountdown = 8f;
+	[SerializeField] private float outOfRangeCountdown = 8f;
 	private float outOfRangeTimer;
-	[SerializeField]
-	private float orbitRange = 1.75f;
-	[SerializeField]
-	private float orbitSpeed = 0.6f;
-	[SerializeField]
-	private float firingRange = 5f;
-	[SerializeField]
-	private float drillToChargeTimer = 1f;
-	[SerializeField]
-	private float chargeToExplosionTimer = 3f;
-	[SerializeField]
-	private SpriteRenderer chargeSprRend;
-	[SerializeField]
-	private float explosionRadius = 3f;
-	[SerializeField]
-	private float explosionStrength = 1f;
+	[SerializeField] private float orbitRange = 1.75f;
+	[SerializeField] private float orbitSpeed = 0.6f;
+	[SerializeField] private float firingRange = 5f;
+	[SerializeField] private float drillToChargeTimer = 1f;
+	[SerializeField] private float chargeToExplosionTimer = 3f;
+	[SerializeField] private SpriteRenderer chargeSprRend;
+	[SerializeField] private float explosionRadius = 3f;
+	[SerializeField] private float explosionStrength = 1f;
 	private bool stunned = false;
-	[SerializeField]
-	private float stunDuration = 2f;
+	[SerializeField] private float stunDuration = 2f;
 	private float stunTimer = 0f;
 	private bool launched = false;
 	private float launchedDuration = 1f;
 	private Entity launcher;
 	private LaunchTrailController launchTrail;
 	public float drillDamageResistance = 2f;
-	[SerializeField]
-	private ExpandingCircle forcePulseWave;
-	[SerializeField]
-	private List<Loot> loot;
+	[SerializeField] private ExpandingCircle forcePulseWave;
+	[SerializeField] private List<Loot> loot;
 	private bool straightWeaponAttached = false;
 	private bool readyToFire = false;
 	[SerializeField] private ColorReplacement colorReplacement;
 
 	//signalling variables
 	private float signalTimer;
+
+	//dying variables
+	private float dyingTimer = 0f;
+	[SerializeField] private float dyingDuration = 2f;
+	[SerializeField] private Sprite dyingSprite;
+	private Entity destroyer;
+	private int dropModifier;
+	[SerializeField] private GameObject burningEffectsObj;
+	[SerializeField] private GameObject explosionDeathObj;
 
 	private void Start()
 	{
@@ -203,6 +190,9 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 			case AIState.Escaping:
 				Escaping();
 				break;
+			case AIState.Dying:
+				Dying();
+				break;
 		}
 
 		ApplyMovementCalculation();
@@ -210,7 +200,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 
 	private void FixedUpdate()
 	{
-		Rb.AddForce(accel);
+		rb.AddForce(accel);
 	}
 
 	#region State Methods
@@ -223,7 +213,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 		Vector2 targetPos = dock.position - dock.up * dockDistance;
 		if (GoToLocation(targetPos))
 		{
-			if (Rb.velocity.sqrMagnitude < 0.01f)
+			if (rb.velocity.sqrMagnitude < 0.01f)
 			{
 				StartExploring(true);
 			}
@@ -232,7 +222,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 
 	private void Scanning()
 	{
-		if (Rb.velocity.sqrMagnitude < 0.01f)
+		if (rb.velocity.sqrMagnitude < 0.01f)
 		{
 			if (!scanStarted)
 			{
@@ -554,7 +544,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 
 		foreach (GatherBot sibling in hive.childBots)
 		{
-			if (sibling.state == AIState.Attacking) continue;
+			if (sibling.state == AIState.Attacking || sibling.state == AIState.Dying) continue;
 
 			if (Vector2.Distance(transform.position, sibling.transform.position)
 				< Constants.CHUNK_SIZE)
@@ -587,6 +577,18 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 	private void Escaping()
 	{
 
+	}
+
+	private void Dying()
+	{
+		if (dyingTimer < dyingDuration)
+		{
+			dyingTimer += Time.deltaTime;
+		}
+		else
+		{
+			DestroySelf(true, destroyer, dropModifier);
+		}
 	}
 
 	#endregion
@@ -843,7 +845,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 		for (int i = 0; i < hitCount && i < hits.Length; i++)
 		{
 			if (hits[i].collider == null) continue;
-			if (hits[i].collider.attachedRigidbody == Rb) continue;
+			if (hits[i].collider.attachedRigidbody == rb) continue;
 			float dist = Vector2.Distance(transform.position, hits[i].collider.attachedRigidbody.transform.position);
 			if (dist < distance)
 			{
@@ -900,7 +902,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 		if (IsDrilling)
 		{
 			//freeze constraints
-			Rb.constraints = RigidbodyConstraints2D.FreezeAll;
+			rb.constraints = RigidbodyConstraints2D.FreezeAll;
 			//add potential velocity
 			velocity += accel / 10f;
 			//apply a continuous slowdown effect
@@ -915,12 +917,12 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 		}
 		else
 		{
-			velocity = Rb.velocity;
+			velocity = rb.velocity;
 			//keep constraints unfrozen
-			Rb.constraints = RigidbodyConstraints2D.None | RigidbodyConstraints2D.FreezeRotation;
+			rb.constraints = RigidbodyConstraints2D.None | RigidbodyConstraints2D.FreezeRotation;
 			//apply deceleration
-			Rb.drag = Mathf.MoveTowards(
-				Rb.drag,
+			rb.drag = Mathf.MoveTowards(
+				rb.drag,
 				deceleration * decelerationModifier,
 				decelEffectiveness);
 			transform.eulerAngles = Vector3.forward * -rot;
@@ -1042,13 +1044,13 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 			stunnable = stunnable ?? colRb.GetComponentInChildren<IStunnable>();
 			if (stunnable != null) stunnable.Stun();
 
-			if (colRb == Rb) continue;
+			if (colRb == rb) continue;
 			Vector2 dir = ((Vector2)colRb.transform.position - point).normalized;
 			float distance = Vector2.Distance(point, colRb.transform.position);
 			if (distance >= explosionRadius) continue;
 			colRb.velocity += dir * Mathf.Pow((explosionRadius - distance) / explosionRadius, 0.5f)
 				* explosionStrength;
-			colRb.AddTorque((Random.value > 0.5 ? 1f : -1f) * explosionStrength * 5f);
+			colRb.AddTorque((UnityEngine.Random.value > 0.5 ? 1f : -1f) * explosionStrength * 5f);
 		}
 
 		Vector2 screenPos = Camera.main.WorldToViewportPoint(transform.position);
@@ -1061,7 +1063,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 
 	public void StartDrilling()
 	{
-		Rb.constraints = RigidbodyConstraints2D.FreezeAll;
+		rb.constraints = RigidbodyConstraints2D.FreezeAll;
 		beingDrilled = true;
 		if (IsDrilling)
 		{
@@ -1085,7 +1087,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 
 	public void StopDrilling()
 	{
-		Rb.constraints = RigidbodyConstraints2D.None;
+		rb.constraints = RigidbodyConstraints2D.None;
 		beingDrilled = false;
 		shakeFX.Stop();
 	}
@@ -1236,7 +1238,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 		{
 			drill.drillTarget.StopDrilling();
 		}
-		DestroySelf(true, destroyer, dropModifier);
+		GoToDyingState(destroyer, dropModifier);
 		return currentHealth <= 0f;
 	}
 
@@ -1245,6 +1247,8 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 		if (explode)
 		{
 			//particle effects
+			GameObject explosion = Instantiate(explosionDeathObj, ParticleGenerator.holder);
+			explosion.transform.position = transform.position;
 
 			//sound effects
 
@@ -1257,6 +1261,17 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 		}
 		if (hive) hive.BotDestroyed(this);
 		base.DestroySelf(destroyer);
+	}
+
+	private void GoToDyingState(Entity destroyer, int dropModifier)
+	{
+		state = AIState.Dying;
+		dyingTimer = 0f;
+		this.destroyer = destroyer;
+		this.dropModifier = dropModifier;
+		anim.enabled = false;
+		sprRend.sprite = dyingSprite;
+		burningEffectsObj?.SetActive(true);
 	}
 
 	private void DropLoot(Entity destroyer, Vector2 pos, int dropModifier = 0)
@@ -1308,7 +1323,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 
 	private void StartEmergencyAttack()
 	{
-		if (state == AIState.Attacking) return;
+		if (state == AIState.Attacking || state == AIState.Dying) return;
 
 		canDrill = false;
 		state = AIState.Attacking;
@@ -1371,7 +1386,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 	public void Launch(Vector2 launchDirection, Entity launcher)
 	{
 		this.launcher = launcher;
-		Rb.velocity = launchDirection;
+		rb.velocity = launchDirection;
 		shakeFX.Begin(0.1f, 0f, 1f / 30f);
 		launched = true;
 		if (launcher.GetLaunchTrailAnimation() != null)

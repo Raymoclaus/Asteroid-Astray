@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 public class Quest
@@ -46,7 +45,11 @@ public class Quest
 
 	public bool IsComplete()
 	{
-		return Requirements.All(r => r.IsComplete());
+		for (int i = 0; i < Requirements.Count; i++)
+		{
+			if (!Requirements[i].IsComplete()) return false;
+		}
+		return true;
 	}
 
 	public void Activate()
