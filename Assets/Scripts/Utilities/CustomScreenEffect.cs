@@ -49,8 +49,9 @@ public class CustomScreenEffect : MonoBehaviour
 		}
 
 		RenderTexture currentRT = RenderTexture.active;
-		foreach (RenderTexture rt in rts)
+		for (int i = 0; i < rts.Count; i++)
 		{
+			RenderTexture rt = rts[i];
 			RenderTexture.active = rt;
 			GL.Clear(false, true, Color.clear);
 			RenderTexture.active = currentRT;
@@ -63,6 +64,27 @@ public class CustomScreenEffect : MonoBehaviour
 	{
 		effects[index].blit = shouldBlit;
 		if (!shouldBlit) enabled = true;
+	}
+
+	public void SetBlit(Material mat, bool shouldBlit)
+	{
+		int index = FindMaterialID(mat);
+		if (index < 0) return;
+
+		effects[index].blit = shouldBlit;
+		if (!shouldBlit) enabled = true;
+	}
+
+	private int FindMaterialID(Material mat)
+	{
+		for (int i = 0; i < effects.Length; i++)
+		{
+			if (effects[i].material == mat)
+			{
+				return i;
+			}
+		}
+		return -1;
 	}
 
 	private void CheckRTSCount()

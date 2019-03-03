@@ -18,8 +18,9 @@ public class Inventory : MonoBehaviour
 	public int ContainsItem(Item.Type type)
 	{
 		int amount = 0;
-		foreach (ItemStack stack in stacks)
+		for (int i = 0; i < stacks.Count; i++)
 		{
+			ItemStack stack = stacks[i];
 			if (stack.GetItemType() == type)
 			{
 				amount += stack.GetAmount();
@@ -47,8 +48,9 @@ public class Inventory : MonoBehaviour
 		if (type == Item.Type.Blank) return 0;
 
 		inv = inv != null ? inv : stacks;
-		foreach (ItemStack stack in inv)
+		for (int i = 0; i < inv.Count; i++)
 		{
+			ItemStack stack = inv[i];
 			if (stack.GetItemType() == type)
 			{
 				int difference = Item.StackLimit(type) - stack.GetAmount();
@@ -78,8 +80,9 @@ public class Inventory : MonoBehaviour
 	private int SetBlank(Item.Type type, int num, List<ItemStack> inv = null)
 	{
 		inv = inv != null ? inv : stacks;
-		foreach (ItemStack stack in inv)
+		for (int i = 0; i < inv.Count; i++)
 		{
+			ItemStack stack = inv[i];
 			if (stack.GetItemType() == Item.Type.Blank)
 			{
 				int add = Math.Min(num, Item.StackLimit(type));
@@ -143,8 +146,9 @@ public class Inventory : MonoBehaviour
 
 		if (include == Item.Type.Blank) return 0;
 
-		foreach (ItemStack stack in stacks)
+		for (int i = 0; i < stacks.Count; i++)
 		{
+			ItemStack stack = stacks[i];
 			if (fltr && stack.GetItemType() != include) continue;
 			int rarity = Item.TypeRarity(stack.GetItemType());
 			if (rarity < minRarity && rarity > maxRarity) continue;
@@ -188,8 +192,9 @@ public class Inventory : MonoBehaviour
 		int[] counts = new int[Item.MAX_RARITY + 1];
 		bool fltr = exclude != null;
 
-		foreach (ItemStack stack in stacks)
+		for (int i = 0; i < stacks.Count; i++)
 		{
+			ItemStack stack = stacks[i];
 			if (fltr && stack.GetItemType() == exclude) continue;
 			int rarity = Item.TypeRarity(stack.GetItemType());
 			counts[rarity] += stack.GetAmount();

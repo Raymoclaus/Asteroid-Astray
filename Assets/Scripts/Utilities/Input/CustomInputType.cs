@@ -4,8 +4,11 @@ using UnityEngine;
 public interface ICustomInputType
 {
 	bool ProcessInputs();
-	void ChangeKeyBinding(string key, KeyCode newVal);
+	void ChangeKeyBinding(InputHandler.InputAction key, KeyCode newVal);
 	void ChangeAllKeyBindings(List<KeyCode> keys);
 	List<KeyCode> GetDefaults();
-	float GetInput(string key);
+	float GetInput(InputHandler.InputAction key);
+	float GetInputUp(InputHandler.InputAction key);
+	float GetInputDown(InputHandler.InputAction key);
+	KeyCode GetBinding(InputHandler.InputAction key);
 }

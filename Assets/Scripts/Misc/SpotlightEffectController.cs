@@ -5,7 +5,7 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "Scriptable Objects/Spotlight Effect Controller")]
 public class SpotlightEffectController : ScriptableObject
 {
-	[SerializeField] private Material spotlightMaterial;
+	public Material spotlightMaterial;
 	private string softRadius = "_SoftRadius", hardRadius = "_Radius";
 	private Coroutine currentCoroutine;
 	private const float DEFAULT_SOFT_VALUE = 0.2f, DEFAULT_HARD_VALUE = 0.15f;

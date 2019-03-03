@@ -138,16 +138,19 @@ public class ItemPopupUI : PopupUI
 	public void GeneratePopup(Item.Type type, int amount = 1)
 	{
 		PopupData data = new PopupData(sprites, type, amount);
-		foreach (ItemPopupObject po in activePopups)
+		for (int i = 0; i < activePopups.Count; i++)
 		{
+			ItemPopupObject po = activePopups[i];
 			if (po.type == type)
 			{
 				po.AddAmount(data.amount);
 				return;
 			}
 		}
-		foreach (PopupData pd in popupsToShow)
+
+		for (int i = 0; i < popupsToShow.Count; i++)
 		{
+			PopupData pd = popupsToShow[i];
 			if (pd.type == type)
 			{
 				pd.AddAmount(amount);

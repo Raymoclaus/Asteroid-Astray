@@ -228,8 +228,9 @@ public class InventoryUIController : MonoBehaviour
 
 		public void FindImagesAndTexts()
 		{
-			foreach (GameObject obj in slots)
+			for (int i = 0; i < slots.Count; i++)
 			{
+				GameObject obj = slots[i];
 				slotImages.Add(obj.transform.GetChild(0).GetComponent<Image>());
 				slotTexts.Add(obj.transform.GetChild(1).GetComponent<Text>());
 			}

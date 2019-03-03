@@ -73,8 +73,9 @@ public class LaserWeapon : MonoBehaviour
 		}
 
 		bool flipMuzzleFlash = true;
-		foreach (Transform weapon in weapons)
+		for (int i = 0; i < weapons.Length; i++)
 		{
+			Transform weapon = weapons[i];
 			LaserBlast blast = pool[pool.Count - 1];
 			pool.RemoveAt(pool.Count - 1);
 			blast.Shoot(weapon.position, transform.rotation, weapon.GetChild(0).position - weapon.position,

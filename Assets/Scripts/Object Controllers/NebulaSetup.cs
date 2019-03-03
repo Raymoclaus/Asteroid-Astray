@@ -36,8 +36,9 @@ public class NebulaSetup : Entity
 		systems = systems.Length == 0 ? GetComponentsInChildren<ParticleSystem>() : systems;
 		thrusterRef = thrusterRef == null ? FindObjectOfType<ThrusterController>().thrusterCol : thrusterRef;
 		//make sure particle systems have references to thruster force collider
-		foreach (ParticleSystem ps in systems)
+		for (int i = 0; i < systems.Length; i++)
 		{
+			ParticleSystem ps = systems[i];
 			ps.trigger.SetCollider(0, thrusterRef);
 		}
 		//pick a color
@@ -97,8 +98,9 @@ public class NebulaSetup : Entity
 
 			bool alreadyExists = false;
 			//this will check for nebulas already created in this group
-			foreach (ChunkCoords check in filled)
+			for (int i = 0; i < filled.Count; i++)
 			{
+				ChunkCoords check = filled[i];
 				if (c == check)
 				{
 					alreadyExists = true;
@@ -138,8 +140,10 @@ public class NebulaSetup : Entity
 			Random.value * Mathf.Abs(color2Max - color2Min) + Mathf.Min(color2Min, color2Max),
 			1f);
 
-		foreach (ParticleSystem ps in systems)
+		for (int i = 0; i < systems.Length; i++)
 		{
+			ParticleSystem ps = systems[i];
+
 			//min gradient
 			ParticleSystem.ColorOverLifetimeModule colMod = ps.colorOverLifetime;
 			ParticleSystem.MinMaxGradient gradient = colMod.color;
@@ -180,22 +184,4 @@ public class NebulaSetup : Entity
 	{
 		return EntityType.Nebula;
 	}
-
-	//public override bool OnExitPhysicsRange()
-	//{
-	//	foreach (NebulaSetup nebula in cluster)
-	//	{
-	//		if (nebula.isInPhysicsRange)
-	//		{
-	//			return base.OnExitPhysicsRange();
-	//		}
-	//	}
-	//	transform.parent.gameObject.SetActive(false);
-	//	return false;
-	//}
-
-	//public override void PhysicsReEnabled()
-	//{
-	//	transform.parent.gameObject.SetActive(true);
-	//}
 }

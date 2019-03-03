@@ -265,9 +265,11 @@ namespace Geometry
             }
 
             //check to see if any points are in the circle
-            foreach (Vector2 vert in verts)
+            for (int i = 0; i < verts.Count; i++)
             {
-                if (PointInCircle(vert, c))
+				Vector2 vert = verts[i];
+
+				if (PointInCircle(vert, c))
                 {
                     return true;
                 }
@@ -307,17 +309,21 @@ namespace Geometry
         public static bool PolyIntersectsPoly(List<Vector2> verts1, List<Vector2> verts2)
         {
             //check to see if any vertices exist inside either polygon (more efficient and catches most cases)
-            foreach (Vector2 vert in verts1)
+            for (int i = 0; i < verts1.Count; i++)
             {
-                if (PointInPoly(vert, verts2))
+				Vector2 vert = verts1[i];
+
+				if (PointInPoly(vert, verts2))
                 {
                     return true;
                 }
             }
 
-            foreach (Vector2 vert in verts2)
+            for (int i = 0; i < verts2.Count; i++)
             {
-                if (PointInPoly(vert, new List<Vector2>(verts1)))
+				Vector2 vert = verts2[i];
+
+				if (PointInPoly(vert, new List<Vector2>(verts1)))
                 {
                     return true;
                 }

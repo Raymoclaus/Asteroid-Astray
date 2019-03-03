@@ -1,23 +1,18 @@
 ﻿using System.Collections.Generic;
 using UnityEditor;
+using UnityEngine;
 
 public static class Crafting
 {
 	public static CraftingRecipe? CheckRecipes(List<ItemStack> items)
 	{
-		string[] recipeGuids = AssetDatabase.FindAssets("t:CraftingRecipeSO");
-
-		string[] recipePaths = new string[recipeGuids.Length];
-		for (int i = 0; i < recipeGuids.Length; i++)
-		{
-			recipePaths[i] = AssetDatabase.GUIDToAssetPath(recipeGuids[i]);
-		}
+		CraftingRecipeSO[] recipes = Resources.LoadAll<CraftingRecipeSO>(string.Empty);
 
 		CraftingRecipe? recipe = null;
 		int priority = 0;
-		for (int i = 0; i < recipePaths.Length; i++)
+		for (int i = 0; i < recipes.Length; i++)
 		{
-			CraftingRecipe recipeCheck = AssetDatabase.LoadAssetAtPath<CraftingRecipeSO>(recipePaths[i]).recipe;
+			CraftingRecipe recipeCheck = recipes[i].recipe;
 			int checkPriority = recipeCheck.GetPriority();
 			if (checkPriority > priority && recipeCheck.IsMatch(items))
 			{

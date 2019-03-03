@@ -8,6 +8,7 @@ public class NarrativeManager : MonoBehaviour
 	[SerializeField] private LoadingController loadingController;
 	[SerializeField] private DebugGameplayManager debugGameplayManager;
 	[SerializeField] private SpotlightEffectController spotlightEffectController;
+	[SerializeField] private CustomScreenEffect screenEffects;
 	
 	[SerializeField] private ConversationEvent recoveryDialogue;
 	[SerializeField] private Character mainChar;
@@ -22,13 +23,12 @@ public class NarrativeManager : MonoBehaviour
 		if (!debugGameplayManager.skipIntro)
 		{
 			loadingController.AddPostLoadAction(StartRecoveryDialogue);
+			screenEffects.SetBlit(spotlightEffectController.spotlightMaterial, true);
 		}
 		else
 		{
-			if (spotlightEffectController)
-			{
-				spotlightEffectController.SetSpotlight();
-			}
+			screenEffects.SetBlit(spotlightEffectController.spotlightMaterial, false);
+			spotlightEffectController.SetSpotlight();
 			loadingController.AddPostLoadAction(StartRecoveryQuest);
 		}
 	}
@@ -36,7 +36,7 @@ public class NarrativeManager : MonoBehaviour
 	private void StartRecoveryDialogue()
 	{
 		recoveryDialogue.conversationEndAction.AddListener(StartRecoveryQuest);
-		dialogueController.StartChat(recoveryDialogue);
+		dialogueController.StartDialogue(recoveryDialogue);
 	}
 
 	public void StartRecoveryQuest()

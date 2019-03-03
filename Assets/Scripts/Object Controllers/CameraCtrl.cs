@@ -209,16 +209,18 @@ public class CameraCtrl : MonoBehaviour
 		//disable all entities previously in view
 		notInView.Clear();
 		EntityNetwork.GetEntitiesAtCoords(notInViewAnymore, addToList: notInView);
-		foreach (Entity e in notInView)
+		for (int i = 0; i < notInView.Count; i++)
 		{
+			Entity e = notInView[i];
 			e.SetAllActivity(false);
 		}
 
 		//enables all entities now in view
 		nowInView.Clear();
 		EntityNetwork.GetEntitiesAtCoords(newCoords, addToList: nowInView);
-		foreach (Entity e in nowInView)
+		for (int i = 0; i < nowInView.Count; i++)
 		{
+			Entity e = nowInView[i];
 			e.SetAllActivity(true);
 		}
 
@@ -231,8 +233,9 @@ public class CameraCtrl : MonoBehaviour
 		EntityNetwork.GetEntitiesInRange(center, Constants.MAX_PHYSICS_RANGE,
 			addToList: physicsRange);
 
-		foreach(Entity e in physicsRange)
+		for (int i = 0; i < physicsRange.Count; i++)
 		{
+			Entity e = physicsRange[i];
 			if (e && !e.gameObject.activeSelf)
 			{
 				e.RepositionInNetwork();

@@ -184,13 +184,16 @@ public class DrillBit : MonoBehaviour
 
 	private void TriggerParticleEffects(bool start)
 	{
-		foreach (GameObject obj in drillSparkObjects)
+		for (int i = 0; i < drillSparkObjects.Length; i++)
 		{
+			GameObject obj = drillSparkObjects[i];
 			if (obj == null) continue;
 			obj.SetActive(start);
 		}
-		foreach (ParticleSystem ps in DrillSparks)
+
+		for (int i = 0; i < DrillSparks.Count; i++)
 		{
+			ParticleSystem ps = DrillSparks[i];
 			if (start)
 			{
 				ps.Clear();
@@ -211,8 +214,10 @@ public class DrillBit : MonoBehaviour
 			if (obj == null) continue;
 			obj.SetActive(size > drillSparkObjectThresholds[i]);
 		}
-		foreach (ParticleSystem ps in DrillSparks)
+
+		for (int i = 0; i < DrillSparks.Count; i++)
 		{
+			ParticleSystem ps = DrillSparks[i];
 			ParticleSystem.MainModule main = ps.main;
 			main.startSpeed = size * sparkSizeModifier;
 		}

@@ -29,7 +29,7 @@ public class Pause : MonoBehaviour
 	{
 		timeSinceOpen += Time.deltaTime;
 
-		if (InputHandler.GetInputDown("Pause") > 0f && !isShifting && canPause)
+		if (InputHandler.GetInputDown(InputHandler.InputAction.Pause) > 0f && !isShifting && canPause)
 		{
 			if (IsPaused)
 			{
@@ -84,6 +84,7 @@ public class Pause : MonoBehaviour
 		isShifting = false;
 		shiftingUp = false;
 		Time.timeScale = pause ? 0f : intendedTimeSpeed;
+		canPause = !pause;
 	}
 
 	public void TemporaryPause(float time = 0.5f)

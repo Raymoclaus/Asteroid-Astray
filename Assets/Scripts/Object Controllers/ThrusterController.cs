@@ -45,8 +45,9 @@ public class ThrusterController : MonoBehaviour
 		float speed = baseSpeed * shuttleMag * speedMod;
 		float trailWidth = baseTrailWidth * speed / baseSpeed;
 
-		foreach (ParticleSystem ps in thrusterFire)
+		for (int i = 0; i < thrusterFire.Length; i++)
 		{
+			ParticleSystem ps = thrusterFire[i];
 			ParticleSystem.VelocityOverLifetimeModule volMod = ps.velocityOverLifetime;
 			volMod.speedModifierMultiplier = speed;
 
@@ -68,8 +69,9 @@ public class ThrusterController : MonoBehaviour
 	{
 		bool active = shuttle.accel != Vector2.zero;
 
-		foreach (ParticleSystem ps in smokeTrails)
+		for (int i = 0; i < smokeTrails.Length; i++)
 		{
+			ParticleSystem ps = smokeTrails[i];
 			if (active)
 			{
 				if (!ps.isEmitting)

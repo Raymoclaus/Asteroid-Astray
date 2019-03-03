@@ -148,8 +148,9 @@ public class BotHive : Character, IDrillableObject, IDamageable
 
 	public void ActivateBot(int ID, Vector2 position)
 	{
-		foreach (GatherBot bot in childBots)
+		for (int i = 0; i < childBots.Count; i++)
 		{
+			GatherBot bot = childBots[i];
 			if (bot.dockID == ID)
 			{
 				bot.transform.position = position;
@@ -223,8 +224,9 @@ public class BotHive : Character, IDrillableObject, IDamageable
 
 	public bool SplitUpGatheringUnits(GatherBot b)
 	{
-		foreach (GatherBot bot in childBots)
+		for (int i = 0; i < childBots.Count; i++)
 		{
+			GatherBot bot = childBots[i];
 			//don't check self
 			if (b == bot) continue;
 			//two bots should gather in different locations to avoid overcrowding
@@ -236,8 +238,9 @@ public class BotHive : Character, IDrillableObject, IDamageable
 	public bool VerifyGatheringTarget(GatherBot b, Entity e = null)
 	{
 		e = e == null ? b.targetEntity : e;
-		foreach (GatherBot bot in childBots)
+		for (int i = 0; i < childBots.Count; i++)
 		{
+			GatherBot bot = childBots[i];
 			//don't check self
 			if (b == bot) continue;
 			//two bots shouldn't gather from the same target
@@ -254,7 +257,7 @@ public class BotHive : Character, IDrillableObject, IDamageable
 
 	public void Store(List<ItemStack> items, GatherBot b)
 	{
-		b.gameObject.SetActive(false);
+		b.Activate(false);
 		dockAnims[b.dockID].SetTrigger("Dismantle1");
 		inventory.Store(items);
 		resourceCount = inventory.Count(Item.Type.PureCorvorite);
@@ -391,8 +394,9 @@ public class BotHive : Character, IDrillableObject, IDamageable
 
 	public bool IsSibling(Entity e)
 	{
-		foreach (Entity ent in childBots)
+		for (int i = 0; i < childBots.Count; i ++)
 		{
+			Entity ent = childBots[i];
 			if (e == ent) return true;
 		}
 		return false;

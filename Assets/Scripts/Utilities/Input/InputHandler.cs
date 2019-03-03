@@ -8,12 +8,21 @@ public static class InputHandler
 		Keyboard, Ps4
 	}
 
+	public enum InputAction
+	{
+		Go, Stop, Shoot, Boost, Pause
+	}
+
 	//current input mode
 	private static InputMode _mode;
 	//used to query the control scheme of a keyboard
 	private static KeyboardInputHandler keyLayout = new KeyboardInputHandler();
 	//used to query the control scheme of a PS4 controller
 	private static Ps4InputHandler ps4Layout = new Ps4InputHandler();
+
+	public delegate void InputModeChangedEventHandler();
+	public static event InputModeChangedEventHandler InputModeChanged;
+	public static void OnInputModeChanged() => InputModeChanged?.Invoke();
 
 	private static void CheckForModeUpdate()
 	{
@@ -32,96 +41,60 @@ public static class InputHandler
 
 		if (prevMode != _mode)
 		{
-			Debug.LogWarning("Input mode set to: " + _mode);
+			OnInputModeChanged();
+			Debug.LogWarning($"Input mode set to: {_mode}");
 		}
 	}
 
 	//returns the input status of a given command. 0f usually means no input.
-	public static float GetInput(string key)
+	public static float GetInput(InputAction key)
 	{
-		int index = GetKeyIndex(key);
-		if (index == -1)
+		if (!System.Enum.IsDefined(typeof(InputAction), key))
 		{
-			Debug.LogWarning(string.Format("Action: {0}, does not exist.", key));
+			Debug.LogWarning($"Action: {key}, does not exist.");
 			return 0f;
 		}
 
 		//make sure we're using the right mode
 		CheckForModeUpdate();
 
-		switch (_mode)
-		{
-			case InputMode.Keyboard:
-				return keyLayout.GetInput(key);
-			case InputMode.Ps4:
-				return ps4Layout.GetInput(key);
-			default:
-				Debug.LogError("Input Mode is not set.");
-				return 0f;
-		}
+		return GetHandler().GetInput(key);
 	}
 
 	//returns the input status of a given command. 0f usually means no input.
-	public static float GetInputDown(string key)
+	public static float GetInputDown(InputAction key)
 	{
-		int index = GetKeyIndex(key);
-		if (index == -1)
+		if (!System.Enum.IsDefined(typeof(InputAction), key))
 		{
-			Debug.LogWarning(string.Format("Action: {0}, does not exist.", key));
+			Debug.LogWarning($"Action: {key}, does not exist.");
 			return 0f;
 		}
 
 		//make sure we're using the right mode
 		CheckForModeUpdate();
 
-		switch (_mode)
-		{
-			case InputMode.Keyboard:
-				return keyLayout.GetInputDown(key);
-			case InputMode.Ps4:
-				return ps4Layout.GetInputDown(key);
-			default:
-				Debug.LogError("Input Mode is not set.");
-				return 0f;
-		}
+		return GetHandler().GetInputDown(key);
 	}
 
 	//returns the input status of a given command. 0f usually means no input.
-	public static float GetInputUp(string key)
+	public static float GetInputUp(InputAction key)
 	{
-		int index = GetKeyIndex(key);
-		if (index == -1)
+		int index = (int)key;
+		if (!System.Enum.IsDefined(typeof(InputAction), index))
 		{
-			Debug.LogWarning(string.Format("Action: {0}, does not exist.", key));
+			Debug.LogWarning($"Action: {key}, does not exist.");
 			return 0f;
 		}
 
 		//make sure we're using the right mode
 		CheckForModeUpdate();
 
-		switch (_mode)
-		{
-			case InputMode.Keyboard:
-				return keyLayout.GetInputUp(key);
-			case InputMode.Ps4:
-				return ps4Layout.GetInputUp(key);
-			default:
-				Debug.LogError("Input Mode is not set.");
-				return 0f;
-		}
+		return GetHandler().GetInputUp(key);
 	}
 
-	public static int GetKeyIndex(string key)
+	public static KeyCode GetBinding(InputAction key)
 	{
-		switch (key)
-		{
-			case "Go": return 0;
-			case "Stop": return 1;
-			case "Shoot": return 2;
-			case "Boost": return 3;
-			case "Pause": return 4;
-			default: return -1;
-		}
+		return GetHandler().GetBinding(key);
 	}
 
 	//returns the angle in degrees that the shuttle should turn to
@@ -148,5 +121,15 @@ public static class InputHandler
 	public static InputMode GetMode()
 	{
 		return _mode;
+	}
+
+	private static ICustomInputType GetHandler()
+	{
+		switch (_mode)
+		{
+			case InputMode.Keyboard: return keyLayout;
+			case InputMode.Ps4: return ps4Layout;
+			default: return null;
+		}
 	}
 }

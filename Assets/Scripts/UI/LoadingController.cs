@@ -71,8 +71,9 @@ public class LoadingController : MonoBehaviour
 			}));
 		});
 
-		foreach (System.Action a in preLoadActions)
+		for (int i = 0; i < preLoadActions.Count; i++)
 		{
+			System.Action a = preLoadActions[i];
 			a?.Invoke();
 		}
 	}
@@ -88,8 +89,9 @@ public class LoadingController : MonoBehaviour
 			holder.SetActive(false);
 			finishedLoading = true;
 
-			foreach (System.Action a in postLoadActions)
+			for (int i = 0; i < postLoadActions.Count; i++)
 			{
+				System.Action a = postLoadActions[i];
 				a?.Invoke();
 			}
 		}
@@ -97,8 +99,9 @@ public class LoadingController : MonoBehaviour
 
 	private bool AllEssentialSystemsReady()
 	{
-		foreach (bool b in loadingReady)
+		for (int i = 0; i < loadingReady.Count; i++)
 		{
+			bool b = loadingReady[i];
 			if (!b) return false;
 		}
 		return true;

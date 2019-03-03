@@ -39,11 +39,12 @@ public static class EntityGenerator
 		//determine area to spawn in
 		Vector2Pair range = ChunkCoords.GetCellArea(cc);
 		Vector2 spawnPos = Vector2.zero;
-		foreach (SpawnableEntity e in toSpawn)
+		for (int i = 0; i < toSpawn.Count; i++)
 		{
+			SpawnableEntity e = toSpawn[i];
 			//determine how many to spawn
 			int numToSpawn = Random.Range(e.spawnRange.A, e.spawnRange.B + 1);
-			for (int i = 0; i < numToSpawn; i++)
+			for (int j = 0; j < numToSpawn; j++)
 			{
 				//pick a position within the chunk coordinates
 				switch (e.posType)
@@ -67,8 +68,9 @@ public static class EntityGenerator
 		addToList = addToList ?? new List<SpawnableEntity>();
 		bool usingSpacePriority = false;
 		//choose which non priority entities to spawn
-		foreach (SpawnableEntity e in prefabs.spawnableEntities)
+		for (int i = 0; i < prefabs.spawnableEntities.Count; i++)
 		{
+			SpawnableEntity e = prefabs.spawnableEntities[i];
 			if (e.ignore || (excludePriority && e.spacePriority) || (usingSpacePriority && !e.spacePriority)) continue;
 
 			float chance = Random.value;
@@ -95,8 +97,9 @@ public static class EntityGenerator
 
 	public static void InstantFillChunks(List<ChunkCoords> coords)
 	{
-		foreach(ChunkCoords c in coords)
+		for (int i = 0; i < coords.Count; i++)
 		{
+			ChunkCoords c = coords[i];
 			FillChunk(c);
 		}
 	}
@@ -203,8 +206,9 @@ public static class EntityGenerator
 		}
 		yield return null;
 
-		foreach (SpawnableEntity e in list)
+		for (int i = 0; i < list.Count; i++)
 		{
+			SpawnableEntity e = list[i];
 			holders.Add(e.name, new GameObject(e.name));
 		}
 		a?.Invoke();

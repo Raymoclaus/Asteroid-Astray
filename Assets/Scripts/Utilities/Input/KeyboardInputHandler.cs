@@ -5,7 +5,7 @@ using UnityEngine;
 public class KeyboardInputHandler : ICustomInputType
 {
 	//set of default key bindings that cannot be changed
-	private readonly List<KeyCode> defaults = new List<KeyCode>
+	private static readonly List<KeyCode> defaults = new List<KeyCode>
 	{
 		KeyCode.W,
 		KeyCode.S,
@@ -54,8 +54,9 @@ public class KeyboardInputHandler : ICustomInputType
 		bool inputDetected = false;
 
 		//checks all the bindings
-		foreach (KeyCode kb in bindings)
+		for (int i = 0; i < bindings.Count; i++)
 		{
+			KeyCode kb = bindings[i];
 			if (!Input.GetKey(kb)) continue;
 			inputDetected = true;
 			break;
@@ -70,10 +71,10 @@ public class KeyboardInputHandler : ICustomInputType
 		return true;
 	}
 
-	public void ChangeKeyBinding(string key, KeyCode newVal)
+	public void ChangeKeyBinding(InputHandler.InputAction key, KeyCode newVal)
 	{
-		int index = InputHandler.GetKeyIndex(key);
-		if (index == -1)
+		int index = (int)key;
+		if (index < 0 || index >= bindings.Count)
 		{
 			Debug.LogWarning(string.Format("Action: {0}, does not exist.", key));
 			return;
@@ -91,25 +92,25 @@ public class KeyboardInputHandler : ICustomInputType
 		return defaults;
 	}
 
-	public float GetInput(string key)
+	public float GetInput(InputHandler.InputAction key)
 	{
 		return Input.GetKey(GetBinding(key)) ? 1f : 0f;
 	}
 
-	public float GetInputDown(string key)
+	public float GetInputDown(InputHandler.InputAction key)
 	{
 		return Input.GetKeyDown(GetBinding(key)) ? 1f : 0f;
 	}
 
-	public float GetInputUp(string key)
+	public float GetInputUp(InputHandler.InputAction key)
 	{
 		return Input.GetKeyUp(GetBinding(key)) ? 1f : 0f;
 	}
 
-	private KeyCode GetBinding(string key)
+	public KeyCode GetBinding(InputHandler.InputAction key)
 	{
-		int index = InputHandler.GetKeyIndex(key);
-		if (index == -1)
+		int index = (int)key;
+		if (index < 0 || index >= bindings.Count)
 		{
 			Debug.LogWarning(string.Format("Action: {0}, does not exist.", key));
 			return KeyCode.None;

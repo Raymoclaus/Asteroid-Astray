@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class DestroyOnNoChildren : MonoBehaviour
 {
@@ -10,8 +8,7 @@ public class DestroyOnNoChildren : MonoBehaviour
 	{
 		t = transform;
 	}
-
-	// Update is called once per frame
+	
 	void Update()
 	{
 		if (t.childCount == 0)

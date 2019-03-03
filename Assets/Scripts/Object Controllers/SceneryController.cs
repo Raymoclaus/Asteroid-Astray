@@ -141,9 +141,11 @@ public class SceneryController : MonoBehaviour
 		}
 
 		//activate or create new items to fill in the scenery
-		foreach (ChunkCoords c in
-			EntityNetwork.GetCoordsInRange(newCoords, ViewDistance, ignoreLackOfExistenceInGrid: true))
+		List<ChunkCoords> coords = EntityNetwork.GetCoordsInRange(
+			newCoords, ViewDistance, ignoreLackOfExistenceInGrid: true);
+		for (int i = 0; i < coords.Count; i++)
 		{
+			ChunkCoords c = coords[i];
 			//create new cosmic items
 			if (Chunk(c).Count == 0)
 			{
@@ -156,8 +158,9 @@ public class SceneryController : MonoBehaviour
 
 	private void SetUpScenery(ChunkCoords c)
 	{
-		foreach(CosmicItem item in Chunk(c))
+		for (int i = 0; i < Chunk(c).Count; i++)
 		{
+			CosmicItem item = Chunk(c)[i];
 			StarFieldMaterialPropertyManager sfmpm;
 			SpriteRenderer rend;
 			Transform tr;

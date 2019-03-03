@@ -5,13 +5,13 @@ using System.IO;
 public class Ps4InputHandler : ICustomInputType
 {
 	//set of default key bindings that cannot be changed
-	private readonly List<KeyCode> defaults = new List<KeyCode>
+	private static readonly List<KeyCode> defaults = new List<KeyCode>
 	{
-		KeyCode.Joystick1Button7,
-		KeyCode.Joystick1Button0,
-		KeyCode.Joystick1Button5,
-		KeyCode.Joystick1Button1,
-		KeyCode.Joystick1Button9
+		KeyCode.JoystickButton7,
+		KeyCode.JoystickButton0,
+		KeyCode.JoystickButton5,
+		KeyCode.JoystickButton1,
+		KeyCode.JoystickButton9
 	};
 	//set of key bindings that can be changed
 	private List<KeyCode> bindings = new List<KeyCode>();
@@ -54,8 +54,9 @@ public class Ps4InputHandler : ICustomInputType
 	public bool ProcessInputs()
 	{
 		//checks all the bindings
-		foreach (KeyCode kb in bindings)
+		for (int i = 0; i < bindings.Count; i++)
 		{
+			KeyCode kb = bindings[i];
 			if (Input.GetKey(kb)) return true;
 		}
 
@@ -71,10 +72,10 @@ public class Ps4InputHandler : ICustomInputType
 		return false;
 	}
 
-	public void ChangeKeyBinding(string key, KeyCode newVal)
+	public void ChangeKeyBinding(InputHandler.InputAction key, KeyCode newVal)
 	{
-		int index = InputHandler.GetKeyIndex(key);
-		if (index == -1)
+		int index = (int)key;
+		if (index < 0 || index >= bindings.Count)
 		{
 			Debug.LogWarning(string.Format("Action: {0}, does not exist.", key));
 			return;
@@ -92,34 +93,29 @@ public class Ps4InputHandler : ICustomInputType
 		return defaults;
 	}
 
-	public float GetInput(string key)
+	public float GetInput(InputHandler.InputAction key)
 	{
 		return Input.GetKey(GetBinding(key)) ? 1f : 0f;
 	}
 
-	public float GetInputDown(string key)
+	public float GetInputDown(InputHandler.InputAction key)
 	{
 		return Input.GetKeyDown(GetBinding(key)) ? 1f : 0f;
 	}
 
-	public float GetInputUp(string key)
+	public float GetInputUp(InputHandler.InputAction key)
 	{
 		return Input.GetKeyUp(GetBinding(key)) ? 1f : 0f;
 	}
 
-	private KeyCode GetBinding(string key)
+	public KeyCode GetBinding(InputHandler.InputAction key)
 	{
-		int index = InputHandler.GetKeyIndex(key);
-		if (index == -1)
+		int index = (int)key;
+		if (index < 0 || index >= bindings.Count)
 		{
 			Debug.LogWarning(string.Format("Action: {0}, does not exist.", key));
 			return KeyCode.None;
 		}
 		return bindings[index];
-	}
-
-	private Vector2 MoveVector()
-	{
-		return new Vector2(GetInput("MoveHorizontal"), GetInput("MoveVertical"));
 	}
 }

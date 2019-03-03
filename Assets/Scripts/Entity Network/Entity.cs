@@ -171,8 +171,9 @@ public class Entity : MonoBehaviour
 		ActivateRenderers(active);
 
 		//enable/disable all relevant components
-		foreach (MonoBehaviour script in ScriptComponents)
+		for (int i = 0; i < ScriptComponents.Count; i++)
 		{
+			MonoBehaviour script = ScriptComponents[i];
 			if (script != null)
 			{
 				script.enabled = active;
@@ -192,8 +193,9 @@ public class Entity : MonoBehaviour
 	{
 		if (active) active = ShouldBeVisible();
 
-		foreach (Renderer r in rends)
+		for (int i = 0; i < rends.Length; i++)
 		{
+			Renderer r = rends[i];
 			if (r != null) r.enabled = active;
 		}
 	}

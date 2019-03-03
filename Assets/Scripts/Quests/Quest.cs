@@ -24,8 +24,9 @@ public class Quest
 		Rewards = rewards;
 		Requirements = requirements;
 
-		foreach (QuestRequirement requirement in Requirements)
+		for (int i = 0; i < Requirements.Count; i++)
 		{
+			QuestRequirement requirement = Requirements[i];
 			requirement.OnQuestRequirementUpdated += EvaluateRequirements;
 		}
 	}
@@ -36,8 +37,9 @@ public class Quest
 		{
 			Debug.Log($"Quest Complete: {Name}");
 			QuestComplete(this);
-			foreach (QuestReward reward in Rewards)
+			for (int i = 0; i < Rewards.Count; i++)
 			{
+				QuestReward reward = Rewards[i];
 				reward.GiveReward(Quester);
 			}
 		}
@@ -54,8 +56,9 @@ public class Quest
 
 	public void Activate()
 	{
-		foreach (QuestRequirement requirement in Requirements)
+		for (int i = 0; i < Requirements.Count; i++)
 		{
+			QuestRequirement requirement = Requirements[i];
 			requirement.Activate();
 		}
 	}

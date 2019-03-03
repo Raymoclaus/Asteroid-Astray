@@ -14,8 +14,10 @@ public class PromptTrigger : MonoBehaviour
 		promptLayer = LayerMask.NameToLayer("ButtonPrompt");
 		if (!promptUI)
 		{
-			foreach (Canvas canvas in FindObjectsOfType<Canvas>())
+			Canvas[] canvases = FindObjectsOfType<Canvas>();
+			for (int i = 0; i < canvases.Length; i++)
 			{
+				Canvas canvas = canvases[i];
 				promptUI = canvas.GetComponentInChildren<PromptUI>(true);
 				if (promptUI) break;
 			}

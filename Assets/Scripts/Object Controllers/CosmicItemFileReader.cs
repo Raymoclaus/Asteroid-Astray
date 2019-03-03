@@ -62,9 +62,10 @@ public static class CosmicItemFileReader
 		int quad = 0, x = 0, y = 0, i = 0;
 		CosmicItem c;
 
-		foreach (string line in lines)
+		for (int j = 0; j < lines.Length; j++)
 		{
-			switch(line[0])
+			string line = lines[j];
+			switch (line[0])
 			{
 				case quadSeparator: quad++; x = 0; y = 0; i = 0; break;
 				case xSeparator: x++; y = 0; i = 0; break;

@@ -105,8 +105,9 @@ public class DialoguePopupUI : PopupUI
 
 	protected void AddSpeakerID(int speakerID)
 	{
-		foreach (int id in speakerIDs)
+		for (int i = 0; i < speakerIDs.Count; i++)
 		{
+			int id = speakerIDs[i];
 			if (id == speakerID)
 			{
 				return;
@@ -117,8 +118,9 @@ public class DialoguePopupUI : PopupUI
 
 	protected DialoguePopupObject GetInactivePopup(bool leftSidePopup)
 	{
-		foreach (DialoguePopupObject popup in inactivePopups)
+		for (int i = 0; i < inactivePopups.Count; i++)
 		{
+			DialoguePopupObject popup = inactivePopups[i];
 			if (popup.isLeft == leftSidePopup)
 			{
 				return popup;

@@ -248,8 +248,9 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 				scanTimer = 0f;
 				scanStarted = false;
 				//look for the first unusual entity in the scan
-				foreach (Entity e in entitiesScanned)
+				for (int i = 0; i < entitiesScanned.Count; i++)
 				{
+					Entity e = entitiesScanned[i];
 					ICombat threat = e.GetICombat();
 					if (threat != null && IsSuspicious(threat))
 					{
@@ -446,8 +447,9 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 						}
 						state = AIState.Signalling;
 						nearbySuspects.Clear();
-						foreach (GatherBot sibling in hive.childBots)
+						for (int i = 0; i < hive.childBots.Count; i++)
 						{
+							GatherBot sibling = hive.childBots[i];
 							if (sibling == null)
 							{
 								hive.childBots.Remove(sibling);
@@ -483,12 +485,14 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 		signalTimer -= Time.deltaTime;
 		if (signalTimer <= 0f)
 		{
-			foreach (GatherBot sibling in hive.childBots)
+			for (int i = 0; i < hive.childBots.Count; i++)
 			{
+				GatherBot sibling = hive.childBots[i];
 				sibling.enemies = enemies;
 				sibling.StartEmergencyAttack();
-				foreach (ICombat enemy in enemies)
+				for (int j = 0; j < enemies.Count; j++)
 				{
+					ICombat enemy = enemies[j];
 					enemy.EngageInCombat(sibling);
 				}
 			}
@@ -502,8 +506,9 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 		if (distanceFromTarget > chaseRange)
 		{
 			bool found = false;
-			foreach (GatherBot bot in hive.childBots)
+			for (int i = 0; i < hive.childBots.Count; i++)
 			{
+				GatherBot bot = hive.childBots[i];
 				if (bot == this || bot == null) continue;
 				float dist = Vector2.Distance(bot.transform.position, ((Entity)enemies[0]).transform.position);
 				if (dist < chaseRange)
@@ -522,8 +527,9 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 					enemies.RemoveAt(0);
 					if (enemies.Count == 0)
 					{
-						foreach (GatherBot bot in hive.childBots)
+						for (int i = 0; i < hive.childBots.Count; i++)
 						{
+							GatherBot bot = hive.childBots[i];
 							bot.state = AIState.Collecting;
 							bot.anim.SetTrigger("Idle");
 							bot.isIdle = true;
@@ -542,8 +548,9 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 			outOfRangeTimer = 0f;
 		}
 
-		foreach (GatherBot sibling in hive.childBots)
+		for (int i = 0; i < hive.childBots.Count; i++)
 		{
+			GatherBot sibling = hive.childBots[i];
 			if (sibling.state == AIState.Attacking || sibling.state == AIState.Dying) continue;
 
 			if (Vector2.Distance(transform.position, sibling.transform.position)
@@ -663,8 +670,9 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 		}
 
 		float shortestDist = float.PositiveInfinity;
-		foreach (Entity e in surroundingEntities)
+		for (int i = 0; i < surroundingEntities.Count; i++)
 		{
+			Entity e = surroundingEntities[i];
 			float dist = Vector2.Distance(transform.position, e.transform.position);
 			if (dist < shortestDist || float.IsPositiveInfinity(shortestDist))
 			{
@@ -813,8 +821,9 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 		//look at all the objects being seen by the raycasts
 		//if there are too many hits on the same object then assume it is a wall or large object
 		obstacles.Clear();
-		foreach (RaycastHit2D hit in hits)
+		for (int i = 0; i < hits.Count; i++)
 		{
+			RaycastHit2D hit = hits[i];
 			if (hit.collider == null) continue;
 			obstacles.Add(hit.collider.attachedRigidbody);
 		}
@@ -966,7 +975,8 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 	public void Activate(bool active)
 	{
 		activated = active;
-		ActivateRenderers(activated);
+		ActivateRenderers(activated && IsInView());
+		ActivateAllColliders(active);
 	}
 
 	protected override bool ShouldBeVisible()
@@ -1020,12 +1030,14 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 		int layers = (1 << layerSolid) | (1 << layerProjectile);
 		Collider2D[] colliders = Physics2D.OverlapCircleAll(point, explosionRadius, layers);
 		List<Rigidbody2D> rbs = new List<Rigidbody2D>();
-		foreach (Collider2D col in colliders)
+		for (int i = 0; i < colliders.Length; i++)
 		{
+			Collider2D col = colliders[i];
 			if (col.attachedRigidbody.bodyType == RigidbodyType2D.Static) continue;
 			bool found = false;
-			foreach (Rigidbody2D colRb in rbs)
+			for (int j = 0; j < rbs.Count; j++)
 			{
+				Rigidbody2D colRb = rbs[j];
 				if (colRb == col.attachedRigidbody)
 				{
 					found = true;
@@ -1038,8 +1050,9 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 			}
 		}
 
-		foreach (Rigidbody2D colRb in rbs)
+		for (int i = 0; i < rbs.Count; i++)
 		{
+			Rigidbody2D colRb = rbs[i];
 			IStunnable stunnable = colRb.GetComponent<IStunnable>();
 			stunnable = stunnable ?? colRb.GetComponentInChildren<IStunnable>();
 			if (stunnable != null) stunnable.Stun();
@@ -1255,8 +1268,9 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 			//drop resources
 			DropLoot(destroyer, transform.position, dropModifier);
 		}
-		foreach (ICombat enemy in enemies)
+		for (int i = 0; i < enemies.Count; i++)
 		{
+			ICombat enemy = enemies[i];
 			enemy.DisengageInCombat(this);
 		}
 		if (hive) hive.BotDestroyed(this);
@@ -1369,8 +1383,9 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 				enemies.RemoveAt(i);
 				if (enemies.Count == 0)
 				{
-					foreach (GatherBot bot in hive.childBots)
+					for (int j = 0; j < hive.childBots.Count; j++)
 					{
+						GatherBot bot = hive.childBots[j];
 						if (bot == null) continue;
 
 						bot.state = AIState.Collecting;
@@ -1423,8 +1438,9 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 
 	private void AddThreat(ICombat threat)
 	{
-		foreach (ICombat e in enemies)
+		for (int i = 0; i < enemies.Count; i++)
 		{
+			ICombat e = enemies[i];
 			if (e == threat) return;
 		}
 		enemies.Add(threat);

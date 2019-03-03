@@ -157,7 +157,7 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 		if (!trackerSO.hasControl) return;
 
 		//Check if the player is attempting to boost
-		if (!trackerSO.autoPilot) Boost(InputHandler.GetInput("Boost") > 0f);
+		if (!trackerSO.autoPilot) Boost(InputHandler.GetInput(InputHandler.InputAction.Boost) > 0f);
 		//used for artificially adjusting speed, used by the auto pilot only
 		float speedMod = 1f;
 		//update rotation variable with transform's current rotation
@@ -217,7 +217,7 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 		//reset acceleration
 		accel = Vector2.zero;
 		//get movement input
-		accel.y += Mathf.Clamp01(InputHandler.GetInput("Go")) * EngineStrength * speedMultiplier;
+		accel.y += Mathf.Clamp01(InputHandler.GetInput(InputHandler.InputAction.Go)) * EngineStrength * speedMultiplier;
 
 		if (trackerSO.autoPilot)
 		{
@@ -366,8 +366,9 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 		}
 
 		float shortestDist = float.PositiveInfinity;
-		foreach (Entity e in asteroids)
+		for (int i = 0; i < asteroids.Count; i++)
 		{
+			Entity e = asteroids[i];
 			float dist = Vector2.Distance(transform.position, e.transform.position);
 			if (dist < shortestDist || float.IsPositiveInfinity(shortestDist))
 			{
@@ -388,7 +389,7 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 
 	public override float DrillDamageQuery(bool firstHit)
 	{
-		if (InputHandler.GetInputUp("Stop") > 0f || !trackerSO.hasControl)
+		if (InputHandler.GetInputUp(InputHandler.InputAction.Stop) > 0f || !trackerSO.hasControl)
 		{
 			if (cameraCtrl)
 			{
@@ -398,7 +399,7 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 			return 0f;
 		}
 
-		if (InputHandler.GetInput("Stop") > 0f)
+		if (InputHandler.GetInput(InputHandler.InputAction.Stop) > 0f)
 		{
 			GameObject launchCone = drillLaunchArcSprite.gameObject;
 			launchCone.SetActive(true);
@@ -452,7 +453,7 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 	{
 		return canDrillLaunch
 			&& velocity.sqrMagnitude >= Mathf.Pow(SpeedLimit * DrillBoost, 2f) * 0.9f
-			&& InputHandler.GetInputUp("Stop") > 0f
+			&& InputHandler.GetInputUp(InputHandler.InputAction.Stop) > 0f
 			&& trackerSO.hasControl;
 	}
 
@@ -618,13 +619,13 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 
 	public override bool CanFireLaser()
 	{
-		return laserAttached && !isBoosting && InputHandler.GetInput("Shoot") > 0f
+		return laserAttached && !isBoosting && InputHandler.GetInput(InputHandler.InputAction.Shoot) > 0f
 			&& !Pause.IsPaused && trackerSO.hasControl;
 	}
 
 	public override bool CanFireStraightWeapon()
 	{
-		return straightWeaponAttached && !isBoosting && InputHandler.GetInput("Shoot") > 0f
+		return straightWeaponAttached && !isBoosting && InputHandler.GetInput(InputHandler.InputAction.Shoot) > 0f
 			&& !Pause.IsPaused && trackerSO.hasControl;
 	}
 
@@ -731,8 +732,9 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 		base.AcceptQuest(quest);
 
 		Debug.Log($"Accepted Quest: {quest.Name}");
-		foreach (QuestRequirement req in quest.Requirements)
+		for (int i = 0; i < quest.Requirements.Count; i++)
 		{
+			QuestRequirement req = quest.Requirements[i];
 			Debug.Log(req.GetDescription());
 		}
 		questLog.AddQuest(quest);
