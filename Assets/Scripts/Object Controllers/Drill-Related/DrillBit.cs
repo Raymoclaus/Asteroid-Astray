@@ -72,7 +72,7 @@ public class DrillBit : MonoBehaviour
 		//if damage is 0 then stop drilling
 		if (damage <= 0f && !Pause.IsPaused && !Pause.isShifting)
 		{
-			bool launch = parent.ShouldLaunch();
+			bool launch = parent.ShouldLaunch() && drillTarget.CanBeLaunched();
 			Vector2 launchDirection = Vector2.up;
 			if (launch)
 			{

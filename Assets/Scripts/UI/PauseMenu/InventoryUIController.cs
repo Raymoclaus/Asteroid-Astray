@@ -128,6 +128,12 @@ public class InventoryUIController : MonoBehaviour
 	public void Collect()
 	{
 		List<ItemStack> outputStacks = craftingOutputGroup.inventory.stacks;
+		if (!mainGroup.inventory.CanFit(outputStacks)) return;
+
+		for (int i = 0; i < outputStacks.Count; i++)
+		{
+			GameEvents.ItemCrafted(outputStacks[i].GetItemType(), outputStacks[i].GetAmount());
+		}
 		mainGroup.inventory.AddItems(outputStacks);
 		craftingInputGroup.inventory.RemoveItems(currentRecipe.GetRecipeStacks());
 		CheckRecipes();

@@ -15,7 +15,7 @@ public class Quest
 	public void QuestComplete(Quest quest) => OnQuestComplete?.Invoke(quest);
 
 	public Quest(string name, string description, Character quester, EntityProfile issuer,
-		List<QuestReward> rewards, List<QuestRequirement> requirements)
+		List<QuestReward> rewards, List<QuestRequirement> requirements, QuestCompleteEventHandler action = null)
 	{
 		Name = name;
 		Description = description;
@@ -23,6 +23,7 @@ public class Quest
 		Issuer = issuer;
 		Rewards = rewards;
 		Requirements = requirements;
+		OnQuestComplete += action;
 
 		for (int i = 0; i < Requirements.Count; i++)
 		{

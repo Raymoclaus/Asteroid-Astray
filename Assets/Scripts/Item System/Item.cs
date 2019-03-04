@@ -25,7 +25,8 @@ public static class Item
 		SpareParts,
 		RepairKit,
 		NioleriumCrystals,
-		NiolerDung
+		NiolerDung,
+		StoneAmmo
 	}
 
 	public static Sprite[] sprites;
@@ -59,6 +60,7 @@ public static class Item
 			case Type.RepairKit: return "Repair Kit";
 			case Type.NioleriumCrystals: return "Niolerium Crystals";
 			case Type.NiolerDung: return "Nioler Dung";
+			case Type.StoneAmmo: return "Stone Ammo";
 
 			default: return "<Unnamed>";
 		}
@@ -91,6 +93,7 @@ public static class Item
 			case Type.RepairKit: return 3;
 			case Type.NioleriumCrystals: return 3;
 			case Type.NiolerDung: return 6;
+			case Type.StoneAmmo: return 1;
 
 			default: return 1;
 		}
@@ -123,6 +126,7 @@ public static class Item
 			case Type.RepairKit: return 10;
 			case Type.NioleriumCrystals: return 30;
 			case Type.NiolerDung: return 30;
+			case Type.StoneAmmo: return 1000;
 
 			default: return 100;
 		}
@@ -161,6 +165,8 @@ public static class Item
 			case Type.RepairKit: return string.Empty;
 			case Type.NioleriumCrystals: return string.Empty;
 			case Type.NiolerDung: return string.Empty;
+			case Type.StoneAmmo: return "A stone-based ammunition that is low-damage but is" +
+					" useful for penetrating shields.";
 
 			default: return string.Empty;
 		}
@@ -203,6 +209,7 @@ public static class Item
 			case Type.RepairKit: return string.Empty;
 			case Type.NioleriumCrystals: return string.Empty;
 			case Type.NiolerDung: return string.Empty;
+			case Type.StoneAmmo: return string.Empty;
 
 			default: return string.Empty;
 		}

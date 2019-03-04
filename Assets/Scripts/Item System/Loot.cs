@@ -15,7 +15,7 @@ public struct Loot
 		this.type = type;
 		this.maxAmount = Mathf.Max(maxAmount, 1);
 		this.lootChance = Mathf.Clamp01(lootChance);
-		this.minAmountPercentage = minAmountPercentage > 0 ? (minAmountPercentage < 1 ? minAmountPercentage : 1) : 0;
+		this.minAmountPercentage = Mathf.Clamp01((float)minAmountPercentage);
 		this.roundedUp = roundedUp;
 	}
 
@@ -36,7 +36,7 @@ public struct Loot
 		{
 			if (Random.value <= lootChance) amount++;
 		}
-
+		
 		return new ItemStack(type, amount);
 	}
 }

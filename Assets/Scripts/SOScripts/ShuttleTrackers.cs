@@ -16,6 +16,7 @@ public class ShuttleTrackers : ScriptableObject
 	public bool hasControl = true;
 	public bool isKinematic = false;
 	public bool isInvulnerable = false;
+	public bool navigationActive = false;
 
 	public void ToggleAutoPilot()
 	{

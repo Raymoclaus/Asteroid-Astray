@@ -10,7 +10,7 @@ public class ItemStack
 
 	public ItemStack(Item.Type type, int num)
 	{
-		this.type = type;
+		this.type = num <= 0 ? Item.Type.Blank : type;
 		this.amount = num < 0 ? 0 : num;
 	}
 

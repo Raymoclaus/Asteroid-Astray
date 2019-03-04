@@ -425,12 +425,9 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 					//attack alone
 					case 0:
 						ICombat enemy = targetEntity.GetICombat();
-						if (enemy != null)
+						if ((bool)enemy?.EngageInCombat(this))
 						{
-							if (enemy.EngageInCombat(this))
-							{
-								AddThreat(enemy);
-							}
+							EngageInCombat(enemy);
 						}
 						state = AIState.Attacking;
 						nearbySuspects.Clear();
@@ -438,12 +435,9 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 					//signal for help
 					case 1:
 						enemy = targetEntity.GetICombat();
-						if (enemy != null)
+						if ((bool)enemy?.EngageInCombat(this))
 						{
-							if (enemy.EngageInCombat(this))
-							{
-								AddThreat(enemy);
-							}
+							EngageInCombat(enemy);
 						}
 						state = AIState.Signalling;
 						nearbySuspects.Clear();
@@ -551,7 +545,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 		for (int i = 0; i < hive.childBots.Count; i++)
 		{
 			GatherBot sibling = hive.childBots[i];
-			if (sibling.state == AIState.Attacking || sibling.state == AIState.Dying) continue;
+			if ((sibling.state & (AIState.Attacking | AIState.Dying)) != 0 || !sibling.activated) continue;
 
 			if (Vector2.Distance(transform.position, sibling.transform.position)
 				< Constants.CHUNK_SIZE)
@@ -1168,16 +1162,13 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 				{
 					launchTrail.CutLaunchTrail();
 				}
-				IDamageable otherDamageable = other.transform.parent.GetComponent<IDamageable>();
+				IDamageable otherDamageable = other.attachedRigidbody.gameObject.GetComponent<IDamageable>();
 				float damage = launcher.GetLaunchDamage();
 				if (currentHealth / maxHealth < 0.5f)
 				{
 					damage *= 2f;
 				}
-				if (otherDamageable != null)
-				{
-					otherDamageable.TakeDamage(damage, contactPoint, launcher);
-				}
+				otherDamageable?.TakeDamage(damage, contactPoint, launcher);
 				TakeDamage(damage, contactPoint, launcher);
 				launched = false;
 				Stun();
@@ -1196,7 +1187,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 	public bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer, int dropModifier = 0, bool flash = true)
 	{
 		//cannot be hit by projectiles from self or siblings
-		if (!IsSibling(destroyer))
+		if (!IsSibling(destroyer) && destroyer != hive)
 		{
 			currentHealth -= damage;
 			ICombat enemy = destroyer.GetICombat();
@@ -1337,7 +1328,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 
 	private void StartEmergencyAttack()
 	{
-		if (state == AIState.Attacking || state == AIState.Dying) return;
+		if ((state & (AIState.Attacking | AIState.Dying)) != 0 || !activated) return;
 
 		canDrill = false;
 		state = AIState.Attacking;
@@ -1433,7 +1424,18 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 
 	public bool IsDrillable()
 	{
+		return state != AIState.Dying;
+	}
+
+	public bool CanBeLaunched()
+	{
 		return true;
+	}
+
+	public void HiveThreatened(ICombat threat)
+	{
+		AddThreat(threat);
+		StartEmergencyAttack();
 	}
 
 	private void AddThreat(ICombat threat)
@@ -1449,7 +1451,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 	public bool EngageInCombat(ICombat hostile)
 	{
 		if (IsSibling((Entity)hostile) || (Entity)hostile == hive || enemies.Contains(hostile)) return false;
-		enemies.Add(hostile);
+		AddThreat(hostile);
 		return true;
 	}
 

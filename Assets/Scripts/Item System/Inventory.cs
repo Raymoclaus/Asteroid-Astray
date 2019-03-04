@@ -44,7 +44,7 @@ public class Inventory : MonoBehaviour
 
 	public int AddItem(Item.Type type, int num = 1, List<ItemStack> inv = null)
 	{
-		if (num <= 0) return -1;
+		if (num <= 0) return 0;
 		if (type == Item.Type.Blank) return 0;
 
 		inv = inv != null ? inv : stacks;

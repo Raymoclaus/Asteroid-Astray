@@ -389,7 +389,7 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 
 	public override float DrillDamageQuery(bool firstHit)
 	{
-		if (InputHandler.GetInputUp(InputHandler.InputAction.Stop) > 0f || !trackerSO.hasControl)
+		if (InputHandler.GetInputUp(InputHandler.InputAction.Launch) > 0f || !trackerSO.hasControl)
 		{
 			if (cameraCtrl)
 			{
@@ -399,7 +399,7 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 			return 0f;
 		}
 
-		if (InputHandler.GetInput(InputHandler.InputAction.Stop) > 0f)
+		if (InputHandler.GetInput(InputHandler.InputAction.Launch) > 0f)
 		{
 			GameObject launchCone = drillLaunchArcSprite.gameObject;
 			launchCone.SetActive(true);
@@ -453,7 +453,7 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 	{
 		return canDrillLaunch
 			&& velocity.sqrMagnitude >= Mathf.Pow(SpeedLimit * DrillBoost, 2f) * 0.9f
-			&& InputHandler.GetInputUp(InputHandler.InputAction.Stop) > 0f
+			&& InputHandler.GetInputUp(InputHandler.InputAction.Launch) > 0f
 			&& trackerSO.hasControl;
 	}
 

@@ -1,5 +1,5 @@
-﻿using UnityEngine;
-using System.Collections;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 public class Asteroid : Entity, IDrillableObject, IDamageable
 {
@@ -49,6 +49,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	private Entity launcher;
 	private LaunchTrailController launchTrail;
 	private ContactPoint2D[] contacts = new ContactPoint2D[1];
+	[SerializeField] private List<Loot> loot;
 	#endregion
 
 	#region Audio
@@ -155,6 +156,12 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		for (int i = 0; i < Random.Range(minDrop, minDrop + dropModifier + 1); i++)
 		{
 			particleGenerator.DropResource(destroyer, pos);
+		}
+
+		for (int i = 0; i < loot.Count; i++)
+		{
+			ItemStack stack = loot[i].GetStack();
+			particleGenerator.DropResource(destroyer, pos, stack.GetItemType(), stack.GetAmount());
 		}
 	}
 
@@ -368,16 +375,13 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 				{
 					launchTrail.CutLaunchTrail();
 				}
-				IDamageable otherDamageable = other.transform.parent.GetComponent<IDamageable>();
+				IDamageable otherDamageable = other.attachedRigidbody.gameObject.GetComponent<IDamageable>();
 				float damage = launcher.GetLaunchDamage();
 				if (Health / MaxHealth < 0.7f)
 				{
 					damage *= 2f;
 				}
-				if (otherDamageable != null)
-				{
-					otherDamageable.TakeDamage(damage, contactPoint, launcher);
-				}
+				otherDamageable?.TakeDamage(damage, contactPoint, launcher);
 				TakeDamage(damage, contactPoint, launcher);
 				launched = false;
 				if (cameraCtrl && cameraCtrl.GetPanTarget() == transform)
@@ -426,5 +430,10 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	public bool IsDrillable()
 	{
 		return launched;
+	}
+
+	public bool CanBeLaunched()
+	{
+		return true;
 	}
 }

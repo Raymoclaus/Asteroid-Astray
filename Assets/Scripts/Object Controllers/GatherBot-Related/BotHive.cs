@@ -1,11 +1,9 @@
 ﻿using System.Collections.Generic;
-using CielaSpike;
 using System;
 using UnityEngine;
-using System.Collections;
 
 [RequireComponent(typeof(HiveInventory))]
-public class BotHive : Character, IDrillableObject, IDamageable
+public class BotHive : Character, IDrillableObject, IDamageable, ICombat
 {
 	//references
 	[SerializeField]
@@ -37,6 +35,7 @@ public class BotHive : Character, IDrillableObject, IDamageable
 	private List<GTime> emptyCoordTimes = new List<GTime>();
 	private float emptyCoordWaitTime = 300f;
 	public WaitForSeconds maintenanceTime = new WaitForSeconds(3f);
+	private List<ICombat> enemies = new List<ICombat>();
 
 	//cache
 	private List<ChunkCoords> botOccupiedCoords = new List<ChunkCoords>();
@@ -59,6 +58,14 @@ public class BotHive : Character, IDrillableObject, IDamageable
 		SpendResources();
 
 		initialised = true;
+	}
+
+	private void Update()
+	{
+		if (enemies.Count > 0)
+		{
+			AlertBots(enemies);
+		}
 	}
 
 	private void SpendResources(GatherBot b = null)
@@ -172,6 +179,15 @@ public class BotHive : Character, IDrillableObject, IDamageable
 	public Transform GetDock(GatherBot bot)
 	{
 		return docks[bot.dockID];
+	}
+
+	public bool IsChildBot(Entity e)
+	{
+		for (int i = 0; i < childBots.Count; i++)
+		{
+			if (childBots[i] == e) return true;
+		}
+		return false;
 	}
 
 	public void AssignUnoccupiedCoords(GatherBot b)
@@ -329,8 +345,30 @@ public class BotHive : Character, IDrillableObject, IDamageable
 	public bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer, int dropModifier = 0, bool flash = true)
 	{
 		currentHealth -= damage;
-
+		ICombat threat = destroyer.GetICombat();
+		if (threat != null && threat.EngageInCombat(this))
+		{
+			EngageInCombat(threat);
+		}
 		return CheckHealth(destroyer, dropModifier);
+	}
+
+	private void AlertBots(ICombat threat)
+	{
+		if (threat == null) return;
+		for (int i = 0; i < childBots.Count; i++)
+		{
+			childBots[i].HiveThreatened(threat);
+		}
+	}
+
+	private void AlertBots(List<ICombat> threats)
+	{
+		if (threats == null || threats.Count == 0) return;
+		for (int i = 0; i < threats.Count; i++)
+		{
+			AlertBots(threats[i]);
+		}
 	}
 
 	private bool CheckHealth(Entity destroyer, int dropModifier = 0)
@@ -412,8 +450,43 @@ public class BotHive : Character, IDrillableObject, IDamageable
 
 	}
 
+	public bool CanBeLaunched()
+	{
+		return false;
+	}
+
 	public bool IsDrillable()
 	{
 		return true;
+	}
+
+	public bool EngageInCombat(ICombat hostile)
+	{
+		if (IsChildBot((Entity)hostile) || enemies.Contains(hostile)) return false;
+		AddThreat(hostile);
+		AlertBots(hostile);
+		return true;
+	}
+
+	public void DisengageInCombat(ICombat nonHostile)
+	{
+		for (int i = 0; i < enemies.Count; i++)
+		{
+			if (enemies[i] == nonHostile)
+			{
+				enemies.RemoveAt(i);
+				return;
+			}
+		}
+	}
+
+	private void AddThreat(ICombat threat)
+	{
+		for (int i = 0; i < enemies.Count; i++)
+		{
+			ICombat e = enemies[i];
+			if (e == threat) return;
+		}
+		enemies.Add(threat);
 	}
 }
