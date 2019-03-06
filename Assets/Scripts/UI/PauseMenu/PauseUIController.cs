@@ -6,7 +6,7 @@ public class PauseUIController : MonoBehaviour
 	[SerializeField]
 	private RectTransform[] tabs;
 	[SerializeField]
-	private CanvasGroup[] panels;
+	private PauseTab[] panels;
 	[SerializeField]
 	private float tabShiftDuration = 0.6f;
 	[SerializeField]
@@ -75,7 +75,7 @@ public class PauseUIController : MonoBehaviour
 			for (int i = 0; i < panels.Length; i++)
 			{
 				float moveTo = i == tabID ? 1f : 0f;
-				panels[i].alpha = Mathf.Lerp(-i + 1f, moveTo, timer / tabShiftDuration);
+				panels[i].GetCanvasGroup().alpha = Mathf.Lerp(-i + 1f, moveTo, timer / tabShiftDuration);
 			}
 			yield return null;
 		}
@@ -110,7 +110,11 @@ public class PauseUIController : MonoBehaviour
 			}
 		}
 		pauseUIGroup.alpha = 0f;
-		if (a != null) a();
+		for (int i = 0; i < panels.Length; i++)
+		{
+			panels[i].OnResume();
+		}
+		a?.Invoke();
 		ActivateRender(false);
 		gameObject.SetActive(false);
 	}

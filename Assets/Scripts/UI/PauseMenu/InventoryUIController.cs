@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class InventoryUIController : MonoBehaviour
+public class InventoryUIController : PauseTab
 {
 	[SerializeField] private SlotGroup mainGroup, craftingInputGroup, craftingOutputGroup;
 
@@ -37,6 +37,16 @@ public class InventoryUIController : MonoBehaviour
 		UpdateSlots();
 		UpdateGrabUI();
 		UpdatePreview();
+	}
+
+	public override void OnResume()
+	{
+		Inventory inv = craftingInputGroup.inventory;
+		if (inv.HasItems())
+		{
+			mainGroup.inventory.AddItems(inv.stacks);
+			inv.ClearAll();
+		}
 	}
 
 	private void UpdateSlots()

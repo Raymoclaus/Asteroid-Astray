@@ -42,6 +42,11 @@ public class Inventory : MonoBehaviour
 		return count;
 	}
 
+	public bool HasItems()
+	{
+		return EmptySlotCount() < size;
+	}
+
 	public int AddItem(Item.Type type, int num = 1, List<ItemStack> inv = null)
 	{
 		if (num <= 0) return 0;
@@ -185,6 +190,7 @@ public class Inventory : MonoBehaviour
 		{
 			stacks[i].SetBlank();
 		}
+		TrimPadStacks();
 	}
 
 	public int[] CountRarities(Item.Type? exclude = null)

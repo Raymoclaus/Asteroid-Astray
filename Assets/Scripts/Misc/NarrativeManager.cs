@@ -10,7 +10,7 @@ public class NarrativeManager : MonoBehaviour
 	[SerializeField] private CustomScreenEffect screenEffects;
 	[SerializeField] private ShuttleTrackers shuttleTrackerSO;
 	
-	[SerializeField] private ConversationEvent recoveryDialogue;
+	[SerializeField] private ConversationEvent recoveryDialogue, completedFirstGatheringQuestDialogue;
 	[SerializeField] private Character mainChar;
 
 	[Header("Entity Profiles")]
@@ -31,13 +31,9 @@ public class NarrativeManager : MonoBehaviour
 		}
 	}
 
-	private void StartRecoveryDialogue()
-	{
-		recoveryDialogue.conversationEndAction.AddListener(StartRecoveryQuest);
-		dialogueController.StartDialogue(recoveryDialogue);
-	}
+	private void StartRecoveryDialogue() => StartDialogue(recoveryDialogue, false, StartRecoveryQuest);
 
-	public void StartRecoveryQuest()
+	private void StartRecoveryQuest()
 	{
 		if (mainChar == null) return;
 
@@ -51,12 +47,18 @@ public class NarrativeManager : MonoBehaviour
 			"Gather materials",
 			"We need some materials so that we can repair our communications system. Once that" +
 			" is done, we should be able to find our way back to Dendro and the ship.",
-			mainChar, claire, qRewards, qReqs, StartFirstGatheringQuest);
+			mainChar, claire, qRewards, qReqs, CompletedFirstGatheringQuestAction);
 
 		GiveQuest(mainChar, q);
 	}
 
-	public void StartFirstGatheringQuest(Quest other)
+	private void CompletedFirstGatheringQuestAction(Quest quest)
+	{
+		StartDialogue(completedFirstGatheringQuestDialogue, true);
+		CraftYourFirstRepairKitQuest(null);
+	}
+
+	private void CraftYourFirstRepairKitQuest(Quest other)
 	{
 		if (mainChar == null) return;
 
@@ -73,8 +75,23 @@ public class NarrativeManager : MonoBehaviour
 		GiveQuest(mainChar, q);
 	}
 
-	public void GiveQuest(Character c, Quest q)
+	private void GiveQuest(Character c, Quest q) => c.AcceptQuest(q);
+
+	private void StartDialogue(ConversationEvent ce, bool chat = false,
+		UnityEngine.Events.UnityAction action = null)
 	{
-		c.AcceptQuest(q);
+		if (action != null)
+		{
+			ce.conversationEndAction.AddListener(action);
+		}
+
+		if (chat)
+		{
+			dialogueController.StartChat(ce);
+		}
+		else
+		{
+			dialogueController.StartDialogue(ce);
+		}
 	}
 }

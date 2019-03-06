@@ -86,10 +86,7 @@ public class DialogueController : MonoBehaviour
 			}
 			else
 			{
-				if (currentConversation.conversationEndAction != null)
-				{
-					currentConversation.conversationEndAction.Invoke();
-				}
+				currentConversation.conversationEndAction?.Invoke();
 				currentPosition = -1;
 				currentLines = null;
 				speakers = null;
