@@ -80,6 +80,21 @@ public class DialoguePopupUI : PopupUI
 		}
 	}
 
+	public bool IsTyping()
+	{
+		return TmpTeleType.IsTyping(activePopups[0].line.textMesh);
+	}
+
+	public void RevealAllCharacters()
+	{
+		TmpTeleType.RevealAllCharacters(activePopups[0].line.textMesh);
+	}
+
+	public void Type(WaitForSeconds timeBetweenStrokes = null, System.Action onFinishTyping = null)
+	{
+		TmpTeleType.Type(this, activePopups[0].line.textMesh, timeBetweenStrokes, onFinishTyping);
+	}
+
 	public virtual void GeneratePopup(string name, string line, Sprite face, int speakerID)
 	{
 		bool useLeftSide = speakerID == 0;
@@ -157,14 +172,14 @@ public class DialoguePopupUI : PopupUI
 		{
 			if (this.name == null) return;
 
-			this.name.nameText.text = name;
+			this.name.SetText(name);
 		}
 
 		public void SetLine(string line)
 		{
 			if (this.line == null) return;
 
-			this.line.lineText.text = line;
+			this.line.SetText(line);
 		}
 
 		public void SetFace(Sprite face)

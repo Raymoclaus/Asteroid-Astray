@@ -15,10 +15,10 @@ public class DialogueController : MonoBehaviour
 	private List<ConversationEvent> chatQueue = new List<ConversationEvent>();
 	private float chatQueueTimer = 0f;
 	[SerializeField]
-	private float chatQueueWaitDuration = 4f;
+	private float chatQueueWaitDuration = 5f;
 	private float chatContinueTimer = 0f;
 	[SerializeField]
-	private float chatContinueWaitDuration = 2f;
+	private float chatContinueWaitDuration = 4f;
 
 	private void Awake()
 	{
@@ -42,7 +42,14 @@ public class DialogueController : MonoBehaviour
 
 		if (dialogueIsRunning && (Input.GetKeyDown(KeyCode.Return) || Input.GetMouseButtonDown(0)))
 		{
-			GetNextLine();
+			if (dialogueUI.IsTyping())
+			{
+				dialogueUI.RevealAllCharacters();
+			}
+			else
+			{
+				GetNextLine();
+			}
 		}
 
 		if (!dialogueIsRunning && !chatIsRunning)
@@ -60,7 +67,7 @@ public class DialogueController : MonoBehaviour
 			}
 		}
 
-		if (chatIsRunning)
+		if (chatIsRunning && !chatUI.IsTyping())
 		{
 			chatContinueTimer += Time.deltaTime;
 			if (chatContinueTimer >= chatContinueWaitDuration)
@@ -120,16 +127,9 @@ public class DialogueController : MonoBehaviour
 			currentConversation.conversation[currentPosition].action.Invoke();
 		}
 
-		if (dialogueIsRunning)
-		{
-			dialogueUI.GeneratePopup(name, line, face, speakerID);
-			return;
-		}
-		if (chatIsRunning)
-		{
-			chatUI.GeneratePopup(name, line, face, speakerID);
-			return;
-		}
+		DialoguePopupUI popupUI = dialogueIsRunning ? dialogueUI : chatUI;
+		popupUI.GeneratePopup(name, line, face, speakerID);
+		popupUI.Type();
 	}
 
 	public void SkipEntireDialogue()

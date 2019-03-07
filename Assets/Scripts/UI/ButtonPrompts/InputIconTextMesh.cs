@@ -6,10 +6,9 @@ using TMPro;
 [RequireComponent(typeof(TextMeshProUGUI))]
 public class InputIconTextMesh : MonoBehaviour
 {
-	private TextMeshProUGUI textMesh;
+	public TextMeshProUGUI textMesh;
 	private static List<SpriteAssetInputActionPair> spriteAssetActions = new List<SpriteAssetInputActionPair>(20);
-	public InputHandler.InputAction action;
-	public string text;
+	[SerializeField] private string text;
 	private static InputIconSO keyboardIcons, ps4Icons;
 	private const string keyboardIconsString = "Keyboard Icons", ps4IconsString = "Ps4 Icons";
 	private const string spriteAssetString = " TmpSpriteAsset";
@@ -33,25 +32,47 @@ public class InputIconTextMesh : MonoBehaviour
 
 	private void UpdateIcon()
 	{
-		InputIconSO iconSet = GetIconSet();
-		if (iconSet == null) return;
-		KeyCode kc = InputHandler.GetBinding(action);
 		textMesh = textMesh ?? GetComponent<TextMeshProUGUI>();
-		TMP_SpriteAsset tmpSpriteAsset = GetSpriteAsset();
-		tmpSpriteAsset.spriteSheet = iconSet.GetSprite(kc).texture;
-		tmpSpriteAsset.material.mainTexture = tmpSpriteAsset.spriteSheet;
-		textMesh.spriteAsset = null;
-		textMesh.SetText(string.Format(text, action));
-		StartCoroutine(blah(textMesh, tmpSpriteAsset));
+		string s = ReformatText(text);
+		textMesh.gameObject.SetActive(false);
+		textMesh.SetText(s);
+		textMesh.gameObject.SetActive(true);
 	}
 
-	private IEnumerator blah(TextMeshProUGUI t, TMP_SpriteAsset ts)
+	public void SetText(string s)
 	{
-		yield return null;
-		t.spriteAsset = ts;
+		text = s;
+		UpdateIcon();
 	}
 
-	private TMP_SpriteAsset GetSpriteAsset()
+	private string ReformatText(string input)
+	{
+		string s = input;
+
+		InputHandler.InputAction[] actions =
+			(InputHandler.InputAction[])System.Enum.GetValues(typeof(InputHandler.InputAction));
+		for (int i = 0; i < actions.Length; i++)
+		{
+			InputHandler.InputAction action = actions[i];
+			string check = $"[{actions[i].ToString()}]";
+			if (s.Contains(check))
+			{
+				InputIconSO iconSet = GetIconSet();
+				if (iconSet == null) continue;
+				KeyCode kc = InputHandler.GetBinding(actions[i]);
+				TMP_SpriteAsset tmpSpriteAsset = GetSpriteAsset(actions[i]);
+				tmpSpriteAsset.spriteSheet = iconSet.GetSprite(kc).texture;
+				tmpSpriteAsset.material.mainTexture = tmpSpriteAsset.spriteSheet;
+				string actionString = actions[i].ToString();
+				s = s.Replace(check, $"<sprite=\"{tmpSpriteAsset.name}\" index=0>" +
+					$" <color=#00FFFF>{actionString}</color>");
+			}
+		}
+
+		return s;
+	}
+
+	private TMP_SpriteAsset GetSpriteAsset(InputHandler.InputAction action)
 	{
 		for (int i = 0; i < spriteAssetActions.Count; i++)
 		{

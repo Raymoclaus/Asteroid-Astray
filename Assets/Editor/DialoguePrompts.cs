@@ -9,7 +9,7 @@ public class DialoguePromptsEditor : PropertyDrawer
 
 	public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
 	{
-
+		EditorGUI.BeginChangeCheck();
 		Object target = property.serializedObject.targetObject;
 		ConversationEvent prompt = (ConversationEvent)fieldInfo.GetValue(target);
 
@@ -87,6 +87,12 @@ public class DialoguePromptsEditor : PropertyDrawer
 		EditorGUI.indentLevel = indent;
 		EditorGUI.EndProperty();
 		property.serializedObject.ApplyModifiedProperties();
+		EditorGUI.EndChangeCheck();
+
+		if (GUI.changed)
+		{
+			EditorUtility.SetDirty(target);
+		}
 	}
 
 	public override float GetPropertyHeight(SerializedProperty property, GUIContent label)

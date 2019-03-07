@@ -10,7 +10,10 @@ public class NarrativeManager : MonoBehaviour
 	[SerializeField] private CustomScreenEffect screenEffects;
 	[SerializeField] private ShuttleTrackers shuttleTrackerSO;
 	
-	[SerializeField] private ConversationEvent recoveryDialogue, completedFirstGatheringQuestDialogue;
+	[SerializeField] private ConversationEvent
+		recoveryDialogue,
+		UseThrustersDialogue,
+		completedFirstGatheringQuestDialogue;
 	[SerializeField] private Character mainChar;
 
 	[Header("Entity Profiles")]
@@ -50,12 +53,15 @@ public class NarrativeManager : MonoBehaviour
 			mainChar, claire, qRewards, qReqs, CompletedFirstGatheringQuestAction);
 
 		GiveQuest(mainChar, q);
+		FirstQuestScriptedDrops.scriptedDropsActive = true;
+		StartDialogue(UseThrustersDialogue, true);
 	}
 
 	private void CompletedFirstGatheringQuestAction(Quest quest)
 	{
 		StartDialogue(completedFirstGatheringQuestDialogue, true);
 		CraftYourFirstRepairKitQuest(null);
+		FirstQuestScriptedDrops.scriptedDropsActive = false;
 	}
 
 	private void CraftYourFirstRepairKitQuest(Quest other)

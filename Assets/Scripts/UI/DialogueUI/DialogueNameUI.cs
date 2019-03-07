@@ -1,7 +1,4 @@
-﻿using UnityEngine.UI;
-using UnityEngine;
-
-public class DialogueNameUI : MonoBehaviour
+﻿public class DialogueNameUI : InputIconTextMesh
 {
-	public Text nameText;
+
 }

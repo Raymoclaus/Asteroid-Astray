@@ -55,7 +55,7 @@ public class CommPopupUI : DialoguePopupUI
 		po.SetAll(name, line, face, speakerID, 0f);
 		Vector2 pos = po.transform.anchoredPosition;
 		pos.x = po.xPos;
-		pos.y = +popupHeight;
+		pos.y = popupHeight;
 		po.transform.anchoredPosition = pos;
 		po.transform.gameObject.SetActive(true);
 	}

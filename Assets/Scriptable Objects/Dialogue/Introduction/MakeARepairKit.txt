@@ -1,3 +1,4 @@
 0|Great! We have the materials we need.
 0|We can make a repair kit now.
 0|I just need to drop those materials in the constructor.
+0|I can access the constructor using [Pause]

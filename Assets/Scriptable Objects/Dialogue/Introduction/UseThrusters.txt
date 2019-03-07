@@ -1,0 +1,3 @@
+0|It looks like thrusters are fine.
+0|The [Go] button will push us forward.
+0|I'll use that thrust to drill into asteroids.
