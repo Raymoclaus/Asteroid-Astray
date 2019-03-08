@@ -26,13 +26,13 @@ public class GatheringQRec : QuestRequirement
 	{
 		if (completed || !active) return;
 
-		if (type == typeNeeded)
+		if (type == typeNeeded && amount != 0)
 		{
 			currentAmount += amount;
-			Debug.Log($"Quest requirement updated: {GetDescription()}");
+			QuestRequirementUpdated();
 			if (completed = currentAmount >= amountNeeded)
 			{
-				QuestRequirementUpdated();
+				QuestRequirementCompleted();
 				GameEvents.OnItemCollected -= EvaluateEvent;
 			}
 		}

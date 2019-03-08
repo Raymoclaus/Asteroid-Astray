@@ -10,6 +10,10 @@ public abstract class QuestRequirement
 	public event QuestRequirementUpdatedEventHandler OnQuestRequirementUpdated;
 	public void QuestRequirementUpdated() => OnQuestRequirementUpdated?.Invoke();
 
+	public delegate void QuestRequirementCompletedEventHandler();
+	public event QuestRequirementCompletedEventHandler OnQuestRequirementCompleted;
+	public void QuestRequirementCompleted() => OnQuestRequirementCompleted?.Invoke();
+
 	public virtual string GetDescription() => NO_DESCRIPTION;
 
 	public virtual bool IsComplete() => completed;

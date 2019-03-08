@@ -28,7 +28,7 @@ public class Quest
 		for (int i = 0; i < Requirements.Count; i++)
 		{
 			QuestRequirement requirement = Requirements[i];
-			requirement.OnQuestRequirementUpdated += EvaluateRequirements;
+			requirement.OnQuestRequirementCompleted += EvaluateRequirements;
 		}
 	}
 

@@ -161,12 +161,15 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		if (FirstQuestScriptedDrops.scriptedDropsActive)
 		{
 			List<ItemStack> stacks = FirstQuestScriptedDrops.GetScriptedDrop(destroyer);
-			for (int i = 0; i < stacks.Count; i++)
+			if (stacks != null)
 			{
-				ItemStack stack = stacks[i];
-				particleGenerator.DropResource(destroyer, pos, stack.GetItemType(), stack.GetAmount());
+				for (int i = 0; i < stacks.Count; i++)
+				{
+					ItemStack stack = stacks[i];
+					particleGenerator.DropResource(destroyer, pos, stack.GetItemType(), stack.GetAmount());
+				}
+				return;
 			}
-			return;
 		}
 
 		for (int i = 0; i < loot.Count; i++)
