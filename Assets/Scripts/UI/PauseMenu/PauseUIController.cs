@@ -1,33 +1,25 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class PauseUIController : MonoBehaviour
 {
-	[SerializeField]
-	private RectTransform[] tabs;
-	[SerializeField]
-	private PauseTab[] panels;
-	[SerializeField]
-	private float tabShiftDuration = 0.6f;
-	[SerializeField]
-	private CanvasGroup pauseUIGroup;
-	[SerializeField]
-	private UICamCtrl uiCam;
-	[SerializeField]
-	private CameraCtrl mainCam;
-	[SerializeField]
-	private CustomScreenEffect uiCamEffects;
-	[SerializeField]
-	private CustomScreenEffect mainCamEffects;
-	[SerializeField]
-	private Material uiRenderEffect;
-	[SerializeField]
-	private RecordingModeController recordingModeController;
+	[SerializeField] private RectTransform[] tabs;
+	[SerializeField] private PauseTab[] panels;
+	[SerializeField] private float tabShiftDuration = 0.6f;
+	[SerializeField] private CanvasGroup pauseUIGroup;
+	[SerializeField] private UICamCtrl uiCam;
+	[SerializeField] private CameraCtrl mainCam;
+	[SerializeField] private CustomScreenEffect uiCamEffects;
+	[SerializeField] private CustomScreenEffect mainCamEffects;
+	[SerializeField] private Material uiRenderEffect;
+	[SerializeField] private RecordingModeController recordingModeController;
+	[SerializeField] private List<MoveTrigger> moveTriggers;
 
 	public void Activate(bool active, System.Action a = null, bool instant = false)
 	{
 		if (gameObject.activeSelf == active) return;
-
+		MoveTriggerObjects(!active);
 		if (active)
 		{
 			Coro(OpenUI(instant));
@@ -146,5 +138,13 @@ public class PauseUIController : MonoBehaviour
 	{
 		gameObject.SetActive(true);
 		StartCoroutine(c);
+	}
+
+	private void MoveTriggerObjects(bool goToA)
+	{
+		for (int i = 0; i < moveTriggers.Count; i++)
+		{
+			moveTriggers[i].Move(goToA);
+		}
 	}
 }

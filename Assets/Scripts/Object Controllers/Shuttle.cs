@@ -141,6 +141,8 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 			GetMovementInput();
 			//calculate position based on input
 			CalculateForces();
+			//get input for item usage
+			GetItemUsageInput();
 		}
 
 		UpdateShuttleTrackerSO();
@@ -385,6 +387,34 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 
 	public override EntityType GetEntityType() {
 		return EntityType.Shuttle;
+	}
+
+	private void GetItemUsageInput()
+	{
+		CheckItemUsage(InputHandler.InputAction.Slot1, 0);
+		CheckItemUsage(InputHandler.InputAction.Slot2, 1);
+		CheckItemUsage(InputHandler.InputAction.Slot3, 2);
+		CheckItemUsage(InputHandler.InputAction.Slot4, 3);
+		CheckItemUsage(InputHandler.InputAction.Slot5, 4);
+		CheckItemUsage(InputHandler.InputAction.Slot6, 5);
+		CheckItemUsage(InputHandler.InputAction.Slot7, 6);
+		CheckItemUsage(InputHandler.InputAction.Slot8, 7);
+	}
+
+	private void CheckItemUsage(InputHandler.InputAction action, int i)
+	{
+		if (InputHandler.GetInputDown(action) <= 0f) return;
+
+		List<ItemStack> stacks = storage.stacks;
+		if (stacks[i].GetAmount() > 0)
+		{
+			Item.Type type = stacks[i].GetItemType();
+			if (UseItem(type))
+			{
+				stacks[i].RemoveAmount(1);
+				GameEvents.ItemUsed(type);
+			}
+		}
 	}
 
 	public override float DrillDamageQuery(bool firstHit)

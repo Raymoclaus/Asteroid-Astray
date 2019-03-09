@@ -29,8 +29,6 @@ public static class Item
 		StoneAmmo
 	}
 
-	public static Sprite[] sprites;
-
 	public const int MAX_RARITY = 10;
 
 	public static string TypeName(Type type)

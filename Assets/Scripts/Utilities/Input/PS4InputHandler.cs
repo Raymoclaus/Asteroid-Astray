@@ -4,6 +4,7 @@ using System.IO;
 
 public class Ps4InputHandler : ICustomInputType
 {
+	//https://www.google.com/search?q=ps4+input+map&rlz=1C1CHBF_en-GBAU819AU819&source=lnms&tbm=isch&sa=X&ved=0ahUKEwikzP_7lvTgAhVSdCsKHUXwDSQQ_AUIDigB&biw=1920&bih=937#imgrc=kNz76yy98oC0CM:
 	//set of default key bindings that cannot be changed
 	private static readonly List<KeyCode> defaults = new List<KeyCode>
 	{
@@ -11,7 +12,16 @@ public class Ps4InputHandler : ICustomInputType
 		KeyCode.JoystickButton0,
 		KeyCode.JoystickButton5,
 		KeyCode.JoystickButton1,
-		KeyCode.JoystickButton9
+		KeyCode.JoystickButton9,
+		KeyCode.JoystickButton4,
+		KeyCode.UpArrow,
+		KeyCode.LeftArrow,
+		KeyCode.DownArrow,
+		KeyCode.RightArrow,
+		KeyCode.UpArrow,
+		KeyCode.LeftArrow,
+		KeyCode.DownArrow,
+		KeyCode.RightArrow,
 	};
 	//set of key bindings that can be changed
 	private List<KeyCode> bindings = new List<KeyCode>();

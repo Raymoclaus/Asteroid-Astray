@@ -10,7 +10,8 @@ public static class InputHandler
 
 	public enum InputAction
 	{
-		Go, Launch, Shoot, Boost, Pause
+		Go, Launch, Shoot, Boost, Pause,
+		HotbarSwitch, Slot1, Slot2, Slot3, Slot4, Slot5, Slot6, Slot7, Slot8
 	}
 
 	//current input mode

@@ -15,7 +15,7 @@ public class DialogueController : MonoBehaviour
 	private List<ConversationEvent> chatQueue = new List<ConversationEvent>();
 	private float chatQueueTimer = 0f;
 	[SerializeField]
-	private float chatQueueWaitDuration = 5f;
+	private float chatQueueWaitDuration = 2f;
 	private float chatContinueTimer = 0f;
 	[SerializeField]
 	private float chatContinueWaitDuration = 4f;

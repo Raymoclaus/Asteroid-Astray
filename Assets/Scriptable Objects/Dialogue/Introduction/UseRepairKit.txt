@@ -1,0 +1,4 @@
+0|Perfect! The repair kit is ready.
+0|Items in the top row of storage can be used.
+0|I can press the appropriate button to use that item.
+0|However, some items like Stone can't be used like that.

@@ -1,0 +1,6 @@
+0|Communications are back online.
+0|We have the location of the ship.
+0|Which means navigation can point us there.
+0|Follow the waypoint indicator to get back to the ship.
+0|I hope the ship survived ok after that wormhole jump.
+0|Sit tight, Dendro. We'll be there soon.

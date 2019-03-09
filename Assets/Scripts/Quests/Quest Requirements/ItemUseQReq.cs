@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class CraftingQReq : QuestRequirement
+public class ItemUseQReq : QuestRequirement
 {
 	public Item.Type typeNeeded;
 	public int amountNeeded = 1;
@@ -8,7 +8,7 @@ public class CraftingQReq : QuestRequirement
 	private string description;
 	private const string formattedDescription = "{0}: {1} / {2}";
 
-	public CraftingQReq(Item.Type typeNeeded, int amountNeeded, string description)
+	public ItemUseQReq(Item.Type typeNeeded, int amountNeeded, string description)
 	{
 		this.typeNeeded = typeNeeded;
 		this.description = description.Replace(
@@ -19,21 +19,21 @@ public class CraftingQReq : QuestRequirement
 	public override void Activate()
 	{
 		base.Activate();
-		GameEvents.OnItemCrafted += EvaluateEvent;
+		GameEvents.OnItemUsed += EvaluateEvent;
 	}
 
-	private void EvaluateEvent(Item.Type type, int amount)
+	private void EvaluateEvent(Item.Type type)
 	{
 		if (completed || !active) return;
-		
-		if (type == typeNeeded && amount != 0)
+
+		if (type == typeNeeded)
 		{
-			currentAmount += amount;
+			currentAmount++;
 			QuestRequirementUpdated();
 			if (completed = currentAmount >= amountNeeded)
 			{
 				QuestRequirementCompleted();
-				GameEvents.OnItemCrafted -= EvaluateEvent;
+				GameEvents.OnItemUsed -= EvaluateEvent;
 			}
 		}
 	}
@@ -50,6 +50,6 @@ public class CraftingQReq : QuestRequirement
 
 	public override Transform TargetLocation()
 	{
-		return null;
+		return base.TargetLocation();
 	}
 }

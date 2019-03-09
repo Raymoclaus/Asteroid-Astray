@@ -4,26 +4,29 @@
 public class ItemSprites : ScriptableObject
 {
 	public Sprite
-	Blank,
-	PureCorvorite,
-	Stone,
-	CorruptedCorvorite,
-	WarpCoreBattery,
-	IronAlloy,
-	BugFood,
-	ProximityMine,
-	UnstableAcid,
-	EnergyDrink,
-	DataChip,
-	HeatResistantIce,
-	Amber,
-	Probe,
-	Beacon,
-	ShieldGenerator,
-	SpareParts,
-	RepairKit,
-	NioleriumCrystals,
-	NiolerDung;
+		Blank,
+		Stone,
+		Iron,
+		Copper,
+		PureCorvorite,
+		CorruptedCorvorite,
+		WarpCoreBattery,
+		IronAlloy,
+		BugFood,
+		ProximityMine,
+		UnstableAcid,
+		EnergyDrink,
+		DataChip,
+		HeatResistantIce,
+		Amber,
+		Probe,
+		Beacon,
+		ShieldGenerator,
+		SpareParts,
+		RepairKit,
+		NioleriumCrystals,
+		NiolerDung,
+		StoneAmmo;
 
 	public Sprite GetItemSprite(Item.Type type)
 	{
@@ -31,8 +34,10 @@ public class ItemSprites : ScriptableObject
 		{
 			default: return Blank;
 			case Item.Type.Blank: return Blank;
-			case Item.Type.PureCorvorite: return PureCorvorite;
 			case Item.Type.Stone: return Stone;
+			case Item.Type.Iron: return Iron;
+			case Item.Type.Copper: return Copper;
+			case Item.Type.PureCorvorite: return PureCorvorite;
 			case Item.Type.CorruptedCorvorite: return CorruptedCorvorite;
 			case Item.Type.WarpCoreBattery: return WarpCoreBattery;
 			case Item.Type.IronAlloy: return IronAlloy;
@@ -50,6 +55,7 @@ public class ItemSprites : ScriptableObject
 			case Item.Type.RepairKit: return RepairKit;
 			case Item.Type.NioleriumCrystals: return NioleriumCrystals;
 			case Item.Type.NiolerDung: return NiolerDung;
+			case Item.Type.StoneAmmo: return StoneAmmo;
 		}
 	}
 }

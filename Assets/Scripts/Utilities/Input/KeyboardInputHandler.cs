@@ -11,7 +11,16 @@ public class KeyboardInputHandler : ICustomInputType
 		KeyCode.S,
 		KeyCode.Mouse0,
 		KeyCode.LeftShift,
-		KeyCode.Tab
+		KeyCode.Tab,
+		KeyCode.None,
+		KeyCode.Alpha1,
+		KeyCode.Alpha2,
+		KeyCode.Alpha3,
+		KeyCode.Alpha4,
+		KeyCode.Alpha5,
+		KeyCode.Alpha6,
+		KeyCode.Alpha7,
+		KeyCode.Alpha8,
 	};
 	//set of key bindings that can be changed
 	private List<KeyCode> bindings = new List<KeyCode>();

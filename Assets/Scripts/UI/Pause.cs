@@ -11,10 +11,8 @@ public class Pause : MonoBehaviour
 	private static bool slowDownEffect = false;
 	private static bool canPause = true;
 	public static float intendedTimeSpeed = 1f;
-	[SerializeField]
-	private PauseUIController pauseUI;
-	[SerializeField]
-	private RecordingModeController recordingModeController;
+	[SerializeField] private PauseUIController pauseUI;
+	[SerializeField] private RecordingModeController recordingModeController;
 
 	private void Awake()
 	{

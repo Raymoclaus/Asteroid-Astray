@@ -15,4 +15,8 @@ public static class GameEvents
 	public delegate void ItemCraftedEventHandler(Item.Type type, int amount);
 	public static event ItemCraftedEventHandler OnItemCrafted;
 	public static void ItemCrafted(Item.Type type, int amount) => OnItemCrafted?.Invoke(type, amount);
+
+	public delegate void ItemUsedEventHandler(Item.Type type);
+	public static event ItemUsedEventHandler OnItemUsed;
+	public static void ItemUsed(Item.Type type) => OnItemUsed?.Invoke(type);
 }
