@@ -3,22 +3,19 @@ using UnityEngine;
 
 public class DialogueController : MonoBehaviour
 {
-	[SerializeField]
-	private DialoguePopupUI dialogueUI, chatUI;
+	[SerializeField] private DialoguePopupUI dialogueUI, chatUI;
 	private ConversationEvent currentConversation;
 	private DialogueLineEvent[] currentLines;
 	private EntityProfile[] speakers;
 	private int currentPosition = -1;
 	private bool dialogueIsRunning, chatIsRunning;
-	[SerializeField]
-	private ConversationEvent testDialogue;
+	[SerializeField] private ConversationEvent testDialogue;
 	private List<ConversationEvent> chatQueue = new List<ConversationEvent>();
 	private float chatQueueTimer = 0f;
-	[SerializeField]
-	private float chatQueueWaitDuration = 2f;
+	[SerializeField] private float chatQueueWaitDuration = 2f;
 	private float chatContinueTimer = 0f;
-	[SerializeField]
-	private float chatContinueWaitDuration = 4f;
+	[SerializeField] private float chatContinueWaitDuration = 4f;
+	[SerializeField] private List<MoveTrigger> moveTriggers;
 
 	private void Awake()
 	{
@@ -40,7 +37,7 @@ public class DialogueController : MonoBehaviour
 			}
 		}
 
-		if (dialogueIsRunning && (Input.GetKeyDown(KeyCode.Return) || Input.GetMouseButtonDown(0)))
+		if (dialogueIsRunning && InputHandler.GetInputDown(InputHandler.InputAction.ScrollDialogue) > 0f)
 		{
 			if (dialogueUI.IsTyping())
 			{
@@ -67,13 +64,27 @@ public class DialogueController : MonoBehaviour
 			}
 		}
 
-		if (chatIsRunning && !chatUI.IsTyping())
+		if (chatIsRunning)
 		{
-			chatContinueTimer += Time.deltaTime;
-			if (chatContinueTimer >= chatContinueWaitDuration)
+			if (InputHandler.GetInputDown(InputHandler.InputAction.ScrollDialogue) > 0f)
 			{
-				chatContinueTimer = 0f;
-				GetNextLine();
+				if (chatUI.IsTyping())
+				{
+					chatUI.RevealAllCharacters();
+				}
+				else
+				{
+					GetNextLine();
+				}
+			}
+			else
+			{
+				chatContinueTimer += Time.deltaTime;
+				if (chatContinueTimer >= chatContinueWaitDuration)
+				{
+					chatContinueTimer = 0f;
+					GetNextLine();
+				}
 			}
 		}
 	}
@@ -102,6 +113,7 @@ public class DialogueController : MonoBehaviour
 					Pause.InstantPause(false);
 					dialogueIsRunning = false;
 					dialogueUI.RemoveAllPopups();
+					MoveTriggerObjects(true);
 				}
 				if (chatIsRunning)
 				{
@@ -154,6 +166,7 @@ public class DialogueController : MonoBehaviour
 		dialogueIsRunning = true;
 		Setup(newDialogue);
 		Pause.InstantPause(true);
+		MoveTriggerObjects(false);
 	}
 
 	public void StartChat(ConversationEvent newDialogue)
@@ -175,5 +188,13 @@ public class DialogueController : MonoBehaviour
 		speakers = currentConversation.speakers;
 		currentPosition = 0;
 		SendPopup();
+	}
+
+	private void MoveTriggerObjects(bool goToA)
+	{
+		for (int i = 0; i < moveTriggers.Count; i++)
+		{
+			moveTriggers[i].Move(goToA);
+		}
 	}
 }

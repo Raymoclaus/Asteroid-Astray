@@ -38,14 +38,13 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	private bool isLarge;
 	//keeps track of size type and ID in that size type
 	private Vector2Int id = Vector2Int.zero;
+	private List<DrillBit> drillers = new List<DrillBit>();
 	//the amount of debris created when destroyed
 	public Vector2Int debrisAmount = new Vector2Int(3, 10);
-	[SerializeField]
-	private float drillDebrisChance = 0.05f, drillDustChance = 0.2f;
+	[SerializeField] private float drillDebrisChance = 0.05f, drillDustChance = 0.2f;
 	private int collisionDustMultiplier = 3;
 	private bool launched = false;
-	[SerializeField]
-	private float launchDuration = 1.5f;
+	[SerializeField] private float launchDuration = 1.5f;
 	private Entity launcher;
 	private LaunchTrailController launchTrail;
 	private ContactPoint2D[] contacts = new ContactPoint2D[1];
@@ -121,8 +120,6 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 
 	private void DestroySelf(bool explode, Entity destroyer, int dropModifier = 0)
 	{
-		if (this == null) return;
-
 		if (explode)
 		{
 			//particle effect
@@ -144,6 +141,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 			//drop resources
 			DropLoot(destroyer, transform.position, dropModifier);
 		}
+		EjectFromAllDrillers();
 		base.DestroySelf(destroyer);
 	}
 
@@ -220,7 +218,6 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	private void UpdateSprite()
 	{
 		particleGenerator = particleGenerator ?? FindObjectOfType<ParticleGenerator>();
-		if (!particleGenerator ||this == null) return;
 
 		if (Health <= 0f)
 		{
@@ -274,6 +271,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 
 	public bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer, int dropModifier = 0, bool flash = true)
 	{
+		if (Health <= 0f) return false;
 		//take damage
 		Health -= damage;
 
@@ -293,17 +291,20 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	//take the damage and if health drops to 0 then signal that this asteroid will be destroyed
 	public bool TakeDrillDamage(float damage, Vector2 drillPos, Entity destroyer, int dropModifier = 0)
 	{
-		bool takeDamage = TakeDamage(damage, drillPos, destroyer, dropModifier);
-		//calculate shake intensity. Gets more intense the less health it has
-		ShakeFX.SetIntensity(damage / MaxHealth * (3f - (Health / MaxHealth * 2f)));
-
-		return takeDamage;
+		if (TakeDamage(damage, drillPos, destroyer, dropModifier))
+		{
+			//calculate shake intensity. Gets more intense the less health it has
+			ShakeFX.SetIntensity(damage / MaxHealth * (3f - (Health / MaxHealth * 2f)));
+			return true;
+		}
+		return false;
 	}
 
-	public void StartDrilling()
+	public void StartDrilling(DrillBit db)
 	{
 		rb.constraints = RigidbodyConstraints2D.FreezeAll;
 		ShakeFX.Begin();
+		AddDriller(db);
 	}
 	
 	public void OnTriggerEnter2D(Collider2D other)
@@ -315,7 +316,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 			DrillBit otherDrill = other.GetComponentInParent<DrillBit>();
 			if (otherDrill.CanDrill && otherDrill.drillTarget == null && otherDrill.Verify(this))
 			{
-				StartDrilling();
+				StartDrilling(otherDrill);
 				otherDrill.StartDrilling(this);
 			}
 		}
@@ -331,18 +332,17 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 
 			if ((Entity)otherDrill.drillTarget == this)
 			{
-				StopDrilling();
+				StopDrilling(otherDrill);
 				otherDrill.StopDrilling();
 			}
 		}
 	}
 
-	public void StopDrilling()
+	public void StopDrilling(DrillBit db)
 	{
-		if (!rb) return;
-
 		rb.constraints = RigidbodyConstraints2D.None;
 		ShakeFX.Stop();
+		RemoveDriller(db);
 	}
 
 	//If queried, this object will say that it is an asteroid-type Entity
@@ -429,8 +429,6 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 					launchTrail.EndLaunchTrail();
 				}
 
-				if (this == null) return;
-
 				this.launcher = null;
 				launched = false;
 				if (cameraCtrl && cameraCtrl.GetPanTarget() == transform)
@@ -443,11 +441,56 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 
 	public bool IsDrillable()
 	{
-		return launched;
+		return launched && Health > 0f;
 	}
 
 	public bool CanBeLaunched()
 	{
-		return true;
+		return Health > 0f;
+	}
+
+	public List<DrillBit> GetDrillers()
+	{
+		return drillers;
+	}
+
+	public void AddDriller(DrillBit db)
+	{
+		GetDrillers().Add(db);
+	}
+
+	public bool RemoveDriller(DrillBit db)
+	{
+		List<DrillBit> drills = GetDrillers();
+		for (int i = 0; i < drills.Count; i++)
+		{
+			if (drills[i] == db)
+			{
+				drills.RemoveAt(i);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private void EjectFromAllDrillers()
+	{
+		List<DrillBit> drills = GetDrillers();
+		int count = drills.Count;
+		for (int i = 0; i < drills.Count; i++)
+		{
+			drills[i].StopDrilling();
+		}
+		if (drills.Count > 0)
+		{
+			if (count == drills.Count)
+			{
+				Debug.LogWarning("Drills were not detached.");
+			}
+			else
+			{
+				EjectFromAllDrillers();
+			}
+		}
 	}
 }

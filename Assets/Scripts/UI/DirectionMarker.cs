@@ -6,10 +6,18 @@ public class DirectionMarker : MonoBehaviour
 	private float radius = 0.5f;
 	private Transform parent, followTarget;
 	private Vector2 locationTarget;
+	[SerializeField] private ShuttleTrackers shuttleTrackerSO;
 
 	private void Awake()
 	{
 		parent = transform.parent;
+		shuttleTrackerSO.NavigationUpdated += UpdateHUD;
+		UpdateHUD();
+	}
+
+	private void UpdateHUD()
+	{
+		gameObject.SetActive(shuttleTrackerSO.navigationActive);
 	}
 
 	private void Update()

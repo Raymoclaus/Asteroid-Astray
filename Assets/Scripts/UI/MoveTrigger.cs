@@ -17,10 +17,14 @@ public class MoveTrigger : MonoBehaviour
 	public void Move(bool goToA)
 	{
 		startAtA = !goToA;
+		if (!gameObject.activeSelf)
+		{
+			SetPosition(GetInterpolatedPosition(1f));
+			return;
+		}
 		if (isMoving)
 		{
 			SetPosition(GetInterpolatedPosition(1f));
-			startAtA = !startAtA;
 			StopAllCoroutines();
 		}
 		StartCoroutine(MoveCurve());
@@ -38,7 +42,6 @@ public class MoveTrigger : MonoBehaviour
 			SetPosition(GetInterpolatedPosition(evaluation));
 			yield return null;
 		}
-		startAtA = !startAtA;
 		isMoving = false;
 	}
 

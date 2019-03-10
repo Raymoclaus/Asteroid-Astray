@@ -42,6 +42,11 @@ public class NarrativeManager : MonoBehaviour
 					{
 						loadingController.AddPostLoadAction(() =>
 						{
+							ShipAvailable = true;
+							shuttleTrackerSO.SetNavigationActive(true);
+						});
+						loadingController.AddPostLoadAction(() =>
+						{
 							CompletedRepairTheShuttleQuest(null);
 						});
 						return;
@@ -144,6 +149,7 @@ public class NarrativeManager : MonoBehaviour
 	private void CompletedRepairTheShuttleQuest(Quest quest)
 	{
 		ShipAvailable = true;
+		shuttleTrackerSO.SetNavigationActive(true);
 		StartDialogue(findShipDialogue, true, null);
 	}
 

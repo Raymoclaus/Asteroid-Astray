@@ -21,6 +21,7 @@ public class KeyboardInputHandler : ICustomInputType
 		KeyCode.Alpha6,
 		KeyCode.Alpha7,
 		KeyCode.Alpha8,
+		KeyCode.Space,
 	};
 	//set of key bindings that can be changed
 	private List<KeyCode> bindings = new List<KeyCode>();

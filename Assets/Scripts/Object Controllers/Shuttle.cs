@@ -704,7 +704,10 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 
 	public bool EngageInCombat(ICombat hostile)
 	{
-		if (enemies.Contains(hostile)) return false;
+		for (int i = 0; i < enemies.Count; i++)
+		{
+			if (enemies[i] == hostile) return false;
+		}
 		enemies.Add(hostile);
 		return true;
 	}

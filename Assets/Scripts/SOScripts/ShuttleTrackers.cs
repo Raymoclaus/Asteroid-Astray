@@ -37,4 +37,13 @@ public class ShuttleTrackers : ScriptableObject
 	{
 		isInvulnerable = invulnerable;
 	}
+
+	public delegate void NavigationUpdatedEventHandler();
+	public event NavigationUpdatedEventHandler NavigationUpdated;
+	public void SetNavigationActive(bool active)
+	{
+		if (active == navigationActive) return;
+		navigationActive = active;
+		NavigationUpdated?.Invoke();
+	}
 }

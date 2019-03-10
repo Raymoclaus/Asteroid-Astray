@@ -55,6 +55,7 @@ public class DrillBit : MonoBehaviour
 	{
 		if (drillTarget == null)
 		{
+			StopDrilling();
 			IsDrilling = false;
 			return;
 		}
@@ -156,7 +157,7 @@ public class DrillBit : MonoBehaviour
 		IsDrilling = false;
 		if (drillTarget != null)
 		{
-			drillTarget.StopDrilling();
+			drillTarget.StopDrilling(this);
 			if (launch)
 			{
 				drillTarget.Launch((Vector2)launchDirection, launcher);

@@ -1,17 +1,16 @@
 fileFormatVersion: 2
-guid: 1a629c79f267b7b4a91e1616cded2577
+guid: 4a15df042e9c4fe4e922f131ded2cd5f
 TextureImporter:
   fileIDToRecycleName:
-    21300000: crescentspritesheet_0
-    21300002: crescentspritesheet_1
-    21300004: crescentspritesheet_2
-    21300006: crescentspritesheet_3
-    21300008: crescentspritesheet_4
-    21300010: crescentspritesheet_5
-    21300012: crescentspritesheet_6
-    21300014: crescentspritesheet_7
+    21300000: SmokeBallFadeSpritesheetPixel_0
+    21300002: SmokeBallFadeSpritesheetPixel_1
+    21300004: SmokeBallFadeSpritesheetPixel_2
+    21300006: SmokeBallFadeSpritesheetPixel_3
+    21300008: SmokeBallFadeSpritesheetPixel_4
+    21300010: SmokeBallFadeSpritesheetPixel_5
+    21300012: SmokeBallFadeSpritesheetPixel_6
   externalObjects: {}
-  serializedVersion: 7
+  serializedVersion: 9
   mipmaps:
     mipMapMode: 0
     enableMipMap: 0
@@ -42,9 +41,9 @@ TextureImporter:
     filterMode: 0
     aniso: -1
     mipBias: -100
-    wrapU: 0
-    wrapV: 0
-    wrapW: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
@@ -55,7 +54,7 @@ TextureImporter:
   spritePivot: {x: 0.5, y: 0.5}
   spritePixelsToUnits: 100
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
-  spriteGenerateFallbackPhysicsShape: 0
+  spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
   alphaIsTransparency: 1
   spriteTessellationDetail: -1
@@ -68,7 +67,7 @@ TextureImporter:
   platformSettings:
   - serializedVersion: 2
     buildTarget: DefaultTexturePlatform
-    maxTextureSize: 1024
+    maxTextureSize: 256
     resizeAlgorithm: 0
     textureFormat: -1
     textureCompression: 1
@@ -79,40 +78,7 @@ TextureImporter:
     androidETC2FallbackOverride: 0
   - serializedVersion: 2
     buildTarget: Standalone
-    maxTextureSize: 1024
-    resizeAlgorithm: 0
-    textureFormat: -1
-    textureCompression: 1
-    compressionQuality: 50
-    crunchedCompression: 0
-    allowsAlphaSplitting: 0
-    overridden: 0
-    androidETC2FallbackOverride: 0
-  - serializedVersion: 2
-    buildTarget: iPhone
-    maxTextureSize: 1024
-    resizeAlgorithm: 0
-    textureFormat: -1
-    textureCompression: 1
-    compressionQuality: 50
-    crunchedCompression: 0
-    allowsAlphaSplitting: 0
-    overridden: 0
-    androidETC2FallbackOverride: 0
-  - serializedVersion: 2
-    buildTarget: Android
-    maxTextureSize: 1024
-    resizeAlgorithm: 0
-    textureFormat: -1
-    textureCompression: 1
-    compressionQuality: 50
-    crunchedCompression: 0
-    allowsAlphaSplitting: 0
-    overridden: 0
-    androidETC2FallbackOverride: 0
-  - serializedVersion: 2
-    buildTarget: WebGL
-    maxTextureSize: 1024
+    maxTextureSize: 256
     resizeAlgorithm: 0
     textureFormat: -1
     textureCompression: 1
@@ -125,11 +91,11 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: crescentspritesheet_0
+      name: SmokeBallFadeSpritesheetPixel_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 64
+        y: 192
         width: 64
         height: 64
       alignment: 0
@@ -139,17 +105,17 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 9f8652c16596e5c4bbda2a56acf88bb6
+      spriteID: 153beb6b5a7aed8489964e6810c5469b
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: crescentspritesheet_1
+      name: SmokeBallFadeSpritesheetPixel_1
       rect:
         serializedVersion: 2
         x: 64
-        y: 64
+        y: 192
         width: 64
         height: 64
       alignment: 0
@@ -159,17 +125,17 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 4fa7e924a2b13be4d8724d11049fac0d
+      spriteID: f23f442cfa23840468e5562e8ecbedcd
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: crescentspritesheet_2
+      name: SmokeBallFadeSpritesheetPixel_2
       rect:
         serializedVersion: 2
         x: 128
-        y: 64
+        y: 192
         width: 64
         height: 64
       alignment: 0
@@ -179,17 +145,17 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 1f782a29eac7be447afe43d15b0fb5ff
+      spriteID: 6da1f1cabfa1a0343b2295e74a4c9ed8
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: crescentspritesheet_3
+      name: SmokeBallFadeSpritesheetPixel_3
       rect:
         serializedVersion: 2
         x: 192
-        y: 64
+        y: 192
         width: 64
         height: 64
       alignment: 0
@@ -199,17 +165,17 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 30f6b0e50f2bfb94f8d3007d4e176fa9
+      spriteID: 09eca59d9ccd30240b4e0ec16391028d
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: crescentspritesheet_4
+      name: SmokeBallFadeSpritesheetPixel_4
       rect:
         serializedVersion: 2
         x: 0
-        y: 0
+        y: 128
         width: 64
         height: 64
       alignment: 0
@@ -219,17 +185,17 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 9426776e9ba64714b9d632aa5dcba360
+      spriteID: 3c9042fb9b6aa124aa50557242d86d10
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: crescentspritesheet_5
+      name: SmokeBallFadeSpritesheetPixel_5
       rect:
         serializedVersion: 2
         x: 64
-        y: 0
+        y: 128
         width: 64
         height: 64
       alignment: 0
@@ -239,17 +205,17 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 2281604ea6250dd49a50c18f2526846c
+      spriteID: d8ee781bb445edd43b2bbb7aaabe6ffa
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: crescentspritesheet_6
+      name: SmokeBallFadeSpritesheetPixel_6
       rect:
         serializedVersion: 2
         x: 128
-        y: 0
+        y: 128
         width: 64
         height: 64
       alignment: 0
@@ -259,27 +225,7 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: c73e351b0a457a745970450873a42bf8
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: crescentspritesheet_7
-      rect:
-        serializedVersion: 2
-        x: 192
-        y: 0
-        width: 64
-        height: 64
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 28c78ae54d846fc40ae515a32e71cdf7
+      spriteID: 3eedd27d0e3a8dc4da59f701300353bf
       vertices: []
       indices: 
       edges: []
@@ -287,7 +233,7 @@ TextureImporter:
     outline: []
     physicsShape: []
     bones: []
-    spriteID: d9a4db166dbde0d4eae5d45406fa2950
+    spriteID: cda9cc209bcad3644814a476c339d4c0
     vertices: []
     indices: 
     edges: []

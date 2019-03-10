@@ -67,6 +67,19 @@ public class InputIconTextMesh : MonoBehaviour
 				s = s.Replace(check, $"<sprite=\"{tmpSpriteAsset.name}\" index=0>" +
 					$" <color=#00FFFF>{actionString}</color>");
 			}
+
+			check = $"[{actions[i].ToString()}:]";
+			if (s.Contains(check))
+			{
+				InputIconSO iconSet = GetIconSet();
+				if (iconSet == null) continue;
+				KeyCode kc = InputHandler.GetBinding(actions[i]);
+				TMP_SpriteAsset tmpSpriteAsset = GetSpriteAsset(actions[i]);
+				tmpSpriteAsset.spriteSheet = iconSet.GetSprite(kc).texture;
+				tmpSpriteAsset.material.mainTexture = tmpSpriteAsset.spriteSheet;
+				string actionString = actions[i].ToString();
+				s = s.Replace(check, $"<sprite=\"{tmpSpriteAsset.name}\" index=0>");
+			}
 		}
 
 		return s;

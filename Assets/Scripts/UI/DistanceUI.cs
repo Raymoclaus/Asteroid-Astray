@@ -3,40 +3,49 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Collections;
 
-[RequireComponent(typeof(Text))]
 public class DistanceUI : MonoBehaviour
 {
 	public const int maxRange = 10000;
 	private List<string> distStrings = new List<string>(maxRange + 1);
-	private string unit = "m";
+	private const string unit = "m";
 	private int dist = -1;
-	private Text _textComponent;
-	[SerializeField]
-	private ShuttleTrackers shuttleTrackerSO;
+	[SerializeField] private Text textComponent;
+	[SerializeField] private ShuttleTrackers shuttleTrackerSO;
 
 	private void Start()
 	{
-		_textComponent = GetComponent<Text>();
+		textComponent = textComponent ?? GetComponent<Text>();
 		StartCoroutine(FillStrings());
+		shuttleTrackerSO.NavigationUpdated += UpdateHUD;
+		UpdateHUD();
 	}
 
 	private void Update()
 	{
-		if (!shuttleTrackerSO) return;
+		UpdateText();
+	}
 
+	private void UpdateText()
+	{
+		if (!shuttleTrackerSO) return;
 		int currentDist = (int)(shuttleTrackerSO.position.magnitude * 3f);
 		if (dist != currentDist)
 		{
 			dist = currentDist;
 			if (dist < maxRange && dist < distStrings.Count)
 			{
-				_textComponent.text = distStrings[dist];
+				textComponent.text = distStrings[dist];
 			}
 			else
 			{
-				_textComponent.text = distStrings[distStrings.Count - 1];
+				textComponent.text = distStrings[distStrings.Count - 1];
 			}
 		}
+	}
+
+	private void UpdateHUD()
+	{
+		gameObject.SetActive(shuttleTrackerSO.navigationActive);
 	}
 
 	private IEnumerator FillStrings()

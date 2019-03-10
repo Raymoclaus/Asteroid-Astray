@@ -39,9 +39,10 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 	[SerializeField] private SpriteRenderer sprRend;
 	[SerializeField] private AudioSO collisionSounds;
 	private ContactPoint2D[] contacts = new ContactPoint2D[1];
+	private List<DrillBit> drillers = new List<DrillBit>();
 
 	//fields
-	[ReadOnly] private AIState state;
+	[SerializeField] private AIState state;
 	private float maxHealth = 2000f;
 	private float currentHealth;
 	[HideInInspector] public int upgradeLevel;
@@ -425,20 +426,16 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 					//attack alone
 					case 0:
 						ICombat enemy = targetEntity.GetICombat();
-						if ((bool)enemy?.EngageInCombat(this))
-						{
-							EngageInCombat(enemy);
-						}
+						if (!(bool)enemy?.EngageInCombat(this)) break;
+						EngageInCombat(enemy);
 						state = AIState.Attacking;
 						nearbySuspects.Clear();
 						break;
 					//signal for help
 					case 1:
 						enemy = targetEntity.GetICombat();
-						if ((bool)enemy?.EngageInCombat(this))
-						{
-							EngageInCombat(enemy);
-						}
+						if (!(bool)enemy?.EngageInCombat(this)) break;
+						EngageInCombat(enemy);
 						state = AIState.Signalling;
 						nearbySuspects.Clear();
 						for (int i = 0; i < hive.childBots.Count; i++)
@@ -545,7 +542,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 		for (int i = 0; i < hive.childBots.Count; i++)
 		{
 			GatherBot sibling = hive.childBots[i];
-			if ((sibling.state & (AIState.Attacking | AIState.Dying)) != 0 || !sibling.activated) continue;
+			if (state == AIState.Attacking || state == AIState.Dying || !sibling.activated) continue;
 
 			if (Vector2.Distance(transform.position, sibling.transform.position)
 				< Constants.CHUNK_SIZE)
@@ -554,7 +551,6 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 				StartCoroutine(ScanRings(scanAngle, 30f, false, 0.3f));
 				sibling.enemies = enemies;
 				sibling.StartEmergencyAttack();
-				enemies[0].EngageInCombat(sibling);
 			}
 		}
 		targetEntity = (Entity)enemies[0];
@@ -1068,17 +1064,15 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 		}
 	}
 
-	public void StartDrilling()
+	public void StartDrilling(DrillBit db)
 	{
 		rb.constraints = RigidbodyConstraints2D.FreezeAll;
 		beingDrilled = true;
+		AddDriller(db);
 		if (IsDrilling)
 		{
 			drill.StopDrilling();
-			if (drill.drillTarget != null)
-			{
-				drill.drillTarget.StopDrilling();
-			}
+			drill.drillTarget?.StopDrilling(drill);
 		}
 		shakeFX.Begin();
 		pause = pause ?? FindObjectOfType<Pause>();
@@ -1092,11 +1086,12 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 		}
 	}
 
-	public void StopDrilling()
+	public void StopDrilling(DrillBit db)
 	{
 		rb.constraints = RigidbodyConstraints2D.None;
 		beingDrilled = false;
 		shakeFX.Stop();
+		RemoveDriller(db);
 	}
 
 	public void OnTriggerEnter2D(Collider2D other)
@@ -1108,7 +1103,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 			DrillBit otherDrill = other.GetComponentInParent<DrillBit>();
 			if (otherDrill.CanDrill && otherDrill.drillTarget == null && otherDrill.Verify(this))
 			{
-				StartDrilling();
+				StartDrilling(otherDrill);
 				otherDrill.StartDrilling(this);
 			}
 		}
@@ -1124,7 +1119,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 
 			if ((Entity)otherDrill.drillTarget == this)
 			{
-				StopDrilling();
+				StopDrilling(otherDrill);
 				otherDrill.StopDrilling();
 			}
 		}
@@ -1186,6 +1181,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 
 	public bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer, int dropModifier = 0, bool flash = true)
 	{
+		if (currentHealth < 0f) return false;
 		//cannot be hit by projectiles from self or siblings
 		if (!IsSibling(destroyer) && destroyer != hive)
 		{
@@ -1199,10 +1195,9 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 			{
 				if (enemy.EngageInCombat(this))
 				{
-					AddThreat(enemy);
+					AlertOthers(enemy);
 				}
 			}
-			StartEmergencyAttack();
 		}
 		return CheckHealth(destroyer, dropModifier);
 	}
@@ -1232,7 +1227,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 
 	public override bool VerifyDrillTarget(Entity target)
 	{
-		return target == targetEntity;
+		return target == targetEntity && target != hive && !IsSibling(target);
 	}
 
 	private bool CheckHealth(Entity destroyer, int dropModifier)
@@ -1240,7 +1235,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 		if (currentHealth > 0f) return false;
 		if (IsDrilling)
 		{
-			drill.drillTarget.StopDrilling();
+			drill.drillTarget.StopDrilling(drill);
 		}
 		GoToDyingState(destroyer, dropModifier);
 		return currentHealth <= 0f;
@@ -1277,6 +1272,8 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 		anim.enabled = false;
 		sprRend.sprite = dyingSprite;
 		burningEffectsObj?.SetActive(true);
+		ActivateAllColliders(false);
+		EjectFromAllDrillers();
 	}
 
 	private void DropLoot(Entity destroyer, Vector2 pos, int dropModifier = 0)
@@ -1328,8 +1325,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 
 	private void StartEmergencyAttack()
 	{
-		if ((state & (AIState.Attacking | AIState.Dying)) != 0 || !activated) return;
-
+		if (state == AIState.Attacking || state == AIState.Dying || !activated) return;
 		canDrill = false;
 		state = AIState.Attacking;
 		anim.SetTrigger("GunOut");
@@ -1438,6 +1434,16 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 		StartEmergencyAttack();
 	}
 
+	private void AlertOthers(ICombat threat)
+	{
+		for (int i = 0; i < hive.childBots.Count; i++)
+		{
+			GatherBot sibling = hive.childBots[i];
+			sibling.AddThreat(threat);
+			sibling.StartEmergencyAttack();
+		}
+	}
+
 	private void AddThreat(ICombat threat)
 	{
 		for (int i = 0; i < enemies.Count; i++)
@@ -1450,7 +1456,12 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 
 	public bool EngageInCombat(ICombat hostile)
 	{
-		if (IsSibling((Entity)hostile) || (Entity)hostile == hive || enemies.Contains(hostile)) return false;
+		if (IsSibling((Entity)hostile) || (Entity)hostile == hive) return false;
+
+		for (int i = 0; i < enemies.Count; i++)
+		{
+			if (enemies[i] == hostile) return false;
+		}
 		AddThreat(hostile);
 		return true;
 	}
@@ -1469,7 +1480,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 
 	public override bool CanFireStraightWeapon()
 	{
-		return straightWeaponAttached && readyToFire && !beingDrilled && !stunned;
+		return straightWeaponAttached && readyToFire && !beingDrilled && !stunned && state == AIState.Attacking;
 	}
 
 	public override void AttachStraightWeapon(bool attach)
@@ -1480,5 +1491,50 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 	public override ICombat GetICombat()
 	{
 		return this;
+	}
+
+	public List<DrillBit> GetDrillers()
+	{
+		return drillers;
+	}
+
+	public void AddDriller(DrillBit db)
+	{
+		GetDrillers().Add(db);
+	}
+
+	public bool RemoveDriller(DrillBit db)
+	{
+		List<DrillBit> drills = GetDrillers();
+		for (int i = 0; i < drills.Count; i++)
+		{
+			if (drills[i] == db)
+			{
+				drills.RemoveAt(i);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private void EjectFromAllDrillers()
+	{
+		List<DrillBit> drills = GetDrillers();
+		int count = drills.Count;
+		for (int i = 0; i < drills.Count; i++)
+		{
+			drills[i].StopDrilling();
+		}
+		if (drills.Count > 0)
+		{
+			if (count == drills.Count)
+			{
+				Debug.LogWarning("Drills were not detached.");
+			}
+			else
+			{
+				EjectFromAllDrillers();
+			}
+		}
 	}
 }

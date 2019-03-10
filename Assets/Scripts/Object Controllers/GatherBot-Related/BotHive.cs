@@ -36,6 +36,7 @@ public class BotHive : Character, IDrillableObject, IDamageable, ICombat
 	private float emptyCoordWaitTime = 300f;
 	public WaitForSeconds maintenanceTime = new WaitForSeconds(3f);
 	private List<ICombat> enemies = new List<ICombat>();
+	private List<DrillBit> drillers = new List<DrillBit>();
 
 	//cache
 	private List<ChunkCoords> botOccupiedCoords = new List<ChunkCoords>();
@@ -289,7 +290,7 @@ public class BotHive : Character, IDrillableObject, IDamageable, ICombat
 			DrillBit otherDrill = other.GetComponentInParent<DrillBit>();
 			if (otherDrill.CanDrill && !IsDrilling)
 			{
-				StartDrilling();
+				StartDrilling(otherDrill);
 				otherDrill.StartDrilling(this);
 			}
 		}
@@ -305,7 +306,7 @@ public class BotHive : Character, IDrillableObject, IDamageable, ICombat
 
 			if ((Entity)otherDrill.drillTarget == this)
 			{
-				otherDrill.StopDrilling();
+				otherDrill.StopDrilling(otherDrill);
 			}
 		}
 	}
@@ -332,18 +333,19 @@ public class BotHive : Character, IDrillableObject, IDamageable, ICombat
 		return TakeDamage(drillDmg, drillPos, destroyer, dropModifier);
 	}
 
-	public void StartDrilling()
+	public void StartDrilling(DrillBit db)
 	{
-
+		AddDriller(db);
 	}
 
-	public void StopDrilling()
+	public void StopDrilling(DrillBit db)
 	{
-
+		RemoveDriller(db);
 	}
 
 	public bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer, int dropModifier = 0, bool flash = true)
 	{
+		if (currentHealth < 0f) return false;
 		currentHealth -= damage;
 		ICombat threat = destroyer.GetICombat();
 		if (threat != null && threat.EngageInCombat(this))
@@ -375,6 +377,7 @@ public class BotHive : Character, IDrillableObject, IDamageable, ICombat
 	{
 		if (currentHealth > 0f) return false;
 		DestroySelf(true, destroyer, dropModifier);
+		EjectFromAllDrillers();
 		return currentHealth <= 0f;
 	}
 
@@ -488,5 +491,50 @@ public class BotHive : Character, IDrillableObject, IDamageable, ICombat
 			if (e == threat) return;
 		}
 		enemies.Add(threat);
+	}
+
+	public List<DrillBit> GetDrillers()
+	{
+		return drillers;
+	}
+
+	public void AddDriller(DrillBit db)
+	{
+		GetDrillers().Add(db);
+	}
+
+	public bool RemoveDriller(DrillBit db)
+	{
+		List<DrillBit> drills = GetDrillers();
+		for (int i = 0; i < drills.Count; i++)
+		{
+			if (drills[i] == db)
+			{
+				drills.RemoveAt(i);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private void EjectFromAllDrillers()
+	{
+		List<DrillBit> drills = GetDrillers();
+		int count = drills.Count;
+		for (int i = 0; i < drills.Count; i++)
+		{
+			drills[i].StopDrilling();
+		}
+		if (drills.Count > 0)
+		{
+			if (count == drills.Count)
+			{
+				Debug.LogWarning("Drills were not detached.");
+			}
+			else
+			{
+				EjectFromAllDrillers();
+			}
+		}
 	}
 }

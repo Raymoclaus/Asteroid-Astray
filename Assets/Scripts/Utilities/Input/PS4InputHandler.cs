@@ -22,6 +22,7 @@ public class Ps4InputHandler : ICustomInputType
 		KeyCode.LeftArrow,
 		KeyCode.DownArrow,
 		KeyCode.RightArrow,
+		KeyCode.JoystickButton1,
 	};
 	//set of key bindings that can be changed
 	private List<KeyCode> bindings = new List<KeyCode>();

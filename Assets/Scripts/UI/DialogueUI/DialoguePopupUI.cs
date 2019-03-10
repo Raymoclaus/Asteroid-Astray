@@ -3,8 +3,7 @@ using UnityEngine;
 
 public class DialoguePopupUI : PopupUI
 {
-	[SerializeField]
-	private RectTransform leftPopupPrefab, rightPopupPrefab;
+	[SerializeField] private RectTransform leftPopupPrefab, rightPopupPrefab;
 	protected List<DialoguePopupObject> activePopups = new List<DialoguePopupObject>();
 	protected List<DialoguePopupObject> inactivePopups = new List<DialoguePopupObject>();
 	protected List<int> speakerIDs = new List<int>();
@@ -24,6 +23,7 @@ public class DialoguePopupUI : PopupUI
 				hasName ? popup.GetComponentInChildren<DialogueNameUI>() : null,
 				hasLine ? popup.GetComponentInChildren<DialogueLineUI>() : null,
 				hasFace ? popup.GetComponentInChildren<DialogueFaceUI>() : null,
+				popup.GetComponentInChildren<DialogueInputPromptUI>(),
 				popup.GetComponent<CanvasGroup>(),
 				i < amountOfPopupsToCreate / 2);
 			inactivePopups.Add(po);
@@ -42,6 +42,7 @@ public class DialoguePopupUI : PopupUI
 			float delta = 1f - Mathf.Abs(targetHeight - po.transform.anchoredPosition.y) / popupHeight;
 			delta = Mathf.Lerp(delta, 1f, recordingModeTrackerSO.UnscaledDeltaTime * popupEntrySpeed);
 			po.popupGroup.alpha = i == 0 ? delta : 1f / (i + 1);
+			po.inputPrompt.gameObject.SetActive(i == 0);
 			Vector2 targetPos = po.transform.anchoredPosition;
 			targetPos.y = targetHeight;
 			po.transform.anchoredPosition = Vector2.Lerp(po.transform.anchoredPosition, targetPos, delta);
@@ -149,18 +150,21 @@ public class DialoguePopupUI : PopupUI
 		public DialogueNameUI name;
 		public DialogueLineUI line;
 		public DialogueFaceUI face;
+		public DialogueInputPromptUI inputPrompt;
 		public CanvasGroup popupGroup;
 		public int speakerID;
 		public bool isLeft;
 		public float xPos;
 
-		public DialoguePopupObject(RectTransform transform, DialogueNameUI name, DialogueLineUI line, DialogueFaceUI face,
-			CanvasGroup popupGroup, bool isLeft)
+		public DialoguePopupObject(RectTransform transform, DialogueNameUI name, DialogueLineUI line,
+			DialogueFaceUI face, DialogueInputPromptUI inputPrompt, CanvasGroup popupGroup,
+			bool isLeft)
 		{
 			this.transform = transform;
 			this.name = name;
 			this.line = line;
 			this.face = face;
+			this.inputPrompt = inputPrompt;
 			this.popupGroup = popupGroup;
 			speakerID = 0;
 			this.isLeft = isLeft;
