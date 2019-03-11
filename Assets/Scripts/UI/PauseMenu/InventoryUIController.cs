@@ -76,7 +76,7 @@ public class InventoryUIController : PauseTab
 	private void UpdateGrabUI()
 	{
 		if (!grabbing) return;
-		Vector3 pos = cam.ScreenToWorldPoint(Input.mousePosition);
+		Vector3 pos = Input.mousePosition;
 		pos.z = grabTransform.parent.position.z;
 		grabTransform.position = pos;
 		grabImg.sprite = sprites.GetItemSprite(grabStack.GetItemType());
