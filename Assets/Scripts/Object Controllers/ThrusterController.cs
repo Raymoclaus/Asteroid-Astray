@@ -31,7 +31,7 @@ public class ThrusterController : MonoBehaviour
 
 	private void Update()
 	{
-		if (!Pause.IsPaused)
+		if (!Pause.IsStopped)
 		{
 			shuttleMag = shuttle.velocity.magnitude;
 			SetThrusterFireValues();

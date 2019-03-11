@@ -152,7 +152,27 @@ public class DialogueController : MonoBehaviour
 		{
 			if (currentConversation.conversation[currentPosition].hasAction)
 			{
-				currentConversation.conversation[currentPosition].skipAction.Invoke();
+				currentConversation.conversation[currentPosition].skipAction?.Invoke();
+			}
+		}
+
+		GetNextLine();
+	}
+
+	public void SkipEntireChat(bool clearQueue)
+	{
+		if (clearQueue)
+		{
+			chatQueue.Clear();
+		}
+
+		if (!chatIsRunning) return;
+
+		for (; currentPosition < currentLines.Length; currentPosition++)
+		{
+			if (currentConversation.conversation[currentPosition].hasAction)
+			{
+				currentConversation.conversation[currentPosition].skipAction?.Invoke();
 			}
 		}
 

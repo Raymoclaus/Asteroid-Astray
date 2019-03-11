@@ -4,7 +4,8 @@ using UnityEngine;
 public class Pause : MonoBehaviour
 {
 	private static bool isPaused = false;
-	public static bool IsPaused { get { return isPaused && Mathf.Approximately(Time.timeScale, Mathf.Epsilon); } }
+	public static bool IsPaused { get { return isPaused && IsStopped; } }
+	public static bool IsStopped { get { return Mathf.Approximately(Time.timeScale, 0f); } }
 	public static float timeSinceOpen = 0f;
 	public static bool isShifting = false;
 	private static bool shiftingUp = false;

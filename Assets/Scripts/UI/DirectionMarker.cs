@@ -2,9 +2,8 @@
 
 public class DirectionMarker : MonoBehaviour
 {
-	[SerializeField]
-	private float radius = 0.5f;
-	private Transform parent, followTarget;
+	[SerializeField] private float radius = 0.5f;
+	private Transform parent;
 	private Vector2 locationTarget;
 	[SerializeField] private ShuttleTrackers shuttleTrackerSO;
 
@@ -33,26 +32,6 @@ public class DirectionMarker : MonoBehaviour
 
 	private float GetAngle()
 	{
-		float angle;
-		if (followTarget != null)
-		{
-			angle = -Vector2.SignedAngle(Vector2.up, followTarget.position - parent.position);
-		}
-		else
-		{
-			angle = -Vector2.SignedAngle(Vector2.up, locationTarget - (Vector2)parent.position);
-		}
-		return angle;
-	}
-
-	public void SetFollowTarget(Transform follow)
-	{
-		followTarget = follow;
-	}
-
-	public void SetLocationTarget(Vector2 location)
-	{
-		followTarget = null;
-		locationTarget = location;
+		return -Vector2.SignedAngle(Vector2.up, shuttleTrackerSO.GetWaypointLocation() - parent.position);
 	}
 }

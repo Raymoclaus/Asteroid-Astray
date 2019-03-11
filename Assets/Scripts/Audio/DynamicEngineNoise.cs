@@ -23,7 +23,7 @@ public class DynamicEngineNoise : MonoBehaviour
 		source.enabled = shuttleTrackerSO;
 		if (!shuttleTrackerSO) return;
 
-		source.volume = Pause.IsPaused ? 0f : volume;
+		source.volume = Pause.IsStopped ? 0f : volume;
 		source.pitch = Mathf.Lerp(pitchRange.x, pitchRange.y, shuttleTrackerSO.velocity.magnitude * pitchMultiplier);
 	}
 }

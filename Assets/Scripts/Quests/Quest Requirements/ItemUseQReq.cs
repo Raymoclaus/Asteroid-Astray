@@ -24,13 +24,13 @@ public class ItemUseQReq : QuestRequirement
 
 	private void EvaluateEvent(Item.Type type)
 	{
-		if (completed || !active) return;
+		if (IsComplete() || !active) return;
 
 		if (type == typeNeeded)
 		{
 			currentAmount++;
 			QuestRequirementUpdated();
-			if (completed = currentAmount >= amountNeeded)
+			if (currentAmount >= amountNeeded)
 			{
 				QuestRequirementCompleted();
 				GameEvents.OnItemUsed -= EvaluateEvent;
@@ -48,7 +48,7 @@ public class ItemUseQReq : QuestRequirement
 		return base.IsComplete();
 	}
 
-	public override Transform TargetLocation()
+	public override Vector3? TargetLocation()
 	{
 		return base.TargetLocation();
 	}

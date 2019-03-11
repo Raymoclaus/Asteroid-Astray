@@ -24,13 +24,13 @@ public class CraftingQReq : QuestRequirement
 
 	private void EvaluateEvent(Item.Type type, int amount)
 	{
-		if (completed || !active) return;
+		if (IsComplete() || !active) return;
 		
 		if (type == typeNeeded && amount != 0)
 		{
 			currentAmount += amount;
 			QuestRequirementUpdated();
-			if (completed = currentAmount >= amountNeeded)
+			if (currentAmount >= amountNeeded)
 			{
 				QuestRequirementCompleted();
 				GameEvents.OnItemCrafted -= EvaluateEvent;
@@ -48,7 +48,7 @@ public class CraftingQReq : QuestRequirement
 		return base.IsComplete();
 	}
 
-	public override Transform TargetLocation()
+	public override Vector3? TargetLocation()
 	{
 		return null;
 	}

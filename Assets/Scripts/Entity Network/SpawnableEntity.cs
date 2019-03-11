@@ -45,4 +45,16 @@ public class SpawnableEntity
 
 		return a * ((x - c)/(x - c + b));
 	}
+
+	public float GetMinimumDistanceToBeSpawned()
+	{
+		float dist = 0f;
+		float chance = 0f;
+		while (chance <= 0f)
+		{
+			chance = GetChance(dist);
+			dist += Constants.CHUNK_SIZE;
+		}
+		return dist;
+	}
 }

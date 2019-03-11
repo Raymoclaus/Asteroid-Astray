@@ -43,7 +43,7 @@ public class LaserWeapon : MonoBehaviour
 			timer = Mathf.MoveTowards(timer, 0f, Time.deltaTime);
 		}
 
-		if (parent.CanFireLaser() && !Pause.IsPaused)
+		if (parent.CanFireLaser() && !Pause.IsStopped)
 		{
 			Fire();
 		}

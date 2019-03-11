@@ -28,7 +28,7 @@ public class DistanceUI : MonoBehaviour
 	private void UpdateText()
 	{
 		if (!shuttleTrackerSO) return;
-		int currentDist = (int)(shuttleTrackerSO.position.magnitude * 3f);
+		int currentDist = (int)(shuttleTrackerSO.GetDistanceToWaypoint() * 3f);
 		if (dist != currentDist)
 		{
 			dist = currentDist;

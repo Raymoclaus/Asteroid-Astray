@@ -11,14 +11,17 @@ public class NarrativeManager : MonoBehaviour
 	[SerializeField] private SpotlightEffectController spotlightEffectController;
 	[SerializeField] private CustomScreenEffect screenEffects;
 	[SerializeField] private ShuttleTrackers shuttleTrackerSO;
-	
+	[SerializeField] private Character mainChar;
+	[SerializeField] private Transform mainShip;
+
+
 	[SerializeField] private ConversationEvent
 		recoveryDialogue,
 		UseThrustersDialogue,
 		completedFirstGatheringQuestDialogue,
 		useRepairKitDialogue,
-		findShipDialogue;
-	[SerializeField] private Character mainChar;
+		findShipDialogue,
+		foundShipDialogue;
 
 	[Header("Entity Profiles")]
 	[SerializeField] private EntityProfile claire;
@@ -27,8 +30,13 @@ public class NarrativeManager : MonoBehaviour
 
 	private void Start()
 	{
-		shuttleTrackerSO.SetControllable(true);
-		shuttleTrackerSO.SetKinematic(false);
+		shuttleTrackerSO.SetControllable(false);
+		shuttleTrackerSO.SetKinematic(true);
+		loadingController.AddPostLoadAction(() =>
+		{
+			shuttleTrackerSO.SetControllable(true);
+			shuttleTrackerSO.SetKinematic(false);
+		});
 
 		if (dgm.skipRecoveryDialogue)
 		{
@@ -42,7 +50,6 @@ public class NarrativeManager : MonoBehaviour
 					{
 						loadingController.AddPostLoadAction(() =>
 						{
-							ShipAvailable = true;
 							shuttleTrackerSO.SetNavigationActive(true);
 						});
 						loadingController.AddPostLoadAction(() =>
@@ -85,8 +92,8 @@ public class NarrativeManager : MonoBehaviour
 		List<QuestReward> qRewards = new List<QuestReward>();
 
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-		qReqs.Add(new GatheringQRec(Item.Type.Copper, 2, "Obtain # ? from asteroids"));
-		qReqs.Add(new GatheringQRec(Item.Type.Iron, 1, "Obtain # ? from asteroids"));
+		qReqs.Add(new GatheringQRec(Item.Type.Copper, 2, "Obtain # ? from asteroids."));
+		qReqs.Add(new GatheringQRec(Item.Type.Iron, 1, "Obtain # ? from asteroids."));
 
 		Quest q = new Quest(
 			"Gather materials",
@@ -102,18 +109,18 @@ public class NarrativeManager : MonoBehaviour
 	private void CompletedFirstGatheringQuest(Quest quest)
 	{
 		StartDialogue(completedFirstGatheringQuestDialogue, true);
-		StartCraftYourFirstRepairKitQuest(null);
+		StartCraftYourFirstRepairKitQuest();
 		FirstQuestScriptedDrops.scriptedDropsActive = false;
 	}
 
-	private void StartCraftYourFirstRepairKitQuest(Quest other)
+	private void StartCraftYourFirstRepairKitQuest()
 	{
 		if (mainChar == null) return;
 
 		List<QuestReward> qRewards = new List<QuestReward>();
 
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-		qReqs.Add(new CraftingQReq(Item.Type.RepairKit, 1, "Craft # ?"));
+		qReqs.Add(new CraftingQReq(Item.Type.RepairKit, 1, "Craft # ?."));
 
 		Quest q = new Quest(
 			"Craft Your First Repair Kit",
@@ -125,18 +132,18 @@ public class NarrativeManager : MonoBehaviour
 
 	private void CompletedCraftYourFirstRepairKitQuest(Quest quest)
 	{
-		StartRepairTheShuttleQuest(null);
+		StartRepairTheShuttleQuest();
 		StartDialogue(useRepairKitDialogue, true, null);
 	}
 
-	private void StartRepairTheShuttleQuest(Quest other)
+	private void StartRepairTheShuttleQuest()
 	{
 		if (mainChar == null) return;
 
 		List<QuestReward> qRewards = new List<QuestReward>();
 
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-		qReqs.Add(new ItemUseQReq(Item.Type.RepairKit, 1, "Use # ?"));
+		qReqs.Add(new ItemUseQReq(Item.Type.RepairKit, 1, "Use # ?."));
 
 		Quest q = new Quest(
 			"Repair the Shuttle",
@@ -148,9 +155,56 @@ public class NarrativeManager : MonoBehaviour
 
 	private void CompletedRepairTheShuttleQuest(Quest quest)
 	{
-		ShipAvailable = true;
 		shuttleTrackerSO.SetNavigationActive(true);
 		StartDialogue(findShipDialogue, true, null);
+		StartReturnToTheShipQuest();
+	}
+
+	private void StartReturnToTheShipQuest()
+	{
+		if (mainChar == null) return;
+
+		List<QuestReward> qRewards = new List<QuestReward>();
+
+		List<QuestRequirement> qReqs = new List<QuestRequirement>();
+		qReqs.Add(new WaypointQReq(mainShip, "Return to the ship."));
+
+		Quest q = new Quest(
+			"Find your way back to the ship",
+			"Communication and Navigation systems on the shuttle have been restored, but we still can't contact Dendro. Find your way back to the ship and check if Dendro is still alright.",
+			mainChar, claire, qRewards, qReqs, CompletedReturnToTheShipQuest);
+
+		GiveQuest(mainChar, q);
+	}
+
+	private void CompletedReturnToTheShipQuest(Quest quest)
+	{
+		UnityEngine.Events.UnityAction action = () => 
+		shuttleTrackerSO.SetWaypoint(
+			EntityGenerator.FindNearestOfEntityType(
+				EntityType.BotHive, shuttleTrackerSO.position).transform,
+			null);
+		if (foundShipDialogue.conversation.Length > 12)
+		{
+			foundShipDialogue.conversation[12].action.AddListener(action);
+			foundShipDialogue.conversation[12].skipAction.AddListener(action);
+			foundShipDialogue.conversation[12].hasAction = true;
+		}
+		else
+		{
+			foundShipDialogue.conversationEndAction.AddListener(action);
+		}
+		StartDialogue(foundShipDialogue, false, StartFindEnergySourceQuest);
+	}
+
+	private void StartFindEnergySourceQuest()
+	{
+
+	}
+
+	private void CompletedFindEnergySourceQuest(Quest quest)
+	{
+
 	}
 
 	private void GiveQuest(Character c, Quest q) => c.AcceptQuest(q);
@@ -158,6 +212,8 @@ public class NarrativeManager : MonoBehaviour
 	private void StartDialogue(ConversationEvent ce, bool chat = false,
 		UnityEngine.Events.UnityAction action = null)
 	{
+		dialogueController.SkipEntireChat(true);
+
 		if (action != null)
 		{
 			ce.conversationEndAction.AddListener(action);

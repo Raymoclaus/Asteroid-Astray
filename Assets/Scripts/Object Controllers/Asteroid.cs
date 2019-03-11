@@ -179,7 +179,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 
 	private void CreateDebris(Vector2 pos)
 	{
-		if (!isActive || Pause.IsPaused) return;
+		if (!isActive || Pause.IsStopped) return;
 
 		particleGenerator = particleGenerator ?? FindObjectOfType<ParticleGenerator>();
 		if (!particleGenerator) return;
@@ -196,7 +196,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 
 	private void CreateDust(Vector2 pos, int amount = 1, float alpha = 0.1f)
 	{
-		if (!isActive || Pause.IsPaused) return;
+		if (!isActive || Pause.IsStopped) return;
 
 		//particleGenerator = particleGenerator ?? FindObjectOfType<ParticleGenerator>();
 		if (!particleGenerator) return;

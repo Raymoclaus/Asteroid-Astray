@@ -85,6 +85,7 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 	private bool isInvulnerable = false;
 	private QuestLog questLog = new QuestLog();
 	[SerializeField] private ColorReplacementGroup cRGroup;
+	[SerializeField] private Transform defaultWaypointTarget;
 
 	#region Boost
 	//whether boost capability is available
@@ -130,6 +131,7 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 		base.Awake();
 		shipStorage = shipStorage ?? FindObjectOfType<ShipInventory>();
 		cameraCtrl = cameraCtrl ?? Camera.main.GetComponent<CameraCtrl>();
+		trackerSO.SetDefaultWaypointTarget(defaultWaypointTarget);
 		if (cameraCtrl) cameraCtrl.followTarget = this;
 	}
 
@@ -569,7 +571,7 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 
 	private void Boost(bool input)
 	{
-		if (boostAvailable && input && boostLevel < boostCapacity && !Pause.IsPaused)
+		if (boostAvailable && input && boostLevel < boostCapacity && !Pause.IsStopped)
 		{
 			if (!isBoosting)
 			{
@@ -650,13 +652,13 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 	public override bool CanFireLaser()
 	{
 		return laserAttached && !isBoosting && InputHandler.GetInput(InputHandler.InputAction.Shoot) > 0f
-			&& !Pause.IsPaused && trackerSO.hasControl;
+			&& !Pause.IsStopped && trackerSO.hasControl;
 	}
 
 	public override bool CanFireStraightWeapon()
 	{
 		return straightWeaponAttached && !isBoosting && InputHandler.GetInput(InputHandler.InputAction.Shoot) > 0f
-			&& !Pause.IsPaused && trackerSO.hasControl;
+			&& !Pause.IsStopped && trackerSO.hasControl;
 	}
 
 	public override GameObject GetLaunchImpactAnimation()

@@ -71,7 +71,7 @@ public class DrillBit : MonoBehaviour
 		}
 		firstHit = false;
 		//if damage is 0 then stop drilling
-		if (damage <= 0f && !Pause.IsPaused && !Pause.isShifting)
+		if (damage <= 0f && !Pause.IsStopped && !Pause.isShifting)
 		{
 			bool launch = parent.ShouldLaunch() && drillTarget.CanBeLaunched();
 			Vector2 launchDirection = Vector2.up;
@@ -123,11 +123,11 @@ public class DrillBit : MonoBehaviour
 		}
 
 		//adjust sound
-		if (!Pause.IsPaused)
+		if (!Pause.IsStopped)
 		{
 			currentVolume = Mathf.MoveTowards(currentVolume, maxVolume, maxVolume * volumeIncrease);
 		}
-		drillSoundSource.volume = Pause.IsPaused ? 0f : currentVolume;
+		drillSoundSource.volume = Pause.IsStopped ? 0f : currentVolume;
 		drillSoundSource.pitch = Mathf.MoveTowards(drillPitchRange.x, drillPitchRange.y, damage * pitchModifier);
 	}
 
