@@ -4,10 +4,11 @@ using System.IO;
 
 public class Ps4InputHandler : ICustomInputType
 {
-	//https://www.google.com/search?q=ps4+input+map&rlz=1C1CHBF_en-GBAU819AU819&source=lnms&tbm=isch&sa=X&ved=0ahUKEwikzP_7lvTgAhVSdCsKHUXwDSQQ_AUIDigB&biw=1920&bih=937#imgrc=kNz76yy98oC0CM:
+	//https://pbs.twimg.com/media/Dt6UeTLX4AEYylF.jpg
 	//set of default key bindings that cannot be changed
 	private static readonly List<KeyCode> defaults = new List<KeyCode>
 	{
+		KeyCode.None,
 		KeyCode.JoystickButton7,
 		KeyCode.JoystickButton0,
 		KeyCode.JoystickButton5,
@@ -23,6 +24,7 @@ public class Ps4InputHandler : ICustomInputType
 		KeyCode.DownArrow,
 		KeyCode.RightArrow,
 		KeyCode.JoystickButton1,
+		KeyCode.JoystickButton3
 	};
 	//set of key bindings that can be changed
 	private List<KeyCode> bindings = new List<KeyCode>();
@@ -68,7 +70,7 @@ public class Ps4InputHandler : ICustomInputType
 		for (int i = 0; i < bindings.Count; i++)
 		{
 			KeyCode kb = bindings[i];
-			if (Input.GetKey(kb)) return true;
+			if (GetInputValue(kb) > 0f) return true;
 		}
 
 		if (!Mathf.Approximately(Input.GetAxisRaw("J_LeftHorizontalAxis"), 0f))
@@ -106,17 +108,32 @@ public class Ps4InputHandler : ICustomInputType
 
 	public float GetInput(InputHandler.InputAction key)
 	{
-		return Input.GetKey(GetBinding(key)) ? 1f : 0f;
+		KeyCode kc = GetBinding(key);
+		return GetInputValue(kc);		
+	}
+
+	private float GetInputValue(KeyCode kc)
+	{
+		switch (kc)
+		{
+			default: return Input.GetKey(kc) ? 1f : 0f;
+			case KeyCode.UpArrow: return Mathf.Clamp01(Input.GetAxisRaw("PS4_DPad_VerticalAxis"));
+			case KeyCode.DownArrow: return Mathf.Clamp01(-Input.GetAxisRaw("PS4_DPad_VerticalAxis"));
+			case KeyCode.RightArrow: return Mathf.Clamp01(Input.GetAxisRaw("PS4_DPad_HorizontalAxis"));
+			case KeyCode.LeftArrow: return Mathf.Clamp01(-Input.GetAxisRaw("PS4_DPad_HorizontalAxis"));
+		}
 	}
 
 	public float GetInputDown(InputHandler.InputAction key)
 	{
-		return Input.GetKeyDown(GetBinding(key)) ? 1f : 0f;
+		KeyCode kc = GetBinding(key);
+		return Input.GetKeyDown(kc) ? 1f : 0f;
 	}
 
 	public float GetInputUp(InputHandler.InputAction key)
 	{
-		return Input.GetKeyUp(GetBinding(key)) ? 1f : 0f;
+		KeyCode kc = GetBinding(key);
+		return Input.GetKeyUp(kc) ? 1f : 0f;
 	}
 
 	public KeyCode GetBinding(InputHandler.InputAction key)

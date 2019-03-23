@@ -148,7 +148,6 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	private void DropLoot(Entity destroyer, Vector2 pos, int dropModifier = 0)
 	{
 		particleGenerator = particleGenerator ?? FindObjectOfType<ParticleGenerator>();
-		if (!particleGenerator) return;
 
 		int minDrop = isLarge ? 4 : 1;
 		for (int i = 0; i < Random.Range(minDrop, minDrop + dropModifier + 1); i++)
@@ -476,21 +475,9 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	private void EjectFromAllDrillers()
 	{
 		List<DrillBit> drills = GetDrillers();
-		int count = drills.Count;
-		for (int i = 0; i < drills.Count; i++)
+		for (int i = drills.Count - 1; i >= 0; i--)
 		{
 			drills[i].StopDrilling();
-		}
-		if (drills.Count > 0)
-		{
-			if (count == drills.Count)
-			{
-				Debug.LogWarning("Drills were not detached.");
-			}
-			else
-			{
-				EjectFromAllDrillers();
-			}
 		}
 	}
 }

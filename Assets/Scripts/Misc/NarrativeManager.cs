@@ -120,7 +120,7 @@ public class NarrativeManager : MonoBehaviour
 		List<QuestReward> qRewards = new List<QuestReward>();
 
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-		qReqs.Add(new CraftingQReq(Item.Type.RepairKit, 1, "Craft # ?."));
+		qReqs.Add(new CraftingQReq(Item.Type.RepairKit, 1, "Craft # ? using 2 copper and 1 iron."));
 
 		Quest q = new Quest(
 			"Craft Your First Repair Kit",

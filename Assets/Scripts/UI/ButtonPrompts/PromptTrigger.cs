@@ -4,67 +4,41 @@ using UnityEngine;
 
 public class PromptTrigger : MonoBehaviour
 {
-	[SerializeField]
-	private PromptUI promptUI;
-	private int promptLayer;
-	private List<IPromptRespone> prompts = new List<IPromptRespone>();
-
-	private void Awake()
-	{
-		promptLayer = LayerMask.NameToLayer("ButtonPrompt");
-		if (!promptUI)
-		{
-			Canvas[] canvases = FindObjectsOfType<Canvas>();
-			for (int i = 0; i < canvases.Length; i++)
-			{
-				Canvas canvas = canvases[i];
-				promptUI = canvas.GetComponentInChildren<PromptUI>(true);
-				if (promptUI) break;
-			}
-		}
-	}
-
-	private void Update()
-	{
-		promptUI = promptUI ?? FindObjectOfType<PromptUI>();
-		if (!promptUI) return;
-
-		promptUI.gameObject.SetActive(prompts.Count > 0);
-
-		//check next prompt in list
-		if (Input.GetKeyDown(KeyCode.Q) && prompts.Count > 1)
-		{
-			IPromptRespone pr = prompts[0];
-			prompts.RemoveAt(0);
-			prompts.Add(pr);
-		}
-
-		if (prompts.Count > 0)
-		{
-			promptUI.textUI.text = prompts[0].InteractString();
-
-			if (prompts[0].CheckResponse())
-			{
-				prompts[0].Execute();
-			}
-		}
-	}
+	private static PromptUI promptUI;
+	[SerializeField] protected string text;
+	[SerializeField] protected float fadeInTime = 0f, fadeOutTime = 0f;
+	private bool triggerActive = false;
 
 	private void OnTriggerEnter2D(Collider2D collision)
 	{
-		if (collision.gameObject.layer != promptLayer) return;
+		if (IsTriggerActive() || !collision.attachedRigidbody.GetComponent<Shuttle>()) return;
 
-		IPromptRespone pr = collision.GetComponent<IPromptRespone>();
-		pr.Enter();
-		prompts.Add(collision.GetComponent<IPromptRespone>());
+		promptUI = promptUI ?? FindObjectOfType<PromptUI>();
+		triggerActive = true;
+		EnterTrigger();
 	}
 
 	private void OnTriggerExit2D(Collider2D collision)
 	{
-		if (collision.gameObject.layer != promptLayer) return;
+		if (!IsTriggerActive() || !collision.attachedRigidbody.GetComponent<Shuttle>()) return;
 
-		IPromptRespone pr = collision.GetComponent<IPromptRespone>();
-		pr.Exit();
-		prompts.Remove(pr);
+		promptUI = promptUI ?? FindObjectOfType<PromptUI>();
+		triggerActive = false;
+		ExitTrigger();
+	}
+
+	protected virtual void EnterTrigger()
+	{
+		promptUI?.ActivatePrompt(text, fadeInTime);
+	}
+
+	protected virtual void ExitTrigger()
+	{
+		promptUI?.DeactivatePrompt(fadeOutTime);
+	}
+
+	protected bool IsTriggerActive()
+	{
+		return triggerActive;
 	}
 }

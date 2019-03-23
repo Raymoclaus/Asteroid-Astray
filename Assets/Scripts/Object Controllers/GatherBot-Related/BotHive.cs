@@ -6,28 +6,24 @@ using UnityEngine;
 public class BotHive : Character, IDrillableObject, IDamageable, ICombat
 {
 	//references
-	[SerializeField]
-	private GatherBot botPrefab;
-	[SerializeField]
-	private HiveInventory inventory;
-	[SerializeField]
-	private Transform dockHolder;
+	[SerializeField] private GatherBot botPrefab;
+	[SerializeField] private HiveInventory inventory;
+	[SerializeField] private Transform dockHolder;
 	private Transform[] docks;
-	[SerializeField]
-	private Animator[] dockAnims;
-	[SerializeField]
-	private AudioSO collisionSounds;
+	[SerializeField] private Animator[] dockAnims;
+	[SerializeField] private AudioSO collisionSounds;
+	[SerializeField] private GameObject burningEffects;
+	[SerializeField] private GameObject explosionEffects;
+	[SerializeField] private SpriteRenderer sprRend;
+	[SerializeField] private Sprite burningSprite;
 
 	//fields
-	[SerializeField]
-	private float maxHealth = 10000f, botBaseHP = 500f;
+	[SerializeField] private float maxHealth = 3000f, botBaseHP = 500f;
 	private float currentHealth;
-	[HideInInspector]
-	public List<GatherBot> childBots = new List<GatherBot>();
+	[HideInInspector] public List<GatherBot> childBots = new List<GatherBot>();
 	private bool[] occupiedDocks;
-	[SerializeField]
-	private int minInitialBotCount = 2, maxBotCount = 3, minLeftoverResources = 1, botCreationCost = 2,
-		botUpgradeCost = 4, maxInitialUpgrades = 0;
+	[SerializeField] private int minInitialBotCount = 2, maxBotCount = 3, minLeftoverResources = 1,
+		botCreationCost = 2, botUpgradeCost = 4, maxInitialUpgrades = 0;
 	private int resourceCount, toBeSpent;
 	private bool dormant;
 	private int needToCreate, needToUpgrade;
@@ -37,6 +33,12 @@ public class BotHive : Character, IDrillableObject, IDamageable, ICombat
 	public WaitForSeconds maintenanceTime = new WaitForSeconds(3f);
 	private List<ICombat> enemies = new List<ICombat>();
 	private List<DrillBit> drillers = new List<DrillBit>();
+	[SerializeField] private List<Loot> lootDrops;
+	[SerializeField] private float burnTime = 3f;
+	private float burnTimer = 0f;
+	private bool burning = false;
+	private Entity destroyerEntity;
+	private int dropModifierOnDeath;
 
 	//cache
 	private List<ChunkCoords> botOccupiedCoords = new List<ChunkCoords>();
@@ -63,6 +65,16 @@ public class BotHive : Character, IDrillableObject, IDamageable, ICombat
 
 	private void Update()
 	{
+		if (burning)
+		{
+
+			burnTimer += Time.deltaTime;
+			if (burnTimer >= burnTime)
+			{
+				DestroySelf(true, destroyerEntity, dropModifierOnDeath);
+			}
+			return;
+		}
 		if (enemies.Count > 0)
 		{
 			AlertBots(enemies);
@@ -376,7 +388,17 @@ public class BotHive : Character, IDrillableObject, IDamageable, ICombat
 	private bool CheckHealth(Entity destroyer, int dropModifier = 0)
 	{
 		if (currentHealth > 0f) return false;
-		DestroySelf(true, destroyer, dropModifier);
+		destroyerEntity = destroyer;
+		dropModifierOnDeath = dropModifier;
+		burning = true;
+		burningEffects.SetActive(true);
+		ActivateAllColliders(false);
+		sprRend.sprite = burningSprite;
+		for (int i = 0; i < enemies.Count; i++)
+		{
+			ICombat enemy = enemies[i];
+			enemy.DisengageInCombat(this);
+		}
 		EjectFromAllDrillers();
 		return currentHealth <= 0f;
 	}
@@ -386,11 +408,13 @@ public class BotHive : Character, IDrillableObject, IDamageable, ICombat
 		if (explode)
 		{
 			//particle effects
+			GameObject explosion = Instantiate(explosionEffects, ParticleGenerator.holder, false);
+			explosion.transform.position = transform.position;
 
 			//sound effects
 
 			//drop resources
-
+			DropLoot(destroyer, transform.position, dropModifier);
 		}
 
 		//self destruct all child bots
@@ -402,6 +426,24 @@ public class BotHive : Character, IDrillableObject, IDamageable, ICombat
 			}
 		}
 		base.DestroySelf(destroyer);
+	}
+
+	private void DropLoot(Entity destroyer, Vector2 pos, int dropModifier = 0)
+	{
+		particleGenerator = particleGenerator ?? FindObjectOfType<ParticleGenerator>();
+
+		for (int i = 0; i < inventory.stacks.Count; i++)
+		{
+			ItemStack stack = inventory.stacks[i];
+			if (stack.GetItemType() == Item.Type.Blank) continue;
+			particleGenerator.DropResource(destroyer, pos, stack.GetItemType(), stack.GetAmount());
+		}
+
+		for (int i = 0; i < lootDrops.Count; i++)
+		{
+			ItemStack stack = lootDrops[i].GetStack();
+			particleGenerator.DropResource(destroyer, pos, stack.GetItemType(), stack.GetAmount());
+		}
 	}
 
 	public void MarkCoordAsEmpty(ChunkCoords c)
@@ -520,21 +562,9 @@ public class BotHive : Character, IDrillableObject, IDamageable, ICombat
 	private void EjectFromAllDrillers()
 	{
 		List<DrillBit> drills = GetDrillers();
-		int count = drills.Count;
-		for (int i = 0; i < drills.Count; i++)
+		for (int i = drills.Count - 1; i >= 0; i--)
 		{
 			drills[i].StopDrilling();
-		}
-		if (drills.Count > 0)
-		{
-			if (count == drills.Count)
-			{
-				Debug.LogWarning("Drills were not detached.");
-			}
-			else
-			{
-				EjectFromAllDrillers();
-			}
 		}
 	}
 }

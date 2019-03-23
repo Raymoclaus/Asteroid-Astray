@@ -1279,7 +1279,6 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 	private void DropLoot(Entity destroyer, Vector2 pos, int dropModifier = 0)
 	{
 		particleGenerator = particleGenerator ?? FindObjectOfType<ParticleGenerator>();
-		if (!particleGenerator) return;
 
 		for (int i = 0; i < storage.stacks.Count; i++)
 		{
@@ -1520,21 +1519,9 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 	private void EjectFromAllDrillers()
 	{
 		List<DrillBit> drills = GetDrillers();
-		int count = drills.Count;
-		for (int i = 0; i < drills.Count; i++)
+		for (int i = drills.Count - 1; i >= 0; i--)
 		{
 			drills[i].StopDrilling();
-		}
-		if (drills.Count > 0)
-		{
-			if (count == drills.Count)
-			{
-				Debug.LogWarning("Drills were not detached.");
-			}
-			else
-			{
-				EjectFromAllDrillers();
-			}
 		}
 	}
 }

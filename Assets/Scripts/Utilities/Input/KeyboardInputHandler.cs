@@ -7,6 +7,7 @@ public class KeyboardInputHandler : ICustomInputType
 	//set of default key bindings that cannot be changed
 	private static readonly List<KeyCode> defaults = new List<KeyCode>
 	{
+		KeyCode.None,
 		KeyCode.W,
 		KeyCode.S,
 		KeyCode.Mouse0,
@@ -22,6 +23,7 @@ public class KeyboardInputHandler : ICustomInputType
 		KeyCode.Alpha7,
 		KeyCode.Alpha8,
 		KeyCode.Space,
+		KeyCode.E
 	};
 	//set of key bindings that can be changed
 	private List<KeyCode> bindings = new List<KeyCode>();

@@ -10,9 +10,10 @@ public static class InputHandler
 
 	public enum InputAction
 	{
+		None,
 		Go, Launch, Shoot, Boost, Pause,
 		HotbarSwitch, Slot1, Slot2, Slot3, Slot4, Slot5, Slot6, Slot7, Slot8,
-		ScrollDialogue
+		ScrollDialogue, Interact
 	}
 
 	//current input mode
@@ -29,6 +30,9 @@ public static class InputHandler
 	private static void CheckForModeUpdate()
 	{
 		InputMode prevMode = _mode;
+
+		//check current mode if input detected
+		if (GetHandler().ProcessInputs()) return;
 
 		//check if keyboard/mouse input detected
 		if (keyLayout.ProcessInputs())

@@ -34,9 +34,14 @@ public class InputIconTextMesh : MonoBehaviour
 	{
 		textMesh = textMesh ?? GetComponent<TextMeshProUGUI>();
 		string s = ReformatText(text);
+		textMesh.text = s;
 		textMesh.gameObject.SetActive(false);
-		textMesh.SetText(s);
 		textMesh.gameObject.SetActive(true);
+	}
+
+	public string GetText()
+	{
+		return text;
 	}
 
 	public void SetText(string s)

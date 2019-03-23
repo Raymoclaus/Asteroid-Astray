@@ -221,7 +221,12 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 		//reset acceleration
 		accel = Vector2.zero;
 		//get movement input
-		accel.y += Mathf.Clamp01(InputHandler.GetInput(InputHandler.InputAction.Go)) * EngineStrength * speedMultiplier;
+		float input = Mathf.Clamp01(InputHandler.GetInput(InputHandler.InputAction.Go));
+		if (IsDrilling)
+		{
+			input = Mathf.Clamp01(input + InputHandler.GetInput(InputHandler.InputAction.Launch));
+		}
+		accel.y += input * EngineStrength * speedMultiplier;
 
 		if (trackerSO.autoPilot)
 		{
