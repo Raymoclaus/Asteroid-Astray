@@ -45,7 +45,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	private int collisionDustMultiplier = 3;
 	private bool launched = false;
 	[SerializeField] private float launchDuration = 1.5f;
-	private Entity launcher;
+	private Character launcher;
 	private LaunchTrailController launchTrail;
 	private ContactPoint2D[] contacts = new ContactPoint2D[1];
 	[SerializeField] private List<Loot> loot;
@@ -405,7 +405,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		}
 	}
 
-	public void Launch(Vector2 launchDirection, Entity launcher)
+	public void Launch(Vector2 launchDirection, Character launcher)
 	{
 		this.launcher = launcher;
 		rb.velocity = launchDirection;

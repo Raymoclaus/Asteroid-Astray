@@ -11,7 +11,7 @@ public class CameraCtrl : MonoBehaviour
 	private Transform targetToFollow;
 	private Transform panView;
 	public float panRange = 5f;
-	public Entity followTarget;
+	public Character followTarget;
 	public float minCamSize = 1.7f;
 	public ShakeEffect camShake;
 
@@ -73,7 +73,7 @@ public class CameraCtrl : MonoBehaviour
 		else
 		{
 			//if follow target does not exist, find one
-			followTarget = FindObjectOfType<Entity>();
+			followTarget = FindObjectOfType<Character>();
 			if (followTarget != null)
 			{
 				targetToFollow = followTarget.transform;

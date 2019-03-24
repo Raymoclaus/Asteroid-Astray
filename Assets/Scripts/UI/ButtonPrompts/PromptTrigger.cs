@@ -1,6 +1,4 @@
-﻿using UnityEngine.UI;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class PromptTrigger : MonoBehaviour
 {
@@ -34,7 +32,7 @@ public class PromptTrigger : MonoBehaviour
 
 	protected virtual void ExitTrigger()
 	{
-		promptUI?.DeactivatePrompt(fadeOutTime);
+		promptUI?.DeactivatePrompt(text, fadeOutTime);
 	}
 
 	protected bool IsTriggerActive()

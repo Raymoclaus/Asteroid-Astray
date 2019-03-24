@@ -1,6 +1,81 @@
-﻿public class Character : Entity
+﻿using UnityEngine;
+
+public class Character : Entity
 {
 	private static QuestPopupUI questPopupUI;
+
+	#region Drill-related
+	protected bool canDrill, canDrillLaunch;
+	protected DrillBit drill;
+	public bool IsDrilling { get { return drill == null ? false : drill.IsDrilling; } }
+
+	public DrillBit GetDrill()
+	{
+		return canDrill ? drill : null;
+	}
+
+	public void SetDrill(DrillBit newDrill)
+	{
+		canDrill = newDrill != null;
+		drill = newDrill;
+	}
+
+	public void AttachDrill(DrillBit db)
+	{
+		drill = db;
+	}
+
+	public virtual bool CanDrillLaunch() => false;
+	public virtual bool CanDrill() => false;
+
+	public virtual float GetLaunchDamage()
+	{
+		return 0f;
+	}
+
+	public virtual Vector2 LaunchDirection(Transform launchableObject)
+	{
+		return Vector2.zero;
+	}
+
+	public virtual bool ShouldLaunch()
+	{
+		return false;
+	}
+
+	//This should be overridden. Called by a drill to alert the entity that the drilling has completed
+	public virtual void DrillComplete()
+	{
+
+	}
+
+	//some entities might want to avoid drilling other entities by accident, override to verify target
+	public virtual bool VerifyDrillTarget(Entity target)
+	{
+		return true;
+	}
+
+	//This should be overridden. Called by a drill to determine how much damage it should deal to its target.
+	public virtual float DrillDamageQuery(bool firstHit)
+	{
+		return 1f;
+	}
+
+	public virtual float MaxDrillDamage()
+	{
+		return 1f;
+	}
+
+	public virtual void StoppedDrilling()
+	{
+
+	}
+	#endregion Drill-related
+
+	public override ICombat GetICombat()
+	{
+		return null;
+	}
 
 	public virtual void ReceiveItemReward(Item.Type type, int amount)
 	{
@@ -67,5 +142,10 @@
 				break;
 		}
 		return false;
+	}
+
+	public void Teleport(Vector2 position)
+	{
+		transform.position = position;
 	}
 }

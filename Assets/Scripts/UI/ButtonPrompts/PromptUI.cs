@@ -27,8 +27,9 @@ public class PromptUI : MonoBehaviour
 		StartCoroutine(TimedPrompt(text, fadeInDuration, fadeOutDuration, totalDuration));
 	}
 
-	public void DeactivatePrompt(float fadeOutDuration = 0f)
+	public void DeactivatePrompt(string text, float fadeOutDuration = 0f)
 	{
+		if (text != prompt.GetText()) return;
 		StartCoroutine(Fade(false, fadeOutDuration));
 	}
 

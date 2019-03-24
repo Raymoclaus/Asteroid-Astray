@@ -1,5 +1,13 @@
 ﻿using UnityEngine;
 
+public enum InputAction
+{
+	None,
+	Go, DrillLaunch, Shoot, Boost, Pause,
+	HotbarSwitch, Slot1, Slot2, Slot3, Slot4, Slot5, Slot6, Slot7, Slot8,
+	ScrollDialogue, Interact
+}
+
 public static class InputHandler
 {
 	//possible input modes
@@ -8,12 +16,23 @@ public static class InputHandler
 		Keyboard, Ps4
 	}
 
-	public enum InputAction
+	public static string GetActionString(InputAction action)
 	{
-		None,
-		Go, Launch, Shoot, Boost, Pause,
-		HotbarSwitch, Slot1, Slot2, Slot3, Slot4, Slot5, Slot6, Slot7, Slot8,
-		ScrollDialogue, Interact
+		switch(action)
+		{
+			default: return action.ToString();
+			case InputAction.DrillLaunch: return "Drill Launch";
+			case InputAction.HotbarSwitch: return "Hotbar Switch";
+			case InputAction.Slot1: return "Slot 1";
+			case InputAction.Slot2: return "Slot 2";
+			case InputAction.Slot3: return "Slot 3";
+			case InputAction.Slot4: return "Slot 4";
+			case InputAction.Slot5: return "Slot 5";
+			case InputAction.Slot6: return "Slot 6";
+			case InputAction.Slot7: return "Slot 7";
+			case InputAction.Slot8: return "Slot 8";
+			case InputAction.ScrollDialogue: return "Scroll Dialogue";
+		}
 	}
 
 	//current input mode

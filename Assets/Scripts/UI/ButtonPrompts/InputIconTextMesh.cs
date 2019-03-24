@@ -54,12 +54,13 @@ public class InputIconTextMesh : MonoBehaviour
 	{
 		string s = input;
 
-		InputHandler.InputAction[] actions =
-			(InputHandler.InputAction[])System.Enum.GetValues(typeof(InputHandler.InputAction));
+		InputAction[] actions =
+			(InputAction[])System.Enum.GetValues(typeof(InputAction));
 		for (int i = 0; i < actions.Length; i++)
 		{
-			InputHandler.InputAction action = actions[i];
-			string check = $"[{actions[i].ToString()}]";
+			InputAction action = actions[i];
+			string actionString = InputHandler.GetActionString(actions[i]);
+			string check = $"[{actionString}]";
 			if (s.Contains(check))
 			{
 				InputIconSO iconSet = GetIconSet();
@@ -68,12 +69,11 @@ public class InputIconTextMesh : MonoBehaviour
 				TMP_SpriteAsset tmpSpriteAsset = GetSpriteAsset(actions[i]);
 				tmpSpriteAsset.spriteSheet = iconSet.GetSprite(kc).texture;
 				tmpSpriteAsset.material.mainTexture = tmpSpriteAsset.spriteSheet;
-				string actionString = actions[i].ToString();
 				s = s.Replace(check, $"<sprite=\"{tmpSpriteAsset.name}\" index=0>" +
 					$" <color=#00FFFF>{actionString}</color>");
 			}
 
-			check = $"[{actions[i].ToString()}:]";
+			check = $"[{actionString}:]";
 			if (s.Contains(check))
 			{
 				InputIconSO iconSet = GetIconSet();
@@ -82,15 +82,20 @@ public class InputIconTextMesh : MonoBehaviour
 				TMP_SpriteAsset tmpSpriteAsset = GetSpriteAsset(actions[i]);
 				tmpSpriteAsset.spriteSheet = iconSet.GetSprite(kc).texture;
 				tmpSpriteAsset.material.mainTexture = tmpSpriteAsset.spriteSheet;
-				string actionString = actions[i].ToString();
 				s = s.Replace(check, $"<sprite=\"{tmpSpriteAsset.name}\" index=0>");
+			}
+
+			check = $"[:{actionString}]";
+			if (s.Contains(check))
+			{
+				s = s.Replace(check, $"<color=#00FFFF>{actionString}</color>");
 			}
 		}
 
 		return s;
 	}
 
-	private TMP_SpriteAsset GetSpriteAsset(InputHandler.InputAction action)
+	private TMP_SpriteAsset GetSpriteAsset(InputAction action)
 	{
 		for (int i = 0; i < spriteAssetActions.Count; i++)
 		{
@@ -99,7 +104,8 @@ public class InputIconTextMesh : MonoBehaviour
 				return spriteAssetActions[i].tmpSpriteAsset;
 			}
 		}
-		TMP_SpriteAsset newAsset = Resources.Load<TMP_SpriteAsset>($"Sprite Assets/{action}{spriteAssetString}");
+		TMP_SpriteAsset newAsset = Resources.Load<TMP_SpriteAsset>(
+			$"Sprite Assets/{InputHandler.GetActionString(action)}{spriteAssetString}");
 		spriteAssetActions.Add(new SpriteAssetInputActionPair(newAsset, action));
 		return newAsset;
 	}
@@ -118,9 +124,9 @@ public class InputIconTextMesh : MonoBehaviour
 	private struct SpriteAssetInputActionPair
 	{
 		public TMP_SpriteAsset tmpSpriteAsset;
-		public InputHandler.InputAction action;
+		public InputAction action;
 
-		public SpriteAssetInputActionPair(TMP_SpriteAsset tmpSpriteAsset, InputHandler.InputAction action)
+		public SpriteAssetInputActionPair(TMP_SpriteAsset tmpSpriteAsset, InputAction action)
 		{
 			this.tmpSpriteAsset = tmpSpriteAsset;
 			this.action = action;

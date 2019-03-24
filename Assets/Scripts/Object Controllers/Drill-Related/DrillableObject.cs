@@ -8,7 +8,7 @@ public interface IDrillableObject
 	void StopDrilling(DrillBit db);
 	void OnTriggerEnter2D(Collider2D other);
 	void OnTriggerExit2D(Collider2D other);
-	void Launch(Vector2 launchDirection, Entity launcher);
+	void Launch(Vector2 launchDirection, Character launcher);
 	bool IsDrillable();
 	bool CanBeLaunched();
 	List<DrillBit> GetDrillers();

@@ -40,11 +40,6 @@ public class WaypointQReq : QuestRequirement
 		return description;
 	}
 
-	public override bool IsComplete()
-	{
-		return base.IsComplete();
-	}
-
 	public override Vector3? TargetLocation()
 	{
 		return targetToReach != null ? targetToReach.position : location;

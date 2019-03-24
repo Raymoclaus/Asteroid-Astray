@@ -28,7 +28,7 @@ public class Pause : MonoBehaviour
 	{
 		timeSinceOpen += Time.deltaTime;
 
-		if (InputHandler.GetInputDown(InputHandler.InputAction.Pause) > 0f && !isShifting && canPause)
+		if (InputHandler.GetInputDown(InputAction.Pause) > 0f && !isShifting && canPause)
 		{
 			if (IsPaused)
 			{

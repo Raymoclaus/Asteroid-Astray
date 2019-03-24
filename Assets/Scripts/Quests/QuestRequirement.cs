@@ -20,7 +20,7 @@ public abstract class QuestRequirement
 
 	public virtual string GetDescription() => NO_DESCRIPTION;
 
-	public virtual bool IsComplete() => completed;
+	public bool IsComplete() => completed;
 
 	public virtual Vector3? TargetLocation() => null;
 

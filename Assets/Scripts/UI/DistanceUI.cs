@@ -5,6 +5,7 @@ using System.Collections;
 
 public class DistanceUI : MonoBehaviour
 {
+	public const float UNITS_TO_METRES = 3f;
 	public const int maxRange = 10000;
 	private List<string> distStrings = new List<string>(maxRange + 1);
 	private const string unit = "m";
@@ -28,7 +29,7 @@ public class DistanceUI : MonoBehaviour
 	private void UpdateText()
 	{
 		if (!shuttleTrackerSO) return;
-		int currentDist = (int)(shuttleTrackerSO.GetDistanceToWaypoint() * 3f);
+		int currentDist = (int)(shuttleTrackerSO.GetDistanceToWaypoint() * UNITS_TO_METRES);
 		if (dist != currentDist)
 		{
 			dist = currentDist;

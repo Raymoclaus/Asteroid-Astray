@@ -4,13 +4,22 @@ using UnityEngine;
 
 public class InteractablePromptTrigger : PromptTrigger
 {
-	[SerializeField] protected InputHandler.InputAction action = InputHandler.InputAction.Interact;
+	[SerializeField] protected InputAction action = InputAction.Interact;
+
+	public delegate void InteractionEventHandler();
+	public event InteractionEventHandler OnInteraction;
+	public void Interaction() => OnInteraction?.Invoke();
+
+	private void Awake()
+	{
+		OnInteraction += OnInteracted;
+	}
 
 	protected virtual void Update()
 	{
 		if (IsTriggerActive() && InputHandler.GetInputDown(action) > 0f)
 		{
-			OnInteracted();
+			Interaction();
 		}
 	}
 

@@ -88,8 +88,6 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 	[SerializeField] private Transform defaultWaypointTarget;
 
 	#region Boost
-	//whether boost capability is available
-	[SerializeField] private readonly bool boostAvailable = true;
 	//how long a boost can last
 	[SerializeField] private float boostCapacity = 1f;
 	//represents how much boost is currently available
@@ -131,6 +129,7 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 		base.Awake();
 		shipStorage = shipStorage ?? FindObjectOfType<ShipInventory>();
 		cameraCtrl = cameraCtrl ?? Camera.main.GetComponent<CameraCtrl>();
+		trackerSO.ResetDefaults();
 		trackerSO.SetDefaultWaypointTarget(defaultWaypointTarget);
 		if (cameraCtrl) cameraCtrl.followTarget = this;
 	}
@@ -161,7 +160,7 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 		if (!trackerSO.hasControl) return;
 
 		//Check if the player is attempting to boost
-		if (!trackerSO.autoPilot) Boost(InputHandler.GetInput(InputHandler.InputAction.Boost) > 0f);
+		if (!trackerSO.autoPilot) Boost(InputHandler.GetInput(InputAction.Boost) > 0f);
 		//used for artificially adjusting speed, used by the auto pilot only
 		float speedMod = 1f;
 		//update rotation variable with transform's current rotation
@@ -221,16 +220,22 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 		//reset acceleration
 		accel = Vector2.zero;
 		//get movement input
-		float input = Mathf.Clamp01(InputHandler.GetInput(InputHandler.InputAction.Go));
-		if (IsDrilling)
-		{
-			input = Mathf.Clamp01(input + InputHandler.GetInput(InputHandler.InputAction.Launch));
-		}
-		accel.y += input * EngineStrength * speedMultiplier;
-
 		if (trackerSO.autoPilot)
 		{
 			accel = Vector2.up * EngineStrength * speedMultiplier;
+		}
+		else
+		{
+			float input = Mathf.Clamp01(InputHandler.GetInput(InputAction.Go));
+			if (input > 0f)
+			{
+				trackerSO.GoInput();
+			}
+			if (IsDrilling)
+			{
+				input = Mathf.Clamp01(input + InputHandler.GetInput(InputAction.DrillLaunch));
+			}
+			accel.y += input * EngineStrength * speedMultiplier;
 		}
 		float magnitude = accel.magnitude;
 
@@ -398,17 +403,17 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 
 	private void GetItemUsageInput()
 	{
-		CheckItemUsage(InputHandler.InputAction.Slot1, 0);
-		CheckItemUsage(InputHandler.InputAction.Slot2, 1);
-		CheckItemUsage(InputHandler.InputAction.Slot3, 2);
-		CheckItemUsage(InputHandler.InputAction.Slot4, 3);
-		CheckItemUsage(InputHandler.InputAction.Slot5, 4);
-		CheckItemUsage(InputHandler.InputAction.Slot6, 5);
-		CheckItemUsage(InputHandler.InputAction.Slot7, 6);
-		CheckItemUsage(InputHandler.InputAction.Slot8, 7);
+		CheckItemUsage(InputAction.Slot1, 0);
+		CheckItemUsage(InputAction.Slot2, 1);
+		CheckItemUsage(InputAction.Slot3, 2);
+		CheckItemUsage(InputAction.Slot4, 3);
+		CheckItemUsage(InputAction.Slot5, 4);
+		CheckItemUsage(InputAction.Slot6, 5);
+		CheckItemUsage(InputAction.Slot7, 6);
+		CheckItemUsage(InputAction.Slot8, 7);
 	}
 
-	private void CheckItemUsage(InputHandler.InputAction action, int i)
+	private void CheckItemUsage(InputAction action, int i)
 	{
 		if (InputHandler.GetInputDown(action) <= 0f) return;
 
@@ -426,46 +431,48 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 
 	public override float DrillDamageQuery(bool firstHit)
 	{
-		if (InputHandler.GetInputUp(InputHandler.InputAction.Launch) > 0f || !trackerSO.hasControl)
+		if (InputHandler.GetInputUp(InputAction.DrillLaunch) > 0f || !trackerSO.hasControl)
 		{
-			if (cameraCtrl)
-			{
-				cameraCtrl.SetConstantSize(false);
-				cameraCtrl.SetLookAheadDistance(false);
-			}
+			cameraCtrl?.SetConstantSize(false);
+			cameraCtrl?.SetLookAheadDistance(false);
 			return 0f;
 		}
 
-		if (InputHandler.GetInput(InputHandler.InputAction.Launch) > 0f)
+		if (InputHandler.GetInput(InputAction.DrillLaunch) > 0f)
 		{
 			GameObject launchCone = drillLaunchArcSprite.gameObject;
 			launchCone.SetActive(true);
 			launchCone.transform.position = ((Entity)(drill.drillTarget)).transform.position;
 			launchCone.transform.eulerAngles = Vector3.forward * transform.eulerAngles.z;
+
 			drillLaunchArcSprite.material.SetFloat("_ArcAngle", drillLaunchMaxAngle);
+
 			Transform arrow = launchCone.transform.GetChild(0);
 			Vector2 launchDir = LaunchDirection(((Entity)(drill.drillTarget)).transform);
 			float angle = Vector2.SignedAngle(Vector2.up, launchDir);
 			arrow.eulerAngles = Vector3.forward * angle;
 			arrow.position = ((Entity)(drill.drillTarget)).transform.position;
-			if (cameraCtrl)
-			{
-				cameraCtrl.SetConstantSize(true, launchZoomOutSize);
-				cameraCtrl.SetLookAheadDistance(true, launchLookAheadDistance);
-			}
+
+			cameraCtrl?.SetConstantSize(true, launchZoomOutSize);
+			cameraCtrl?.SetLookAheadDistance(true, launchLookAheadDistance);
 		}
 		else
 		{
 			DrillLaunchArcDisable();
 		}
 
+		float calculation = velocity.magnitude * drillDamageMultiplier;
 		if (firstHit && velocity.magnitude >= SpeedLimit + 0.5f)
 		{
-			return velocity.magnitude * 50f * drillDamageMultiplier;
+			return calculation * 50f;
+		}
+		else if (InputHandler.GetInput(InputAction.Go) > 0f)
+		{
+			return calculation;
 		}
 		else
 		{
-			return velocity.magnitude * drillDamageMultiplier;
+			return 0.001f;
 		}
 	}
 
@@ -488,11 +495,13 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 
 	public override bool ShouldLaunch()
 	{
-		return canDrillLaunch
-			&& velocity.sqrMagnitude >= Mathf.Pow(SpeedLimit * DrillBoost, 2f) * 0.9f
-			&& InputHandler.GetInputUp(InputHandler.InputAction.Launch) > 0f
+		return CanDrillLaunch()
+			&& InputHandler.GetInputUp(InputAction.DrillLaunch) > 0f
 			&& trackerSO.hasControl;
 	}
+
+	public override bool CanDrill() => true;
+	public override bool CanDrillLaunch() => true;
 
 	public void Stun()
 	{
@@ -563,9 +572,7 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 	public bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer, int dropModifier = 0, bool flash = true)
 	{
 		if (destroyer == this || isInvulnerable) return false;
-		
 		cRGroup?.Flash(0.5f, Color.red);
-
 		return true;
 	}
 
@@ -576,7 +583,7 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 
 	private void Boost(bool input)
 	{
-		if (boostAvailable && input && boostLevel < boostCapacity && !Pause.IsStopped)
+		if (trackerSO.canBoost && input && boostLevel < boostCapacity && !Pause.IsStopped)
 		{
 			if (!isBoosting)
 			{
@@ -591,7 +598,7 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 					Vector3 effectRotation = effect.eulerAngles;
 					effectRotation += transform.eulerAngles;
 					effect.eulerAngles = effectRotation;
-					screenRippleSO.StartRipple(this, distortionLevel: 0.01f);
+					screenRippleSO.StartRipple(this, distortionLevel: 0.02f);
 					isInvulnerable = true;
 					pause = pause ?? FindObjectOfType<Pause>();
 					pause.DelayedAction(() => isInvulnerable = false, boostInvulnerabilityTime, true);
@@ -656,14 +663,14 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 
 	public override bool CanFireLaser()
 	{
-		return laserAttached && !isBoosting && InputHandler.GetInput(InputHandler.InputAction.Shoot) > 0f
-			&& !Pause.IsStopped && trackerSO.hasControl;
+		return laserAttached && !isBoosting && InputHandler.GetInput(InputAction.Shoot) > 0f
+			&& !Pause.IsStopped && trackerSO.hasControl && trackerSO.canShoot;
 	}
 
 	public override bool CanFireStraightWeapon()
 	{
-		return straightWeaponAttached && !isBoosting && InputHandler.GetInput(InputHandler.InputAction.Shoot) > 0f
-			&& !Pause.IsStopped && trackerSO.hasControl;
+		return straightWeaponAttached && !isBoosting && InputHandler.GetInput(InputAction.Shoot) > 0f
+			&& !Pause.IsStopped && trackerSO.hasControl && trackerSO.canShoot;
 	}
 
 	public override GameObject GetLaunchImpactAnimation()
@@ -701,7 +708,10 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 
 	public override void Launching()
 	{
+		trackerSO.LaunchInput();
 		DrillLaunchArcDisable();
+		cameraCtrl?.SetConstantSize(false);
+		cameraCtrl?.SetLookAheadDistance(false);
 	}
 
 	public override float GetLaunchDamage()
@@ -739,7 +749,7 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 			return;
 		}
 
-		trackerSO.position = transform.position;
+		trackerSO.SetPosition(transform.position);
 		trackerSO.rotation = transform.eulerAngles;
 		trackerSO.velocity = velocity;
 		trackerSO.lastLookDirection = lastLookDirection;

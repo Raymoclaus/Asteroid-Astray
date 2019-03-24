@@ -83,7 +83,7 @@ public class KeyboardInputHandler : ICustomInputType
 		return true;
 	}
 
-	public void ChangeKeyBinding(InputHandler.InputAction key, KeyCode newVal)
+	public void ChangeKeyBinding(InputAction key, KeyCode newVal)
 	{
 		int index = (int)key;
 		if (index < 0 || index >= bindings.Count)
@@ -104,22 +104,22 @@ public class KeyboardInputHandler : ICustomInputType
 		return defaults;
 	}
 
-	public float GetInput(InputHandler.InputAction key)
+	public float GetInput(InputAction key)
 	{
 		return Input.GetKey(GetBinding(key)) ? 1f : 0f;
 	}
 
-	public float GetInputDown(InputHandler.InputAction key)
+	public float GetInputDown(InputAction key)
 	{
 		return Input.GetKeyDown(GetBinding(key)) ? 1f : 0f;
 	}
 
-	public float GetInputUp(InputHandler.InputAction key)
+	public float GetInputUp(InputAction key)
 	{
 		return Input.GetKeyUp(GetBinding(key)) ? 1f : 0f;
 	}
 
-	public KeyCode GetBinding(InputHandler.InputAction key)
+	public KeyCode GetBinding(InputAction key)
 	{
 		int index = (int)key;
 		if (index < 0 || index >= bindings.Count)

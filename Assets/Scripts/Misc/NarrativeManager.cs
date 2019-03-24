@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -12,8 +13,7 @@ public class NarrativeManager : MonoBehaviour
 	[SerializeField] private CustomScreenEffect screenEffects;
 	[SerializeField] private ShuttleTrackers shuttleTrackerSO;
 	[SerializeField] private Character mainChar;
-	[SerializeField] private Transform mainShip;
-
+	[SerializeField] private MainHatchPrompt mainShip;
 
 	[SerializeField] private ConversationEvent
 		recoveryDialogue,
@@ -30,8 +30,11 @@ public class NarrativeManager : MonoBehaviour
 
 	private void Start()
 	{
+		ChooseStartingLocation();
+
 		shuttleTrackerSO.SetControllable(false);
 		shuttleTrackerSO.SetKinematic(true);
+		mainShip.Lock(true);
 		loadingController.AddPostLoadAction(() =>
 		{
 			shuttleTrackerSO.SetControllable(true);
@@ -167,7 +170,7 @@ public class NarrativeManager : MonoBehaviour
 		List<QuestReward> qRewards = new List<QuestReward>();
 
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-		qReqs.Add(new WaypointQReq(mainShip, "Return to the ship."));
+		qReqs.Add(new InteractionQReq(mainShip, "Return to the ship."));
 
 		Quest q = new Quest(
 			"Find your way back to the ship",
@@ -182,7 +185,7 @@ public class NarrativeManager : MonoBehaviour
 		UnityEngine.Events.UnityAction action = () => 
 		shuttleTrackerSO.SetWaypoint(
 			EntityGenerator.FindNearestOfEntityType(
-				EntityType.BotHive, shuttleTrackerSO.position).transform,
+				EntityType.BotHive, shuttleTrackerSO.GetPosition()).transform,
 			null);
 		if (foundShipDialogue.conversation.Length > 12)
 		{
@@ -227,5 +230,15 @@ public class NarrativeManager : MonoBehaviour
 		{
 			dialogueController.StartDialogue(ce);
 		}
+	}
+
+	private void ChooseStartingLocation()
+	{
+		Vector2 pos = mainShip.transform.position;
+		float randomAngle = UnityEngine.Random.value * Mathf.PI * 2f;
+		Vector2 randomPos = new Vector2(Mathf.Sin(randomAngle),	Mathf.Cos(randomAngle));
+		float div = DistanceUI.UNITS_TO_METRES;
+		randomPos *= UnityEngine.Random.value * 100f / div + 300f / div;
+		mainChar.Teleport(pos + randomPos);
 	}
 }

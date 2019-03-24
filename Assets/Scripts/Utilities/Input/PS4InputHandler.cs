@@ -85,7 +85,7 @@ public class Ps4InputHandler : ICustomInputType
 		return false;
 	}
 
-	public void ChangeKeyBinding(InputHandler.InputAction key, KeyCode newVal)
+	public void ChangeKeyBinding(InputAction key, KeyCode newVal)
 	{
 		int index = (int)key;
 		if (index < 0 || index >= bindings.Count)
@@ -106,7 +106,7 @@ public class Ps4InputHandler : ICustomInputType
 		return defaults;
 	}
 
-	public float GetInput(InputHandler.InputAction key)
+	public float GetInput(InputAction key)
 	{
 		KeyCode kc = GetBinding(key);
 		return GetInputValue(kc);		
@@ -124,19 +124,19 @@ public class Ps4InputHandler : ICustomInputType
 		}
 	}
 
-	public float GetInputDown(InputHandler.InputAction key)
+	public float GetInputDown(InputAction key)
 	{
 		KeyCode kc = GetBinding(key);
 		return Input.GetKeyDown(kc) ? 1f : 0f;
 	}
 
-	public float GetInputUp(InputHandler.InputAction key)
+	public float GetInputUp(InputAction key)
 	{
 		KeyCode kc = GetBinding(key);
 		return Input.GetKeyUp(kc) ? 1f : 0f;
 	}
 
-	public KeyCode GetBinding(InputHandler.InputAction key)
+	public KeyCode GetBinding(InputAction key)
 	{
 		int index = (int)key;
 		if (index < 0 || index >= bindings.Count)

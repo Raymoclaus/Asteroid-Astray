@@ -28,16 +28,10 @@ public class Entity : MonoBehaviour
 	private float disableTime;
 	protected bool needsInit = true;
 	protected bool initialised = false;
-	public bool canDoCombat = false;
 
 	//related layers
 	private static bool layersSet;
 	protected static int layerDrill, layerProjectile, layerSolid;
-
-	//drill related
-	public bool canDrill, canDrillLaunch;
-	protected DrillBit drill;
-	public bool IsDrilling { get { return drill == null ? false : drill.IsDrilling; } }
 
 	//components to disable/enable
 	public List<MonoBehaviour> ScriptComponents;
@@ -205,6 +199,11 @@ public class Entity : MonoBehaviour
 		return true;
 	}
 
+	public virtual ICombat GetICombat()
+	{
+		return null;
+	}
+
 	public virtual void CollectResources(Item.Type type, int amount)
 	{
 
@@ -238,38 +237,6 @@ public class Entity : MonoBehaviour
 		return string.Format("{0} at coordinates {1}.", GetEntityType(), _coords);
 	}
 
-	public DrillBit GetDrill()
-	{
-		return canDrill ? drill : null;
-	}
-
-	public void SetDrill(DrillBit newDrill)
-	{
-		canDrill = newDrill != null;
-		drill = newDrill;
-	}
-
-	public void AttachDrill(DrillBit db)
-	{
-		drill = db;
-	}
-
-	//This should be overridden. Called by a drill to determine how much damage it should deal to its target.
-	public virtual float DrillDamageQuery(bool firstHit)
-	{
-		return 1f;
-	}
-
-	public virtual float MaxDrillDamage()
-	{
-		return 1f;
-	}
-
-	public virtual void StoppedDrilling()
-	{
-
-	}
-
 	public virtual LaunchTrailController GetLaunchTrailAnimation()
 	{
 		return null;
@@ -278,18 +245,6 @@ public class Entity : MonoBehaviour
 	public virtual GameObject GetLaunchImpactAnimation()
 	{
 		return null;
-	}
-
-	//This should be overridden. Called by a drill to alert the entity that the drilling has completed
-	public virtual void DrillComplete()
-	{
-
-	}
-
-	//some entities might want to avoid drilling other entities by accident, override to verify target
-	public virtual bool VerifyDrillTarget(Entity target)
-	{
-		return true;
 	}
 
 	public virtual void PhysicsReEnabled()
@@ -313,6 +268,16 @@ public class Entity : MonoBehaviour
 		return new Scan(GetEntityType(), 1f, 1);
 	}
 
+	public virtual void DestroyedAnEntity(Entity target)
+	{
+
+	}
+
+	public virtual void Launching()
+	{
+
+	}
+
 	public virtual bool CanFireLaser()
 	{
 		return false;
@@ -321,36 +286,6 @@ public class Entity : MonoBehaviour
 	public virtual bool CanFireStraightWeapon()
 	{
 		return false;
-	}
-
-	public virtual void DestroyedAnEntity(Entity target)
-	{
-
-	}
-
-	public virtual bool ShouldLaunch()
-	{
-		return false;
-	}
-
-	public virtual Vector2 LaunchDirection(Transform launchableObject)
-	{
-		return Vector2.zero;
-	}
-
-	public virtual void Launching()
-	{
-
-	}
-
-	public virtual float GetLaunchDamage()
-	{
-		return 0f;
-	}
-
-	public virtual ICombat GetICombat()
-	{
-		return null;
 	}
 
 	public virtual void AttachLaser(bool attach)

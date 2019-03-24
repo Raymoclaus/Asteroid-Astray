@@ -490,7 +490,7 @@ public class BotHive : Character, IDrillableObject, IDamageable, ICombat
 		return EntityType.BotHive;
 	}
 
-	public void Launch(Vector2 launchDirection, Entity launcher)
+	public void Launch(Vector2 launchDirection, Character launcher)
 	{
 
 	}

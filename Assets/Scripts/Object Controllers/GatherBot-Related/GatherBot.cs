@@ -119,7 +119,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 	private float stunTimer = 0f;
 	private bool launched = false;
 	private float launchedDuration = 1f;
-	private Entity launcher;
+	private Character launcher;
 	private LaunchTrailController launchTrail;
 	public float drillDamageResistance = 2f;
 	[SerializeField] private ExpandingCircle forcePulseWave;
@@ -1094,6 +1094,9 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 		RemoveDriller(db);
 	}
 
+	public override bool CanDrill() => true;
+	public override bool CanDrillLaunch() => true;
+
 	public void OnTriggerEnter2D(Collider2D other)
 	{
 		int otherLayer = other.gameObject.layer;
@@ -1384,7 +1387,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 		}
 	}
 
-	public void Launch(Vector2 launchDirection, Entity launcher)
+	public void Launch(Vector2 launchDirection, Character launcher)
 	{
 		this.launcher = launcher;
 		rb.velocity = launchDirection;

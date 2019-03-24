@@ -43,11 +43,6 @@ public class CraftingQReq : QuestRequirement
 		return string.Format(formattedDescription, description, currentAmount, amountNeeded);
 	}
 
-	public override bool IsComplete()
-	{
-		return base.IsComplete();
-	}
-
 	public override Vector3? TargetLocation()
 	{
 		return null;

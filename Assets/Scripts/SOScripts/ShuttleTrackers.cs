@@ -3,8 +3,10 @@
 [CreateAssetMenu(menuName = "Scriptable Objects/ShuttleTracker")]
 public class ShuttleTrackers : ScriptableObject
 {
-	[HideInInspector] public Vector3 position, rotation;
+	private Vector3 position;
+	[HideInInspector] public Vector3 rotation;
 	[HideInInspector] public Vector2 velocity;
+	public bool canBoost = true, canDrill = true, canLaunch = true, canShoot = true;
 	[HideInInspector] public float lastLookDirection, boostRemaining;
 	public float drillLaunchMaxAngle = 60f, drillLaunchSpeed = 10f, launchDamage = 500f;
 	[HideInInspector] public int storageCount;
@@ -16,6 +18,24 @@ public class ShuttleTrackers : ScriptableObject
 	private Transform defaultWaypointTarget;
 	private Transform waypointTarget;
 	private Vector3? waypointLocation;
+
+	private float timeLastMoved, timeLastGoInput;
+
+	public void ResetDefaults()
+	{
+		autoPilot = false;
+		timeLastMoved = 0f;
+		timeLastGoInput = 0f;
+	}
+
+	public void SetPosition(Vector3 position)
+	{
+		if (this.position == position) return;
+		this.position = position;
+		timeLastMoved = Time.timeSinceLevelLoad;
+	}
+
+	public Vector3 GetPosition() => position;
 
 	public void ToggleAutoPilot()
 	{
@@ -77,4 +97,18 @@ public class ShuttleTrackers : ScriptableObject
 		if (dist < 2f) GameEvents.WaypointReached(waypointLocation);
 		return dist;
 	}
+
+	public float GetTimeSinceMoved() => Time.timeSinceLevelLoad - timeLastMoved;
+
+	public delegate void GoInputEventHandler();
+	public event GoInputEventHandler OnGoInput;
+	public void GoInput()
+	{
+		OnGoInput?.Invoke();
+		timeLastGoInput = Time.timeSinceLevelLoad;
+	}
+
+	public delegate void LaunchInputEventHandler();
+	public event LaunchInputEventHandler OnLaunchInput;
+	public void LaunchInput() => OnLaunchInput?.Invoke();
 }

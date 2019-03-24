@@ -37,7 +37,7 @@ public class DialogueController : MonoBehaviour
 			}
 		}
 
-		if (dialogueIsRunning && InputHandler.GetInputDown(InputHandler.InputAction.ScrollDialogue) > 0f)
+		if (dialogueIsRunning && InputHandler.GetInputDown(InputAction.ScrollDialogue) > 0f)
 		{
 			if (dialogueUI.IsTyping())
 			{
@@ -66,7 +66,7 @@ public class DialogueController : MonoBehaviour
 
 		if (chatIsRunning)
 		{
-			if (InputHandler.GetInputDown(InputHandler.InputAction.ScrollDialogue) > 0f)
+			if (InputHandler.GetInputDown(InputAction.ScrollDialogue) > 0f)
 			{
 				if (chatUI.IsTyping())
 				{
