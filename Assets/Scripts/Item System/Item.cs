@@ -26,7 +26,8 @@ public static class Item
 		RepairKit,
 		NioleriumCrystals,
 		NiolerDung,
-		StoneAmmo
+		StoneAmmo,
+		CureShotAmmo
 	}
 
 	public const int MAX_RARITY = 10;
@@ -59,6 +60,7 @@ public static class Item
 			case Type.NioleriumCrystals: return "Niolerium Crystals";
 			case Type.NiolerDung: return "Nioler Dung";
 			case Type.StoneAmmo: return "Stone Ammo";
+			case Type.CureShotAmmo: return "CureShot Ammo";
 
 			default: return "<Unnamed>";
 		}
@@ -91,7 +93,8 @@ public static class Item
 			case Type.RepairKit: return 3;
 			case Type.NioleriumCrystals: return 3;
 			case Type.NiolerDung: return 6;
-			case Type.StoneAmmo: return 1;
+			case Type.StoneAmmo: return 2;
+			case Type.CureShotAmmo: return 3;
 
 			default: return 1;
 		}
@@ -124,7 +127,8 @@ public static class Item
 			case Type.RepairKit: return 10;
 			case Type.NioleriumCrystals: return 30;
 			case Type.NiolerDung: return 30;
-			case Type.StoneAmmo: return 1000;
+			case Type.StoneAmmo: return 100;
+			case Type.CureShotAmmo: return 100;
 
 			default: return 100;
 		}
@@ -165,6 +169,8 @@ public static class Item
 			case Type.NiolerDung: return string.Empty;
 			case Type.StoneAmmo: return "A stone-based ammunition that is low-damage but is" +
 					" useful for penetrating shields.";
+			case Type.CureShotAmmo: return "Ammunition designed to inject nanobots into the" +
+					" target and repair mechanical systems.";
 
 			default: return string.Empty;
 		}
@@ -207,7 +213,15 @@ public static class Item
 			case Type.RepairKit: return string.Empty;
 			case Type.NioleriumCrystals: return string.Empty;
 			case Type.NiolerDung: return string.Empty;
-			case Type.StoneAmmo: return string.Empty;
+			case Type.StoneAmmo: return "Due to the special energy-piercing properties of the" +
+					" stone found in asteroids of Lost space, it doesn't take anyone long to" +
+					" figure out that it makes for useful ammo.";
+			case Type.CureShotAmmo: return "Originally designed as a joke and was often used as" +
+					" a form of disrespect by those capable of overpowering others with ease." +
+					" They would heal their prey to give a false sense of mercy before finishing" +
+					" them off. CureShot ammunition later saw some more practical use between" +
+					" squads, but hasn't seen much more use due to its difficulty to use in" +
+					" combat and has few other applications.";
 
 			default: return string.Empty;
 		}

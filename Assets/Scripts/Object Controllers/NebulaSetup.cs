@@ -64,7 +64,7 @@ public class NebulaSetup : Entity
 	private void Update()
 	{
 		//destroy self if a nebula already exists in current coordinates
-		if (EntityNetwork.ContainsType(GetEntityType(), _coords, this))
+		if (EntityNetwork.ContainsType(GetEntityType(), coords, this))
 		{
 			DestroySelf(null);
 		}
@@ -76,7 +76,7 @@ public class NebulaSetup : Entity
 		int size = Random.Range(minSystemSize, maxSystemSize + 1);
 		cluster = new List<NebulaSetup>(size);
 		List<ChunkCoords> filled = new List<ChunkCoords>(size);
-		ChunkCoords c = _coords;
+		ChunkCoords c = coords;
 		filled.Add(c);
 		int count = 1;
 		int failCount = 0;

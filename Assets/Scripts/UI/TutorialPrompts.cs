@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Collections.Generic;
 
 [RequireComponent(typeof(PromptUI))]
 public class TutorialPrompts : MonoBehaviour
@@ -7,8 +8,10 @@ public class TutorialPrompts : MonoBehaviour
 	[SerializeField] private ShuttleTrackers shuttleTracker;
 	[SerializeField] private Character mainChar;
 	
-	[SerializeField] private PromptInfo goInputPromptInfo;
-	[SerializeField] private PromptInfo launchInputPromptInfo;
+	public PromptInfo goInputPromptInfo;
+	public PromptInfo launchInputPromptInfo;
+
+	private List<PromptInfo> prompts = new List<PromptInfo>();
 
 	private void Awake()
 	{
@@ -16,28 +19,67 @@ public class TutorialPrompts : MonoBehaviour
 		ui = GetComponent<PromptUI>();
 		mainChar = mainChar ?? FindObjectOfType<Shuttle>();
 
-		shuttleTracker.OnGoInput += () => goInputPromptInfo.Deactivate(ui);
+		prompts.Add(goInputPromptInfo);
+		prompts.Add(launchInputPromptInfo);
+
+		IterateAll((PromptInfo pi) => pi.SetUI(ui));
+
+		SetUpGoInputPrompt();
+		SetUpLaunchInputPrompt();
+	}
+
+	private void SetUpGoInputPrompt()
+	{
+		goInputPromptInfo.SetListeners(() =>
+		{
+			shuttleTracker.OnGoInput += goInputPromptInfo.Deactivate;
+		}, () =>
+		{
+			shuttleTracker.OnGoInput -= goInputPromptInfo.Deactivate;
+		});
+
 		goInputPromptInfo.SetCondition(() =>
 		{
 			return !Pause.IsStopped && shuttleTracker.hasControl;
 		});
+	}
 
-		shuttleTracker.OnLaunchInput += () => launchInputPromptInfo.Deactivate(ui);
+	private void SetUpLaunchInputPrompt()
+	{
+		launchInputPromptInfo.SetListeners(() =>
+		{
+			shuttleTracker.OnLaunchInput += launchInputPromptInfo.Deactivate;
+		}, () =>
+		{
+			shuttleTracker.OnLaunchInput -= launchInputPromptInfo.Deactivate;
+		});
+
 		launchInputPromptInfo.SetCondition(() =>
 		{
-			return mainChar.IsDrilling && mainChar.CanDrillLaunch() && mainChar.ShouldLaunch();
+			return mainChar.IsDrilling && mainChar.CanDrillLaunch();
 		});
 	}
 
 	private void Update()
 	{
-		goInputPromptInfo.Check(ui);
-		launchInputPromptInfo.Check(ui);
+		IterateAll((PromptInfo pi) => pi.Check());
+	}
+
+	private void IterateAll(System.Action<PromptInfo> action)
+	{
+		if (action == null) return;
+
+		for (int i = 0; i < prompts.Count; i++)
+		{
+			action(prompts[i]);
+		}
 	}
 
 	[System.Serializable]
-	private struct PromptInfo
+	public class PromptInfo
 	{
+		private PromptUI ui;
+		private const string TO_STRING = "Prompt: \"{0}\", Active: {1}";
 		public float delay;
 		private float delayTimer;
 		[TextArea(1, 1)]
@@ -50,14 +92,16 @@ public class TutorialPrompts : MonoBehaviour
 		public bool ignoreOnDeactivate;
 		private bool ignore;
 		private System.Func<bool> condition;
+		private System.Action startListening, stopListening;
+		private bool isListening;
 
-		public void Check(PromptUI ui)
+		public void Check()
 		{
-			if (condition != null && condition())
+			if (condition?.Invoke() ?? false)
 			{
 				if (AddTimer(Time.deltaTime))
 				{
-					Activate(ui);
+					Activate();
 				}
 			}
 			else
@@ -69,6 +113,22 @@ public class TutorialPrompts : MonoBehaviour
 		public void SetCondition(System.Func<bool> condition)
 		{
 			this.condition = condition;
+		}
+
+		public void SetUI(PromptUI ui)
+		{
+			this.ui = ui;
+		}
+
+		public void SetListeners(System.Action start, System.Action stop)
+		{
+			startListening = start;
+			stopListening = stop;
+
+			if (!ignore)
+			{
+				startListening?.Invoke();
+			}
 		}
 
 		private bool AddTimer(float add)
@@ -92,23 +152,23 @@ public class TutorialPrompts : MonoBehaviour
 			return delayTimer >= delay;
 		}
 		
-		private void Activate(PromptUI ui)
+		private void Activate()
 		{
 			if (isActivated || ignore) return;
 			if (!isRepeatable && activationCount > 0) return;
-
+			
 			ui.ActivatePrompt(text, fadeInTime);
 			isActivated = true;
 			activationCount++;
 		}
 
-		public void Deactivate(PromptUI ui)
+		public void Deactivate()
 		{
 			if (ignoreOnDeactivate)
 			{
 				SetIgnore(true);
 			}
-
+			
 			if (!isActivated) return;
 
 			ui.DeactivatePrompt(text, fadeOutTime);
@@ -118,12 +178,33 @@ public class TutorialPrompts : MonoBehaviour
 		public void SetIgnore(bool ignore)
 		{
 			this.ignore = ignore;
+			if (ignore)
+			{
+				if (isListening)
+				{
+					stopListening?.Invoke();
+					isListening = false;
+				}
+			}
+			else
+			{
+				if (!isListening)
+				{
+					startListening?.Invoke();
+					isListening = true;
+				}
+			}
 		}
 
 		public void Refresh(bool ignore)
 		{
 			activationCount = 0;
 			this.ignore = ignore;
+		}
+
+		public override string ToString()
+		{
+			return string.Format(TO_STRING, text, isActivated);
 		}
 	}
 }

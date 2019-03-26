@@ -1,0 +1,4 @@
+0|Cool! We found the ship.
+0|However, communication systems are dead.
+0|The hatch won't open until they are fixed.
+0|We should come back once they are repaired.

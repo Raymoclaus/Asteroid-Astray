@@ -223,7 +223,7 @@ public class BotHive : Character, IDrillableObject, IDamageable, ICombat
 		while (!finished)
 		{
 			if (b == null) return;
-			EntityNetwork.GetCoordsOnRangeBorder(_coords, searchRange, searchCoords);
+			EntityNetwork.GetCoordsOnRangeBorder(coords, searchRange, searchCoords);
 			searchRange++;
 
 			for (int i = searchCoords.Count - 1; i >= 0; i--)
@@ -372,7 +372,7 @@ public class BotHive : Character, IDrillableObject, IDamageable, ICombat
 		if (threat == null) return;
 		for (int i = 0; i < childBots.Count; i++)
 		{
-			childBots[i].HiveThreatened(threat);
+			childBots[i].Alert(threat);
 		}
 	}
 

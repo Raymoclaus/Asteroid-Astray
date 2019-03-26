@@ -6,12 +6,12 @@ public class PromptTrigger : MonoBehaviour
 	[SerializeField] protected string text;
 	[SerializeField] protected float fadeInTime = 0f, fadeOutTime = 0f;
 	private bool triggerActive = false;
+	protected bool disablePrompt = false;
+	private PromptUI PromptUI { get { return promptUI ?? (promptUI = FindObjectOfType<PromptUI>()); } }
 
 	private void OnTriggerEnter2D(Collider2D collision)
 	{
 		if (IsTriggerActive() || !collision.attachedRigidbody.GetComponent<Shuttle>()) return;
-
-		promptUI = promptUI ?? FindObjectOfType<PromptUI>();
 		triggerActive = true;
 		EnterTrigger();
 	}
@@ -19,24 +19,19 @@ public class PromptTrigger : MonoBehaviour
 	private void OnTriggerExit2D(Collider2D collision)
 	{
 		if (!IsTriggerActive() || !collision.attachedRigidbody.GetComponent<Shuttle>()) return;
-
-		promptUI = promptUI ?? FindObjectOfType<PromptUI>();
 		triggerActive = false;
 		ExitTrigger();
 	}
 
-	protected virtual void EnterTrigger()
+	public void DisablePrompt(bool disable)
 	{
-		promptUI?.ActivatePrompt(text, fadeInTime);
+		disablePrompt = disable;
+		if (!disable) return;
+		DeactivatePrompt();
 	}
 
-	protected virtual void ExitTrigger()
-	{
-		promptUI?.DeactivatePrompt(text, fadeOutTime);
-	}
-
-	protected bool IsTriggerActive()
-	{
-		return triggerActive;
-	}
+	protected virtual void EnterTrigger() => PromptUI?.ActivatePrompt(text, fadeInTime);
+	protected virtual void ExitTrigger() => DeactivatePrompt();
+	protected bool IsTriggerActive() => triggerActive;
+	private void DeactivatePrompt() => PromptUI?.DeactivatePrompt(text, fadeOutTime);
 }

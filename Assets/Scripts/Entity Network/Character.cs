@@ -6,7 +6,7 @@ public class Character : Entity
 
 	#region Drill-related
 	protected bool canDrill, canDrillLaunch;
-	protected DrillBit drill;
+	[SerializeField] protected DrillBit drill;
 	public bool IsDrilling { get { return drill == null ? false : drill.IsDrilling; } }
 
 	public DrillBit GetDrill()

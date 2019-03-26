@@ -163,6 +163,8 @@ public class DrillBit : MonoBehaviour
 				drillTarget.Launch((Vector2)launchDirection, launcher);
 			}
 			drillTarget = null;
+
+			parent.StoppedDrilling();
 		}
 
 		currentVolume = 0f;
@@ -173,8 +175,6 @@ public class DrillBit : MonoBehaviour
 		{
 			drillAnim.SetBool("Drilling", false);
 		}
-
-		parent.StoppedDrilling();
 	}
 
 	public bool Verify(Entity target)

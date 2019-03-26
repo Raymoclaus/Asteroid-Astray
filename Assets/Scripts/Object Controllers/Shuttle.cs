@@ -375,7 +375,7 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 
 		while (asteroids.Count == 0)
 		{
-			EntityNetwork.GetEntitiesInRange(_coords, searchRange, EntityType.Asteroid, addToList: asteroids);
+			EntityNetwork.GetEntitiesInRange(coords, searchRange, EntityType.Asteroid, addToList: asteroids);
 			searchRange++;
 		}
 

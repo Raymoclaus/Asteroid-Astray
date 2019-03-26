@@ -4,7 +4,7 @@ using UnityEngine;
 public class Entity : MonoBehaviour
 {
 	[Header("Entity Fields")]
-	[SerializeField] protected ChunkCoords _coords;
+	[SerializeField] protected ChunkCoords coords;
 	public Collider2D[] col;
 	public Rigidbody2D rb;
 	[SerializeField] protected CameraCtrlTracker camTrackerSO;
@@ -18,12 +18,12 @@ public class Entity : MonoBehaviour
 	protected static AudioManager audioManager;
 	[SerializeField] protected ScreenRippleEffectController screenRippleSO;
 	protected bool entityReady = false;
-	public bool shouldDisablePhysicsOnDistance = true;
-	public bool shouldDisableObjectOnDistance = true;
-	public bool shouldDisableGameObjectOnShortDistance = true;
-	public bool isActive = true;
-	public bool disabled = false;
-	public bool isInPhysicsRange = false;
+	[SerializeField] private bool shouldDisablePhysicsOnDistance = true;
+	[SerializeField] private bool shouldDisableObjectOnDistance = true;
+	[SerializeField] private bool shouldDisableGameObjectOnShortDistance = true;
+	[HideInInspector] public bool isActive = true;
+	[HideInInspector] public bool disabled = false;
+	[HideInInspector] public bool isInPhysicsRange = false;
 	private Vector3 vel;
 	private float disableTime;
 	protected bool needsInit = true;
@@ -67,8 +67,8 @@ public class Entity : MonoBehaviour
 	public virtual void Initialise()
 	{
 		entitiesActive++;
-		_coords = new ChunkCoords(transform.position);
-		EntityNetwork.AddEntity(this, _coords);
+		coords = new ChunkCoords(transform.position);
+		EntityNetwork.AddEntity(this, coords);
 		GetLayers();
 		entityReady = true;
 	}
@@ -87,7 +87,7 @@ public class Entity : MonoBehaviour
 	{
 		ChunkCoords newCc = new ChunkCoords(transform.position);
 		bool repositioned = false;
-		if (newCc != _coords)
+		if (newCc != coords)
 		{ 
 			EntityNetwork.Reposition(this, newCc);
 			repositioned = true;
@@ -134,19 +134,19 @@ public class Entity : MonoBehaviour
 
 	public void SetCoordinates(ChunkCoords newCc)
 	{
-		_coords = newCc;
+		coords = newCc;
 	}
 
 	protected bool IsInView()
 	{
 		if (!camTrackerSO) return false;
-		return camTrackerSO.IsCoordInView(_coords);
+		return camTrackerSO.IsCoordInView(coords);
 	}
 
 	protected bool IsInPhysicsRange()
 	{
 		if (!camTrackerSO) return false;
-		return camTrackerSO.IsCoordInPhysicsRange(_coords);
+		return camTrackerSO.IsCoordInPhysicsRange(coords);
 	}
 
 	public void SetAllActivity(bool active)
@@ -220,7 +220,7 @@ public class Entity : MonoBehaviour
 		{
 			destroyer.DestroyedAnEntity(this);
 		}
-		if (EntityNetwork.ConfirmLocation(this, _coords))
+		if (EntityNetwork.ConfirmLocation(this, coords))
 		{
 			EntityNetwork.RemoveEntity(this);
 		}
@@ -229,12 +229,12 @@ public class Entity : MonoBehaviour
 
 	public ChunkCoords GetCoords()
 	{
-		return _coords;
+		return coords;
 	}
 
 	public override string ToString()
 	{
-		return string.Format("{0} at coordinates {1}.", GetEntityType(), _coords);
+		return string.Format("{0} at coordinates {1}.", GetEntityType(), coords);
 	}
 
 	public virtual LaunchTrailController GetLaunchTrailAnimation()
