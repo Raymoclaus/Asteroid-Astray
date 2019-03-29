@@ -217,4 +217,9 @@ public class DialogueController : MonoBehaviour
 			moveTriggers[i].Move(goToA);
 		}
 	}
+
+	public bool DialogueIsActive()
+	{
+		return dialogueIsRunning || chatIsRunning;
+	}
 }

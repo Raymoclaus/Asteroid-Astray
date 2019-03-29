@@ -19,27 +19,25 @@ public class SoloBot : GatherBot
 			case AIState.Attacking:
 			case AIState.Collecting:
 			case AIState.Escaping:
+			case AIState.Wandering:
 			case AIState.Dying:
 				base.SetState(newState);
 				break;
-			case AIState.Spawning:
-			case AIState.Exploring:
-			case AIState.Storing:
-			case AIState.Signalling:
+			default:
 				SetState(AIState.Scanning);
 				break;
 		}
 	}
 
-
-	//codes: 0 = attack alone, 1 = signal for help, 2 = escape, 3 = ignore
-	protected override int EvaluateScan(Scan sc)
+	protected override void Wandering() => SetState(AIState.Scanning);
+	
+	protected override AttackViability EvaluateScan(Scan sc)
 	{
-		int scanResult = base.EvaluateScan(sc);
+		AttackViability scanResult = base.EvaluateScan(sc);
 		switch (scanResult)
 		{
-			case 1:
-				scanResult = 2;
+			case AttackViability.SignalForHelp:
+				scanResult = AttackViability.Escape;
 				break;
 		}
 		return scanResult;

@@ -9,7 +9,7 @@ public class SpawnableEntity
 	//name of the Entity type
 	public string name = "default";
 	//chance that the chunk will be filled with this entity type
-	[Range(0f, 1f)]
+	[Range(0.0001f, 1f)]
 	public float rarity;
 	//entities with a rarity offset won't appear before a specified zone
 	public int rarityZoneOffset = 1;
@@ -34,6 +34,8 @@ public class SpawnableEntity
 
 	public float GetChance(float distance)
 	{
+		if (rarity <= 0f) return 0f;
+
 		int zone = Difficulty.DistanceBasedDifficulty(distance);
 		if (zone < rarityZoneOffset) return 0f;
 		if (rarityZoneCutoff >= 0 && zone > rarityZoneOffset + rarityZoneCutoff) return 0f;

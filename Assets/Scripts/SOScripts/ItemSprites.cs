@@ -26,7 +26,8 @@ public class ItemSprites : ScriptableObject
 		RepairKit,
 		NioleriumCrystals,
 		NiolerDung,
-		StoneAmmo;
+		StoneAmmo,
+		CureShotAmmo;
 
 	public Sprite GetItemSprite(Item.Type type)
 	{
@@ -56,6 +57,7 @@ public class ItemSprites : ScriptableObject
 			case Item.Type.NioleriumCrystals: return NioleriumCrystals;
 			case Item.Type.NiolerDung: return NiolerDung;
 			case Item.Type.StoneAmmo: return StoneAmmo;
+			case Item.Type.CureShotAmmo: return CureShotAmmo;
 		}
 	}
 }

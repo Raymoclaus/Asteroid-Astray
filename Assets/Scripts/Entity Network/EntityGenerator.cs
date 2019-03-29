@@ -21,35 +21,9 @@ public static class EntityGenerator
 	private static bool batcherRunning = false;
 	#endregion
 
-	public static Entity FindNearestOfEntityType(EntityType type, Vector3 referenceLocation)
+	public static Entity SpawnEntity(Entity e)
 	{
-		string entityName = type.ToString();
-
-		GameObject holder;
-		holders.TryGetValue(entityName, out holder);
-		if (holder == null) return null;
-
-		Transform holderTr = holder.transform;
-		if (holderTr.childCount == 0) return SpawnEntity(type);
-		float closestDist = float.PositiveInfinity;
-		Transform closestTr = null;
-		for (int i = 0; i < holderTr.childCount; i++)
-		{
-			Transform child = holderTr.GetChild(i);
-			float dist = (child.position - referenceLocation).sqrMagnitude;
-			if (dist < closestDist)
-			{
-				closestDist = dist;
-				closestTr = child;
-			}
-			if (closestDist < 1f) break;
-		}
-		return closestTr.GetComponent<Entity>();
-	}
-
-	public static Entity SpawnEntity(EntityType type)
-	{
-		SpawnableEntity se = GetSpawnableEntity(type);
+		SpawnableEntity se = GetSpawnableEntity(e);
 		if (se == null) return null;
 
 		ChunkCoords cc = ClosestValidNonFilledChunk(se);
@@ -58,16 +32,12 @@ public static class EntityGenerator
 		return SpawnOneInEmptyChunk(cc, se);
 	}
 
-	private static SpawnableEntity GetSpawnableEntity(EntityType type)
+	private static SpawnableEntity GetSpawnableEntity(Entity e)
 	{
-		for (int i = 0; i < prefabs.spawnableEntities.Count; i++)
-		{
-			if (prefabs.spawnableEntities[i].prefab.GetEntityType() == type) return prefabs.spawnableEntities[i];
-		}
-		return null;
+		return prefabs.GetSpawnableEntity(e);
 	}
 
-	private static ChunkCoords ClosestValidNonFilledChunk(SpawnableEntity se)
+	public static ChunkCoords ClosestValidNonFilledChunk(SpawnableEntity se)
 	{
 		int minRange = (int)((se.GetMinimumDistanceToBeSpawned() + Constants.CHUNK_SIZE / 2) / Constants.CHUNK_SIZE);
 		List<ChunkCoords> coordsList = new List<ChunkCoords>();
@@ -127,7 +97,7 @@ public static class EntityGenerator
 				}
 				//spawn it
 				Object.Instantiate(e.prefab, spawnPos, Quaternion.identity,
-					holders[e.prefab.GetEntityType().ToString()].transform);
+					holders[e.name].transform);
 			}
 		}
 	}
@@ -160,7 +130,7 @@ public static class EntityGenerator
 		}
 		//spawn it
 		return Object.Instantiate(e.prefab, spawnPos, Quaternion.identity,
-			holders[e.prefab.GetEntityType().ToString()].transform);
+			holders[e.name].transform);
 	}
 
 	private static List<SpawnableEntity> ChooseEntitiesToSpawn(float distance, bool excludePriority = false,
@@ -311,8 +281,7 @@ public static class EntityGenerator
 		for (int i = 0; i < list.Count; i++)
 		{
 			SpawnableEntity e = list[i];
-			string name = e.prefab.GetEntityType().ToString();
-			holders.Add(name, new GameObject(name));
+			holders.Add(e.name, new GameObject(e.name));
 		}
 		a?.Invoke();
 	}

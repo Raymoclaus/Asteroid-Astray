@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 [System.Serializable]
 public class ItemStack
@@ -81,5 +82,10 @@ public class ItemStack
 	{
 		type = Item.Type.Blank;
 		amount = 0;
+	}
+
+	public int GetValue()
+	{
+		return Item.TypeRarity(type) * amount;
 	}
 }

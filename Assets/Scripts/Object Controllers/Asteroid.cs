@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-public class Asteroid : Entity, IDrillableObject, IDamageable
+public class Asteroid : Entity, IDrillableObject
 {
 	[System.Serializable]
 	private struct ColliderInfo
@@ -25,10 +25,6 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	public float SpinSpeedRange;
 	[Tooltip("Picks a random value between given value and negative given value to determine starting velocity")]
 	public float VelocityRange;
-	[Tooltip("Upper limit for health stat.")]
-	public float MaxHealth = 150f;
-	//current health value between 0 and MaxHealth
-	private float Health;
 	//collection of info about the colliders the large asteroids should use
 	[SerializeField]
 	private ColliderInfo[] largeInfo;
@@ -91,13 +87,13 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 					break;
 			}
 			rb.mass *= 4f;
-			MaxHealth *= 4f;
+			maxHP *= 4f;
 		}
 
 		RandomMovement();
 
 		//start health at max value
-		Health = MaxHealth;
+		currentHP = maxHP;
 
 		initialised = true;
 	}
@@ -218,7 +214,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	{
 		particleGenerator = particleGenerator ?? FindObjectOfType<ParticleGenerator>();
 
-		if (Health <= 0f)
+		if (currentHP <= 0f)
 		{
 			particleGenerator.GenerateParticle(GetCurrentSpriteSettings()[GetCurrentSpriteSettings().Length - 1],
 				transform.position, fadeOut: false, lifeTime: 0.05f,
@@ -226,7 +222,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 			return;
 		}
 
-		int delta = (int)((1f - (Health / MaxHealth)) * GetCurrentSpriteSettings().Length - 1);
+		int delta = (int)((1f - (currentHP / maxHP)) * GetCurrentSpriteSettings().Length - 1);
 		delta = Mathf.Clamp(delta, 0, GetCurrentSpriteSettings().Length - 1);
 		SprRend.sprite = GetCurrentSpriteSettings()[delta];
 	}
@@ -258,21 +254,17 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 	private bool CheckHealth(Entity destroyer, int dropModifier = 0)
 	{
 		UpdateSprite();
-		if (Health > 0f) return false;
+		if (currentHP > 0f) return false;
 		DestroySelf(true, destroyer, dropModifier);
 		return true;
 	}
 
-	public Vector2 GetPosition()
+	public override bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer,
+		int dropModifier = 0, bool flash = true)
 	{
-		return transform.position;
-	}
-
-	public bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer, int dropModifier = 0, bool flash = true)
-	{
-		if (Health <= 0f) return false;
+		if (currentHP <= 0f) return false;
 		//take damage
-		Health -= damage;
+		currentHP -= damage;
 
 		//particle effects
 		if (Random.value < drillDebrisChance)
@@ -293,7 +285,7 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 		if (TakeDamage(damage, drillPos, destroyer, dropModifier))
 		{
 			//calculate shake intensity. Gets more intense the less health it has
-			ShakeFX.SetIntensity(damage / MaxHealth * (3f - (Health / MaxHealth * 2f)));
+			ShakeFX.SetIntensity(damage / maxHP * (3f - (currentHP / maxHP * 2f)));
 			return true;
 		}
 		return false;
@@ -388,9 +380,9 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 				{
 					launchTrail.CutLaunchTrail();
 				}
-				IDamageable otherDamageable = other.attachedRigidbody.gameObject.GetComponent<IDamageable>();
+				Entity otherDamageable = other.attachedRigidbody.gameObject.GetComponent<Entity>();
 				float damage = launcher.GetLaunchDamage();
-				if (Health / MaxHealth < 0.7f)
+				if (currentHP / maxHP < 0.7f)
 				{
 					damage *= 2f;
 				}
@@ -440,12 +432,12 @@ public class Asteroid : Entity, IDrillableObject, IDamageable
 
 	public bool IsDrillable()
 	{
-		return launched && Health > 0f;
+		return launched && currentHP > 0f;
 	}
 
 	public bool CanBeLaunched()
 	{
-		return Health > 0f;
+		return currentHP > 0f;
 	}
 
 	public List<DrillBit> GetDrillers()

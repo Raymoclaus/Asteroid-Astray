@@ -3,22 +3,38 @@
 public class MainHatchPrompt : InteractablePromptTrigger
 {
 	[SerializeField] private ShipEntryPanel shipEntryUI;
+	[SerializeField] private ConversationEvent interactBeforeRepairedShuttle,
+		interactBeforeRechargedShip;
 
-	private bool canBeAccessed = true;
+	private bool isLocked = false;
 
 	protected override void OnInteracted()
 	{
 		base.OnInteracted();
 
-		if (!canBeAccessed) return;
+		if (isLocked) return;
 
 		Pause.InstantPause(true);
 		shipEntryUI = shipEntryUI ?? FindObjectOfType<ShipEntryPanel>();
 		shipEntryUI?.OpenPanel();
 	}
 
+	protected override void DialogueResponse()
+	{
+		if (DialogueController.DialogueIsActive()) return;
+
+		if (!NarrativeManager.ShuttleRepaired)
+		{
+			DialogueController.StartChat(interactBeforeRepairedShuttle);
+		}
+		else if (!NarrativeManager.ShipRecharged)
+		{
+			DialogueController.StartChat(interactBeforeRechargedShip);
+		}
+	}
+
 	public void Lock(bool lockDoor)
 	{
-		canBeAccessed = !lockDoor;
+		isLocked = lockDoor;
 	}
 }

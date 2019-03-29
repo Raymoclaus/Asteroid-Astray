@@ -9,11 +9,17 @@ public class InteractablePromptTrigger : PromptTrigger
 	public delegate void InteractionEventHandler();
 	public event InteractionEventHandler OnInteraction;
 	public void Interaction() => OnInteraction?.Invoke();
-
-	private void Awake()
+	private static DialogueController dialogueController;
+	protected static DialogueController DialogueController
 	{
-		OnInteraction += OnInteracted;
+		get
+		{
+			return dialogueController ?? (dialogueController = FindObjectOfType<DialogueController>());
+		}
 	}
+	protected bool enabledDialogueResponses;
+
+	private void Awake() => OnInteraction += OnInteracted;
 
 	protected virtual void Update()
 	{
@@ -25,6 +31,13 @@ public class InteractablePromptTrigger : PromptTrigger
 
 	protected virtual void OnInteracted()
 	{
-
+		if (enabledDialogueResponses)
+		{
+			DialogueResponse();
+		}
 	}
+
+	protected virtual void DialogueResponse() { }
+
+	public void EnableDialogueResponses(bool enable) => enabledDialogueResponses = enable;
 }

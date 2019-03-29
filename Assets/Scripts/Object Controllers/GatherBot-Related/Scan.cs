@@ -3,11 +3,13 @@
 	public EntityType type;
 	public float hpRatio;
 	public int level;
+	public int value;
 
-	public Scan(EntityType t, float hpR, int lv)
+	public Scan(EntityType type, float hpRatio, int level, int value)
 	{
-		type = t;
-		hpRatio = hpR;
-		level = lv;
+		this.type = type;
+		this.hpRatio = hpRatio;
+		this.level = level;
+		this.value = value;
 	}
 }

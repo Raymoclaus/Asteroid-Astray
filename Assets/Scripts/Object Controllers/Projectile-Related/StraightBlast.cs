@@ -41,7 +41,7 @@ public class StraightBlast : MonoBehaviour, IProjectile
 		gameObject.SetActive(false);
 	}
 
-	public void Hit(IDamageable obj, Vector2 contactPoint)
+	public void Hit(Entity obj, Vector2 contactPoint)
 	{
 		//report damage calculation to the object taking the damage
 		obj.TakeDamage(damage, contactPoint, parent);

@@ -3,7 +3,7 @@ using System;
 using UnityEngine;
 
 [RequireComponent(typeof(HiveInventory))]
-public class BotHive : Character, IDrillableObject, IDamageable, ICombat
+public class BotHive : Character, IDrillableObject, ICombat
 {
 	//references
 	[SerializeField] private GatherBot botPrefab;
@@ -18,8 +18,7 @@ public class BotHive : Character, IDrillableObject, IDamageable, ICombat
 	[SerializeField] private Sprite burningSprite;
 
 	//fields
-	[SerializeField] private float maxHealth = 3000f, botBaseHP = 500f;
-	private float currentHealth;
+	[SerializeField] private float botBaseHP = 500f;
 	[HideInInspector] public List<GatherBot> childBots = new List<GatherBot>();
 	private bool[] occupiedDocks;
 	[SerializeField] private int minInitialBotCount = 2, maxBotCount = 3, minLeftoverResources = 1,
@@ -53,7 +52,7 @@ public class BotHive : Character, IDrillableObject, IDamageable, ICombat
 		{
 			docks[i] = dockHolder.GetChild(i);
 		}
-		currentHealth = maxHealth;
+		currentHP = maxHP;
 		resourceCount = UnityEngine.Random.Range(
 			minLeftoverResources + botCreationCost * minInitialBotCount,
 			minLeftoverResources + (botCreationCost + botUpgradeCost * maxInitialUpgrades) * maxBotCount + 1);
@@ -355,10 +354,11 @@ public class BotHive : Character, IDrillableObject, IDamageable, ICombat
 		RemoveDriller(db);
 	}
 
-	public bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer, int dropModifier = 0, bool flash = true)
+	public override bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer,
+		int dropModifier = 0, bool flash = true)
 	{
-		if (currentHealth < 0f) return false;
-		currentHealth -= damage;
+		if (currentHP < 0f) return false;
+		currentHP -= damage;
 		ICombat threat = destroyer.GetICombat();
 		if (threat != null && threat.EngageInCombat(this))
 		{
@@ -387,7 +387,7 @@ public class BotHive : Character, IDrillableObject, IDamageable, ICombat
 
 	private bool CheckHealth(Entity destroyer, int dropModifier = 0)
 	{
-		if (currentHealth > 0f) return false;
+		if (currentHP > 0f) return false;
 		destroyerEntity = destroyer;
 		dropModifierOnDeath = dropModifier;
 		burning = true;
@@ -400,7 +400,7 @@ public class BotHive : Character, IDrillableObject, IDamageable, ICombat
 			enemy.DisengageInCombat(this);
 		}
 		EjectFromAllDrillers();
-		return currentHealth <= 0f;
+		return currentHP <= 0f;
 	}
 
 	private void DestroySelf(bool explode, Entity destroyer, int dropModifier = 0)
@@ -468,11 +468,6 @@ public class BotHive : Character, IDrillableObject, IDamageable, ICombat
 				return;
 			}
 		}
-	}
-
-	public Vector2 GetPosition()
-	{
-		return transform.position;
 	}
 
 	public bool IsSibling(Entity e)

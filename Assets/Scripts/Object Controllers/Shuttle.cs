@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-public class Shuttle : Character, IDamageable, IStunnable, ICombat
+public class Shuttle : Character, IStunnable, ICombat
 {
 	#region Fields
 
@@ -569,16 +569,12 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 		}
 	}
 
-	public bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer, int dropModifier = 0, bool flash = true)
+	public override bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer,
+		int dropModifier = 0, bool flash = true)
 	{
 		if (destroyer == this || isInvulnerable) return false;
 		cRGroup?.Flash(0.5f, Color.red);
 		return true;
-	}
-
-	public Vector2 GetPosition()
-	{
-		return transform.position;
 	}
 
 	private void Boost(bool input)
@@ -789,4 +785,13 @@ public class Shuttle : Character, IDamageable, IStunnable, ICombat
 		}
 		questLog.AddQuest(quest);
 	}
+
+	public override Scan ReturnScan()
+	{
+		return new Scan(GetEntityType(), 1f, GetLevel(), GetValue());
+	}
+
+	protected override int GetLevel() => base.GetLevel();
+
+	protected override int GetValue() => storage.GetValue();
 }

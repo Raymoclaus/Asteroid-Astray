@@ -110,7 +110,7 @@ public class LaserBlast : MonoBehaviour, IProjectile
 		rb.velocity = vel;
 	}
 
-	public void Hit(IDamageable obj, Vector2 contactPoint)
+	public void Hit(Entity obj, Vector2 contactPoint)
 	{
 		//calculate damage
 		float damageCalc = damage;
@@ -121,7 +121,7 @@ public class LaserBlast : MonoBehaviour, IProjectile
 
 		//create explosion effect based on damage dealt
 		bool isStrongHit = damageCalc >= damage * 0.9f;
-		float dirToObject = Vector2.SignedAngle(Vector2.up, obj.GetPosition() - contactPoint);
+		float dirToObject = Vector2.SignedAngle(Vector2.up, (Vector2)obj.transform.position - contactPoint);
 		GameObject hitFX = Instantiate(isStrongHit ? strongHit : weakHit);
 		hitFX.transform.position = contactPoint;
 		hitFX.transform.eulerAngles = Vector3.forward * (dirToObject + 180f);

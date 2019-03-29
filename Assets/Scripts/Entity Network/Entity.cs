@@ -29,6 +29,9 @@ public class Entity : MonoBehaviour
 	protected bool needsInit = true;
 	protected bool initialised = false;
 
+	[SerializeField] protected float maxHP = 1000f;
+	protected float currentHP;
+
 	//related layers
 	private static bool layersSet;
 	protected static int layerDrill, layerProjectile, layerSolid;
@@ -39,13 +42,9 @@ public class Entity : MonoBehaviour
 
 	private static int entitiesActive;
 
-	public static int GetActive()
-	{
-		return entitiesActive;
-	}
-
 	public virtual void Awake()
 	{
+		currentHP = maxHP;
 		mainCanvas = mainCanvas ?? FindObjectOfType<MainCanvas>() ?? Instantiate(mainCanvasPrefab);
 		loadingController = loadingController ?? FindObjectOfType<LoadingController>()
 			?? Instantiate(loadingControllerPrefab, mainCanvas.transform);
@@ -73,15 +72,9 @@ public class Entity : MonoBehaviour
 		entityReady = true;
 	}
 
-	public virtual void LateUpdate()
-	{
-		RepositionInNetwork();
-	}
+	public virtual void LateUpdate() => RepositionInNetwork();
 
-	private void OnDestroy()
-	{
-		EntityNetwork.RemoveEntity(this);
-	}
+	private void OnDestroy() => EntityNetwork.RemoveEntity(this);
 
 	public void RepositionInNetwork()
 	{
@@ -127,27 +120,13 @@ public class Entity : MonoBehaviour
 		}
 	}
 
-	public virtual bool OnExitPhysicsRange()
-	{
-		return false;
-	}
+	public virtual bool OnExitPhysicsRange() => false;
 
-	public void SetCoordinates(ChunkCoords newCc)
-	{
-		coords = newCc;
-	}
+	public void SetCoordinates(ChunkCoords newCc) => coords = newCc;
 
-	protected bool IsInView()
-	{
-		if (!camTrackerSO) return false;
-		return camTrackerSO.IsCoordInView(coords);
-	}
+	protected bool IsInView() => camTrackerSO?.IsCoordInView(coords) ?? false;
 
-	protected bool IsInPhysicsRange()
-	{
-		if (!camTrackerSO) return false;
-		return camTrackerSO.IsCoordInPhysicsRange(coords);
-	}
+	protected bool IsInPhysicsRange() => camTrackerSO?.IsCoordInPhysicsRange(coords) ?? false;
 
 	public void SetAllActivity(bool active)
 	{
@@ -194,25 +173,13 @@ public class Entity : MonoBehaviour
 		}
 	}
 
-	protected virtual bool ShouldBeVisible()
-	{
-		return true;
-	}
+	protected virtual bool ShouldBeVisible() => true;
 
-	public virtual ICombat GetICombat()
-	{
-		return null;
-	}
+	public virtual ICombat GetICombat() => null;
 
-	public virtual void CollectResources(Item.Type type, int amount)
-	{
+	public virtual void CollectResources(Item.Type type, int amount) { }
 
-	}
-
-	public virtual EntityType GetEntityType()
-	{
-		return EntityType.Entity;
-	}
+	public virtual EntityType GetEntityType() => EntityType.Entity;
 
 	public virtual void DestroySelf(Entity destroyer)
 	{
@@ -227,30 +194,15 @@ public class Entity : MonoBehaviour
 		Destroy(gameObject);
 	}
 
-	public ChunkCoords GetCoords()
-	{
-		return coords;
-	}
+	public ChunkCoords GetCoords() => coords;
 
-	public override string ToString()
-	{
-		return string.Format("{0} at coordinates {1}.", GetEntityType(), coords);
-	}
+	public override string ToString() => string.Format("{0} at coordinates {1}.", GetEntityType(), coords);
 
-	public virtual LaunchTrailController GetLaunchTrailAnimation()
-	{
-		return null;
-	}
+	public virtual LaunchTrailController GetLaunchTrailAnimation() => null;
 
-	public virtual GameObject GetLaunchImpactAnimation()
-	{
-		return null;
-	}
+	public virtual GameObject GetLaunchImpactAnimation() => null;
 
-	public virtual void PhysicsReEnabled()
-	{
-
-	}
+	public virtual void PhysicsReEnabled() { }
 
 	private void GetLayers()
 	{
@@ -263,40 +215,30 @@ public class Entity : MonoBehaviour
 		layersSet = true;
 	}
 
-	public virtual Scan ReturnScan()
-	{
-		return new Scan(GetEntityType(), 1f, 1);
-	}
+	public virtual Scan ReturnScan() => new Scan(GetEntityType(), GetHpRatio(), GetLevel(), GetValue()); 
 
-	public virtual void DestroyedAnEntity(Entity target)
-	{
+	protected float GetHpRatio() => currentHP / maxHP;
 
-	}
+	protected virtual int GetLevel() => 1;
 
-	public virtual void Launching()
-	{
+	protected virtual int GetValue() => 0;
 
-	}
+	public virtual void DestroyedAnEntity(Entity target) { }
 
-	public virtual bool CanFireLaser()
-	{
-		return false;
-	}
+	public virtual void Launching() { }
 
-	public virtual bool CanFireStraightWeapon()
-	{
-		return false;
-	}
+	public virtual bool CanFireLaser() => false;
 
-	public virtual void AttachLaser(bool attach)
-	{
+	public virtual bool CanFireStraightWeapon() => false;
 
-	}
+	public virtual void AttachLaser(bool attach) { }
 
-	public virtual void AttachStraightWeapon(bool attach)
-	{
+	public virtual void AttachStraightWeapon(bool attach) { }
 
-	}
+	public static int GetActive() => entitiesActive;
+
+	public virtual bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer,
+		int dropModifier = 0, bool flash = true) => false;
 }
 
 public enum EntityType

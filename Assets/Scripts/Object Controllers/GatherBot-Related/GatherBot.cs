@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 
-public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, ICombat
+public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 {
 	protected enum AIState
 	{
@@ -27,6 +27,8 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 		Collecting,
 		//Running for backup when solo fight gets too intense
 		Escaping,
+		//Exploring with no real direction
+		Wandering,
 		//Dying
 		Dying
 	}
@@ -43,8 +45,6 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 
 	//fields
 	[SerializeField] private AIState state;
-	private float maxHealth = 2000f;
-	private float currentHealth;
 	[HideInInspector] public int upgradeLevel;
 	public int dockID = -1;
 
@@ -97,6 +97,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 	[SerializeField] private SpriteRenderer radialMeterPrefab;
 	private SpriteRenderer suspicionMeter;
 	[SerializeField] private Vector2 meterRelativePosition = Vector2.one * 0.2f;
+	protected List<Entity> unsuspiciousEntities = new List<Entity>();
 
 	//combat variables
 	[SerializeField] private StraightWeapon straightWeapon;
@@ -108,6 +109,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 	[SerializeField] private float orbitRange = 1.75f;
 	[SerializeField] private float orbitSpeed = 0.6f;
 	[SerializeField] private float firingRange = 5f;
+	[SerializeField] protected int valuableLootThreshold = 1;
 	[SerializeField] private float drillToChargeTimer = 1f;
 	[SerializeField] private float chargeToExplosionTimer = 3f;
 	[SerializeField] private SpriteRenderer chargeSprRend;
@@ -195,6 +197,9 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 				break;
 			case AIState.Escaping:
 				Escaping();
+				break;
+			case AIState.Wandering:
+				Wandering();
 				break;
 			case AIState.Dying:
 				Dying();
@@ -394,31 +399,32 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 				//scan complete
 				intenseScanTimer = 0f;
 				//assess threat level and make a decision
-				int threatLevel = EvaluateScan(targetEntity.ReturnScan());
+				AttackViability threatLevel = EvaluateScan(targetEntity.ReturnScan());
 				switch (threatLevel)
 				{
-					//attack alone
-					case 0:
+					case AttackViability.AttackAlone:
 						ICombat enemy = targetEntity.GetICombat();
 						if (!(bool)enemy?.EngageInCombat(this)) break;
 						EngageInCombat(enemy);
 						SetState(AIState.Attacking);
 						break;
-					//signal for help
-					case 1:
+					case AttackViability.SignalForHelp:
 						enemy = targetEntity.GetICombat();
 						if (!(bool)enemy?.EngageInCombat(this)) break;
 						EngageInCombat(enemy);
 						SetState(AIState.Signalling);
 						break;
-					//escape
-					case 2:
+					case AttackViability.Escape:
 						hive?.MarkCoordAsEmpty(targetEntity.GetCoords());
 						SetState(AIState.Escaping);
 						break;
-					//ignore
-					case 3:
+					case AttackViability.Ignore:
+						unsuspiciousEntities.Add((Entity)nearbySuspects[0]);
 						nearbySuspects.RemoveAt(0);
+						if (nearbySuspects.Count == 0)
+						{
+							SetState(AIState.Scanning);
+						}
 						break;
 				}
 			}
@@ -533,6 +539,11 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 
 	}
 
+	protected virtual void Wandering()
+	{
+
+	}
+
 	protected virtual void Dying()
 	{
 		if (dyingTimer < dyingDuration)
@@ -550,8 +561,9 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 	protected virtual void SetState(AIState newState)
 	{
 		if (state == AIState.Dying || state == newState) return;
-
+		bool wasIdle = isIdle;
 		isIdle = true;
+		bool couldDrill = canDrill;
 		canDrill = false;
 
 		switch (newState)
@@ -570,6 +582,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 				hive.Store(storage.stacks, this);
 				itemsCollected = 0;
 				disassembling = false;
+				unsuspiciousEntities.Clear();
 				break;
 			case AIState.Signalling:
 				for (int i = 0; i < hive.childBots.Count; i++)
@@ -602,12 +615,12 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 				break;
 		}
 
-		if (isIdle)
+		if (isIdle && isIdle != wasIdle)
 		{
 			anim.SetTrigger("Idle");
 		}
 
-		if (canDrill)
+		if (canDrill && canDrill != couldDrill)
 		{
 			anim.SetTrigger("DrillOut");
 		}
@@ -987,8 +1000,8 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 	{
 		hive = botHive;
 		SetState(AIState.Spawning);
-		maxHealth = MaxHP;
-		currentHealth = maxHealth;
+		maxHP = MaxHP;
+		currentHP = maxHP;
 		dockID = dockingID;
 	}
 
@@ -1185,9 +1198,9 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 				{
 					launchTrail.CutLaunchTrail();
 				}
-				IDamageable otherDamageable = other.attachedRigidbody.gameObject.GetComponent<IDamageable>();
+				Entity otherDamageable = other.attachedRigidbody.gameObject.GetComponent<Entity>();
 				float damage = launcher.GetLaunchDamage();
-				if (currentHealth / maxHealth < 0.5f)
+				if (currentHP / maxHP < 0.5f)
 				{
 					damage *= 2f;
 				}
@@ -1205,13 +1218,14 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 		&& hive != null
 		&& ((GatherBot)e).hive == hive;
 
-	public bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer, int dropModifier = 0, bool flash = true)
+	public override bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer,
+		int dropModifier = 0, bool flash = true)
 	{
-		if (currentHealth < 0f) return false;
+		if (currentHP < 0f) return false;
 		//cannot be hit by projectiles from self or siblings
 		if (!IsSibling(destroyer) && destroyer != hive)
 		{
-			currentHealth -= damage;
+			currentHP -= damage;
 			ICombat enemy = destroyer.GetICombat();
 			if (flash)
 			{
@@ -1257,7 +1271,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 
 	private bool CheckHealth(Entity destroyer, int dropModifier)
 	{
-		if (currentHealth > 0f) return false;
+		if (currentHP > 0f) return false;
 		if (IsDrilling)
 		{
 			drill.drillTarget.StopDrilling(drill);
@@ -1265,7 +1279,7 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 		SetState(AIState.Dying);
 		this.destroyer = destroyer;
 		this.dropModifier = dropModifier;
-		return currentHealth <= 0f;
+		return currentHP <= 0f;
 	}
 
 	public void DestroySelf(bool explode, Entity destroyer, int dropModifier = 0)
@@ -1321,15 +1335,54 @@ public class GatherBot : Character, IDrillableObject, IDamageable, IStunnable, I
 		waitingForResources = false;
 	}
 
-	public Vector2 GetPosition() => transform.position;
-
 	public override EntityType GetEntityType() => EntityType.GatherBot;
-
-	//codes: 0 = attack alone, 1 = signal for help, 2 = escape, 3 = ignore
-	protected virtual int EvaluateScan(Scan sc)
+	
+	protected virtual AttackViability EvaluateScan(Scan sc)
 	{
-		return 1;
+		float baseThreatMultiplier = 1f;
+		switch (sc.type)
+		{
+			case EntityType.Asteroid:
+				baseThreatMultiplier = 0f;
+				break;
+			case EntityType.Shuttle:
+				baseThreatMultiplier = 2f;
+				break;
+			case EntityType.Nebula:
+				baseThreatMultiplier = 0f;
+				break;
+			case EntityType.BotHive:
+				baseThreatMultiplier = 5f;
+				break;
+			case EntityType.GatherBot:
+				baseThreatMultiplier = 3f;
+				break;
+			default:
+				baseThreatMultiplier = 1f;
+				break;
+		}
+
+		float targetThreatValue = baseThreatMultiplier * sc.level * sc.hpRatio * 1.5f;
+		float gatherBotBackupModifier = hive?.childBots.Count ?? 1f;
+		float selfThreatValue = GetLevel() * GetHpRatio();
+		float swarmThreatValue = selfThreatValue * gatherBotBackupModifier;
+		bool isValuable = sc.value >= valuableLootThreshold;
+
+		if (selfThreatValue >= targetThreatValue)
+		{
+			return isValuable ? AttackViability.AttackAlone : AttackViability.Ignore;
+		}
+		else if (swarmThreatValue >= targetThreatValue)
+		{
+			return isValuable ? AttackViability.SignalForHelp : AttackViability.Ignore;
+		}
+		else
+		{
+			return AttackViability.Escape;
+		}
 	}
+
+	protected enum AttackViability { AttackAlone, SignalForHelp, Escape, Ignore }
 
 	public override void DestroyedAnEntity(Entity target)
 	{

@@ -5,6 +5,11 @@ using UnityEngine.Serialization;
 
 public class NarrativeManager : MonoBehaviour
 {
+	#region Narrative booleans
+	public static bool ShuttleRepaired { get; private set; }
+	public static bool ShipRecharged { get; private set; }
+	#endregion
+
 	[SerializeField] private DialogueController dialogueController;
 	[SerializeField] private LoadingController loadingController;
 	[FormerlySerializedAs("debugGameplayManager")]
@@ -14,6 +19,7 @@ public class NarrativeManager : MonoBehaviour
 	[SerializeField] private ShuttleTrackers shuttleTrackerSO;
 	[SerializeField] private Character mainChar;
 	[SerializeField] private MainHatchPrompt mainShip;
+	[SerializeField] private DerangedSoloBot derangedSoloBotPrefab;
 
 	[SerializeField] private ConversationEvent
 		recoveryDialogue,
@@ -26,11 +32,9 @@ public class NarrativeManager : MonoBehaviour
 	[Header("Entity Profiles")]
 	[SerializeField] private EntityProfile claire;
 
-	public static bool ShipAvailable { get; private set; } = false;
-
 	private void Start()
 	{
-		ChooseStartingLocation();
+		//ChooseStartingLocation();
 
 		shuttleTrackerSO.SetControllable(false);
 		shuttleTrackerSO.SetKinematic(true);
@@ -51,6 +55,7 @@ public class NarrativeManager : MonoBehaviour
 				{
 					if (dgm.skipRepairTheShuttleQuest)
 					{
+						ShuttleRepaired = true;
 						loadingController.AddPostLoadAction(() =>
 						{
 							shuttleTrackerSO.SetNavigationActive(true);
@@ -159,6 +164,7 @@ public class NarrativeManager : MonoBehaviour
 	private void CompletedRepairTheShuttleQuest(Quest quest)
 	{
 		shuttleTrackerSO.SetNavigationActive(true);
+		ShuttleRepaired = true;
 		StartDialogue(findShipDialogue, true, null);
 		StartReturnToTheShipQuest();
 	}
@@ -178,15 +184,16 @@ public class NarrativeManager : MonoBehaviour
 			mainChar, claire, qRewards, qReqs, CompletedReturnToTheShipQuest);
 
 		GiveQuest(mainChar, q);
+		mainShip.EnableDialogueResponses(false);
 	}
 
 	private void CompletedReturnToTheShipQuest(Quest quest)
 	{
-		UnityEngine.Events.UnityAction action = () => 
-		shuttleTrackerSO.SetWaypoint(
-			EntityGenerator.FindNearestOfEntityType(
-				EntityType.BotHive, shuttleTrackerSO.GetPosition()).transform,
-			null);
+		UnityEngine.Events.UnityAction action = () =>
+		{
+			Entity newEntity = EntityGenerator.SpawnEntity(derangedSoloBotPrefab);
+			shuttleTrackerSO.SetWaypoint(newEntity.transform, null);
+		};
 		if (foundShipDialogue.conversation.Length > 12)
 		{
 			foundShipDialogue.conversation[12].action.AddListener(action);
@@ -198,6 +205,7 @@ public class NarrativeManager : MonoBehaviour
 			foundShipDialogue.conversationEndAction.AddListener(action);
 		}
 		StartDialogue(foundShipDialogue, false, StartFindEnergySourceQuest);
+		mainShip.EnableDialogueResponses(true);
 	}
 
 	private void StartFindEnergySourceQuest()

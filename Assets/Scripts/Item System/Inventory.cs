@@ -317,4 +317,14 @@ public class Inventory : MonoBehaviour
 		stacks[place] = stack;
 		return temp;
 	}
+
+	public int GetValue()
+	{
+		int value = 0;
+		for (int i = 0; i < stacks.Count; i++)
+		{
+			value += stacks[i].GetValue();
+		}
+		return value;
+	}
 }
