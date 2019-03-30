@@ -1,0 +1,8 @@
+0|What is that!?
+1|ANALYSING...
+1|IT IS A MECHANICAL ENTITY.
+1|IT IS RUNNING ON A SIMPLISTIC AI.
+1|FAR INFERIOR TO MYSELF, OF COURSE.
+0|Is it the energy source?
+1|THE ENTITY CONTAINS THE ENERGY SOURCE.
+0|I wonder how we can get to the source.

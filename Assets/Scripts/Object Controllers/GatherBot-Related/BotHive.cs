@@ -5,6 +5,7 @@ using UnityEngine;
 [RequireComponent(typeof(HiveInventory))]
 public class BotHive : Character, IDrillableObject, ICombat
 {
+	#region Fields
 	//references
 	[SerializeField] private GatherBot botPrefab;
 	[SerializeField] private HiveInventory inventory;
@@ -43,6 +44,7 @@ public class BotHive : Character, IDrillableObject, ICombat
 	private List<ChunkCoords> botOccupiedCoords = new List<ChunkCoords>();
 	private List<ChunkCoords> searchCoords = new List<ChunkCoords>();
 	private ContactPoint2D[] contacts = new ContactPoint2D[1];
+	#endregion
 
 	private void Start()
 	{
@@ -133,10 +135,7 @@ public class BotHive : Character, IDrillableObject, ICombat
 		}
 	}
 
-	public void BuildBot(int dockID)
-	{
-		dockAnims[dockID].SetTrigger("Spawn1");
-	}
+	public void BuildBot(int dockID) => dockAnims[dockID].SetTrigger("Spawn1");
 
 	private GatherBot CreateBot(int dockID)
 	{
@@ -188,10 +187,7 @@ public class BotHive : Character, IDrillableObject, ICombat
 		return -1;
 	}
 
-	public Transform GetDock(GatherBot bot)
-	{
-		return docks[bot.dockID];
-	}
+	public Transform GetDock(GatherBot bot) => docks[bot.dockID];
 
 	public bool IsChildBot(Entity e)
 	{
@@ -339,20 +335,12 @@ public class BotHive : Character, IDrillableObject, ICombat
 		}
 	}
 
-	public bool TakeDrillDamage(float drillDmg, Vector2 drillPos, Entity destroyer, int dropModifier = 0)
-	{
-		return TakeDamage(drillDmg, drillPos, destroyer, dropModifier);
-	}
+	public bool TakeDrillDamage(float drillDmg, Vector2 drillPos, Entity destroyer,
+		int dropModifier = 0) => TakeDamage(drillDmg, drillPos, destroyer, dropModifier);
 
-	public void StartDrilling(DrillBit db)
-	{
-		AddDriller(db);
-	}
+	public void StartDrilling(DrillBit db) => AddDriller(db);
 
-	public void StopDrilling(DrillBit db)
-	{
-		RemoveDriller(db);
-	}
+	public void StopDrilling(DrillBit db) => RemoveDriller(db);
 
 	public override bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer,
 		int dropModifier = 0, bool flash = true)
@@ -480,25 +468,13 @@ public class BotHive : Character, IDrillableObject, ICombat
 		return false;
 	}
 
-	public override EntityType GetEntityType()
-	{
-		return EntityType.BotHive;
-	}
+	public override EntityType GetEntityType() => EntityType.BotHive;
 
-	public void Launch(Vector2 launchDirection, Character launcher)
-	{
+	public void Launch(Vector2 launchDirection, Character launcher) { }
 
-	}
+	public bool CanBeLaunched() => false;
 
-	public bool CanBeLaunched()
-	{
-		return false;
-	}
-
-	public bool IsDrillable()
-	{
-		return true;
-	}
+	public bool IsDrillable() => true;
 
 	public bool EngageInCombat(ICombat hostile)
 	{
@@ -530,15 +506,9 @@ public class BotHive : Character, IDrillableObject, ICombat
 		enemies.Add(threat);
 	}
 
-	public List<DrillBit> GetDrillers()
-	{
-		return drillers;
-	}
+	public List<DrillBit> GetDrillers() => drillers;
 
-	public void AddDriller(DrillBit db)
-	{
-		GetDrillers().Add(db);
-	}
+	public void AddDriller(DrillBit db) => GetDrillers().Add(db);
 
 	public bool RemoveDriller(DrillBit db)
 	{

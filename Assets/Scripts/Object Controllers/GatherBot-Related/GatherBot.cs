@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -103,12 +104,24 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 	[SerializeField] private StraightWeapon straightWeapon;
 	private bool beingDrilled;
 	private List<ICombat> enemies = new List<ICombat>();
+	protected bool IsInCombat { get { return enemies.Count > 0; } }
+	protected bool IsSwarmInCombat
+	{
+		get
+		{
+			for (int i = 0; i < hive?.childBots.Count; i++)
+			{
+				if (!hive.childBots[i].IsInCombat) return false;
+			}
+			return IsInCombat;
+		}
+	}
 	private float chaseRange = 16f;
 	[SerializeField] private float outOfRangeCountdown = 8f;
 	private float outOfRangeTimer;
 	[SerializeField] private float orbitRange = 1.75f;
 	[SerializeField] private float orbitSpeed = 0.6f;
-	[SerializeField] private float firingRange = 5f;
+	[SerializeField] private float firingRange = 3f;
 	[SerializeField] protected int valuableLootThreshold = 1;
 	[SerializeField] private float drillToChargeTimer = 1f;
 	[SerializeField] private float chargeToExplosionTimer = 3f;
@@ -131,6 +144,10 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 
 	//signalling variables
 	private float signalTimer;
+
+	//escaping variables
+	private List<Entity> scaryEntities = new List<Entity>();
+	private Entity currentlyEscaping;
 
 	//dying variables
 	private float dyingTimer = 0f;
@@ -257,6 +274,12 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 				for (int i = 0; i < entitiesScanned.Count; i++)
 				{
 					Entity e = entitiesScanned[i];
+					if (IsScary(e))
+					{
+						hive?.MarkCoordAsEmpty(coords);
+						SetState(AIState.Exploring);
+						return;
+					}
 					ICombat threat = e.GetICombat();
 					if (threat != null && IsSuspicious(threat))
 					{
@@ -357,7 +380,7 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 	{
 		if (nearbySuspects.Count == 0)
 		{
-			SetState(AIState.Exploring);
+			SetState(AIState.Scanning);
 			return;
 		}
 		targetEntity = (Entity)nearbySuspects[0];
@@ -416,15 +439,12 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 						break;
 					case AttackViability.Escape:
 						hive?.MarkCoordAsEmpty(targetEntity.GetCoords());
-						SetState(AIState.Escaping);
+						scaryEntities.Add(targetEntity);
+						SetState(AIState.Exploring);
 						break;
 					case AttackViability.Ignore:
 						unsuspiciousEntities.Add((Entity)nearbySuspects[0]);
 						nearbySuspects.RemoveAt(0);
-						if (nearbySuspects.Count == 0)
-						{
-							SetState(AIState.Scanning);
-						}
 						break;
 				}
 			}
@@ -445,7 +465,14 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 			{
 				GatherBot sibling = hive.childBots[i];
 				sibling.enemies = enemies;
-				sibling.SetState(AIState.Attacking);
+				if (IsInCombat)
+				{
+					sibling.SetState(AIState.Escaping);
+				}
+				else
+				{
+					sibling.SetState(AIState.Attacking);
+				}
 				for (int j = 0; j < enemies.Count; j++)
 				{
 					ICombat enemy = enemies[j];
@@ -457,51 +484,12 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 
 	protected virtual void Attacking()
 	{
-		//if this bot is too far away and all other bots are also too far away then give up chase
-		float distanceFromTarget = Vector2.Distance(transform.position, ((Entity)enemies[0]).transform.position);
-		if (distanceFromTarget > chaseRange)
+		if (enemies.Count == 0)
 		{
-			bool found = false;
-			for (int i = 0; i < hive?.childBots.Count; i++)
-			{
-				GatherBot bot = hive.childBots[i];
-				if (bot == this || bot == null) continue;
-				float dist = Vector2.Distance(bot.transform.position, ((Entity)enemies[0]).transform.position);
-				if (dist < chaseRange)
-				{
-					found = true;
-					break;
-				}
-			}
-			if (!found)
-			{
-				outOfRangeTimer += Time.deltaTime;
-				if (outOfRangeTimer >= outOfRangeCountdown)
-				{
-					outOfRangeTimer = 0f;
-					enemies[0].DisengageInCombat(this);
-					enemies.RemoveAt(0);
-					if (enemies.Count == 0)
-					{
-						for (int i = 0; i < hive?.childBots.Count; i++)
-						{
-							GatherBot bot = hive.childBots[i];
-							bot.SetState(AIState.Collecting);
-						}
-						return;
-					}
-				}
-			}
-			else
-			{
-				outOfRangeTimer = 0f;
-			}
-		}
-		else
-		{
-			outOfRangeTimer = 0f;
+			SetState(AIState.Collecting);
 		}
 
+		//if sibling bots are nearby, get them to join the fight
 		for (int i = 0; i < hive?.childBots.Count; i++)
 		{
 			GatherBot sibling = hive.childBots[i];
@@ -516,17 +504,40 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 				sibling.SetState(AIState.Attacking);
 			}
 		}
+
+		//check if the target is too far away from this bot and its siblings
 		targetEntity = (Entity)enemies[0];
+		Vector2 enemyPos = targetEntity.transform.position;
+		bool found = SiblingsInRangeOfTarget(enemyPos);
+
+		//if the target is out of range for too long then disengage from combat
+		if (IncrementOutOfRangeCounter(found)) return;
+
+		//bots attack by circling its target and firing
 		float orbitAngle = Mathf.PI * 2f / (hive?.childBots.Count ?? 0) * dockID + Pause.timeSinceOpen * orbitSpeed;
-		Vector3 targetPos = new Vector2(Mathf.Sin(orbitAngle), Mathf.Cos(orbitAngle)) * orbitRange;
-		GoToLocation(targetEntity.transform.position + targetPos, distanceFromTarget > firingRange, 0.2f, true,
+		Vector2 orbitPos = new Vector2(Mathf.Sin(orbitAngle), Mathf.Cos(orbitAngle)) * orbitRange;
+		float distanceFromTarget = Vector2.Distance(transform.position, enemyPos);
+		GoToLocation(enemyPos + orbitPos, distanceFromTarget > firingRange, 0.2f, true,
 			distanceFromTarget > firingRange ? null : (Vector2?)targetEntity.transform.position - transform.right);
+
+		//fire will in range
 		readyToFire = distanceFromTarget <= firingRange;
 		if (readyToFire)
 		{
 			straightWeapon.aim = targetEntity.transform.position;
 		}
-		
+
+		//run away if hp drops below 50% while also having lower health than the target
+		if (!IsSwarmInCombat)
+		{
+			float hpRatio = GetHpRatio();
+			if (hpRatio < 0.5f && hpRatio < targetEntity.GetHpRatio())
+			{
+				scaryEntities.Add(targetEntity);
+				SetState(AIState.Signalling);
+			}
+		}
+
 	}
 
 	protected virtual void Collecting()
@@ -536,7 +547,30 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 
 	protected virtual void Escaping()
 	{
-
+		Vector2 targetPos = Vector2.zero;
+		if (IsInCombat)
+		{
+			Vector2 enemyPos = ((Entity)enemies[0]).transform.position;
+			IncrementOutOfRangeCounter(SiblingsInRangeOfTarget(enemyPos));
+			float enemyDistance = Vector2.Distance(transform.position, enemyPos);
+			if (hive)
+			{
+				targetPos = hive.transform.position;
+				if (GoToLocation(targetPos, false, 3f, false) && enemyDistance < firingRange)
+				{
+					SetState(AIState.Attacking);
+				}
+			}
+			else
+			{
+				targetPos = ((Vector2)transform.position - enemyPos) * 5f;
+				GoToLocation(targetPos, false, 3f, false);
+			}
+		}
+		else
+		{
+			SetState(AIState.Storing);
+		}
 	}
 
 	protected virtual void Wandering()
@@ -604,6 +638,9 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 				break;
 			case AIState.Exploring:
 				hive.AssignUnoccupiedCoords(this);
+				break;
+			case AIState.Escaping:
+				outOfRangeTimer = 0f;
 				break;
 			case AIState.Dying:
 				dyingTimer = 0f;
@@ -904,16 +941,30 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 	{
 		if (threat == null || threat == GetICombat()) return false;
 
+		Entity e = (Entity)threat;
 		//ignore if too far away
-		if (Vector2.Distance(transform.position, ((Entity)threat).transform.position)
-			> suspiciousChaseRange) return false;
+		if (Vector2.Distance(transform.position, e.transform.position) > suspiciousChaseRange) return false;
+
+		for (int i = 0; i < unsuspiciousEntities.Count; i++)
+		{
+			if (unsuspiciousEntities[i] == e) return false;
+		}
 
 		//determine suspect based on entity type
-		EntityType type = ((Entity)threat).GetEntityType();
+		EntityType type = e.GetEntityType();
 		if (type == EntityType.Shuttle) return true;
 		if (type == EntityType.BotHive) return (Entity)threat != hive;
-		if (type == EntityType.GatherBot) return !IsSibling(((Entity)threat));
+		if (type == EntityType.GatherBot) return !IsSibling(e);
 
+		return false;
+	}
+
+	private bool IsScary(Entity e)
+	{
+		for (int i = 0; i < scaryEntities.Count; i++)
+		{
+			if (scaryEntities[i] == e) return true;
+		}
 		return false;
 	}
 
@@ -1017,7 +1068,7 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 	public bool TakeDrillDamage(float drillDmg, Vector2 drillPos, Entity destroyer, int dropModifier = 0)
 		=> TakeDamage(drillDmg / drillDamageResistance, drillPos, destroyer, dropModifier, false);
 
-	public IEnumerator ChargeForcePulse()
+	protected virtual IEnumerator ChargeForcePulse()
 	{
 		if (!beingDrilled) yield break;
 		
@@ -1114,14 +1165,11 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 		}
 		shakeFX.Begin();
 		pause = pause ?? FindObjectOfType<Pause>();
-		if (pause)
+		pause?.DelayedAction(() =>
 		{
-			pause.DelayedAction(() =>
-			{
-				if (this == null) return;
-				StartCoroutine(ChargeForcePulse());
-			}, drillToChargeTimer, true);
-		}
+			if (this == null) return;
+			StartCoroutine(ChargeForcePulse());
+		}, drillToChargeTimer, true);
 	}
 
 	public void StopDrilling(DrillBit db)
@@ -1131,9 +1179,6 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 		shakeFX.Stop();
 		RemoveDriller(db);
 	}
-
-	public override bool CanDrill() => true;
-	public override bool CanDrillLaunch() => true;
 
 	public void OnTriggerEnter2D(Collider2D other)
 	{
@@ -1217,6 +1262,40 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 		e.GetEntityType() == EntityType.GatherBot
 		&& hive != null
 		&& ((GatherBot)e).hive == hive;
+
+	private bool IncrementOutOfRangeCounter(bool reset)
+	{
+		if (reset)
+		{
+			outOfRangeTimer = 0f;
+			return false;
+		}
+
+		outOfRangeTimer += Time.deltaTime;
+		if (outOfRangeTimer >= outOfRangeCountdown)
+		{
+			outOfRangeTimer = 0f;
+			enemies[0].DisengageInCombat(this);
+			enemies.RemoveAt(0);
+			if (enemies.Count == 0)
+			{
+				SetState(AIState.Collecting);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private bool SiblingsInRangeOfTarget(Vector2 enemyPos)
+	{
+		for (int i = 0; i < hive?.childBots.Count; i++)
+		{
+			GatherBot bot = hive.childBots[i];
+			float dist = Vector2.Distance(bot.transform.position, enemyPos);
+			if (dist < chaseRange) return true;
+		}
+		return Vector2.Distance(transform.position, enemyPos) < chaseRange;
+	}
 
 	public override bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer,
 		int dropModifier = 0, bool flash = true)
@@ -1346,7 +1425,7 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 				baseThreatMultiplier = 0f;
 				break;
 			case EntityType.Shuttle:
-				baseThreatMultiplier = 2f;
+				baseThreatMultiplier = 0f;
 				break;
 			case EntityType.Nebula:
 				baseThreatMultiplier = 0f;
@@ -1371,8 +1450,7 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 		if (selfThreatValue >= targetThreatValue)
 		{
 			return isValuable ? AttackViability.AttackAlone : AttackViability.Ignore;
-		}
-		else if (swarmThreatValue >= targetThreatValue)
+		}		else if (swarmThreatValue >= targetThreatValue)
 		{
 			return isValuable ? AttackViability.SignalForHelp : AttackViability.Ignore;
 		}

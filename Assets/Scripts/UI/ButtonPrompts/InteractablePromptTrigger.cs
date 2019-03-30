@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class InteractablePromptTrigger : PromptTrigger
 {
@@ -8,7 +6,7 @@ public class InteractablePromptTrigger : PromptTrigger
 
 	public delegate void InteractionEventHandler();
 	public event InteractionEventHandler OnInteraction;
-	public void Interaction() => OnInteraction?.Invoke();
+
 	private static DialogueController dialogueController;
 	protected static DialogueController DialogueController
 	{
@@ -19,13 +17,17 @@ public class InteractablePromptTrigger : PromptTrigger
 	}
 	protected bool enabledDialogueResponses;
 
-	private void Awake() => OnInteraction += OnInteracted;
+	protected override void Awake()
+	{
+		base.Awake();
+		OnInteraction += OnInteracted;
+	}
 
 	protected virtual void Update()
 	{
 		if (IsTriggerActive() && InputHandler.GetInputDown(action) > 0f)
 		{
-			Interaction();
+			OnInteraction?.Invoke();
 		}
 	}
 

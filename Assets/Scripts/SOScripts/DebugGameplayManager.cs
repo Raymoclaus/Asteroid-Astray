@@ -7,4 +7,6 @@ public class DebugGameplayManager : ScriptableObject
 	public bool skipFirstGatheringQuest = false;
 	public bool skipMakeARepairKitQuest = false;
 	public bool skipRepairTheShuttleQuest = false;
+	public bool skipReturnToTheShipQuest = false;
+	public bool skipAquireAnEnergySourceQuest = false;
 }

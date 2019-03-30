@@ -132,6 +132,9 @@ public class Shuttle : Character, IStunnable, ICombat
 		trackerSO.ResetDefaults();
 		trackerSO.SetDefaultWaypointTarget(defaultWaypointTarget);
 		if (cameraCtrl) cameraCtrl.followTarget = this;
+
+		canDrill = true;
+		canDrillLaunch = true;
 	}
 
 	private void Update()
@@ -149,10 +152,7 @@ public class Shuttle : Character, IStunnable, ICombat
 		UpdateShuttleTrackerSO();
 	}
 
-	private void FixedUpdate()
-	{
-		rb.AddForce(accel);
-	}
+	private void FixedUpdate() => rb.AddForce(accel);
 
 	//Checks for input related to movement and calculates acceleration
 	private void GetMovementInput()
@@ -392,14 +392,9 @@ public class Shuttle : Character, IStunnable, ICombat
 		}
 	}
 
-	private void SetRot(float newRot)
-	{
-		rot.z = ((newRot % 360f) + 360f) % 360f;
-	}
+	private void SetRot(float newRot) => rot.z = ((newRot % 360f) + 360f) % 360f;
 
-	public override EntityType GetEntityType() {
-		return EntityType.Shuttle;
-	}
+	public override EntityType GetEntityType() => EntityType.Shuttle;
 
 	private void GetItemUsageInput()
 	{
@@ -476,15 +471,9 @@ public class Shuttle : Character, IStunnable, ICombat
 		}
 	}
 
-	public override float MaxDrillDamage()
-	{
-		return SpeedLimit * drillDamageMultiplier;
-	}
+	public override float MaxDrillDamage() => SpeedLimit * drillDamageMultiplier;
 
-	public void DrillLaunchArcDisable()
-	{
-		drillLaunchArcSprite.gameObject.SetActive(false);
-	}
+	public void DrillLaunchArcDisable() => drillLaunchArcSprite.gameObject.SetActive(false);
 
 	public override void DrillComplete()
 	{
@@ -493,15 +482,10 @@ public class Shuttle : Character, IStunnable, ICombat
 		cameraCtrl.SetLookAheadDistance(false);
 	}
 
-	public override bool ShouldLaunch()
-	{
-		return CanDrillLaunch()
-			&& InputHandler.GetInputUp(InputAction.DrillLaunch) > 0f
-			&& trackerSO.hasControl;
-	}
-
-	public override bool CanDrill() => true;
-	public override bool CanDrillLaunch() => true;
+	public override bool ShouldLaunch() =>
+		CanDrillLaunch()
+		&& InputHandler.GetInputUp(InputAction.DrillLaunch) > 0f
+		&& trackerSO.hasControl;
 
 	public void Stun()
 	{
@@ -531,26 +515,16 @@ public class Shuttle : Character, IStunnable, ICombat
 
 	public override bool VerifyDrillTarget(Entity target)
 	{
-		bool checks = true;
+		if (accel == Vector2.zero) return false;
+		
 		if (trackerSO.autoPilot)
 		{
-			checks = target.GetEntityType() == EntityType.Asteroid;
+			return target.GetEntityType() == EntityType.Asteroid;
 		}
-		else
-		{
-			checks = accel != Vector2.zero;
-			if (target.GetEntityType() != EntityType.Asteroid)
-			{
-				checks = checks && enemies.Count > 0;
-			}
-		}
-		return checks;
+		return true;
 	}
 
-	public override void StoppedDrilling()
-	{
-		DrillLaunchArcDisable();
-	}
+	public override void StoppedDrilling() => DrillLaunchArcDisable();
 
 	public void OnCollisionEnter2D(Collision2D collision)
 	{
@@ -652,32 +626,27 @@ public class Shuttle : Character, IStunnable, ICombat
 		}
 	}
 
-	public float GetBoostRemaining()
-	{
-		return (boostCapacity - boostLevel) / boostCapacity;
-	}
+	public float GetBoostRemaining() => (boostCapacity - boostLevel) / boostCapacity;
 
-	public override bool CanFireLaser()
-	{
-		return laserAttached && !isBoosting && InputHandler.GetInput(InputAction.Shoot) > 0f
-			&& !Pause.IsStopped && trackerSO.hasControl && trackerSO.canShoot;
-	}
+	public override bool CanFireLaser() =>
+		laserAttached
+		&& !isBoosting
+		&& InputHandler.GetInput(InputAction.Shoot) > 0f
+		&& !Pause.IsStopped
+		&& trackerSO.hasControl
+		&& trackerSO.canShoot;
 
-	public override bool CanFireStraightWeapon()
-	{
-		return straightWeaponAttached && !isBoosting && InputHandler.GetInput(InputAction.Shoot) > 0f
-			&& !Pause.IsStopped && trackerSO.hasControl && trackerSO.canShoot;
-	}
+	public override bool CanFireStraightWeapon() =>
+		straightWeaponAttached
+		&& !isBoosting
+		&& InputHandler.GetInput(InputAction.Shoot) > 0f
+		&& !Pause.IsStopped
+		&& trackerSO.hasControl
+		&& trackerSO.canShoot;
 
-	public override GameObject GetLaunchImpactAnimation()
-	{
-		return drillLaunchImpact;
-	}
+	public override GameObject GetLaunchImpactAnimation() => drillLaunchImpact;
 
-	public override LaunchTrailController GetLaunchTrailAnimation()
-	{
-		return launchTrail;
-	}
+	public override LaunchTrailController GetLaunchTrailAnimation() => launchTrail;
 
 	public override Vector2 LaunchDirection(Transform launchableObject)
 	{
@@ -710,10 +679,7 @@ public class Shuttle : Character, IStunnable, ICombat
 		cameraCtrl?.SetLookAheadDistance(false);
 	}
 
-	public override float GetLaunchDamage()
-	{
-		return trackerSO.launchDamage;
-	}
+	public override float GetLaunchDamage() => trackerSO.launchDamage;
 
 	public bool EngageInCombat(ICombat hostile)
 	{
@@ -753,25 +719,13 @@ public class Shuttle : Character, IStunnable, ICombat
 		trackerSO.storageCount = storage.Count(Item.Type.Stone);
 	}
 
-	public override void AttachLaser(bool attach)
-	{
-		laserAttached = attach;
-	}
+	public override void AttachLaser(bool attach) => laserAttached = attach;
 
-	public override void AttachStraightWeapon(bool attach)
-	{
-		straightWeaponAttached = attach;
-	}
+	public override void AttachStraightWeapon(bool attach) => straightWeaponAttached = attach;
 
-	public override ICombat GetICombat()
-	{
-		return this;
-	}
+	public override ICombat GetICombat() => this;
 
-	public override void ReceiveItemReward(Item.Type type, int amount)
-	{
-		CollectResources(type, amount);
-	}
+	public override void ReceiveItemReward(Item.Type type, int amount) => CollectResources(type, amount);
 
 	public override void AcceptQuest(Quest quest)
 	{
@@ -786,10 +740,9 @@ public class Shuttle : Character, IStunnable, ICombat
 		questLog.AddQuest(quest);
 	}
 
-	public override Scan ReturnScan()
-	{
-		return new Scan(GetEntityType(), 1f, GetLevel(), GetValue());
-	}
+	public override bool TakeItem(Item.Type type, int amount) => storage.RemoveItem(type, amount);
+
+	public override Scan ReturnScan() => new Scan(GetEntityType(), 1f, GetLevel(), GetValue());
 
 	protected override int GetLevel() => base.GetLevel();
 

@@ -217,7 +217,7 @@ public class Entity : MonoBehaviour
 
 	public virtual Scan ReturnScan() => new Scan(GetEntityType(), GetHpRatio(), GetLevel(), GetValue()); 
 
-	protected float GetHpRatio() => currentHP / maxHP;
+	public float GetHpRatio() => currentHP / maxHP;
 
 	protected virtual int GetLevel() => 1;
 
@@ -239,6 +239,8 @@ public class Entity : MonoBehaviour
 
 	public virtual bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer,
 		int dropModifier = 0, bool flash = true) => false;
+
+	public void Teleport(Vector2 position) => transform.position = position;
 }
 
 public enum EntityType

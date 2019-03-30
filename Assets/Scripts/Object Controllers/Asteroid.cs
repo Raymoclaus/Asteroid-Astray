@@ -98,10 +98,7 @@ public class Asteroid : Entity, IDrillableObject
 		initialised = true;
 	}
 
-	public void OnEnable()
-	{
-		RandomMovement();
-	}
+	public void OnEnable() => RandomMovement();
 
 	private void RandomMovement()
 	{
@@ -227,20 +224,11 @@ public class Asteroid : Entity, IDrillableObject
 		SprRend.sprite = GetCurrentSpriteSettings()[delta];
 	}
 
-	private NestedSpriteArray[] GetAllSprites()
-	{
-		return spritesSO.asteroidSprites;
-	}
+	private NestedSpriteArray[] GetAllSprites() => spritesSO.asteroidSprites;
 
-	private SpriteArray[] GetSpriteCategory()
-	{
-		return GetAllSprites()[id.x].collection;
-	}
+	private SpriteArray[] GetSpriteCategory() => GetAllSprites()[id.x].collection;
 
-	private Sprite[] GetCurrentSpriteSettings()
-	{
-		return GetSpriteCategory()[id.y].sprites;
-	}
+	private Sprite[] GetCurrentSpriteSettings() => GetSpriteCategory()[id.y].sprites;
 
 	public override bool OnExitPhysicsRange()
 	{
@@ -337,10 +325,7 @@ public class Asteroid : Entity, IDrillableObject
 	}
 
 	//If queried, this object will say that it is an asteroid-type Entity
-	public override EntityType GetEntityType()
-	{
-		return EntityType.Asteroid;
-	}
+	public override EntityType GetEntityType() => EntityType.Asteroid;
 
 	private void OnCollisionEnter2D(Collision2D collision)
 	{
@@ -430,25 +415,13 @@ public class Asteroid : Entity, IDrillableObject
 		}
 	}
 
-	public bool IsDrillable()
-	{
-		return launched && currentHP > 0f;
-	}
+	public bool IsDrillable() => launched && currentHP > 0f;
 
-	public bool CanBeLaunched()
-	{
-		return currentHP > 0f;
-	}
+	public bool CanBeLaunched() => currentHP > 0f;
 
-	public List<DrillBit> GetDrillers()
-	{
-		return drillers;
-	}
+	public List<DrillBit> GetDrillers() => drillers;
 
-	public void AddDriller(DrillBit db)
-	{
-		GetDrillers().Add(db);
-	}
+	public void AddDriller(DrillBit db) => GetDrillers().Add(db);
 
 	public bool RemoveDriller(DrillBit db)
 	{

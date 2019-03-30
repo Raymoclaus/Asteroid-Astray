@@ -7,13 +7,15 @@ public class GatheringQRec : QuestRequirement
 	private int currentAmount = 0;
 	private string description;
 	private string formattedDescription = "{0}: {1} / {2}";
+	private bool formatDescription;
 
-	public GatheringQRec(Item.Type typeNeeded, int amountNeeded, string description)
+	public GatheringQRec(Item.Type typeNeeded, int amountNeeded, string description, bool formatDescription = true)
 	{
 		this.typeNeeded = typeNeeded;
 		this.amountNeeded = amountNeeded;
 		this.description = description.Replace(
 			"#", amountNeeded.ToString()).Replace("?", Item.TypeName(typeNeeded));
+		this.formatDescription = formatDescription;
 	}
 
 	public override void Activate()
@@ -38,13 +40,10 @@ public class GatheringQRec : QuestRequirement
 		}
 	}
 
-	public override string GetDescription()
-	{
-		return string.Format(formattedDescription, description, currentAmount, amountNeeded);
-	}
+	public override string GetDescription() =>
+		formatDescription ?
+		string.Format(formattedDescription, description, currentAmount, amountNeeded)
+		: description;
 
-	public override Vector3? TargetLocation()
-	{
-		return null;
-	}
+	public override Vector3? TargetLocation() => null;
 }

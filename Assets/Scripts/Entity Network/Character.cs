@@ -9,78 +9,36 @@ public class Character : Entity
 	[SerializeField] protected DrillBit drill;
 	public bool IsDrilling { get { return drill == null ? false : drill.IsDrilling; } }
 
-	public DrillBit GetDrill()
-	{
-		return canDrill ? drill : null;
-	}
+	public DrillBit GetDrill() => canDrill ? drill : null;
 
-	public void SetDrill(DrillBit newDrill)
-	{
-		canDrill = newDrill != null;
-		drill = newDrill;
-	}
+	public void AttachDrill(DrillBit db) => drill = db;
 
-	public void AttachDrill(DrillBit db)
-	{
-		drill = db;
-	}
+	public virtual bool CanDrillLaunch() => canDrillLaunch;
+	public virtual bool CanDrill() => canDrill;
 
-	public virtual bool CanDrillLaunch() => false;
-	public virtual bool CanDrill() => false;
+	public virtual float GetLaunchDamage() => 0f;
 
-	public virtual float GetLaunchDamage()
-	{
-		return 0f;
-	}
+	public virtual Vector2 LaunchDirection(Transform launchableObject) => Vector2.zero;
 
-	public virtual Vector2 LaunchDirection(Transform launchableObject)
-	{
-		return Vector2.zero;
-	}
-
-	public virtual bool ShouldLaunch()
-	{
-		return false;
-	}
+	public virtual bool ShouldLaunch() => false;
 
 	//This should be overridden. Called by a drill to alert the entity that the drilling has completed
-	public virtual void DrillComplete()
-	{
-
-	}
+	public virtual void DrillComplete() { }
 
 	//some entities might want to avoid drilling other entities by accident, override to verify target
-	public virtual bool VerifyDrillTarget(Entity target)
-	{
-		return true;
-	}
+	public virtual bool VerifyDrillTarget(Entity target) => true;
 
 	//This should be overridden. Called by a drill to determine how much damage it should deal to its target.
-	public virtual float DrillDamageQuery(bool firstHit)
-	{
-		return 1f;
-	}
+	public virtual float DrillDamageQuery(bool firstHit) => 1f;
 
-	public virtual float MaxDrillDamage()
-	{
-		return 1f;
-	}
+	public virtual float MaxDrillDamage() => 1f;
 
-	public virtual void StoppedDrilling()
-	{
-
-	}
+	public virtual void StoppedDrilling() { }
 	#endregion Drill-related
 
-	public override ICombat GetICombat()
-	{
-		return null;
-	}
+	public override ICombat GetICombat() => null;
 
-	public virtual void ReceiveItemReward(Item.Type type, int amount)
-	{
-		CollectResources(type, amount);
-	}
+	public virtual void ReceiveItemReward(Item.Type type, int amount) => CollectResources(type, amount);
 
 	public virtual void AcceptQuest(Quest quest)
 	{
@@ -144,8 +102,5 @@ public class Character : Entity
 		return false;
 	}
 
-	public void Teleport(Vector2 position)
-	{
-		transform.position = position;
-	}
+	public virtual bool TakeItem(Item.Type type, int amount) => false;
 }

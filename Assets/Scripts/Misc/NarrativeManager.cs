@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class NarrativeManager : MonoBehaviour
 {
@@ -10,9 +8,16 @@ public class NarrativeManager : MonoBehaviour
 	public static bool ShipRecharged { get; private set; }
 	#endregion
 
+	private Pause pauseController;
+	private Pause PauseController
+	{
+		get
+		{
+			return pauseController ?? (pauseController = FindObjectOfType<Pause>());
+		}
+	}
 	[SerializeField] private DialogueController dialogueController;
 	[SerializeField] private LoadingController loadingController;
-	[FormerlySerializedAs("debugGameplayManager")]
 	[SerializeField] private DebugGameplayManager dgm;
 	[SerializeField] private SpotlightEffectController spotlightEffectController;
 	[SerializeField] private CustomScreenEffect screenEffects;
@@ -27,7 +32,11 @@ public class NarrativeManager : MonoBehaviour
 		completedFirstGatheringQuestDialogue,
 		useRepairKitDialogue,
 		findShipDialogue,
-		foundShipDialogue;
+		foundShipDialogue,
+		foundDerangedBotDialogue,
+		questionHowToObtainEnergySourceDialogue,
+		acquiredEnergySourceDialogue,
+		rechargedTheShipDialogue;
 
 	[Header("Entity Profiles")]
 	[SerializeField] private EntityProfile claire;
@@ -60,6 +69,23 @@ public class NarrativeManager : MonoBehaviour
 						{
 							shuttleTrackerSO.SetNavigationActive(true);
 						});
+						if (dgm.skipReturnToTheShipQuest)
+						{
+							if (dgm.skipAquireAnEnergySourceQuest)
+							{
+								loadingController.AddPostLoadAction(() =>
+								{
+									mainChar.CollectResources(Item.Type.CorruptedCorvorite, 1);
+									CompletedFindEnergySourceQuest(null);
+								});
+								return;
+							}
+							loadingController.AddPostLoadAction(() =>
+							{
+								CompletedReturnToTheShipQuest(null);
+							});
+							return;
+						}
 						loadingController.AddPostLoadAction(() =>
 						{
 							CompletedRepairTheShuttleQuest(null);
@@ -188,34 +214,78 @@ public class NarrativeManager : MonoBehaviour
 	}
 
 	private void CompletedReturnToTheShipQuest(Quest quest)
-	{
-		UnityEngine.Events.UnityAction action = () =>
-		{
-			Entity newEntity = EntityGenerator.SpawnEntity(derangedSoloBotPrefab);
-			shuttleTrackerSO.SetWaypoint(newEntity.transform, null);
-		};
-		if (foundShipDialogue.conversation.Length > 12)
-		{
-			foundShipDialogue.conversation[12].action.AddListener(action);
-			foundShipDialogue.conversation[12].skipAction.AddListener(action);
-			foundShipDialogue.conversation[12].hasAction = true;
-		}
-		else
-		{
-			foundShipDialogue.conversationEndAction.AddListener(action);
-		}
+	{		
 		StartDialogue(foundShipDialogue, false, StartFindEnergySourceQuest);
 		mainShip.EnableDialogueResponses(true);
 	}
 
 	private void StartFindEnergySourceQuest()
 	{
+		if (mainChar == null) return;
 
+		List<QuestReward> qRewards = new List<QuestReward>();
+
+		List<QuestRequirement> qReqs = new List<QuestRequirement>();
+		qReqs.Add(new GatheringQRec(Item.Type.CorruptedCorvorite, 1, "Acquire an energy source.", false));
+
+		Quest q = new Quest(
+			"Acquire an Energy Source",
+			"The ship appears intact, however it is in a powered-down state. We need to find an energy source.",
+			mainChar, claire, qRewards, qReqs, CompletedFindEnergySourceQuest);
+
+		GiveQuest(mainChar, q);
+		//create a deranged bot
+		Entity newEntity = EntityGenerator.SpawnEntity(derangedSoloBotPrefab);
+		//set waypoint to new bot
+		shuttleTrackerSO.SetWaypoint(newEntity.transform, null);
+		//attach dialogue prompt when player approaches bot
+		VicinityTrigger entityPrompt = newEntity.GetComponentInChildren<VicinityTrigger>();
+		VicinityTrigger.VicinityTriggerEventHandler triggerEnterAction = null;
+		triggerEnterAction = () =>
+		{
+			UnityEngine.Events.UnityAction delayedDialogue = () =>
+			{
+				PauseController.DelayedAction(() =>
+				{
+					if (newEntity.GetHpRatio() < 0.9f) return;
+					StartDialogue(questionHowToObtainEnergySourceDialogue, true);
+				}, 5f, true);
+			};
+			StartDialogue(foundDerangedBotDialogue, true, delayedDialogue);
+			entityPrompt.OnEnterTrigger -= triggerEnterAction;
+		};
+		entityPrompt.OnEnterTrigger += triggerEnterAction;
 	}
 
 	private void CompletedFindEnergySourceQuest(Quest quest)
 	{
+		StartDialogue(acquiredEnergySourceDialogue, true);
+		StartRechargeTheShipQuest();
+	}
 
+	private void StartRechargeTheShipQuest()
+	{
+		if (mainChar == null) return;
+
+		List<QuestReward> qRewards = new List<QuestReward>();
+
+		List<QuestRequirement> qReqs = new List<QuestRequirement>();
+		qReqs.Add(new WaypointQReq(mainShip.transform, "Return to the ship."));
+
+		Quest q = new Quest(
+			"Recharge the Ship",
+			"Now that we have an energy source, we should take it back to the ship and restore power so that we can finally get back inside.",
+			mainChar, claire, qRewards, qReqs, CompletedRechargeTheShipQuest);
+
+		GiveQuest(mainChar, q);
+	}
+
+	private void CompletedRechargeTheShipQuest(Quest quest)
+	{
+		ShipRecharged = true;
+		StartDialogue(rechargedTheShipDialogue);
+		mainChar.TakeItem(Item.Type.CorruptedCorvorite, 1);
+		mainShip.Lock(false);
 	}
 
 	private void GiveQuest(Character c, Quest q) => c.AcceptQuest(q);

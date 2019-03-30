@@ -1,0 +1,15 @@
+0|It doesn't look like it's doing anything.
+0|Maybe it's broken?
+1|MANY OF ITS CORE SYSTEMS ARE DAMAGED.
+1|OTHER SYSTEMS ARE NOT IN USE.
+1|IT APPEARS TO BE CAUGHT IN A FUNCTIONAL LOOP.
+0|Poor thing.
+1|SUGGESTION: DESTROY IT.
+0|What! Why?
+1|IT IS UNABLE TO FULFIL ITS CORE FUNCTION.
+0|You have a point. It probably feels useless.
+1|IT LIKELY DOES NOT HAVE THE CAPACITY TO FEEL.
+0|I really want to dismantle it and fix it...
+0|But I can't do that without access to the ship.
+0|I guess I have no choice but to destroy it.
+0|I should be able to drill through it.

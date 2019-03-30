@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 
 public class DerangedSoloBot : SoloBot
 {
@@ -20,7 +21,15 @@ public class DerangedSoloBot : SoloBot
 
 	protected override void SetState(AIState newState)
 	{
-		base.SetState(AIState.Wandering);
+		switch (newState)
+		{
+			case AIState.Dying:
+				base.SetState(newState);
+				break;
+			default:
+				base.SetState(AIState.Wandering);
+				break;
+		}
 	}
 
 	protected override void Wandering()
@@ -60,4 +69,6 @@ public class DerangedSoloBot : SoloBot
 		Vector2 randomDir = new Vector2(Mathf.Sin(randomAngle), Mathf.Cos(randomAngle));
 		randomWanderTarget = (Vector2)transform.position + randomDir * wanderDistance;
 	}
+
+	protected override IEnumerator ChargeForcePulse() { yield break; }
 }
