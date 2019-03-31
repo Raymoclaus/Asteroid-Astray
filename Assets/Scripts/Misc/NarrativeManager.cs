@@ -8,6 +8,8 @@ public class NarrativeManager : MonoBehaviour
 	public static bool ShipRecharged { get; private set; }
 	#endregion
 
+
+	[SerializeField] private bool randomiseStartingLocation;
 	private Pause pauseController;
 	private Pause PauseController
 	{
@@ -16,15 +18,51 @@ public class NarrativeManager : MonoBehaviour
 			return pauseController ?? (pauseController = FindObjectOfType<Pause>());
 		}
 	}
-	[SerializeField] private DialogueController dialogueController;
-	[SerializeField] private LoadingController loadingController;
+	private DialogueController dialogueController;
+	private DialogueController DialogueCtrl
+	{
+		get
+		{
+			return dialogueController ?? (dialogueController = FindObjectOfType<DialogueController>());
+		}
+	}
+	private LoadingController loadingController;
+	private LoadingController LoadingCtrl
+	{
+		get
+		{
+			return loadingController ?? (loadingController = FindObjectOfType<LoadingController>());
+		}
+	}
 	[SerializeField] private DebugGameplayManager dgm;
 	[SerializeField] private SpotlightEffectController spotlightEffectController;
 	[SerializeField] private CustomScreenEffect screenEffects;
-	[SerializeField] private ShuttleTrackers shuttleTrackerSO;
+	private ShuttleTrackers shuttleTracker;
+	private ShuttleTrackers ShuttleTracker
+	{
+		get
+		{
+			return shuttleTracker ?? (shuttleTracker = Resources.Load<ShuttleTrackers>("ShuttleTrackerSO"));
+		}
+	}
 	[SerializeField] private Character mainChar;
-	[SerializeField] private MainHatchPrompt mainShip;
+	private MainHatchPrompt mainHatch;
+	private MainHatchPrompt MainHatch
+	{
+		get
+		{
+			return mainHatch ?? (mainHatch = FindObjectOfType<MainHatchPrompt>());
+		}
+	}
 	[SerializeField] private DerangedSoloBot derangedSoloBotPrefab;
+	private TutorialPrompts tutPrompts;
+	private TutorialPrompts TutPrompts
+	{
+		get
+		{
+			return tutPrompts ?? (tutPrompts = FindObjectOfType<TutorialPrompts>());
+		}
+	}
 
 	[SerializeField] private ConversationEvent
 		recoveryDialogue,
@@ -43,15 +81,19 @@ public class NarrativeManager : MonoBehaviour
 
 	private void Start()
 	{
-		//ChooseStartingLocation();
-
-		shuttleTrackerSO.SetControllable(false);
-		shuttleTrackerSO.SetKinematic(true);
-		mainShip.Lock(true);
-		loadingController.AddPostLoadAction(() =>
+		if (randomiseStartingLocation)
 		{
-			shuttleTrackerSO.SetControllable(true);
-			shuttleTrackerSO.SetKinematic(false);
+			ChooseStartingLocation();
+		}
+
+		ShuttleTracker.SetControllable(false);
+		ShuttleTracker.SetKinematic(true);
+		MainHatch.Lock(true);
+		ShuttleTracker.SetNavigationActive(false);
+		LoadingCtrl.AddPostLoadAction(() =>
+		{
+			ShuttleTracker.SetControllable(true);
+			ShuttleTracker.SetKinematic(false);
 		});
 
 		if (dgm.skipRecoveryDialogue)
@@ -65,41 +107,41 @@ public class NarrativeManager : MonoBehaviour
 					if (dgm.skipRepairTheShuttleQuest)
 					{
 						ShuttleRepaired = true;
-						loadingController.AddPostLoadAction(() =>
+						LoadingCtrl.AddPostLoadAction(() =>
 						{
-							shuttleTrackerSO.SetNavigationActive(true);
+							ShuttleTracker.SetNavigationActive(true);
 						});
 						if (dgm.skipReturnToTheShipQuest)
 						{
 							if (dgm.skipAquireAnEnergySourceQuest)
 							{
-								loadingController.AddPostLoadAction(() =>
+								LoadingCtrl.AddPostLoadAction(() =>
 								{
 									mainChar.CollectResources(Item.Type.CorruptedCorvorite, 1);
 									CompletedFindEnergySourceQuest(null);
 								});
 								return;
 							}
-							loadingController.AddPostLoadAction(() =>
+							LoadingCtrl.AddPostLoadAction(() =>
 							{
 								CompletedReturnToTheShipQuest(null);
 							});
 							return;
 						}
-						loadingController.AddPostLoadAction(() =>
+						LoadingCtrl.AddPostLoadAction(() =>
 						{
 							CompletedRepairTheShuttleQuest(null);
 						});
 						return;
 					}
-					loadingController.AddPostLoadAction(() =>
+					LoadingCtrl.AddPostLoadAction(() =>
 					{
 						mainChar.CollectResources(Item.Type.RepairKit, 1);
 						CompletedCraftYourFirstRepairKitQuest(null);
 					});
 					return;
 				}
-				loadingController.AddPostLoadAction(() =>
+				LoadingCtrl.AddPostLoadAction(() =>
 				{
 					mainChar.CollectResources(Item.Type.Copper, 2);
 					mainChar.CollectResources(Item.Type.Iron, 1);
@@ -107,10 +149,10 @@ public class NarrativeManager : MonoBehaviour
 				});
 				return;
 			}
-			loadingController.AddPostLoadAction(StartFirstGatheringQuest);
+			LoadingCtrl.AddPostLoadAction(StartFirstGatheringQuest);
 			return;
 		}
-		loadingController.AddPostLoadAction(StartRecoveryDialogue);
+		LoadingCtrl.AddPostLoadAction(StartRecoveryDialogue);
 	}
 
 	private void StartRecoveryDialogue()
@@ -138,6 +180,7 @@ public class NarrativeManager : MonoBehaviour
 		GiveQuest(mainChar, q);
 		FirstQuestScriptedDrops.scriptedDropsActive = true;
 		StartDialogue(UseThrustersDialogue, true);
+		TutPrompts.drillInputPromptInfo.SetIgnore(false);
 	}
 
 	private void CompletedFirstGatheringQuest(Quest quest)
@@ -145,6 +188,7 @@ public class NarrativeManager : MonoBehaviour
 		StartDialogue(completedFirstGatheringQuestDialogue, true);
 		StartCraftYourFirstRepairKitQuest();
 		FirstQuestScriptedDrops.scriptedDropsActive = false;
+		TutPrompts.drillInputPromptInfo.SetIgnore(true);
 	}
 
 	private void StartCraftYourFirstRepairKitQuest()
@@ -189,7 +233,7 @@ public class NarrativeManager : MonoBehaviour
 
 	private void CompletedRepairTheShuttleQuest(Quest quest)
 	{
-		shuttleTrackerSO.SetNavigationActive(true);
+		ShuttleTracker.SetNavigationActive(true);
 		ShuttleRepaired = true;
 		StartDialogue(findShipDialogue, true, null);
 		StartReturnToTheShipQuest();
@@ -202,7 +246,7 @@ public class NarrativeManager : MonoBehaviour
 		List<QuestReward> qRewards = new List<QuestReward>();
 
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-		qReqs.Add(new InteractionQReq(mainShip, "Return to the ship."));
+		qReqs.Add(new InteractionQReq(MainHatch, "Return to the ship."));
 
 		Quest q = new Quest(
 			"Find your way back to the ship",
@@ -210,13 +254,13 @@ public class NarrativeManager : MonoBehaviour
 			mainChar, claire, qRewards, qReqs, CompletedReturnToTheShipQuest);
 
 		GiveQuest(mainChar, q);
-		mainShip.EnableDialogueResponses(false);
+		MainHatch.EnableDialogueResponses(false);
 	}
 
 	private void CompletedReturnToTheShipQuest(Quest quest)
 	{		
 		StartDialogue(foundShipDialogue, false, StartFindEnergySourceQuest);
-		mainShip.EnableDialogueResponses(true);
+		MainHatch.EnableDialogueResponses(true);
 	}
 
 	private void StartFindEnergySourceQuest()
@@ -237,7 +281,7 @@ public class NarrativeManager : MonoBehaviour
 		//create a deranged bot
 		Entity newEntity = EntityGenerator.SpawnEntity(derangedSoloBotPrefab);
 		//set waypoint to new bot
-		shuttleTrackerSO.SetWaypoint(newEntity.transform, null);
+		ShuttleTracker.SetWaypoint(newEntity.transform, null);
 		//attach dialogue prompt when player approaches bot
 		VicinityTrigger entityPrompt = newEntity.GetComponentInChildren<VicinityTrigger>();
 		VicinityTrigger.VicinityTriggerEventHandler triggerEnterAction = null;
@@ -270,7 +314,7 @@ public class NarrativeManager : MonoBehaviour
 		List<QuestReward> qRewards = new List<QuestReward>();
 
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-		qReqs.Add(new WaypointQReq(mainShip.transform, "Return to the ship."));
+		qReqs.Add(new WaypointQReq(MainHatch.transform, "Return to the ship."));
 
 		Quest q = new Quest(
 			"Recharge the Ship",
@@ -285,7 +329,7 @@ public class NarrativeManager : MonoBehaviour
 		ShipRecharged = true;
 		StartDialogue(rechargedTheShipDialogue);
 		mainChar.TakeItem(Item.Type.CorruptedCorvorite, 1);
-		mainShip.Lock(false);
+		MainHatch.Lock(false);
 	}
 
 	private void GiveQuest(Character c, Quest q) => c.AcceptQuest(q);
@@ -293,7 +337,7 @@ public class NarrativeManager : MonoBehaviour
 	private void StartDialogue(ConversationEvent ce, bool chat = false,
 		UnityEngine.Events.UnityAction action = null)
 	{
-		dialogueController.SkipEntireChat(true);
+		DialogueCtrl.SkipEntireChat(true);
 
 		if (action != null)
 		{
@@ -302,17 +346,17 @@ public class NarrativeManager : MonoBehaviour
 
 		if (chat)
 		{
-			dialogueController.StartChat(ce);
+			DialogueCtrl.StartChat(ce);
 		}
 		else
 		{
-			dialogueController.StartDialogue(ce);
+			DialogueCtrl.StartDialogue(ce);
 		}
 	}
 
 	private void ChooseStartingLocation()
 	{
-		Vector2 pos = mainShip.transform.position;
+		Vector2 pos = MainHatch.transform.position;
 		float randomAngle = UnityEngine.Random.value * Mathf.PI * 2f;
 		Vector2 randomPos = new Vector2(Mathf.Sin(randomAngle),	Mathf.Cos(randomAngle));
 		float div = DistanceUI.UNITS_TO_METRES;

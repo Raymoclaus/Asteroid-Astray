@@ -648,7 +648,7 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 				sprRend.sprite = dyingSprite;
 				burningEffectsObj?.SetActive(true);
 				ActivateAllColliders(false);
-				EjectFromAllDrillers();
+				EjectFromAllDrillers(true);
 				break;
 		}
 
@@ -664,7 +664,7 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 
 		if (newState != AIState.Gathering)
 		{
-			drill.StopDrilling();
+			drill.StopDrilling(false);
 			anim.SetBool("Drilling", false);
 		}
 
@@ -1160,7 +1160,7 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 		AddDriller(db);
 		if (IsDrilling)
 		{
-			drill.StopDrilling();
+			drill.StopDrilling(false);
 			drill.drillTarget?.StopDrilling(drill);
 		}
 		shakeFX.Begin();
@@ -1206,7 +1206,7 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 			if ((Entity)otherDrill.drillTarget == this)
 			{
 				StopDrilling(otherDrill);
-				otherDrill.StopDrilling();
+				otherDrill.StopDrilling(false);
 			}
 		}
 	}
@@ -1599,12 +1599,12 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 		return false;
 	}
 
-	private void EjectFromAllDrillers()
+	private void EjectFromAllDrillers(bool successful)
 	{
 		List<DrillBit> drills = GetDrillers();
 		for (int i = drills.Count - 1; i >= 0; i--)
 		{
-			drills[i].StopDrilling();
+			drills[i].StopDrilling(successful);
 		}
 		drills.Clear();
 	}

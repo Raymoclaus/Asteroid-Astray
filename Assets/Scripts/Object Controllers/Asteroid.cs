@@ -134,7 +134,7 @@ public class Asteroid : Entity, IDrillableObject
 			//drop resources
 			DropLoot(destroyer, transform.position, dropModifier);
 		}
-		EjectFromAllDrillers();
+		EjectFromAllDrillers(true);
 		base.DestroySelf(destroyer);
 	}
 
@@ -312,7 +312,7 @@ public class Asteroid : Entity, IDrillableObject
 			if ((Entity)otherDrill.drillTarget == this)
 			{
 				StopDrilling(otherDrill);
-				otherDrill.StopDrilling();
+				otherDrill.StopDrilling(false);
 			}
 		}
 	}
@@ -437,12 +437,12 @@ public class Asteroid : Entity, IDrillableObject
 		return false;
 	}
 
-	private void EjectFromAllDrillers()
+	private void EjectFromAllDrillers(bool successful)
 	{
 		List<DrillBit> drills = GetDrillers();
 		for (int i = drills.Count - 1; i >= 0; i--)
 		{
-			drills[i].StopDrilling();
+			drills[i].StopDrilling(successful);
 		}
 	}
 }

@@ -10,6 +10,7 @@ public class TutorialPrompts : MonoBehaviour
 	
 	public PromptInfo goInputPromptInfo;
 	public PromptInfo launchInputPromptInfo;
+	public PromptInfo drillInputPromptInfo;
 
 	private List<PromptInfo> prompts = new List<PromptInfo>();
 
@@ -21,11 +22,13 @@ public class TutorialPrompts : MonoBehaviour
 
 		prompts.Add(goInputPromptInfo);
 		prompts.Add(launchInputPromptInfo);
+		prompts.Add(drillInputPromptInfo);
 
 		IterateAll((PromptInfo pi) => pi.SetUI(ui));
 
 		SetUpGoInputPrompt();
 		SetUpLaunchInputPrompt();
+		SetUpDrillInputPrompt();
 	}
 
 	private void SetUpGoInputPrompt()
@@ -46,18 +49,33 @@ public class TutorialPrompts : MonoBehaviour
 
 	private void SetUpLaunchInputPrompt()
 	{
+		Shuttle.DrillCompleteEventHandler action = (bool successful) =>
+		{
+			launchInputPromptInfo.Deactivate();
+		};
 		launchInputPromptInfo.SetListeners(() =>
 		{
 			shuttleTracker.OnLaunchInput += launchInputPromptInfo.Deactivate;
+			Shuttle.OnDrillComplete += action;
 		}, () =>
 		{
 			shuttleTracker.OnLaunchInput -= launchInputPromptInfo.Deactivate;
+			Shuttle.OnDrillComplete -= action;
 		});
 
 		launchInputPromptInfo.SetCondition(() =>
 		{
 			return mainChar.IsDrilling && mainChar.CanDrillLaunch();
 		});
+	}
+
+	private void SetUpDrillInputPrompt()
+	{
+		Shuttle.OnDrillComplete += (bool successful) =>
+		{
+			if (successful) return;
+			drillInputPromptInfo.Activate();
+		};
 	}
 
 	private void Update()
@@ -84,6 +102,8 @@ public class TutorialPrompts : MonoBehaviour
 		private float delayTimer;
 		[TextArea(1, 1)]
 		public string text;
+		public bool isTimedPrompt;
+		public float promptDuration;
 		public bool isRepeatable;
 		private int activationCount;
 		private bool isActivated;
@@ -152,13 +172,30 @@ public class TutorialPrompts : MonoBehaviour
 			return delayTimer >= delay;
 		}
 		
-		private void Activate()
+		public void Activate()
 		{
 			if (isActivated || ignore) return;
 			if (!isRepeatable && activationCount > 0) return;
 			
-			ui.ActivatePrompt(text, fadeInTime);
-			isActivated = true;
+			if (isTimedPrompt)
+			{
+				ui.ActivatePromptTimer(text, fadeInTime, fadeOutTime, promptDuration);
+				PromptUI.PromptUpdatedEventHandler action = null;
+				action = (string promptText, bool activating) =>
+				{
+					if (promptText != text || (promptText == text && !activating))
+					{
+						SetIsActivated(false);
+					}
+					PromptUI.OnPromptUpdated -= action;
+				};
+				PromptUI.OnPromptUpdated += action;
+			}
+			else
+			{
+				ui.ActivatePrompt(text, fadeInTime);
+			}
+			SetIsActivated(true);
 			activationCount++;
 		}
 
@@ -172,7 +209,12 @@ public class TutorialPrompts : MonoBehaviour
 			if (!isActivated) return;
 
 			ui.DeactivatePrompt(text, fadeOutTime);
-			isActivated = false;
+			SetIsActivated(false);
+		}
+
+		private void SetIsActivated(bool active)
+		{
+			isActivated = active;
 		}
 
 		public void SetIgnore(bool ignore)

@@ -55,7 +55,7 @@ public class DrillBit : MonoBehaviour
 	{
 		if (drillTarget == null)
 		{
-			StopDrilling();
+			StopDrilling(true);
 			IsDrilling = false;
 			return;
 		}
@@ -111,7 +111,7 @@ public class DrillBit : MonoBehaviour
 					}
 				}
 			}
-			StopDrilling(launch, launchDirection, parent);
+			StopDrilling(false, launch, launchDirection, parent);
 		}
 		//else send the damage to the drill target
 		else
@@ -151,7 +151,7 @@ public class DrillBit : MonoBehaviour
 		}
 	}
 
-	public void StopDrilling(bool launch = false, Vector2? launchDirection = null, Character launcher = null)
+	public void StopDrilling(bool successful, bool launch = false, Vector2? launchDirection = null, Character launcher = null)
 	{
 		TriggerParticleEffects(false);
 		IsDrilling = false;
@@ -164,7 +164,7 @@ public class DrillBit : MonoBehaviour
 			}
 			drillTarget = null;
 
-			parent.StoppedDrilling();
+			parent.StoppedDrilling(successful);
 		}
 
 		currentVolume = 0f;

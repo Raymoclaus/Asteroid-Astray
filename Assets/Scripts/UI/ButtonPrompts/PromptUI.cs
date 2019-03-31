@@ -9,6 +9,9 @@ public class PromptUI : MonoBehaviour
 	[SerializeField] private CanvasGroup canvasGroup;
 	[SerializeField] private InputIconTextMesh prompt;
 
+	public delegate void PromptUpdatedEventHandler(string text, bool activating);
+	public static event PromptUpdatedEventHandler OnPromptUpdated;
+
 	private void Awake()
 	{
 		prompt = GetComponentInChildren<InputIconTextMesh>();
@@ -17,6 +20,7 @@ public class PromptUI : MonoBehaviour
 
 	public void ActivatePrompt(string text, float fadeInDuration = 0f)
 	{
+		OnPromptUpdated?.Invoke(text, true);
 		SetText(text);
 		StartCoroutine(Fade(true, fadeInDuration));
 	}
@@ -30,6 +34,8 @@ public class PromptUI : MonoBehaviour
 	public void DeactivatePrompt(string text, float fadeOutDuration = 0f)
 	{
 		if (text != prompt.GetText()) return;
+		OnPromptUpdated?.Invoke(text, false);
+		StopAllCoroutines();
 		StartCoroutine(Fade(false, fadeOutDuration));
 	}
 

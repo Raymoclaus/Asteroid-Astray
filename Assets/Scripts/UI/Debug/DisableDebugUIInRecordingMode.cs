@@ -2,23 +2,33 @@
 
 public class DisableDebugUIInRecordingMode : MonoBehaviour
 {
-	[SerializeField]
 	private DebugUI debugUI;
-	[SerializeField]
-	private RecordingModeController recordingModeController;
-	private bool recordingModeState = false;
-
-	private void Awake()
+	private DebugUI DebugUi
 	{
-		recordingModeState = recordingModeController.RecordingMode;
+		get
+		{
+			return debugUI ?? (debugUI = GetComponentInChildren<DebugUI>(true));
+		}
+	}
+	private RecordingModeController recordingModeController;
+	private RecordingModeController Rmc
+	{
+		get
+		{
+			return recordingModeController
+				?? (recordingModeController = Resources.Load<RecordingModeController>("RecordingModeSO"));
+		}
+	}
+	private bool RecordingModeState
+	{
+		get
+		{
+			return Rmc?.RecordingMode ?? false;
+		}
 	}
 
 	private void Update()
 	{
-		debugUI = debugUI ?? GetComponentInChildren<DebugUI>();
-		if (!debugUI || recordingModeController.RecordingMode == recordingModeState) return;
-
-		debugUI.gameObject.SetActive(!recordingModeController.RecordingMode);
-		recordingModeState = recordingModeController.RecordingMode;
+		DebugUi?.gameObject.SetActive(!RecordingModeState);
 	}
 }

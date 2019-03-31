@@ -33,7 +33,7 @@ public class Character : Entity
 
 	public virtual float MaxDrillDamage() => 1f;
 
-	public virtual void StoppedDrilling() { }
+	public virtual void StoppedDrilling(bool successful) { }
 	#endregion Drill-related
 
 	public override ICombat GetICombat() => null;

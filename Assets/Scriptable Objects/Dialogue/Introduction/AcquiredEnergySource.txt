@@ -3,4 +3,4 @@
 0|They have a bit of an ominous glow...
 0|But we're stranded if we don't use them.
 0|Let's get these babies back to the ship.
-1|I DON'T SEE HOW THESE RESEMBLE INFANTS.
+1|IT IS UNCLEAR HOW THESE RESEMBLE INFANTS.

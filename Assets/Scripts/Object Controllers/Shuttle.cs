@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
+
 public class Shuttle : Character, IStunnable, ICombat
 {
 	#region Fields
@@ -87,9 +88,12 @@ public class Shuttle : Character, IStunnable, ICombat
 	[SerializeField] private ColorReplacementGroup cRGroup;
 	[SerializeField] private Transform defaultWaypointTarget;
 
+	public delegate void DrillCompleteEventHandler(bool successful);
+	public static event DrillCompleteEventHandler OnDrillComplete;
+	
 	#region Boost
-	//how long a boost can last
-	[SerializeField] private float boostCapacity = 1f;
+		//how long a boost can last
+		[SerializeField] private float boostCapacity = 1f;
 	//represents how much boost is currently available
 	private float boostLevel;
 	//how much a boost affects speed
@@ -465,9 +469,13 @@ public class Shuttle : Character, IStunnable, ICombat
 		{
 			return calculation;
 		}
-		else
+		else if (InputHandler.GetInput(InputAction.DrillLaunch) > 0f)
 		{
 			return 0.001f;
+		}
+		else
+		{
+			return calculation;
 		}
 	}
 
@@ -491,7 +499,7 @@ public class Shuttle : Character, IStunnable, ICombat
 	{
 		if (isInvulnerable) return;
 
-		drill.StopDrilling();
+		drill.StopDrilling(false);
 		stunned = true;
 		rb.constraints = RigidbodyConstraints2D.None;
 		accel = Vector2.zero;
@@ -524,7 +532,11 @@ public class Shuttle : Character, IStunnable, ICombat
 		return true;
 	}
 
-	public override void StoppedDrilling() => DrillLaunchArcDisable();
+	public override void StoppedDrilling(bool successful)
+	{
+		DrillLaunchArcDisable();
+		OnDrillComplete?.Invoke(successful);
+	}
 
 	public void OnCollisionEnter2D(Collision2D collision)
 	{

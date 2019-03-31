@@ -387,7 +387,7 @@ public class BotHive : Character, IDrillableObject, ICombat
 			ICombat enemy = enemies[i];
 			enemy.DisengageInCombat(this);
 		}
-		EjectFromAllDrillers();
+		EjectFromAllDrillers(true);
 		return currentHP <= 0f;
 	}
 
@@ -524,12 +524,12 @@ public class BotHive : Character, IDrillableObject, ICombat
 		return false;
 	}
 
-	private void EjectFromAllDrillers()
+	private void EjectFromAllDrillers(bool successful)
 	{
 		List<DrillBit> drills = GetDrillers();
 		for (int i = drills.Count - 1; i >= 0; i--)
 		{
-			drills[i].StopDrilling();
+			drills[i].StopDrilling(successful);
 		}
 	}
 }
