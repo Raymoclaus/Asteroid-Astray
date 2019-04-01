@@ -12,6 +12,7 @@ public class ConversationEventEditor : Editor
 		if (GUILayout.Button("Load From File"))
 		{
 			((ConversationEvent)target).Load();
+			EditorUtility.SetDirty(target);
 		}
 		if (GUILayout.Button("Save To File"))
 		{

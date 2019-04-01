@@ -17,14 +17,20 @@ public class ShipEntryPanel : MonoBehaviour
 
 	public void ClosePanel()
 	{
-		Pause.InstantPause(false);
-		holder.SetActive(false);
+		if (holder.activeSelf)
+		{
+			Pause.InstantPause(false);
+			holder.SetActive(false);
+		}
 	}
 
 	public void OpenPanel()
 	{
-		Pause.InstantPause(true);
-		holder.SetActive(true);
+		if (!holder.activeSelf)
+		{
+			Pause.InstantPause(true);
+			holder.SetActive(true);
+		}
 	}
 
 	public void Store()

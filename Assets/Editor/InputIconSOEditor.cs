@@ -26,6 +26,7 @@ public class InputIconSOEditor : Editor
 					Debug.Log($"{objects[i].name} is a type of {objects[i].GetType()}, not a {typeof(Texture2D)}");
 				}
 			}
+			EditorUtility.SetDirty(target);
 		}
 		EditorGUI.EndDisabledGroup();
 	}
