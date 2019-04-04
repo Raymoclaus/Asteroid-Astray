@@ -8,19 +8,10 @@ public class ChunkFiller : MonoBehaviour
 	public int FillRange = 2;
 	[HideInInspector] public int RangeIncrease;
 	private bool ready = false;
-	private static LoadingController loadingController;
-	[SerializeField]
-	private LoadingController loadingControllerPrefab;
-	private static MainCanvas mainCanvas;
-	[SerializeField]
-	private MainCanvas mainCanvasPrefab;
 
 	private void Start()
 	{
-		mainCanvas = mainCanvas ?? FindObjectOfType<MainCanvas>() ?? Instantiate(mainCanvasPrefab);
-		loadingController = loadingController ?? FindObjectOfType<LoadingController>()
-			?? Instantiate(loadingControllerPrefab, mainCanvas.transform);
-		if (!EntityNetwork.ready || !loadingController.finishedLoading)
+		if (!EntityNetwork.ready)
 		{
 			enabled = false;
 			EntityNetwork.postInitActions.Add(() =>

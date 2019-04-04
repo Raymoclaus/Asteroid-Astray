@@ -395,24 +395,21 @@ public class Asteroid : Entity, IDrillableObject
 			launchTrail.SetFollowTarget(transform, launchDirection, isLarge ? 2f : 1f);
 
 		}
-		pause = pause ?? FindObjectOfType<Pause>();
-		if (pause)
-		{
-			pause.DelayedAction(() =>
-			{
-				if (launchTrail != null)
-				{
-					launchTrail.EndLaunchTrail();
-				}
 
-				this.launcher = null;
-				launched = false;
-				if (cameraCtrl && cameraCtrl.GetPanTarget() == transform)
-				{
-					cameraCtrl.Pan(null);
-				}
-			}, launchDuration, true);
-		}
+		Pause.DelayedAction(() =>
+		{
+			if (launchTrail != null)
+			{
+				launchTrail.EndLaunchTrail();
+			}
+
+			this.launcher = null;
+			launched = false;
+			if (cameraCtrl && cameraCtrl.GetPanTarget() == transform)
+			{
+				cameraCtrl.Pan(null);
+			}
+		}, launchDuration, true);
 	}
 
 	public bool IsDrillable() => launched && currentHP > 0f;

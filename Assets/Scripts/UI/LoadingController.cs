@@ -9,17 +9,16 @@ public class LoadingController : MonoBehaviour
 	private SceneryController sceneryCtrl;
 	private List<bool> loadingReady = new List<bool>();
 	[SerializeField]
-	private LoadingTracker trackerSO;
-	[SerializeField]
 	private GameObject holder;
-	[HideInInspector]
-	public bool finishedLoading = false;
-	private List<System.Action> postLoadActions = new List<System.Action>();
+	public static bool IsLoading { get; private set; } = true;
+
+	public delegate void LoadingCompleteEventHandler();
+	public static event LoadingCompleteEventHandler OnLoadingComplete;
 
 	private void Awake()
 	{
 		holder.SetActive(true);
-		trackerSO.isLoading = true;
+		IsLoading = true;
 		List<System.Action> preLoadActions = new List<System.Action>();
 
 		preLoadActions.Add(() =>
@@ -84,15 +83,9 @@ public class LoadingController : MonoBehaviour
 			Debug.Log("Finished Loading");
 			loadingReady = null;
 			EntityNetwork.RunInitialisationActions();
-			trackerSO.isLoading = false;
 			holder.SetActive(false);
-			finishedLoading = true;
-
-			for (int i = 0; i < postLoadActions.Count; i++)
-			{
-				System.Action a = postLoadActions[i];
-				a?.Invoke();
-			}
+			IsLoading = false;
+			OnLoadingComplete?.Invoke();
 		}
 	}
 
@@ -106,15 +99,15 @@ public class LoadingController : MonoBehaviour
 		return true;
 	}
 
-	public void AddPostLoadAction(System.Action action)
+	public static void AddPostLoadAction(System.Action action)
 	{
-		if (finishedLoading)
+		if (IsLoading)
 		{
-			action?.Invoke();
+			OnLoadingComplete += new LoadingCompleteEventHandler(action);
 		}
 		else
 		{
-			postLoadActions.Add(action);
+			action?.Invoke();
 		}
 	}
 }

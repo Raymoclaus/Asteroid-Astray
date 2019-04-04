@@ -10,28 +10,12 @@ public class NarrativeManager : MonoBehaviour
 
 
 	[SerializeField] private bool randomiseStartingLocation;
-	private Pause pauseController;
-	private Pause PauseController
-	{
-		get
-		{
-			return pauseController ?? (pauseController = FindObjectOfType<Pause>());
-		}
-	}
 	private DialogueController dialogueController;
 	private DialogueController DialogueCtrl
 	{
 		get
 		{
 			return dialogueController ?? (dialogueController = FindObjectOfType<DialogueController>());
-		}
-	}
-	private LoadingController loadingController;
-	private LoadingController LoadingCtrl
-	{
-		get
-		{
-			return loadingController ?? (loadingController = FindObjectOfType<LoadingController>());
 		}
 	}
 	[SerializeField] private DebugGameplayManager dgm;
@@ -90,7 +74,7 @@ public class NarrativeManager : MonoBehaviour
 		ShuttleTracker.SetKinematic(true);
 		MainHatch.Lock(true);
 		ShuttleTracker.SetNavigationActive(false);
-		LoadingCtrl.AddPostLoadAction(() =>
+		LoadingController.AddPostLoadAction(() =>
 		{
 			ShuttleTracker.SetControllable(true);
 			ShuttleTracker.SetKinematic(false);
@@ -107,7 +91,7 @@ public class NarrativeManager : MonoBehaviour
 					if (dgm.skipRepairTheShuttleQuest)
 					{
 						ShuttleRepaired = true;
-						LoadingCtrl.AddPostLoadAction(() =>
+						LoadingController.AddPostLoadAction(() =>
 						{
 							ShuttleTracker.SetNavigationActive(true);
 						});
@@ -115,33 +99,33 @@ public class NarrativeManager : MonoBehaviour
 						{
 							if (dgm.skipAquireAnEnergySourceQuest)
 							{
-								LoadingCtrl.AddPostLoadAction(() =>
+								LoadingController.AddPostLoadAction(() =>
 								{
 									mainChar.CollectResources(Item.Type.CorruptedCorvorite, 1);
 									CompletedFindEnergySourceQuest(null);
 								});
 								return;
 							}
-							LoadingCtrl.AddPostLoadAction(() =>
+							LoadingController.AddPostLoadAction(() =>
 							{
 								CompletedReturnToTheShipQuest(null);
 							});
 							return;
 						}
-						LoadingCtrl.AddPostLoadAction(() =>
+						LoadingController.AddPostLoadAction(() =>
 						{
 							CompletedRepairTheShuttleQuest(null);
 						});
 						return;
 					}
-					LoadingCtrl.AddPostLoadAction(() =>
+					LoadingController.AddPostLoadAction(() =>
 					{
 						mainChar.CollectResources(Item.Type.RepairKit, 1);
 						CompletedCraftYourFirstRepairKitQuest(null);
 					});
 					return;
 				}
-				LoadingCtrl.AddPostLoadAction(() =>
+				LoadingController.AddPostLoadAction(() =>
 				{
 					mainChar.CollectResources(Item.Type.Copper, 2);
 					mainChar.CollectResources(Item.Type.Iron, 1);
@@ -149,10 +133,10 @@ public class NarrativeManager : MonoBehaviour
 				});
 				return;
 			}
-			LoadingCtrl.AddPostLoadAction(StartFirstGatheringQuest);
+			LoadingController.AddPostLoadAction(StartFirstGatheringQuest);
 			return;
 		}
-		LoadingCtrl.AddPostLoadAction(StartRecoveryDialogue);
+		LoadingController.AddPostLoadAction(StartRecoveryDialogue);
 	}
 
 	private void StartRecoveryDialogue()
@@ -289,7 +273,7 @@ public class NarrativeManager : MonoBehaviour
 		{
 			UnityEngine.Events.UnityAction delayedDialogue = () =>
 			{
-				PauseController.DelayedAction(() =>
+				Pause.DelayedAction(() =>
 				{
 					if (newEntity.GetHpRatio() < 0.9f) return;
 					StartDialogue(questionHowToObtainEnergySourceDialogue, true);

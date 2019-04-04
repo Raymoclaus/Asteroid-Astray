@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class Pause : MonoBehaviour
 {
+	private static Pause instance;
+
 	private static bool isPaused = false;
 	public static bool IsPaused { get { return isPaused && IsStopped; } }
 	public static bool IsStopped { get { return Mathf.Approximately(Time.timeScale, 0f); } }
@@ -14,9 +16,19 @@ public class Pause : MonoBehaviour
 	public static float intendedTimeSpeed = 1f;
 	[SerializeField] private PauseUIController pauseUI;
 	[SerializeField] private RecordingModeController recordingModeController;
-
+	
 	private void Awake()
 	{
+		if (instance == null)
+		{
+			instance = this;
+		}
+		else
+		{
+			Destroy(gameObject);
+			return;
+		}
+
 		pauseUI = pauseUI ?? FindObjectOfType<PauseUIController>();
 		if (pauseUI)
 		{
@@ -86,29 +98,29 @@ public class Pause : MonoBehaviour
 		canPause = !pause;
 	}
 
-	public void TemporaryPause(float time = 0.5f)
+	public static void TemporaryPause(float time = 0.5f)
 	{
-		StartCoroutine(TempPauseCoroutine(time));
+		instance.StartCoroutine(TempPauseCoroutine(time));
 	}
 
-	private IEnumerator TempPauseCoroutine(float time = 0.5f)
+	private static IEnumerator TempPauseCoroutine(float time = 0.5f)
 	{
 		canPause = false;
 		Time.timeScale = 0f;
 		while (time > 0f)
 		{
-			time -= recordingModeController.UnscaledDeltaTime;
+			time -= instance.recordingModeController.UnscaledDeltaTime;
 			yield return null;
 		}
 		Time.timeScale = intendedTimeSpeed;
 		canPause = true;
 	}
 
-	public void BulletTime(bool activate, float timeSpeed = 0.1f)
+	public static void BulletTime(bool activate, float timeSpeed = 0.1f)
 	{
 		if (activate)
 		{
-			StartCoroutine(SlowDown(timeSpeed * intendedTimeSpeed));
+			instance.StartCoroutine(SlowDown(timeSpeed * intendedTimeSpeed));
 		}
 		else
 		{
@@ -116,14 +128,14 @@ public class Pause : MonoBehaviour
 		}
 	}
 
-	public void TemporarySlowDownEffect(float duration = 1f, float timeSpeed = 0.1f)
+	public static void TemporarySlowDownEffect(float duration = 1f, float timeSpeed = 0.1f)
 	{
 		canPause = false;
-		StartCoroutine(SlowDown(timeSpeed * intendedTimeSpeed));
+		instance.StartCoroutine(SlowDown(timeSpeed * intendedTimeSpeed));
 		DelayedAction(() => { slowDownEffect = false; }, duration);
 	}
 
-	private IEnumerator SlowDown(float timeSpeed = 0.5f)
+	private static IEnumerator SlowDown(float timeSpeed = 0.5f)
 	{
 		slowDownEffect = true;
 		while (slowDownEffect)
@@ -141,16 +153,16 @@ public class Pause : MonoBehaviour
 		canPause = true;
 	}
 
-	public void DelayedAction(System.Action a, float wait, bool useDeltaTime = false)
+	public static void DelayedAction(System.Action a, float wait, bool useDeltaTime = false)
 	{
-		StartCoroutine(Delay(a, wait, useDeltaTime));
+		instance.StartCoroutine(Delay(a, wait, useDeltaTime));
 	}
 
-	private IEnumerator Delay(System.Action a, float wait, bool useDeltaTime = false)
+	private static IEnumerator Delay(System.Action a, float wait, bool useDeltaTime = false)
 	{
 		while (wait > 0f)
 		{
-			wait -= useDeltaTime ? Time.deltaTime : recordingModeController.UnscaledDeltaTime;
+			wait -= useDeltaTime ? Time.deltaTime : instance.recordingModeController.UnscaledDeltaTime;
 			yield return null;
 		}
 		a();

@@ -1164,8 +1164,7 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 			drill.drillTarget?.StopDrilling(drill);
 		}
 		shakeFX.Begin();
-		pause = pause ?? FindObjectOfType<Pause>();
-		pause?.DelayedAction(() =>
+		Pause.DelayedAction(() =>
 		{
 			if (this == null) return;
 			StartCoroutine(ChargeForcePulse());
@@ -1495,19 +1494,16 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 			launchTrail.SetFollowTarget(transform, launchDirection);
 
 		}
-		pause = pause ?? FindObjectOfType<Pause>();
-		if (pause)
+	   
+		Pause.DelayedAction(() =>
 		{
-			pause.DelayedAction(() =>
+			if (launchTrail != null)
 			{
-				if (launchTrail != null)
-				{
-					launchTrail.EndLaunchTrail();
-				}
-				launched = false;
-				this.launcher = null;
-			}, launchedDuration, true);
-		}
+				launchTrail.EndLaunchTrail();
+			}
+			launched = false;
+			this.launcher = null;
+		}, launchedDuration, true);
 	}
 
 	public void Stun()

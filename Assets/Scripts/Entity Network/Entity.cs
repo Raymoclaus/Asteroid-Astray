@@ -8,13 +8,7 @@ public class Entity : MonoBehaviour
 	public Collider2D[] col;
 	public Rigidbody2D rb;
 	[SerializeField] protected CameraCtrlTracker camTrackerSO;
-	[SerializeField] private EntityPrefabDB prefabs;
 	[SerializeField] protected static ParticleGenerator particleGenerator;
-	private static LoadingController loadingController;
-	[SerializeField] private LoadingController loadingControllerPrefab;
-	private static MainCanvas mainCanvas;
-	[SerializeField] private MainCanvas mainCanvasPrefab;
-	protected static Pause pause;
 	protected static AudioManager audioManager;
 	[SerializeField] protected ScreenRippleEffectController screenRippleSO;
 	protected bool entityReady = false;
@@ -40,15 +34,16 @@ public class Entity : MonoBehaviour
 	public List<MonoBehaviour> ScriptComponents;
 	public Renderer[] rends;
 
+	public delegate void HealthUpdateHandler(float oldVal, float newVal);
+	public event HealthUpdateHandler OnHealthUpdate;
+	protected void HealthUpdated(float oldVal, float newVal) => OnHealthUpdate?.Invoke(oldVal, newVal);
+
 	private static int entitiesActive;
 
 	public virtual void Awake()
 	{
 		currentHP = maxHP;
-		mainCanvas = mainCanvas ?? FindObjectOfType<MainCanvas>() ?? Instantiate(mainCanvasPrefab);
-		loadingController = loadingController ?? FindObjectOfType<LoadingController>()
-			?? Instantiate(loadingControllerPrefab, mainCanvas.transform);
-		if (!EntityNetwork.ready || !loadingController.finishedLoading)
+		if (!EntityNetwork.ready)
 		{
 			gameObject.SetActive(false);
 			EntityNetwork.postInitActions.Add(() =>

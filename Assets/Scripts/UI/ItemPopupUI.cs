@@ -34,7 +34,7 @@ public class ItemPopupUI : PopupUI
 
 	private void Update()
 	{
-		if (loadingTrackerSO.isLoading) return;
+		if (LoadingController.IsLoading) return;
 
 		while (popupsToShow.Count > 0)
 		{

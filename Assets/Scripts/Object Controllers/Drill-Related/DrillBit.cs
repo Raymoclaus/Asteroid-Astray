@@ -83,32 +83,24 @@ public class DrillBit : MonoBehaviour
 				eff.position = transform.position;
 				float angle = -Vector2.SignedAngle(Vector2.up, launchDirection);
 				eff.eulerAngles = Vector3.forward * -angle;
-				pause = pause ?? FindObjectOfType<Pause>();
-				if (pause)
+				Pause.TemporaryPause(drillLaunchPauseTime);
+				if (cameraCtrl)
 				{
-					pause.TemporaryPause(drillLaunchPauseTime);
-					if (cameraCtrl)
-					{
-						cameraCtrl.CamShake();
-						cameraCtrl.QuickZoom(0.8f, drillLaunchPauseTime, true);
-					}
+					cameraCtrl.CamShake();
+					cameraCtrl.QuickZoom(0.8f, drillLaunchPauseTime, true);
 				}
 				screenRippleSO.StartRipple(this, wait: drillLaunchPauseTime);
 				parent.Launching();
 				if (drillLaunchBurstAnimations.Length > 0)
 				{
-					pause = pause ?? FindObjectOfType<Pause>();
-					if (pause)
+					Pause.DelayedAction(() =>
 					{
-						pause.DelayedAction(() =>
-						{
-							int chooseLaunchBurstAnimation = Random.Range(0, drillLaunchBurstAnimations.Length);
-							Transform burst = Instantiate(drillLaunchBurstAnimations[chooseLaunchBurstAnimation]).transform;
-							burst.parent = ParticleGenerator.holder;
-							burst.position = transform.position;
-							burst.eulerAngles = Vector3.forward * -angle;
-						}, 0.02f, true);
-					}
+						int chooseLaunchBurstAnimation = Random.Range(0, drillLaunchBurstAnimations.Length);
+						Transform burst = Instantiate(drillLaunchBurstAnimations[chooseLaunchBurstAnimation]).transform;
+						burst.parent = ParticleGenerator.holder;
+						burst.position = transform.position;
+						burst.eulerAngles = Vector3.forward * -angle;
+					}, 0.02f, true);
 				}
 			}
 			StopDrilling(false, launch, launchDirection, parent);

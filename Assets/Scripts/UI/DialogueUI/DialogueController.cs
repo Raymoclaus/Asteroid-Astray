@@ -9,7 +9,6 @@ public class DialogueController : MonoBehaviour
 	private EntityProfile[] speakers;
 	private int currentPosition = -1;
 	private bool dialogueIsRunning, chatIsRunning;
-	[SerializeField] private ConversationEvent testDialogue;
 	private List<ConversationEvent> chatQueue = new List<ConversationEvent>();
 	private float chatQueueTimer = 0f;
 	[SerializeField] private float chatQueueWaitDuration = 2f;
@@ -25,18 +24,6 @@ public class DialogueController : MonoBehaviour
 
 	private void Update()
 	{
-		if (testDialogue != null)
-		{
-			if (Input.GetKeyDown(KeyCode.T))
-			{
-				StartDialogue(testDialogue);
-			}
-			if (Input.GetKeyDown(KeyCode.Y))
-			{
-				StartChat(testDialogue);
-			}
-		}
-
 		if (dialogueIsRunning && InputHandler.GetInputDown(InputAction.ScrollDialogue) > 0f)
 		{
 			if (dialogueUI.IsTyping())

@@ -33,7 +33,7 @@ public class DialoguePopupUI : PopupUI
 
 	protected virtual void Update()
 	{
-		if (loadingTrackerSO.isLoading) return;
+		if (LoadingController.IsLoading) return;
 
 		for (int i = 0; i < activePopups.Count; i++)
 		{

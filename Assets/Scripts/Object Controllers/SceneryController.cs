@@ -81,8 +81,7 @@ public class SceneryController : MonoBehaviour
 
 	private void Awake()
 	{
-		LoadingController lc = FindObjectOfType<LoadingController>();
-		if (!lc || lc.finishedLoading)
+		if (!LoadingController.IsLoading)
 		{
 			StartCoroutine(CreateStarSystems(null));
 		}

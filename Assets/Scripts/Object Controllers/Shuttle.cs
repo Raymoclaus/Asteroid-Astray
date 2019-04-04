@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-
 public class Shuttle : Character, IStunnable, ICombat
 {
 	#region Fields
@@ -87,9 +86,6 @@ public class Shuttle : Character, IStunnable, ICombat
 	private QuestLog questLog = new QuestLog();
 	[SerializeField] private ColorReplacementGroup cRGroup;
 	[SerializeField] private Transform defaultWaypointTarget;
-
-	public delegate void DrillCompleteEventHandler(bool successful);
-	public static event DrillCompleteEventHandler OnDrillComplete;
 	
 	#region Boost
 		//how long a boost can last
@@ -128,6 +124,13 @@ public class Shuttle : Character, IStunnable, ICombat
 	private ContactPoint2D[] contacts = new ContactPoint2D[1];
 	#endregion
 
+	#region Events
+	public delegate void DrillCompleteEventHandler(bool successful);
+	public static event DrillCompleteEventHandler OnDrillComplete;
+	public delegate void BoostAmountEventHandler(float oldVal, float newVal);
+	public static event BoostAmountEventHandler OnBoostAmountChanged;
+	#endregion Events
+
 	public override void Awake()
 	{
 		base.Awake();
@@ -139,10 +142,16 @@ public class Shuttle : Character, IStunnable, ICombat
 
 		canDrill = true;
 		canDrillLaunch = true;
+		boostLevel = boostCapacity;
 	}
 
 	private void Update()
 	{
+		if (Input.GetKeyDown(KeyCode.D))
+		{
+			TakeDamage(100f, transform.position, null, 0, true);
+		}
+
 		if (!stunned)
 		{
 			//get shuttle movement input
@@ -504,15 +513,11 @@ public class Shuttle : Character, IStunnable, ICombat
 		rb.constraints = RigidbodyConstraints2D.None;
 		accel = Vector2.zero;
 		velocity = Vector3.zero;
-		pause = pause ?? FindObjectOfType<Pause>();
-		if (pause)
+		Pause.DelayedAction(() =>
 		{
-			pause.DelayedAction(() =>
-			{
-				stunned = false;
-				rb.constraints = RigidbodyConstraints2D.FreezeRotation;
-			}, stunDuration, true);
-		}
+			stunned = false;
+			rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+		}, stunDuration, true);
 	}
 
 	public void StoreInShip()
@@ -559,13 +564,16 @@ public class Shuttle : Character, IStunnable, ICombat
 		int dropModifier = 0, bool flash = true)
 	{
 		if (destroyer == this || isInvulnerable) return false;
+		float oldVal = GetHpRatio();
+		currentHP -= damage;
+		HealthUpdated(oldVal, GetHpRatio());
 		cRGroup?.Flash(0.5f, Color.red);
 		return true;
 	}
 
 	private void Boost(bool input)
 	{
-		if (trackerSO.canBoost && input && boostLevel < boostCapacity && !Pause.IsStopped)
+		if (trackerSO.canBoost && input && boostLevel > 0f && !Pause.IsStopped)
 		{
 			if (!isBoosting)
 			{
@@ -582,13 +590,14 @@ public class Shuttle : Character, IStunnable, ICombat
 					effect.eulerAngles = effectRotation;
 					screenRippleSO.StartRipple(this, distortionLevel: 0.02f);
 					isInvulnerable = true;
-					pause = pause ?? FindObjectOfType<Pause>();
-					pause.DelayedAction(() => isInvulnerable = false, boostInvulnerabilityTime, true);
+					Pause.DelayedAction(() => isInvulnerable = false, boostInvulnerabilityTime, true);
 				}
 			}
 			isBoosting = true;
 			rechargeTimer = 0f;
-			boostLevel += Time.deltaTime;
+			float oldVal = GetBoostRemaining();
+			boostLevel = Mathf.Max(boostLevel - Time.deltaTime, 0f);
+			OnBoostAmountChanged?.Invoke(oldVal, GetBoostRemaining());
 			if (IsDrilling)
 			{
 				velocity.Normalize();
@@ -614,7 +623,9 @@ public class Shuttle : Character, IStunnable, ICombat
 			rechargeTimer += Time.deltaTime;
 			if (rechargeTimer >= boostRechargeTime)
 			{
-				boostLevel = Mathf.Max(boostLevel - Time.deltaTime * rechargeSpeed, 0f);
+				float oldVal = boostLevel / boostCapacity;
+				boostLevel = Mathf.Min(boostLevel + Time.deltaTime * rechargeSpeed, boostCapacity);
+				OnBoostAmountChanged?.Invoke(oldVal, GetBoostRemaining());
 			}
 		}
 	}
@@ -627,18 +638,12 @@ public class Shuttle : Character, IStunnable, ICombat
 		{
 			case EntityType.BotHive:
 			case EntityType.GatherBot:
-			{
-				pause = pause ?? FindObjectOfType<Pause>();
-				if (pause)
-				{
-					pause.TemporarySlowDownEffect();
-				}
-			break;
-			}
+				Pause.TemporarySlowDownEffect();
+				break;
 		}
 	}
 
-	public float GetBoostRemaining() => (boostCapacity - boostLevel) / boostCapacity;
+	public float GetBoostRemaining() => boostLevel / boostCapacity;
 
 	public override bool CanFireLaser() =>
 		laserAttached
