@@ -44,27 +44,29 @@ public static class EntityNetwork
 	/// Constructs and reserves a large amount of space for the grid
 	public static IEnumerator CreateGrid(Action a)
 	{
-		if (ready) yield break;
-
-		//reserve space in each direction
-		//takes ~1.5 seconds for 1000 * 1000 * 10
-		for (int dir = 0; dir < QUADRANT_COUNT; dir++)
+		if (!ready)
 		{
-			grid.Add(new List<List<List<Entity>>>(ReserveSize));
-			for (int x = 0; x < ReserveSize; x++)
+			//reserve space in each direction
+			//takes ~1.5 seconds for 1000 * 1000 * 10
+			for (int dir = 0; dir < QUADRANT_COUNT; dir++)
 			{
-				grid[dir].Add(new List<List<Entity>>(ReserveSize));
-				for (int y = 0; y < ReserveSize; y++)
+				grid.Add(new List<List<List<Entity>>>(ReserveSize));
+				for (int x = 0; x < ReserveSize; x++)
 				{
-					grid[dir][x].Add(new List<Entity>(CellReserve));
+					grid[dir].Add(new List<List<Entity>>(ReserveSize));
+					for (int y = 0; y < ReserveSize; y++)
+					{
+						grid[dir][x].Add(new List<Entity>(CellReserve));
+					}
 				}
+				yield return null;
 			}
-			yield return null;
+
+			ready = true;
 		}
 
-		ready = true;
-		a?.Invoke();
 		RunInitialisationActions();
+		a?.Invoke();
 	}
 
 	/// Other classes that needed to use the network before the network was initialised could store actions

@@ -15,7 +15,7 @@ public class Inventory : MonoBehaviour
 		initialised = true;
 	}
 
-	public int ContainsItem(Item.Type type)
+	public int AmountOfItem(Item.Type type)
 	{
 		int amount = 0;
 		for (int i = 0; i < stacks.Count; i++)
@@ -326,5 +326,14 @@ public class Inventory : MonoBehaviour
 			value += stacks[i].GetValue();
 		}
 		return value;
+	}
+
+	public int FirstInstanceId(Item.Type type)
+	{
+		for (int i = 0; i < stacks.Count; i++)
+		{
+			if (stacks[i].GetItemType() == type) return i;
+		}
+		return -1;
 	}
 }

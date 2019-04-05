@@ -7,10 +7,8 @@ public static class EntityGenerator
 	#region Fields
 	//references to all kinds of spawnable entities
 	private static EntityPrefabDB prefabs;
-	//store chance values from prefabs
-	private static List<float> chances = new List<float>();
 	//keeps track of whether chunks have been filled already. Prevents chunk from refilling if emptied by player
-	private static List<List<List<bool>>> _wasFilled = new List<List<List<bool>>>();
+	private static List<List<List<bool>>> wasFilled = new List<List<List<bool>>>();
 	//List of empty game objects to store entities in and keep the hierarchy organised
 	private static Dictionary<string, GameObject> holders = new Dictionary<string, GameObject>();
 	//chunks to fill in batches
@@ -19,7 +17,16 @@ public static class EntityGenerator
 	private static int maxChunkBatchFill = 1;
 	private static List<SpawnableEntity> toSpawn = new List<SpawnableEntity>();
 	private static bool batcherRunning = false;
+	private static bool attached = false;
 	#endregion
+
+	private static void Unload(string sceneName)
+	{
+		holders.Clear();
+		chunkBatches.Clear();
+		toSpawn.Clear();
+		batcherRunning = false;
+	}
 
 	public static Entity SpawnEntity(Entity e)
 	{
@@ -234,55 +241,68 @@ public static class EntityGenerator
 
 		while (Column(cc).Count <= cc.Y)
 		{
-			_wasFilled[(int) cc.Direction][cc.X].Add(false);
+			wasFilled[(int) cc.Direction][cc.X].Add(false);
 		}
 	}
 
 	/// Fills up the list of fill triggers
 	public static IEnumerator FillTriggerList(System.Action a)
 	{
-		for (int dir = 0; dir < EntityNetwork.QUADRANT_COUNT; dir++)
+		if (!attached)
 		{
-			_wasFilled.Add(new List<List<bool>>());
-			for (int x = 0; x < EntityNetwork.ReserveSize; x++)
+			SceneLoader.OnSceneLoad += Unload;
+			attached = true;
+		}
+
+		if (wasFilled.Count == 0)
+		{
+			for (int dir = 0; dir < EntityNetwork.QUADRANT_COUNT; dir++)
 			{
-				_wasFilled[dir].Add(new List<bool>());
-				for (int y = 0; y < EntityNetwork.ReserveSize; y++)
+				wasFilled.Add(new List<List<bool>>());
+				for (int x = 0; x < EntityNetwork.ReserveSize; x++)
 				{
-					_wasFilled[dir][x].Add(false);
+					wasFilled[dir].Add(new List<bool>());
+					for (int y = 0; y < EntityNetwork.ReserveSize; y++)
+					{
+						wasFilled[dir][x].Add(false);
+					}
 				}
+				yield return null;
 			}
-			yield return null;
 		}
 		a?.Invoke();
 	}
 
 	public static IEnumerator SetPrefabs(EntityPrefabDB prf, System.Action a)
 	{
-		prefabs = prf;
 		//sort the space priority entities by lowest rarity to highest
-		List<SpawnableEntity> list = prefabs.spawnableEntities;
-		for (int i = 1; i < list.Count; i += 0)
+		List<SpawnableEntity> list = prf.spawnableEntities;
+		if (prefabs == null)
 		{
-			SpawnableEntity e = list[i];
-			if (e.rarity < list[i - 1].rarity)
+			prefabs = prf;
+			for (int i = 1; i < list.Count; i += 0)
 			{
-				list.RemoveAt(i);
-				list.Insert(i - 1, e);
-				i -= i > 1 ? 1 : 0;
+				SpawnableEntity e = list[i];
+				if (e.rarity < list[i - 1].rarity)
+				{
+					list.RemoveAt(i);
+					list.Insert(i - 1, e);
+					i -= i > 1 ? 1 : 0;
+				}
+				else
+				{
+					i++;
+				}
 			}
-			else
-			{
-				i++;
-			}
+			yield return null;
 		}
-		yield return null;
 
 		for (int i = 0; i < list.Count; i++)
 		{
 			SpawnableEntity e = list[i];
 			holders.Add(e.name, new GameObject(e.name));
 		}
+
 		a?.Invoke();
 	}
 
@@ -299,7 +319,7 @@ public static class EntityGenerator
 
 	private static List<List<bool>> Direction(ChunkCoords cc)
 	{
-		return _wasFilled[(int) cc.Direction];
+		return wasFilled[(int) cc.Direction];
 	}
 	#endregion
 }

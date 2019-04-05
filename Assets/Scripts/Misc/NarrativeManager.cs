@@ -164,7 +164,7 @@ public class NarrativeManager : MonoBehaviour
 		GiveQuest(mainChar, q);
 		FirstQuestScriptedDrops.scriptedDropsActive = true;
 		StartDialogue(UseThrustersDialogue, true);
-		TutPrompts.drillInputPromptInfo.SetIgnore(false);
+		TutPrompts?.drillInputPromptInfo.SetIgnore(false);
 	}
 
 	private void CompletedFirstGatheringQuest(Quest quest)
@@ -190,12 +190,14 @@ public class NarrativeManager : MonoBehaviour
 			mainChar, claire, qRewards, qReqs, CompletedCraftYourFirstRepairKitQuest);
 
 		GiveQuest(mainChar, q);
+		TutPrompts?.pauseInputPromptInfo.SetIgnore(false);
 	}
 
 	private void CompletedCraftYourFirstRepairKitQuest(Quest quest)
 	{
 		StartRepairTheShuttleQuest();
 		StartDialogue(useRepairKitDialogue, true, null);
+		TutPrompts?.pauseInputPromptInfo.SetIgnore(true);
 	}
 
 	private void StartRepairTheShuttleQuest()
@@ -213,6 +215,7 @@ public class NarrativeManager : MonoBehaviour
 			mainChar, claire, qRewards, qReqs, CompletedRepairTheShuttleQuest);
 
 		GiveQuest(mainChar, q);
+		TutPrompts?.repairKitInputPromptInfo.SetIgnore(false);
 	}
 
 	private void CompletedRepairTheShuttleQuest(Quest quest)
@@ -221,6 +224,7 @@ public class NarrativeManager : MonoBehaviour
 		ShuttleRepaired = true;
 		StartDialogue(findShipDialogue, true, null);
 		StartReturnToTheShipQuest();
+		TutPrompts?.repairKitInputPromptInfo.SetIgnore(true);
 	}
 
 	private void StartReturnToTheShipQuest()

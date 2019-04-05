@@ -14,6 +14,10 @@ public class LoadingController : MonoBehaviour
 
 	public delegate void LoadingCompleteEventHandler();
 	public static event LoadingCompleteEventHandler OnLoadingComplete;
+	public static void ClearEvent()
+	{
+		OnLoadingComplete = null;
+	}
 
 	private void Awake()
 	{

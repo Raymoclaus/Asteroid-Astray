@@ -11,11 +11,16 @@ public class PromptUI : MonoBehaviour
 
 	public delegate void PromptUpdatedEventHandler(string text, bool activating);
 	public static event PromptUpdatedEventHandler OnPromptUpdated;
+	public static void ClearEvent()
+	{
+		OnPromptUpdated = null;
+	}
 
 	private void Awake()
 	{
 		prompt = GetComponentInChildren<InputIconTextMesh>();
 		canvasGroup.alpha = 0f;
+		OnPromptUpdated = null;
 	}
 
 	public void ActivatePrompt(string text, float fadeInDuration = 0f)

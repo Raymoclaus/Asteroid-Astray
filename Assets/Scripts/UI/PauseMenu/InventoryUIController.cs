@@ -109,25 +109,20 @@ public class InventoryUIController : PauseTab
 	public void SlotClickDown(GameObject slot)
 	{
 		SelectionContext context = FindSlotId(slot);
-		Debug.Log(context.selected);
 		Inventory currentInv = GetInventory(context.context);
 		if (context.selected < 0 || context.selected >= currentInv.size) return;
-		grabStack = currentInv.Replace(grabStack, context.selected);
-		grabbing = grabStack.GetItemType() != Item.Type.Blank;
-		grabTransform.gameObject.SetActive(grabbing);
-		if (context.context == ContextInterface.CraftingInput)
-		{
-			CheckRecipes();
-		}
-	}
 
-	public void SlotClickUp(GameObject slot)
-	{
-		SelectionContext context = FindSlotId(slot);
-		Debug.Log(context.selected);
-		Inventory currentInv = GetInventory(context.context);
-		if (context.selected < 0 || context.selected >= currentInv.size || !grabbing) return;
-		grabStack = currentInv.Replace(grabStack, context.selected);
+		ItemStack inventoryStack = currentInv.stacks[context.selected];
+		if (grabStack.GetItemType() == inventoryStack.GetItemType()
+			&& !inventoryStack.IsMaxed)
+		{
+			int leftOver = inventoryStack.AddAmount(grabStack.GetAmount());
+			grabStack.SetAmount(leftOver);
+		}
+		else
+		{
+			grabStack = currentInv.Replace(grabStack, context.selected);
+		}
 		grabbing = grabStack.GetItemType() != Item.Type.Blank;
 		grabTransform.gameObject.SetActive(grabbing);
 		if (context.context == ContextInterface.CraftingInput)

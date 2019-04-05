@@ -2,7 +2,9 @@
 
 public class Character : Entity
 {
-	private static QuestPopupUI questPopupUI;
+	public delegate void ItemUsedEventHandler(Item.Type type);
+	public event ItemUsedEventHandler OnItemUsed;
+	public Inventory storage;
 
 	#region Drill-related
 	protected bool canDrill, canDrillLaunch;
@@ -43,13 +45,12 @@ public class Character : Entity
 	public virtual void AcceptQuest(Quest quest)
 	{
 		quest.Activate();
-
-		questPopupUI = questPopupUI ?? FindObjectOfType<QuestPopupUI>();
-		questPopupUI?.GeneratePopup(quest);
+		QuestPopupUI.ShowQuest(quest);
 	}
 
 	protected bool UseItem(Item.Type type)
 	{
+		bool used = false;
 		switch (type)
 		{
 			case Item.Type.Blank:
@@ -91,7 +92,8 @@ public class Character : Entity
 			case Item.Type.SpareParts:
 				break;
 			case Item.Type.RepairKit:
-				return true;
+				used = true;
+				break;
 			case Item.Type.NioleriumCrystals:
 				break;
 			case Item.Type.NiolerDung:
@@ -99,7 +101,11 @@ public class Character : Entity
 			case Item.Type.StoneAmmo:
 				break;
 		}
-		return false;
+		if (used)
+		{
+			OnItemUsed?.Invoke(type);
+		}
+		return used;
 	}
 
 	public virtual bool TakeItem(Item.Type type, int amount) => false;

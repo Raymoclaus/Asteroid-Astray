@@ -16,7 +16,7 @@ public class DirectionMarker : MonoBehaviour
 
 	private void UpdateHUD()
 	{
-		gameObject.SetActive(shuttleTrackerSO.navigationActive);
+		gameObject?.SetActive(shuttleTrackerSO.navigationActive);
 	}
 
 	private void Update()

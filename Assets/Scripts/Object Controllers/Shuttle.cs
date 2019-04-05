@@ -79,7 +79,6 @@ public class Shuttle : Character, IStunnable, ICombat
 	[SerializeField] private float launchZoomOutSize = 5f;
 	[SerializeField] private float launchLookAheadDistance = 5f;
 	private List<ICombat> enemies = new List<ICombat>();
-	public Inventory storage;
 	[SerializeField] private ShipInventory shipStorage;
 	[SerializeField] private ItemPopupUI popupUI;
 	private bool isInvulnerable = false;
@@ -129,6 +128,11 @@ public class Shuttle : Character, IStunnable, ICombat
 	public static event DrillCompleteEventHandler OnDrillComplete;
 	public delegate void BoostAmountEventHandler(float oldVal, float newVal);
 	public static event BoostAmountEventHandler OnBoostAmountChanged;
+	public static void ClearEvent()
+	{
+		OnDrillComplete = null;
+		OnBoostAmountChanged = null;
+	}
 	#endregion Events
 
 	public override void Awake()

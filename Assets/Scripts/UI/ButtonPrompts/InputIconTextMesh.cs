@@ -19,6 +19,11 @@ public class InputIconTextMesh : MonoBehaviour
 		UpdateIcon();
 	}
 
+	private void OnDisable()
+	{
+		InputHandler.InputModeChanged -= UpdateIcon;
+	}
+
 	private void GetIconSoReferences()
 	{
 		keyboardIcons = keyboardIcons ?? GetInputIconSO(keyboardIconsString);

@@ -18,7 +18,7 @@ public static class InputHandler
 
 	public static string GetActionString(InputAction action)
 	{
-		switch(action)
+		switch (action)
 		{
 			default: return action.ToString();
 			case InputAction.DrillLaunch: return "Drill Launch";
@@ -44,7 +44,10 @@ public static class InputHandler
 
 	public delegate void InputModeChangedEventHandler();
 	public static event InputModeChangedEventHandler InputModeChanged;
-	public static void OnInputModeChanged() => InputModeChanged?.Invoke();
+	public static void ClearEvent()
+	{
+		InputModeChanged = null;
+	}
 
 	private static void CheckForModeUpdate()
 	{
@@ -66,7 +69,7 @@ public static class InputHandler
 
 		if (prevMode != _mode)
 		{
-			OnInputModeChanged();
+			InputModeChanged?.Invoke();
 			Debug.LogWarning($"Input mode set to: {_mode}");
 		}
 	}

@@ -15,8 +15,22 @@ public class Pause : MonoBehaviour
 	private static bool canPause = true;
 	public static float intendedTimeSpeed = 1f;
 	[SerializeField] private PauseUIController pauseUI;
+	private PauseUIController PauseUI
+	{
+		get
+		{
+			return pauseUI ?? (pauseUI = FindObjectOfType<PauseUIController>());
+		}
+	}
 	[SerializeField] private RecordingModeController recordingModeController;
-	
+
+	public delegate void PauseEventHandler(bool pausing);
+	public static event PauseEventHandler OnPause;
+	public static void ClearEvent()
+	{
+		OnPause = null;
+	}
+
 	private void Awake()
 	{
 		if (instance == null)
@@ -29,11 +43,7 @@ public class Pause : MonoBehaviour
 			return;
 		}
 
-		pauseUI = pauseUI ?? FindObjectOfType<PauseUIController>();
-		if (pauseUI)
-		{
-			pauseUI.Activate(false, instant: true);
-		}
+		PauseUI.Activate(false, instant: true);
 	}
 
 	private void Update()
@@ -42,32 +52,20 @@ public class Pause : MonoBehaviour
 
 		if (InputHandler.GetInputDown(InputAction.Pause) > 0f && !isShifting && canPause)
 		{
+			OnPause?.Invoke(!IsPaused);
 			if (IsPaused)
 			{
-				pauseUI = pauseUI ?? FindObjectOfType<PauseUIController>();
-				if (pauseUI)
-				{
-					pauseUI.Activate(false, () =>
-					{
-						isShifting = true;
-						shiftingUp = IsPaused;
-					});
-				}
-				else
+				PauseUI.Activate(false, () =>
 				{
 					isShifting = true;
 					shiftingUp = IsPaused;
-				}
+				});
 			}
 			else
 			{
 				isShifting = true;
 				shiftingUp = IsPaused;
-				pauseUI = pauseUI ?? FindObjectOfType<PauseUIController>();
-				if (pauseUI)
-				{
-					pauseUI.Activate(true);
-				}
+				PauseUI.Activate(true);
 			}
 		}
 

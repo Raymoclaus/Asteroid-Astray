@@ -23,4 +23,13 @@ public static class GameEvents
 	public delegate void WaypointReachedEventHandler(Vector3 location);
 	public static event WaypointReachedEventHandler OnWaypointReached;
 	public static void WaypointReached(Vector3 location) => OnWaypointReached?.Invoke(location);
+
+	public static void ClearEvent()
+	{
+		OnEntityDestroyed = null;
+		OnItemCollected = null;
+		OnItemCrafted = null;
+		OnItemUsed = null;
+		OnWaypointReached = null;
+	}
 }

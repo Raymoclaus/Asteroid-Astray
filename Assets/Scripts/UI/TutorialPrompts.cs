@@ -11,6 +11,8 @@ public class TutorialPrompts : MonoBehaviour
 	public PromptInfo goInputPromptInfo;
 	public PromptInfo launchInputPromptInfo;
 	public PromptInfo drillInputPromptInfo;
+	public PromptInfo pauseInputPromptInfo;
+	public PromptInfo repairKitInputPromptInfo;
 
 	private List<PromptInfo> prompts = new List<PromptInfo>();
 
@@ -23,12 +25,21 @@ public class TutorialPrompts : MonoBehaviour
 		prompts.Add(goInputPromptInfo);
 		prompts.Add(launchInputPromptInfo);
 		prompts.Add(drillInputPromptInfo);
+		prompts.Add(pauseInputPromptInfo);
+		prompts.Add(repairKitInputPromptInfo);
 
 		IterateAll((PromptInfo pi) => pi.SetUI(ui));
 
 		SetUpGoInputPrompt();
 		SetUpLaunchInputPrompt();
 		SetUpDrillInputPrompt();
+		SetUpPauseInputPrompt();
+		SetUpRepairKitInputPrompt();
+	}
+
+	private void OnDisable()
+	{
+		IterateAll((PromptInfo pi) => pi.SetIgnore(true));
 	}
 
 	private void SetUpGoInputPrompt()
@@ -78,6 +89,55 @@ public class TutorialPrompts : MonoBehaviour
 		};
 	}
 
+	private void SetUpPauseInputPrompt()
+	{
+		Pause.PauseEventHandler action = (bool pausing) =>
+		{
+			if (!pausing) return;
+			pauseInputPromptInfo.Deactivate();
+		};
+		pauseInputPromptInfo.SetListeners(() =>
+		{
+			Pause.OnPause += action;
+		}, () =>
+		{
+			Pause.OnPause -= action;
+		});
+
+		pauseInputPromptInfo.SetCondition(() =>
+		{
+			return true;
+		});
+	}
+
+	private void SetUpRepairKitInputPrompt()
+	{
+		Character.ItemUsedEventHandler action = (Item.Type type) =>
+		{
+			if (type != Item.Type.RepairKit) return;
+			repairKitInputPromptInfo.Deactivate();
+		};
+		repairKitInputPromptInfo.SetListeners(() =>
+		{
+			mainChar.OnItemUsed += action;
+		}, () =>
+		{
+			mainChar.OnItemUsed -= action;
+		});
+
+		repairKitInputPromptInfo.SetCondition(() =>
+		{
+			Item.Type repairKit = Item.Type.RepairKit;
+			int id = mainChar.storage.FirstInstanceId(Item.Type.RepairKit);
+			if (id < 0) return false;
+			string typeName = Item.TypeName(repairKit);
+			string text = id < 8 ? $"Press [Slot {id + 1}:] to use the {typeName}"
+			: $"Place the {typeName} in one of the first 8 inventory slots";
+			repairKitInputPromptInfo.SetText(text);
+			return true;
+		});
+	}
+
 	private void Update()
 	{
 		IterateAll((PromptInfo pi) => pi.Check());
@@ -110,7 +170,7 @@ public class TutorialPrompts : MonoBehaviour
 		public float fadeInTime, fadeOutTime;
 		[Tooltip("If true, and if the \"Deactivate\" condition is triggered early, then the prompt will never appear.")]
 		public bool ignoreOnDeactivate;
-		private bool ignore;
+		public bool ignore;
 		private System.Func<bool> condition;
 		private System.Action startListening, stopListening;
 		private bool isListening;
@@ -148,6 +208,15 @@ public class TutorialPrompts : MonoBehaviour
 			if (!ignore)
 			{
 				startListening?.Invoke();
+			}
+		}
+
+		public void SetText(string s)
+		{
+			text = s;
+			if (isActivated)
+			{
+				ui.ActivatePrompt(text, 0f);
 			}
 		}
 

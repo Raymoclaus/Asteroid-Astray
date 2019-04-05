@@ -38,7 +38,6 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 	//references
 	protected BotHive hive;
 	[SerializeField] private ShakeEffect shakeFX;
-	[SerializeField] protected Inventory storage;
 	[SerializeField] private Animator anim;
 	[SerializeField] private SpriteRenderer sprRend;
 	private ContactPoint2D[] contacts = new ContactPoint2D[1];

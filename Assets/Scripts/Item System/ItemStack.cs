@@ -9,6 +9,8 @@ public class ItemStack
 	[SerializeField]
 	private int amount;
 
+	public bool IsMaxed { get { return amount == Item.StackLimit(type); } }
+
 	public ItemStack(Item.Type type, int num)
 	{
 		this.type = num <= 0 ? Item.Type.Blank : type;
@@ -48,16 +50,17 @@ public class ItemStack
 		}
 	}
 
-	public bool AddAmount(int num)
+	public int AddAmount(int num)
 	{
-		if (num <= 0) return false;
+		if (num <= 0) return num;
 
 		amount += num;
+		int leftOver = Mathf.Max(amount - Item.StackLimit(type), 0);
 		if (amount > Item.StackLimit(type))
 		{
 			amount = Item.StackLimit(type);
 		}
-		return true;
+		return leftOver;
 	}
 
 	public int RemoveAmount(int num)
