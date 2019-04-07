@@ -4,7 +4,8 @@ using UnityEngine.UI;
 
 public class InventoryUIController : PauseTab
 {
-	[SerializeField] private SlotGroup mainGroup, craftingInputGroup, craftingOutputGroup;
+	[SerializeField] private SlotGroup mainGroup, craftingInputGroup, craftingOutputGroup,
+		ghostInputGroup, ghostOutputGroup;
 
 	private SelectionContext currentContext = new SelectionContext(ContextInterface.Inventory, 0);
 
@@ -14,22 +15,26 @@ public class InventoryUIController : PauseTab
 	[SerializeField] private Image grabImg;
 	[SerializeField] private Text grabCountText;
 
-	[SerializeField] private Camera cam;
-
 	[SerializeField] private Image previewImg;
 	[SerializeField] private Text previewName;
 	[SerializeField] private Text previewDesc;
 	[SerializeField] private Text previewFlav;
 	[SerializeField] private ItemSprites sprites;
 
-	[SerializeField] private Button collectButton;
 	private CraftingRecipe currentRecipe;
+	[HideInInspector] private CraftingRecipe ghostRecipe;
+	[SerializeField] private GameObject recipeGroup, constructorGroup;
+	[SerializeField] private Transform recipeContent;
+	private List<CraftingRecipeSO> availableRecipes = new List<CraftingRecipeSO>();
+	[SerializeField] private GameObject recipeObjectPrefab;
 
 	private void Awake()
 	{
 		mainGroup.FindImagesAndTexts();
 		craftingInputGroup.FindImagesAndTexts();
 		craftingOutputGroup.FindImagesAndTexts();
+		ghostInputGroup.FindImagesAndTexts();
+		ghostOutputGroup.FindImagesAndTexts();
 	}
 
 	private void Update()
@@ -51,12 +56,14 @@ public class InventoryUIController : PauseTab
 
 	private void UpdateSlots()
 	{
-		UpdateSlotGroup(mainGroup);
-		UpdateSlotGroup(craftingInputGroup);
-		UpdateSlotGroup(craftingOutputGroup);
+		UpdateSlotGroup(mainGroup, 1f);
+		UpdateSlotGroup(craftingInputGroup, 1f);
+		UpdateSlotGroup(craftingOutputGroup, 1f);
+		UpdateSlotGroup(ghostInputGroup, 0.5f);
+		UpdateSlotGroup(ghostOutputGroup, 0.5f);
 	}
 
-	private void UpdateSlotGroup(SlotGroup sg)
+	private void UpdateSlotGroup(SlotGroup sg, float alpha)
 	{
 		Inventory inv = sg.inventory;
 		List<ItemStack> stacks = inv.stacks;
@@ -67,10 +74,18 @@ public class InventoryUIController : PauseTab
 			{
 				sg.slotImages[i].sprite = sprites.GetItemSprite(type);
 			}
-			sg.slotImages[i].color = type == Item.Type.Blank ? Color.clear : Color.white;
+			Color col = type == Item.Type.Blank ? Color.clear : new Color(1f, 1f, 1f, alpha);
+			sg.slotImages[i].color = col;
 			int count = stacks[i].GetAmount();
 			sg.slotTexts[i].text = count > 1 ? count.ToString() : string.Empty;
 		}
+	}
+
+	public void SetGhostRecipe(CraftingRecipe recipe)
+	{
+		ghostRecipe = recipe;
+		ghostInputGroup.inventory.SetStacks(recipe.GetRecipeStacks());
+		ghostOutputGroup.inventory.SetStacks(recipe.GetResultStacks());
 	}
 
 	private void UpdateGrabUI()
@@ -127,11 +142,18 @@ public class InventoryUIController : PauseTab
 		grabTransform.gameObject.SetActive(grabbing);
 		if (context.context == ContextInterface.CraftingInput)
 		{
-			CheckRecipes();
+			CheckForMatchInRecipes();
 		}
 	}
 
-	private void CheckRecipes()
+	public void SwitchConstructorRecipeLayout()
+	{
+		bool goToRecipes = constructorGroup.activeSelf;
+		constructorGroup.SetActive(!goToRecipes);
+		recipeGroup.SetActive(goToRecipes);
+	}
+
+	private void CheckForMatchInRecipes()
 	{
 		CraftingRecipe? recipe = Crafting.CheckRecipes(craftingInputGroup.inventory.stacks);
 		if (recipe != null)
@@ -143,21 +165,43 @@ public class InventoryUIController : PauseTab
 		{
 			craftingOutputGroup.inventory.ClearAll();
 		}
-		collectButton.interactable = recipe != null;
 	}
 
 	public void Collect()
 	{
-		List<ItemStack> outputStacks = craftingOutputGroup.inventory.stacks;
-		if (!mainGroup.inventory.CanFit(outputStacks)) return;
+		ItemStack outputStack = craftingOutputGroup.inventory.stacks[0];
+		Item.Type outputType = outputStack.GetItemType();
+		if (outputType == Item.Type.Blank) return;
 
-		for (int i = 0; i < outputStacks.Count; i++)
+		Item.Type grabStackType = grabStack.GetItemType();
+		if (grabStackType != outputType && grabStackType != Item.Type.Blank) return;
+
+		int stackLimit = Item.StackLimit(outputType);
+		int outputAmount = outputStack.GetAmount();
+		int grabStackAmount = grabStack.GetAmount();
+		int combinedAmount = outputAmount + grabStackAmount;
+		if (grabStackType == Item.Type.Blank || combinedAmount <= stackLimit)
 		{
-			GameEvents.ItemCrafted(outputStacks[i].GetItemType(), outputStacks[i].GetAmount());
+			grabStack.SetItemType(outputType);
+			grabStack.AddAmount(outputAmount);
+			craftingInputGroup.inventory.RemoveItems(currentRecipe.GetRecipeStacks());
 		}
-		mainGroup.inventory.AddItems(outputStacks);
-		craftingInputGroup.inventory.RemoveItems(currentRecipe.GetRecipeStacks());
-		CheckRecipes();
+		else if (mainGroup.inventory.CanFit(new ItemStack(outputType, combinedAmount - stackLimit)))
+		{
+			grabStack.SetItemType(outputType);
+			int leftover = grabStack.AddAmount(outputAmount);
+			mainGroup.inventory.AddItem(outputType, leftover);
+		}
+		else
+		{
+			return;
+		}
+
+		grabbing = grabStack.GetItemType() != Item.Type.Blank;
+		grabTransform.gameObject.SetActive(grabbing);
+		CheckForMatchInRecipes();
+
+		GameEvents.ItemCrafted(outputType, outputStack.GetAmount());
 	}
 
 	private Inventory GetInventory(ContextInterface ci)
@@ -167,6 +211,8 @@ public class InventoryUIController : PauseTab
 			case ContextInterface.Inventory: return mainGroup.inventory;
 			case ContextInterface.CraftingInput: return craftingInputGroup.inventory;
 			case ContextInterface.CraftingOutput: return craftingOutputGroup.inventory;
+			case ContextInterface.GhostInput: return ghostInputGroup.inventory;
+			case ContextInterface.GhostOutput: return ghostOutputGroup.inventory;
 			default: return null;
 		}
 	}
@@ -187,35 +233,37 @@ public class InventoryUIController : PauseTab
 
 	private SelectionContext FindSlotId(GameObject slot)
 	{
-		int i = 0;
+		int i = ContainsSlot(ghostInputGroup, slot);
+		if (i >= 0) return new SelectionContext(ContextInterface.GhostInput, i);
 
-		for (i = 0; i < craftingInputGroup.slots.Count; i++)
-		{
-			if (craftingInputGroup.slots[i] == slot)
-			{
-				return new SelectionContext(ContextInterface.CraftingInput, i);
-			}
-		}
+		i = ContainsSlot(ghostOutputGroup, slot);
+		if (i >= 0) return new SelectionContext(ContextInterface.GhostOutput, i);
 
-		for (i = 0; i < craftingOutputGroup.slots.Count; i++)
-		{
-			if (craftingOutputGroup.slots[i] == slot)
-			{
-				return new SelectionContext(ContextInterface.CraftingOutput, i);
-			}
-		}
+		i = ContainsSlot(craftingInputGroup, slot);
+		if (i >= 0) return new SelectionContext(ContextInterface.CraftingInput, i);
 
-		for (i = 0; i < mainGroup.slots.Count; i++)
-		{
-			if (mainGroup.slots[i] == slot)
-			{
-				return new SelectionContext(ContextInterface.Inventory, i);
-			}
-		}
+		i = ContainsSlot(craftingOutputGroup, slot);
+		if (i >= 0) return new SelectionContext(ContextInterface.CraftingOutput, i);
+
+		i = ContainsSlot(mainGroup, slot);
+		if (i >= 0) return new SelectionContext(ContextInterface.Inventory, i);
+
 		return new SelectionContext(ContextInterface.Inventory, -1);
 	}
 
-	private enum ContextInterface { Inventory, CraftingInput, CraftingOutput }
+	private int ContainsSlot(SlotGroup sg, GameObject slot)
+	{
+		for (int i = 0; i < sg.slots.Count; i++)
+		{
+			if (sg.slots[i] == slot)
+			{
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	private enum ContextInterface { Inventory, CraftingInput, CraftingOutput, GhostInput, GhostOutput }
 
 	private struct SelectionContext
 	{
@@ -234,15 +282,11 @@ public class InventoryUIController : PauseTab
 		public static bool operator !=(SelectionContext a, SelectionContext b)
 			=> a.context != b.context || a.selected != b.selected;
 
-		public override bool Equals(object obj)
-		{
-			return base.Equals(obj);
-		}
+		public override bool Equals(object obj) => base.Equals(obj);
 
-		public override int GetHashCode()
-		{
-			return base.GetHashCode();
-		}
+		public override int GetHashCode() => base.GetHashCode();
+
+		public override string ToString() => $"Slot {selected} of {context}";
 	}
 
 	[System.Serializable]

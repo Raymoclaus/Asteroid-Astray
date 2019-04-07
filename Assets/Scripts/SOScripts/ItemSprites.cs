@@ -10,7 +10,7 @@ public class ItemSprites : ScriptableObject
 		Copper,
 		PureCorvorite,
 		CorruptedCorvorite,
-		WarpCoreBattery,
+		CoreCrystal,
 		IronAlloy,
 		BugFood,
 		ProximityMine,
@@ -40,8 +40,7 @@ public class ItemSprites : ScriptableObject
 			case Item.Type.Copper: return Copper;
 			case Item.Type.PureCorvorite: return PureCorvorite;
 			case Item.Type.CorruptedCorvorite: return CorruptedCorvorite;
-			case Item.Type.WarpCoreBattery: return WarpCoreBattery;
-			case Item.Type.IronAlloy: return IronAlloy;
+			case Item.Type.CoreCrystal: return CoreCrystal;
 			case Item.Type.BugFood: return BugFood;
 			case Item.Type.ProximityMine: return ProximityMine;
 			case Item.Type.UnstableAcid: return UnstableAcid;

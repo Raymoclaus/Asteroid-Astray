@@ -65,9 +65,7 @@ public class Character : Entity
 				break;
 			case Item.Type.CorruptedCorvorite:
 				break;
-			case Item.Type.WarpCoreBattery:
-				break;
-			case Item.Type.IronAlloy:
+			case Item.Type.CoreCrystal:
 				break;
 			case Item.Type.BugFood:
 				break;

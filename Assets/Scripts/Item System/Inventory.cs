@@ -144,6 +144,12 @@ public class Inventory : MonoBehaviour
 		return true;
 	}
 
+	public bool CanFit(ItemStack items)
+	{
+		List<ItemStack> tempInventory = new List<ItemStack>(stacks);
+		return AddItem(items.GetItemType(), items.GetAmount(), tempInventory) <= 0;
+	}
+
 	public int Count(Item.Type? include = null, int minRarity = 0, int maxRarity = Item.MAX_RARITY)
 	{
 		int count = 0;
@@ -165,7 +171,7 @@ public class Inventory : MonoBehaviour
 
 	public bool SetStacks(List<ItemStack> newStacks)
 	{
-		if (newStacks.Count > stacks.Count) return false;
+		if (newStacks.Count > size) return false;
 		stacks = newStacks;
 		TrimPadStacks();
 		return true;

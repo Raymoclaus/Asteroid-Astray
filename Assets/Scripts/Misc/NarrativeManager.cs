@@ -47,6 +47,14 @@ public class NarrativeManager : MonoBehaviour
 			return tutPrompts ?? (tutPrompts = FindObjectOfType<TutorialPrompts>());
 		}
 	}
+	[SerializeField] private InventoryUIController inventoryUI;
+	private InventoryUIController InventoryUI
+	{
+		get
+		{
+			return inventoryUI ?? (inventoryUI = FindObjectOfType<InventoryUIController>());
+		}
+	}
 
 	[SerializeField] private ConversationEvent
 		recoveryDialogue,
@@ -191,6 +199,12 @@ public class NarrativeManager : MonoBehaviour
 
 		GiveQuest(mainChar, q);
 		TutPrompts?.pauseInputPromptInfo.SetIgnore(false);
+
+		CraftingRecipe? recipe = Crafting.GetRecipeByName("Repair Kit Recipe");
+		if (recipe != null)
+		{
+			InventoryUI.SetGhostRecipe((CraftingRecipe)recipe);
+		}
 	}
 
 	private void CompletedCraftYourFirstRepairKitQuest(Quest quest)

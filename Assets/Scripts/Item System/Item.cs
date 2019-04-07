@@ -10,8 +10,7 @@ public static class Item
 		Copper,
 		PureCorvorite,
 		CorruptedCorvorite,
-		WarpCoreBattery,
-		IronAlloy,
+		CoreCrystal,
 		BugFood,
 		ProximityMine,
 		UnstableAcid,
@@ -43,8 +42,7 @@ public static class Item
 			case Type.Copper: return "Copper";
 			case Type.PureCorvorite: return "Pure Corvorite";
 			case Type.CorruptedCorvorite: return "Corrupted Corvorite";
-			case Type.WarpCoreBattery: return "Warp Core Battery";
-			case Type.IronAlloy: return "Iron Alloy";
+			case Type.CoreCrystal: return "Core Crystal";
 			case Type.BugFood: return "Bug Food";
 			case Type.ProximityMine: return "Proximity Mine";
 			case Type.UnstableAcid: return "Unstable Acid";
@@ -77,8 +75,7 @@ public static class Item
 			case Type.Copper: return 2;
 			case Type.PureCorvorite: return 8;
 			case Type.CorruptedCorvorite: return 6;
-			case Type.WarpCoreBattery: return 5;
-			case Type.IronAlloy: return 2;
+			case Type.CoreCrystal: return 5;
 			case Type.BugFood: return 1;
 			case Type.ProximityMine: return 3;
 			case Type.UnstableAcid: return 2;
@@ -111,8 +108,7 @@ public static class Item
 			case Type.Copper: return 100;
 			case Type.PureCorvorite: return 5;
 			case Type.CorruptedCorvorite: return 30;
-			case Type.WarpCoreBattery: return 1;
-			case Type.IronAlloy: return 100;
+			case Type.CoreCrystal: return 1;
 			case Type.BugFood: return 50;
 			case Type.ProximityMine: return 10;
 			case Type.UnstableAcid: return 30;
@@ -151,8 +147,7 @@ public static class Item
 			case Type.CorruptedCorvorite:
 				return "An impure source of energy resource derived from the legend known as" +
 					" \"Pure Corvorite\".";
-			case Type.WarpCoreBattery: return string.Empty;
-			case Type.IronAlloy: return string.Empty;
+			case Type.CoreCrystal: return string.Empty;
 			case Type.BugFood: return string.Empty;
 			case Type.ProximityMine: return string.Empty;
 			case Type.UnstableAcid: return string.Empty;
@@ -197,8 +192,7 @@ public static class Item
 					" price. It is theorised that Gather Bot hives recharge their bots regularly" +
 					" with only small amounts of energy from Pure Corvorite to minimise losses" +
 					" if the Gather Bots are attacked.";
-			case Type.WarpCoreBattery: return string.Empty;
-			case Type.IronAlloy: return string.Empty;
+			case Type.CoreCrystal: return string.Empty;
 			case Type.BugFood: return string.Empty;
 			case Type.ProximityMine: return string.Empty;
 			case Type.UnstableAcid: return string.Empty;

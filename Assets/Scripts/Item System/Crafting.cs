@@ -23,4 +23,10 @@ public static class Crafting
 
 		return recipe;
 	}
+
+	public static CraftingRecipe? GetRecipeByName(string recipeName)
+	{
+		CraftingRecipeSO recipeSO = Resources.Load<CraftingRecipeSO>(recipeName);
+		return recipeSO?.recipe;
+	}
 }
