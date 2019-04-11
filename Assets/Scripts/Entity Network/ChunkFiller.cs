@@ -11,19 +11,12 @@ public class ChunkFiller : MonoBehaviour
 
 	private void Start()
 	{
-		if (!EntityNetwork.ready)
-		{
-			enabled = false;
-			EntityNetwork.postInitActions.Add(() =>
-			{
-				Initialise();
-				enabled = true;
-			});
-		}
-		else
+		enabled = false;
+		EntityNetwork.AddListener(() =>
 		{
 			Initialise();
-		}
+			enabled = true;
+		});
 	}
 
 	private void Initialise()
@@ -73,7 +66,7 @@ public class ChunkFiller : MonoBehaviour
 		}
 		else
 		{
-			EntityGenerator.EnqueueBatchOrder(chunksToFill, this);
+			EntityGenerator.EnqueueBatchOrder(chunksToFill);
 		}
 	}
 

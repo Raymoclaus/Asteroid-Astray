@@ -43,19 +43,12 @@ public class Entity : MonoBehaviour
 	public virtual void Awake()
 	{
 		currentHP = maxHP;
-		if (!EntityNetwork.ready)
-		{
-			gameObject.SetActive(false);
-			EntityNetwork.postInitActions.Add(() =>
-			{
-				Initialise();
-				gameObject.SetActive(true);
-			});
-		}
-		else
+		gameObject.SetActive(false);
+		EntityNetwork.AddListener(() =>
 		{
 			Initialise();
-		}
+			gameObject.SetActive(true);
+		});
 	}
 
 	public virtual void Initialise()

@@ -85,6 +85,8 @@ public class Shuttle : Character, IStunnable, ICombat
 	private QuestLog questLog = new QuestLog();
 	[SerializeField] private ColorReplacementGroup cRGroup;
 	[SerializeField] private Transform defaultWaypointTarget;
+
+	[SerializeField] private TY4PlayingUI ty4pUI;
 	
 	#region Boost
 		//how long a boost can last
@@ -151,11 +153,6 @@ public class Shuttle : Character, IStunnable, ICombat
 
 	private void Update()
 	{
-		if (Input.GetKeyDown(KeyCode.D))
-		{
-			TakeDamage(100f, transform.position, null, 0, true);
-		}
-
 		if (!stunned)
 		{
 			//get shuttle movement input
@@ -443,14 +440,14 @@ public class Shuttle : Character, IStunnable, ICombat
 
 	public override float DrillDamageQuery(bool firstHit)
 	{
-		if (InputHandler.GetInputUp(InputAction.DrillLaunch) > 0f || !trackerSO.hasControl)
+		if (ShouldLaunch())
 		{
 			cameraCtrl?.SetConstantSize(false);
 			cameraCtrl?.SetLookAheadDistance(false);
 			return 0f;
 		}
 
-		if (InputHandler.GetInput(InputAction.DrillLaunch) > 0f)
+		if (InputHandler.GetInput(InputAction.DrillLaunch) > 0f && CanDrillLaunch())
 		{
 			GameObject launchCone = drillLaunchArcSprite.gameObject;
 			launchCone.SetActive(true);
@@ -482,7 +479,7 @@ public class Shuttle : Character, IStunnable, ICombat
 		{
 			return calculation;
 		}
-		else if (InputHandler.GetInput(InputAction.DrillLaunch) > 0f)
+		else if (InputHandler.GetInput(InputAction.DrillLaunch) > 0f && CanDrillLaunch())
 		{
 			return 0.001f;
 		}
@@ -506,7 +503,10 @@ public class Shuttle : Character, IStunnable, ICombat
 	public override bool ShouldLaunch() =>
 		CanDrillLaunch()
 		&& InputHandler.GetInputUp(InputAction.DrillLaunch) > 0f
-		&& trackerSO.hasControl;
+		&& trackerSO.hasControl
+		&& trackerSO.canLaunch;
+
+	public override bool CanDrillLaunch() => base.CanDrillLaunch() && trackerSO.canLaunch;
 
 	public void Stun()
 	{
@@ -545,6 +545,8 @@ public class Shuttle : Character, IStunnable, ICombat
 	{
 		DrillLaunchArcDisable();
 		OnDrillComplete?.Invoke(successful);
+		cameraCtrl.SetConstantSize(false);
+		cameraCtrl.SetLookAheadDistance(false);
 	}
 
 	public void OnCollisionEnter2D(Collision2D collision)
@@ -572,6 +574,11 @@ public class Shuttle : Character, IStunnable, ICombat
 		currentHP -= damage;
 		HealthUpdated(oldVal, GetHpRatio());
 		cRGroup?.Flash(0.5f, Color.red);
+		if (currentHP <= 0f)
+		{
+			ty4pUI?.SetActive(true);
+			currentHP = maxHP;
+		}
 		return true;
 	}
 

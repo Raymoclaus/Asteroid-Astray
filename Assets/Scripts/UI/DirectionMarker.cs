@@ -16,7 +16,7 @@ public class DirectionMarker : MonoBehaviour
 
 	private void UpdateHUD()
 	{
-		gameObject?.SetActive(shuttleTrackerSO.navigationActive);
+		gameObject.SetActive(shuttleTrackerSO.navigationActive);
 	}
 
 	private void Update()
@@ -33,5 +33,10 @@ public class DirectionMarker : MonoBehaviour
 	private float GetAngle()
 	{
 		return -Vector2.SignedAngle(Vector2.up, shuttleTrackerSO.GetWaypointLocation() - parent.position);
+	}
+
+	private void OnDestroy()
+	{
+		shuttleTrackerSO.NavigationUpdated -= UpdateHUD;
 	}
 }

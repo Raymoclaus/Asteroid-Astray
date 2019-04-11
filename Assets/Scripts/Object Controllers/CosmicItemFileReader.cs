@@ -23,10 +23,10 @@ public static class CosmicItemFileReader
 		"{6}";
 	private static string newLine = System.Environment.NewLine;
 
-	public static void Save(List<List<List<List<CosmicItem>>>> background)
+	public static void Save(List<List<List<List<SceneryController.CosmicItem>>>> background)
 	{
 		StringBuilder text = new StringBuilder(100000000);
-		CosmicItem c;
+		SceneryController.CosmicItem c;
 
 		for (int quad = 0; quad < background.Count; quad++)
 		{
@@ -53,14 +53,14 @@ public static class CosmicItemFileReader
 		File.WriteAllText(path, text.ToString());
 	}
 
-	public static List<List<List<List<CosmicItem>>>> Load(List<List<List<List<CosmicItem>>>> items,
+	public static List<List<List<List<SceneryController.CosmicItem>>>> Load(List<List<List<List<SceneryController.CosmicItem>>>> items,
 		int largeDistance, int reserveSize)
 	{
 		if (!File.Exists(path)) return items;
 
 		string[] lines = File.ReadAllLines(path);
 		int quad = 0, x = 0, y = 0, i = 0;
-		CosmicItem c;
+		SceneryController.CosmicItem c;
 
 		for (int j = 0; j < lines.Length; j++)
 		{
@@ -89,23 +89,23 @@ public static class CosmicItemFileReader
 	}
 
 	private static void AddItem(
-		CosmicItem item, List<List<List<List<CosmicItem>>>> items, int quad, int x, int y, int i, int largeDistance,
+		SceneryController.CosmicItem item, List<List<List<List<SceneryController.CosmicItem>>>> items, int quad, int x, int y, int i, int largeDistance,
 		int reserveSize)
 	{
 		while (items[quad].Count <= x || items[quad][x].Count <= y)
 		{
 			if (items[quad].Count <= x)
 			{
-				List<List<CosmicItem>> xList = new List<List<CosmicItem>>(largeDistance);
+				List<List<SceneryController.CosmicItem>> xList = new List<List<SceneryController.CosmicItem>>(largeDistance);
 				for (int j = 0; j < largeDistance; j++)
 				{
-					xList.Add(new List<CosmicItem>(reserveSize));
+					xList.Add(new List<SceneryController.CosmicItem>(reserveSize));
 				}
 				items[quad].Add(xList);
 			}
 			else
 			{
-				items[quad][x].Add(new List<CosmicItem>(reserveSize));
+				items[quad][x].Add(new List<SceneryController.CosmicItem>(reserveSize));
 			}
 		}
 		items[quad][x][y].Add(item);

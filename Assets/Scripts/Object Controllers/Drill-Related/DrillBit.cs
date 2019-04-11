@@ -150,13 +150,12 @@ public class DrillBit : MonoBehaviour
 		if (drillTarget != null)
 		{
 			drillTarget.StopDrilling(this);
+			parent.StoppedDrilling(successful);
 			if (launch)
 			{
 				drillTarget.Launch((Vector2)launchDirection, launcher);
 			}
 			drillTarget = null;
-
-			parent.StoppedDrilling(successful);
 		}
 
 		currentVolume = 0f;

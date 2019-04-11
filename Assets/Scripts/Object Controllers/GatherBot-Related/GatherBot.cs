@@ -1133,7 +1133,7 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 			Rigidbody2D colRb = rbs[i];
 			IStunnable stunnable = colRb.GetComponent<IStunnable>();
 			stunnable = stunnable ?? colRb.GetComponentInChildren<IStunnable>();
-			if (stunnable != null) stunnable.Stun();
+			stunnable?.Stun();
 
 			if (colRb == rb) continue;
 			Vector2 dir = ((Vector2)colRb.transform.position - point).normalized;

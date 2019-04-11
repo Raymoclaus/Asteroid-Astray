@@ -2,49 +2,113 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public static class EntityGenerator
+public class EntityGenerator : MonoBehaviour
 {
 	#region Fields
+	private static EntityGenerator instance;
 	//references to all kinds of spawnable entities
-	private static EntityPrefabDB prefabs;
+	[SerializeField] private EntityPrefabDB prefabs;
 	//keeps track of whether chunks have been filled already. Prevents chunk from refilling if emptied by player
-	private static List<List<List<bool>>> wasFilled = new List<List<List<bool>>>();
+	private List<List<List<bool>>> wasFilled = new List<List<List<bool>>>();
 	//List of empty game objects to store entities in and keep the hierarchy organised
-	private static Dictionary<string, GameObject> holders = new Dictionary<string, GameObject>();
+	private Dictionary<string, GameObject> holders = new Dictionary<string, GameObject>();
 	//chunks to fill in batches
-	private static List<ChunkCoords> chunkBatches = new List<ChunkCoords>(100);
+	private List<ChunkCoords> chunkBatches = new List<ChunkCoords>(100);
 	//maximum amount of chunks to fill per frame
-	private static int maxChunkBatchFill = 1;
-	private static List<SpawnableEntity> toSpawn = new List<SpawnableEntity>();
-	private static bool batcherRunning = false;
-	private static bool attached = false;
+	private int maxChunkBatchFill = 1;
+	private List<SpawnableEntity> toSpawn = new List<SpawnableEntity>();
+	private bool batcherRunning = false;
+	private List<bool> systemsReady = new List<bool>();
+
+	public static bool IsReady { get { return instance != null && instance.CheckSystemsReady(); } }
 	#endregion
 
-	private static void Unload(string sceneName)
+	public delegate void CompletedSetupEventHandler();
+	private static event CompletedSetupEventHandler OnCompletedSetup;
+
+	private void Awake()
 	{
-		holders.Clear();
-		chunkBatches.Clear();
-		toSpawn.Clear();
-		batcherRunning = false;
+		if (instance == null)
+		{
+			instance = this;
+		}
+		else
+		{
+			Destroy(gameObject);
+			return;
+		}
+
+		systemsReady.Add(false);
+		StartCoroutine(FillTriggerList(() =>
+		{
+			Ready(0);
+		}));
+
+		systemsReady.Add(false);
+		StartCoroutine(SetPrefabs(() =>
+		{
+			Ready(1);
+		}));
+	}
+
+	private void Ready(int index)
+	{
+		if (index >= 0 && index < systemsReady.Count)
+		{
+			systemsReady[index] = true;
+		}
+
+		if (CheckSystemsReady())
+		{
+			OnCompletedSetup?.Invoke();
+			OnCompletedSetup = null;
+		}
+	}
+
+	private bool CheckSystemsReady()
+	{
+		for (int i = 0; i < systemsReady.Count; i++)
+		{
+			if (!systemsReady[i]) return false;
+		}
+		return true;
+	}
+
+	public static void AddListener(System.Action action)
+	{
+		if (IsReady)
+		{
+			action?.Invoke();
+		}
+		else if (action != null)
+		{
+			OnCompletedSetup += new CompletedSetupEventHandler(action);
+		}
 	}
 
 	public static Entity SpawnEntity(Entity e)
 	{
-		SpawnableEntity se = GetSpawnableEntity(e);
+		if (!IsReady)
+		{
+			AddListener(() => SpawnEntity(e));
+			return null;
+		}
+
+		SpawnableEntity se = instance.GetSpawnableEntity(e);
 		if (se == null) return null;
 
-		ChunkCoords cc = ClosestValidNonFilledChunk(se);
+		ChunkCoords cc = instance.ClosestValidNonFilledChunk(se);
 		if (cc == ChunkCoords.Invalid) return null;
 
 		return SpawnOneInEmptyChunk(cc, se);
 	}
 
-	private static SpawnableEntity GetSpawnableEntity(Entity e)
+	private SpawnableEntity GetSpawnableEntity(Entity e)
 	{
 		return prefabs.GetSpawnableEntity(e);
 	}
 
-	public static ChunkCoords ClosestValidNonFilledChunk(SpawnableEntity se)
+	private ChunkCoords ClosestValidNonFilledChunk(SpawnableEntity se)
 	{
 		int minRange = (int)((se.GetMinimumDistanceToBeSpawned() + Constants.CHUNK_SIZE / 2) / Constants.CHUNK_SIZE);
 		List<ChunkCoords> coordsList = new List<ChunkCoords>();
@@ -68,25 +132,32 @@ public static class EntityGenerator
 
 	public static void FillChunk(ChunkCoords cc, bool excludePriority = false)
 	{
+		if (!IsReady)
+		{
+			AddListener(() => FillChunk(cc, excludePriority));
+			return;
+		}
+
 		//don't bother if the given coordinates are not valid
 		if (!cc.IsValid()) return;
 		//if these coordinates have no been generated yet then reserve some space for the new coordinates
-		GenerateVoid(cc);
+		instance.GenerateVoid(cc);
 		//don't bother if the coordinates have already been filled
-		if (Chunk(cc)) return;
+		if (instance.Chunk(cc)) return;
 		//flag that this chunk coordinates was filled
-		Column(cc)[cc.Y] = true;
+		instance.Column(cc)[cc.Y] = true;
 
 		//look through the space priority entities and check if one may spawn
-		toSpawn.Clear();
-		ChooseEntitiesToSpawn(ChunkCoords.GetCenterCell(cc).magnitude, excludePriority, toSpawn);
+		List<SpawnableEntity> spawnList = instance.toSpawn;
+		spawnList.Clear();
+		instance.ChooseEntitiesToSpawn(ChunkCoords.GetCenterCell(cc).magnitude, excludePriority, spawnList);
 
 		//determine area to spawn in
 		Vector2Pair range = ChunkCoords.GetCellArea(cc);
 		Vector2 spawnPos = Vector2.zero;
-		for (int i = 0; i < toSpawn.Count; i++)
+		for (int i = 0; i < spawnList.Count; i++)
 		{
-			SpawnableEntity e = toSpawn[i];
+			SpawnableEntity e = spawnList[i];
 			//determine how many to spawn
 			int numToSpawn = Random.Range(e.spawnRange.A, e.spawnRange.B + 1);
 			for (int j = 0; j < numToSpawn; j++)
@@ -103,22 +174,27 @@ public static class EntityGenerator
 						break;
 				}
 				//spawn it
-				Object.Instantiate(e.prefab, spawnPos, Quaternion.identity,
-					holders[e.name].transform);
+				Instantiate(e.prefab, spawnPos, Quaternion.identity, instance.holders[e.name].transform);
 			}
 		}
 	}
 
 	public static Entity SpawnOneInEmptyChunk(ChunkCoords cc, SpawnableEntity se)
 	{
+		if (!IsReady)
+		{
+			AddListener(() => SpawnOneInEmptyChunk(cc, se));
+			return null;
+		}
+
 		//don't bother if the given coordinates are not valid
 		if (!cc.IsValid()) return null;
 		//if these coordinates have no been generated yet then reserve some space for the new coordinates
-		GenerateVoid(cc);
+		instance.GenerateVoid(cc);
 		//don't bother if the coordinates have already been filled
-		if (Chunk(cc)) return null;
+		if (instance.Chunk(cc)) return null;
 		//flag that this chunk coordinates was filled
-		Column(cc)[cc.Y] = true;
+		instance.Column(cc)[cc.Y] = true;
 
 		SpawnableEntity e = se;
 		//determine how many to spawn
@@ -136,11 +212,10 @@ public static class EntityGenerator
 				break;
 		}
 		//spawn it
-		return Object.Instantiate(e.prefab, spawnPos, Quaternion.identity,
-			holders[e.name].transform);
+		return Instantiate(e.prefab, spawnPos, Quaternion.identity, instance.holders[e.name].transform);
 	}
 
-	private static List<SpawnableEntity> ChooseEntitiesToSpawn(float distance, bool excludePriority = false,
+	private List<SpawnableEntity> ChooseEntitiesToSpawn(float distance, bool excludePriority = false,
 		List<SpawnableEntity> addToList = null)
 	{
 		addToList = addToList ?? new List<SpawnableEntity>();
@@ -176,6 +251,12 @@ public static class EntityGenerator
 
 	public static void InstantFillChunks(List<ChunkCoords> coords)
 	{
+		if (!IsReady)
+		{
+			AddListener(() => InstantFillChunks(coords));
+			return;
+		}
+
 		for (int i = 0; i < coords.Count; i++)
 		{
 			ChunkCoords c = coords[i];
@@ -183,7 +264,7 @@ public static class EntityGenerator
 		}
 	}
 
-	public static IEnumerator ChunkBatchOrder()
+	private IEnumerator ChunkBatchOrder()
 	{
 		batcherRunning = true;
 		while (true)
@@ -202,17 +283,23 @@ public static class EntityGenerator
 		}
 	}
 
-	public static void EnqueueBatchOrder(List<ChunkCoords> coords, MonoBehaviour mono)
+	public static void EnqueueBatchOrder(List<ChunkCoords> coords)
 	{
-		chunkBatches.AddRange(coords);
-		if (!batcherRunning)
+		if (!IsReady)
 		{
-			mono.StartCoroutine(ChunkBatchOrder());
+			AddListener(() => EnqueueBatchOrder(coords));
+			return;
+		}
+
+		instance.chunkBatches.AddRange(coords);
+		if (!instance.batcherRunning)
+		{
+			instance.StartCoroutine(instance.ChunkBatchOrder());
 		}
 	}
 
 	/// Increases capacity of the fill trigger list to accomodate given coordinates
-	private static void GenerateVoid(ChunkCoords cc)
+	private void GenerateVoid(ChunkCoords cc)
 	{
 		//ignore if given coordinates are invalid or they already exist
 		if (!cc.IsValid() || EntityNetwork.ChunkExists(cc))
@@ -246,23 +333,17 @@ public static class EntityGenerator
 	}
 
 	/// Fills up the list of fill triggers
-	public static IEnumerator FillTriggerList(System.Action a)
+	private IEnumerator FillTriggerList(System.Action a)
 	{
-		if (!attached)
-		{
-			SceneLoader.OnSceneLoad += Unload;
-			attached = true;
-		}
-
 		if (wasFilled.Count == 0)
 		{
 			for (int dir = 0; dir < EntityNetwork.QUADRANT_COUNT; dir++)
 			{
 				wasFilled.Add(new List<List<bool>>());
-				for (int x = 0; x < EntityNetwork.ReserveSize; x++)
+				for (int x = 0; x < EntityNetwork.RESERVE_SIZE; x++)
 				{
 					wasFilled[dir].Add(new List<bool>());
-					for (int y = 0; y < EntityNetwork.ReserveSize; y++)
+					for (int y = 0; y < EntityNetwork.RESERVE_SIZE; y++)
 					{
 						wasFilled[dir][x].Add(false);
 					}
@@ -273,29 +354,25 @@ public static class EntityGenerator
 		a?.Invoke();
 	}
 
-	public static IEnumerator SetPrefabs(EntityPrefabDB prf, System.Action a)
+	private IEnumerator SetPrefabs(System.Action a)
 	{
 		//sort the space priority entities by lowest rarity to highest
-		List<SpawnableEntity> list = prf.spawnableEntities;
-		if (prefabs == null)
+		List<SpawnableEntity> list = prefabs.spawnableEntities;
+		for (int i = 1; i < list.Count; i += 0)
 		{
-			prefabs = prf;
-			for (int i = 1; i < list.Count; i += 0)
+			SpawnableEntity e = list[i];
+			if (e.rarity < list[i - 1].rarity)
 			{
-				SpawnableEntity e = list[i];
-				if (e.rarity < list[i - 1].rarity)
-				{
-					list.RemoveAt(i);
-					list.Insert(i - 1, e);
-					i -= i > 1 ? 1 : 0;
-				}
-				else
-				{
-					i++;
-				}
+				list.RemoveAt(i);
+				list.Insert(i - 1, e);
+				i -= i > 1 ? 1 : 0;
 			}
-			yield return null;
+			else
+			{
+				i++;
+			}
 		}
+		yield return null;
 
 		for (int i = 0; i < list.Count; i++)
 		{
@@ -307,17 +384,17 @@ public static class EntityGenerator
 	}
 
 	#region Convenient short-hand methods for accessing the grid
-	private static bool Chunk(ChunkCoords cc)
+	private bool Chunk(ChunkCoords cc)
 	{
 		return Column(cc)[cc.Y];
 	}
 
-	private static List<bool> Column(ChunkCoords cc)
+	private List<bool> Column(ChunkCoords cc)
 	{
 		return Direction(cc)[cc.X];
 	}
 
-	private static List<List<bool>> Direction(ChunkCoords cc)
+	private List<List<bool>> Direction(ChunkCoords cc)
 	{
 		return wasFilled[(int) cc.Direction];
 	}

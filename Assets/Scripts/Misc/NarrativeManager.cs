@@ -55,6 +55,7 @@ public class NarrativeManager : MonoBehaviour
 			return inventoryUI ?? (inventoryUI = FindObjectOfType<InventoryUIController>());
 		}
 	}
+	[SerializeField] private TY4PlayingUI ty4pUI;
 
 	[SerializeField] private ConversationEvent
 		recoveryDialogue,
@@ -70,6 +71,31 @@ public class NarrativeManager : MonoBehaviour
 
 	[Header("Entity Profiles")]
 	[SerializeField] private EntityProfile claire;
+
+	[SerializeField] private Entity botHivePrefab, soloBotPrefab;
+
+	private void Update()
+	{
+		if (Input.GetKeyDown(KeyCode.Alpha0))
+		{
+			DevCheatSpawn(botHivePrefab);
+		}
+		if (Input.GetKeyDown(KeyCode.Alpha1))
+		{
+			DevCheatSpawn(soloBotPrefab);
+		}
+	}
+
+	private void DevCheatSpawn(Entity e)
+	{
+		Vector2 centerPos = mainChar.transform.position;
+		float randomAngle = Random.value * Mathf.PI * 2f;
+		Vector2 randomUnit = new Vector2(Mathf.Sin(randomAngle), Mathf.Cos(randomAngle));
+		Vector2 spawnPos = centerPos + randomUnit * 3f;
+
+		Entity newEntity = Instantiate(e);
+		newEntity.Teleport(spawnPos);
+	}
 
 	private void Start()
 	{
@@ -160,8 +186,8 @@ public class NarrativeManager : MonoBehaviour
 		List<QuestReward> qRewards = new List<QuestReward>();
 
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-		qReqs.Add(new GatheringQRec(Item.Type.Copper, 2, "Obtain # ? from asteroids."));
-		qReqs.Add(new GatheringQRec(Item.Type.Iron, 1, "Obtain # ? from asteroids."));
+		qReqs.Add(new GatheringQRec(Item.Type.Copper, 2, "Obtain # ? from asteroids"));
+		qReqs.Add(new GatheringQRec(Item.Type.Iron, 1, "Obtain # ? from asteroids"));
 
 		Quest q = new Quest(
 			"Gather materials",
@@ -190,11 +216,11 @@ public class NarrativeManager : MonoBehaviour
 		List<QuestReward> qRewards = new List<QuestReward>();
 
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-		qReqs.Add(new CraftingQReq(Item.Type.RepairKit, 1, "Craft # ? using 2 copper and 1 iron."));
+		qReqs.Add(new CraftingQReq(Item.Type.RepairKit, 1, "Construct # ? using 2 copper and 1 iron"));
 
 		Quest q = new Quest(
-			"Craft Your First Repair Kit",
-			"Now that we have the necessary materials, we should try crafting a repair kit.",
+			"Construct a Repair Kit",
+			"Now that we have the necessary materials, we should try constructing a repair kit.",
 			mainChar, claire, qRewards, qReqs, CompletedCraftYourFirstRepairKitQuest);
 
 		GiveQuest(mainChar, q);
@@ -221,7 +247,7 @@ public class NarrativeManager : MonoBehaviour
 		List<QuestReward> qRewards = new List<QuestReward>();
 
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-		qReqs.Add(new ItemUseQReq(Item.Type.RepairKit, 1, "Use # ?."));
+		qReqs.Add(new ItemUseQReq(Item.Type.RepairKit, 1, "Use # ?"));
 
 		Quest q = new Quest(
 			"Repair the Shuttle",
@@ -329,7 +355,7 @@ public class NarrativeManager : MonoBehaviour
 	private void CompletedRechargeTheShipQuest(Quest quest)
 	{
 		ShipRecharged = true;
-		StartDialogue(rechargedTheShipDialogue);
+		StartDialogue(rechargedTheShipDialogue, false, () => ty4pUI?.SetActive(true));
 		mainChar.TakeItem(Item.Type.CorruptedCorvorite, 1);
 		MainHatch.Lock(false);
 	}

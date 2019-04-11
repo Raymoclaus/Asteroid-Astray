@@ -8,75 +8,91 @@ using Utilities;
 /// Allows entities to be placed pseudo-infinitely in any 2D direction, although it can be upgraded to include 3D.
 /// Useful in case you only want access to entities in a certain area. It's faster than checking every single one.
 /// Intended for use with procedurally-generated content.
-public static class EntityNetwork
+public class EntityNetwork : MonoBehaviour
 {
+	private static EntityNetwork instance;
+
 	#region Fields
 	//4 directions in the grid
 	public const int QUADRANT_COUNT = 4;
 	//Determines the physical size of cells in the grid
 	public const float CHUNK_SIZE = 10f;
 	//network of entities
-	private static List<List<List<List<Entity>>>> grid = new List<List<List<List<Entity>>>>(QUADRANT_COUNT);
+	private List<List<List<List<Entity>>>> grid = new List<List<List<List<Entity>>>>(QUADRANT_COUNT);
 	//list of coordinates that contain any entities
-	private static List<ChunkCoords> occupiedCoords = new List<ChunkCoords>(ReserveSize * ReserveSize * 4);
-	//number of chunks to check each frame. Better than checking all at once, for performance
-	private const int ENTITY_CHECKUP_NUMBER = 100;
+	private List<ChunkCoords> occupiedCoords = new List<ChunkCoords>(RESERVE_SIZE * RESERVE_SIZE * 4);
 	//some large number of reserve to avoid List resizing lag
-	public const int ReserveSize = 1000;
+	public const int RESERVE_SIZE = 1000;
 	//another large number for each individual cell in the grid
-	public const int CellReserve = 15;
+	public const int CELL_RESERVE_SIZE = 15;
 	//check if grid has already been created
-	public static bool ready = false;
-	//Entities and other stuff that might be create before the grid is initialised can store functions here
-	//to be run after the grid is initialised
-	public static List<Action> postInitActions = new List<Action>();
+	private bool gridIsSetUp = false;
+	public static bool IsReady { get { return instance != null && instance.gridIsSetUp; } }
 	#endregion
 
 	#region Stat Tracking
 	//Used to keep track of the amount of active entities. Debugging tool
-	private static int numEntities;
+	private int numEntities;
 	#endregion
 
 	#region Caching
-	private static List<ChunkCoords> coordsInRangeCache = new List<ChunkCoords>();
+	private List<ChunkCoords> coordsInRangeCache = new List<ChunkCoords>();
 	#endregion
 
-	/// Constructs and reserves a large amount of space for the grid
-	public static IEnumerator CreateGrid(Action a)
+	public delegate void GridSetUpEventHandler();
+	private static event GridSetUpEventHandler OnGridSetUp;
+
+	private void Awake()
 	{
-		if (!ready)
+		if (instance == null)
+		{
+			instance = this;
+		}
+		else
+		{
+			Destroy(gameObject);
+			return;
+		}
+		
+		StartCoroutine(CreateGrid());
+	}
+
+	public static void AddListener(Action action)
+	{
+		if (IsReady)
+		{
+			action?.Invoke();
+		}
+		else if (action != null)
+		{
+			OnGridSetUp += new GridSetUpEventHandler(action);
+		}
+	}
+
+	/// Constructs and reserves a large amount of space for the grid
+	private IEnumerator CreateGrid()
+	{
+		if (!gridIsSetUp)
 		{
 			//reserve space in each direction
 			//takes ~1.5 seconds for 1000 * 1000 * 10
 			for (int dir = 0; dir < QUADRANT_COUNT; dir++)
 			{
-				grid.Add(new List<List<List<Entity>>>(ReserveSize));
-				for (int x = 0; x < ReserveSize; x++)
+				grid.Add(new List<List<List<Entity>>>(RESERVE_SIZE));
+				for (int x = 0; x < RESERVE_SIZE; x++)
 				{
-					grid[dir].Add(new List<List<Entity>>(ReserveSize));
-					for (int y = 0; y < ReserveSize; y++)
+					grid[dir].Add(new List<List<Entity>>(RESERVE_SIZE));
+					for (int y = 0; y < RESERVE_SIZE; y++)
 					{
-						grid[dir][x].Add(new List<Entity>(CellReserve));
+						grid[dir][x].Add(new List<Entity>(CELL_RESERVE_SIZE));
 					}
 				}
 				yield return null;
 			}
 
-			ready = true;
-		}
-
-		RunInitialisationActions();
-		a?.Invoke();
-	}
-
-	/// Other classes that needed to use the network before the network was initialised could store actions
-	/// This will call those actions
-	public static void RunInitialisationActions()
-	{
-		for (int i = 0; postInitActions.Count > 0;)
-		{
-			postInitActions[i]();
-			postInitActions.RemoveAt(i);
+			gridIsSetUp = true;
+			OnGridSetUp?.Invoke();
+			OnGridSetUp = null;
 		}
 	}
 
@@ -84,8 +100,8 @@ public static class EntityNetwork
 	public static List<Entity> GetEntitiesInRange(ChunkCoords center, int range, EntityType? type = null,
 		List<Entity> exclusions = null, List<Entity> addToList = null)
 	{
-		coordsInRangeCache.Clear();
-		List<ChunkCoords> coordsInRange = GetCoordsInRange(center, range, coordsInRangeCache);
+		instance.coordsInRangeCache.Clear();
+		List<ChunkCoords> coordsInRange = GetCoordsInRange(center, range, instance.coordsInRangeCache);
 		//declare a list to be filled and reserve some room
 		return GetEntitiesAtCoords(coordsInRange, type, exclusions, addToList);
 	}
@@ -94,7 +110,7 @@ public static class EntityNetwork
 	public static List<Entity> GetEntitiesAtCoords(List<ChunkCoords> coordsList, EntityType? type = null,
 		List<Entity> exclusions = null, List<Entity> addToList = null)
 	{
-		List<Entity> entitiesInCoords = addToList ?? new List<Entity>(CellReserve * coordsList.Count);
+		List<Entity> entitiesInCoords = addToList ?? new List<Entity>(CELL_RESERVE_SIZE * coordsList.Count);
 		//loop through coordinates list and grab all entities at each coordinate
 		for (int i = 0; i < coordsList.Count; i++)
 		{
@@ -186,11 +202,11 @@ public static class EntityNetwork
 		}
 
 		Chunk(cc).Add(e);
-		numEntities++;
+		instance.numEntities++;
 		//update list of occupied coordinates
 		if (Chunk(cc).Count == 1)
 		{
-			occupiedCoords.Add(cc);
+			instance.occupiedCoords.Add(cc);
 		}
 		//set entity's coordinates to be equal to the given coordinates
 		e.SetCoordinates(cc);
@@ -209,10 +225,10 @@ public static class EntityNetwork
 			if (chunk[i] == e)
 			{
 				chunk.RemoveAt(i);
-				numEntities--;
+				instance.numEntities--;
 				if (chunk.Count == 0)
 				{
-					occupiedCoords.Remove(cc);
+					instance.occupiedCoords.Remove(cc);
 				}
 				return true;
 			}
@@ -227,7 +243,7 @@ public static class EntityNetwork
 		ChunkCoords check = ChunkCoords.Zero;
 		bool limitCheck = onlyType != null;
 		//Check every direction
-		for (int dir = 0; dir < grid.Count; dir++)
+		for (int dir = 0; dir < instance.grid.Count; dir++)
 		{
 			check.Direction = (Quadrant) dir;
 			//Check every column
@@ -299,7 +315,7 @@ public static class EntityNetwork
 
 	public static List<List<List<Entity>>> Direction(ChunkCoords cc)
 	{
-		return grid[(int) cc.Direction];
+		return instance.grid[(int) cc.Direction];
 	}
 
 	#endregion
@@ -311,9 +327,9 @@ public static class EntityNetwork
 		ChunkCoords search = ChunkCoords.Zero;
 		FunctionTimer timer = new FunctionTimer();
 		bool found = false;
-		for (int i = 0; i < grid.Count; i++)
+		for (int i = 0; i < instance.grid.Count; i++)
 		{
-			List<List<List<Entity>>> dir = grid[i];
+			List<List<List<Entity>>> dir = instance.grid[i];
 			for (int j = 0; j < dir.Count; j++)
 			{
 				List<List<Entity>> col = dir[j];
@@ -345,11 +361,11 @@ public static class EntityNetwork
 	public static bool ChunkExists(ChunkCoords cc)
 	{
 		//if coordinates are invalid then chunk definitely doesn't exist
-		if (!cc.IsValid()) return false;
+		if (!cc.IsValid() || !IsReady) return false;
 
 		//if the quadrant doesn't have x amount of columns or that column doesn't have y amount of cells,
 		//the chunk doesn't exist
-		if ((int) cc.Direction >= grid.Count
+		if ((int) cc.Direction >= instance.grid.Count
 		    || cc.X >= Direction(cc).Count
 		    || cc.Y >= Column(cc).Count) return false;
 
@@ -377,6 +393,6 @@ public static class EntityNetwork
 
 	public static int GetEntityCount()
 	{
-		return numEntities;
+		return instance.numEntities;
 	}
 }

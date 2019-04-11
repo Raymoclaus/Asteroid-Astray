@@ -5,28 +5,14 @@ using System.Collections;
 using CielaSpike;
 using System.IO;
 
-public struct CosmicItem
-{
-	public byte type;
-	public Vector3 pos;
-	public float size;
-	public byte rotation;
-	public bool common;
-
-	public CosmicItem(byte type, Vector3 pos, float size, byte rotation, bool common)
-	{
-		this.type = type;
-		this.pos = pos;
-		this.size = size;
-		this.rotation = rotation;
-		this.common = common;
-	}
-}
-
 public class SceneryController : MonoBehaviour
 {
+	private static SceneryController instance;
+
+	[SerializeField] private string typesPath;
 	private string folderPath, lessFrequentImageFolderPath;
 	private bool ready;
+	public static bool IsDone { get { return instance != null && instance.texturesGenerated; } }
 
 	private List<List<List<List<CosmicItem>>>> items;
 	private const int reserveSize = 100;
@@ -79,11 +65,33 @@ public class SceneryController : MonoBehaviour
 
 	private int freeWorkers;
 
+	public delegate void StarFieldCreatedEventHandler();
+	private static event StarFieldCreatedEventHandler OnStarFieldCreated;
+
 	private void Awake()
 	{
-		if (!LoadingController.IsLoading)
+		if (instance == null)
 		{
-			StartCoroutine(CreateStarSystems(null));
+			instance = this;
+		}
+		else
+		{
+			Destroy(gameObject);
+			return;
+		}
+
+		StartCoroutine(CreateStarSystems(null));
+	}
+
+	public static void AddListener(System.Action action)
+	{
+		if (IsDone)
+		{
+			action?.Invoke();
+		}
+		else if (action != null)
+		{
+			OnStarFieldCreated += new StarFieldCreatedEventHandler(action);
 		}
 	}
 
@@ -97,7 +105,8 @@ public class SceneryController : MonoBehaviour
 		FillPool();
 		ReserveListCapacity();
 		perlinOffset = new Vector2(Random.value, Random.value);
-		folderPath = Application.dataPath + "/../StarSystemImages";
+		folderPath = Application.dataPath + typesPath;
+		//folderPath = Application.dataPath + "/../StarSystemImages";
 		lessFrequentImageFolderPath = folderPath + "/LessFrequentImages";
 		ready = true;
 	}
@@ -411,9 +420,8 @@ public class SceneryController : MonoBehaviour
 			Debug.Log("Adding existing Star Systems");
 		}
 		texturesGenerated = true;
-
-		//run mandatory action, probably to signal that it's finished
-		a?.Invoke();
+		OnStarFieldCreated?.Invoke();
+		OnStarFieldCreated = null;
 	}
 
 	private IEnumerator GenerateTexture(Star[] stars, Color[] tex, int start,
@@ -579,6 +587,24 @@ public class SceneryController : MonoBehaviour
 		}
 		searchAmount = images.Length;
 		searchCompleted = true;
+	}
+
+	public struct CosmicItem
+	{
+		public byte type;
+		public Vector3 pos;
+		public float size;
+		public byte rotation;
+		public bool common;
+
+		public CosmicItem(byte type, Vector3 pos, float size, byte rotation, bool common)
+		{
+			this.type = type;
+			this.pos = pos;
+			this.size = size;
+			this.rotation = rotation;
+			this.common = common;
+		}
 	}
 
 	private class StarFieldMaterialPropertyManager

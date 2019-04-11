@@ -201,7 +201,7 @@ public class InventoryUIController : PauseTab
 		grabTransform.gameObject.SetActive(grabbing);
 		CheckForMatchInRecipes();
 
-		GameEvents.ItemCrafted(outputType, outputStack.GetAmount());
+		GameEvents.ItemCrafted(outputType, outputAmount);
 	}
 
 	private Inventory GetInventory(ContextInterface ci)

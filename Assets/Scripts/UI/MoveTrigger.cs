@@ -4,6 +4,7 @@ using UnityEditor;
 
 public class MoveTrigger : MonoBehaviour
 {
+	public bool debug = false;
 	public Vector3 locationA, locationB;
 	[SerializeField] private AnimationCurve movementCurve;
 	[SerializeField] private bool startAtA = true;

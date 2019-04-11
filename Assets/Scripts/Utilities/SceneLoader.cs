@@ -4,43 +4,15 @@ using System.Collections.Generic;
 
 public class SceneLoader : MonoBehaviour
 {
-	public static SceneLoader instance;
-
 	public delegate void SceneLoadEventHandler(string sceneName);
 	public static event SceneLoadEventHandler OnSceneLoad;
-	public static void ClearEvent()
-	{
-		System.Delegate[] delegates = OnSceneLoad?.GetInvocationList();
-		for (int i = 0; i < delegates?.Length; i++)
-		{
-			OnSceneLoad -= (SceneLoadEventHandler)delegates[i];
-		}
-	}
+	private static void ClearEvent() => OnSceneLoad = null;
 
-
-	public List<string> sceneNames = new List<string>();
+	private List<string> sceneNames = new List<string>();
 
 	private void Awake()
 	{
-		if (instance == null)
-		{
-			instance = this;
-		}
-		else
-		{
-			Destroy(gameObject);
-			return;
-		}
 		GetScenesFromBuild();
-		//OnSceneLoad?.Invoke(SceneManager.GetActiveScene().name);
-	}
-
-	private void Update()
-	{
-		if (Input.GetKeyDown(KeyCode.Q))
-		{
-			LoadScene("MainMenuScene");
-		}
 	}
 
 	public void LoadScene(string sceneName)
@@ -51,13 +23,17 @@ public class SceneLoader : MonoBehaviour
 		SceneManager.LoadScene(sceneName);
 	}
 
+	public void Quit()
+	{
+		Application.Quit();
+	}
+
 	private void ClearEvents()
 	{
 		InputHandler.ClearEvent();
 		Shuttle.ClearEvent();
 		GameEvents.ClearEvent();
 		PromptUI.ClearEvent();
-		LoadingController.ClearEvent();
 		Pause.ClearEvent();
 	}
 

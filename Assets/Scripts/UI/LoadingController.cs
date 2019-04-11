@@ -3,93 +3,76 @@ using UnityEngine;
 
 public class LoadingController : MonoBehaviour
 {
-	[SerializeField]
-	private EntityPrefabDB prefabs;
-	[SerializeField]
-	private SceneryController sceneryCtrl;
+	private static LoadingController instance;
+	
 	private List<bool> loadingReady = new List<bool>();
-	[SerializeField]
-	private GameObject holder;
-	public static bool IsLoading { get; private set; } = true;
+	[SerializeField] private GameObject holder;
+	private bool finishedLoading = false;
+	public static bool IsLoading { get { return !instance?.finishedLoading ?? true; } }
 
 	public delegate void LoadingCompleteEventHandler();
-	public static event LoadingCompleteEventHandler OnLoadingComplete;
-	public static void ClearEvent()
-	{
-		OnLoadingComplete = null;
-	}
+	private static event LoadingCompleteEventHandler OnLoadingComplete;
 
 	private void Awake()
 	{
+		if (instance == null)
+		{
+			instance = this;
+		}
+		else
+		{
+			Destroy(gameObject);
+			return;
+		}
+
 		holder.SetActive(true);
-		IsLoading = true;
-		List<System.Action> preLoadActions = new List<System.Action>();
-
-		preLoadActions.Add(() =>
+		AddListener(() =>
 		{
-			sceneryCtrl = sceneryCtrl ?? FindObjectOfType<SceneryController>();
-			if (sceneryCtrl)
-			{
-				loadingReady.Add(false);
-				int ID = loadingReady.Count - 1;
-				StartCoroutine(sceneryCtrl.CreateStarSystems(() =>
-				{
-					loadingReady[ID] = true;
-					Ready();
-				}));
-			}
+			holder.SetActive(false);
 		});
 
-		preLoadActions.Add(() =>
+		loadingReady.Add(false);
+		SceneryController.AddListener(() =>
 		{
-			loadingReady.Add(false);
-			int ID = loadingReady.Count - 1;
-			StartCoroutine(EntityNetwork.CreateGrid(() =>
-			{
-				loadingReady[ID] = true;
-				Ready();
-			}));
+			Ready(0);
 		});
 
-		preLoadActions.Add(() =>
+		loadingReady.Add(false);
+		EntityNetwork.AddListener(() =>
 		{
-			loadingReady.Add(false);
-			int ID = loadingReady.Count - 1;
-			StartCoroutine(EntityGenerator.FillTriggerList(() =>
-			{
-				loadingReady[ID] = true;
-				Ready();
-			}));
+			Ready(1);
 		});
-
-		preLoadActions.Add(() =>
+		
+		loadingReady.Add(false);
+		EntityGenerator.AddListener(() =>
 		{
-			loadingReady.Add(false);
-			int ID = loadingReady.Count - 1;
-			StartCoroutine(EntityGenerator.SetPrefabs(prefabs, () =>
-			{
-				loadingReady[ID] = true;
-				Ready();
-			}));
+			Ready(2);
 		});
+	}
 
-		for (int i = 0; i < preLoadActions.Count; i++)
+	public static void AddListener(System.Action action)
+	{
+		if (!IsLoading)
 		{
-			System.Action a = preLoadActions[i];
-			a?.Invoke();
+			action?.Invoke();
+		}
+		else if (action != null)
+		{
+			OnLoadingComplete += new LoadingCompleteEventHandler(action);
 		}
 	}
 
-	private void Ready()
+	private void Ready(int index)
 	{
+		if (index >= 0 && index < loadingReady.Count)
+		{
+			loadingReady[index] = true;
+		}
+
 		if (AllEssentialSystemsReady())
 		{
-			Debug.Log("Finished Loading");
-			loadingReady = null;
-			EntityNetwork.RunInitialisationActions();
-			holder.SetActive(false);
-			IsLoading = false;
 			OnLoadingComplete?.Invoke();
+			OnLoadingComplete = null;
 		}
 	}
 
@@ -100,6 +83,7 @@ public class LoadingController : MonoBehaviour
 			bool b = loadingReady[i];
 			if (!b) return false;
 		}
+		finishedLoading = true;
 		return true;
 	}
 
