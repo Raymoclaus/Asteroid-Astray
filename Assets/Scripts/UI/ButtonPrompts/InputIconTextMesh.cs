@@ -8,7 +8,7 @@ public class InputIconTextMesh : MonoBehaviour
 {
 	public TextMeshProUGUI textMesh;
 	private static List<SpriteAssetInputActionPair> spriteAssetActions = new List<SpriteAssetInputActionPair>(20);
-	[SerializeField] private string text;
+	[SerializeField] [TextArea(1, 3)] private string text;
 	private static InputIconSO keyboardIcons, ps4Icons;
 	private const string keyboardIconsString = "Keyboard Icons", ps4IconsString = "Ps4 Icons";
 	private const string spriteAssetString = " TmpSpriteAsset";
@@ -19,7 +19,7 @@ public class InputIconTextMesh : MonoBehaviour
 		UpdateIcon();
 	}
 
-	private void OnDisable()
+	private void OnDestroy()
 	{
 		InputHandler.InputModeChanged -= UpdateIcon;
 	}

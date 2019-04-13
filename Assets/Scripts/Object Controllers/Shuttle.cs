@@ -247,7 +247,12 @@ public class Shuttle : Character, IStunnable, ICombat
 			}
 			if (IsDrilling)
 			{
-				input = Mathf.Clamp01(input + InputHandler.GetInput(InputAction.DrillLaunch));
+				float launchInput = InputHandler.GetInput(InputAction.DrillLaunch);
+				input = Mathf.Clamp01(input + launchInput);
+				if (!CanDrillLaunch() && launchInput > 0f)
+				{
+					input = 0f;
+				}
 			}
 			accel.y += input * EngineStrength * speedMultiplier;
 		}
@@ -477,11 +482,11 @@ public class Shuttle : Character, IStunnable, ICombat
 		}
 		else if (InputHandler.GetInput(InputAction.Go) > 0f)
 		{
-			return calculation;
+			return (InputHandler.GetInput(InputAction.DrillLaunch) > 0f && !CanDrillLaunch()) ? 0f : calculation;
 		}
-		else if (InputHandler.GetInput(InputAction.DrillLaunch) > 0f && CanDrillLaunch())
+		else if (InputHandler.GetInput(InputAction.DrillLaunch) > 0f)
 		{
-			return 0.001f;
+			return CanDrillLaunch() ? 0.001f : 0f;
 		}
 		else
 		{

@@ -140,6 +140,7 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 	private bool straightWeaponAttached = false;
 	private bool readyToFire = false;
 	[SerializeField] private ColorReplacement colorReplacement;
+	private RaycastHit2D[] lineOfSight = new RaycastHit2D[2];
 
 	//signalling variables
 	private float signalTimer;
@@ -488,16 +489,18 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 			SetState(AIState.Collecting);
 		}
 
+		Vector2 currentPos = transform.position;
+
 		//if sibling bots are nearby, get them to join the fight
 		for (int i = 0; i < hive?.childBots.Count; i++)
 		{
 			GatherBot sibling = hive.childBots[i];
 			if (sibling.state == AIState.Attacking || sibling.state == AIState.Dying) continue;
 
-			if (Vector2.Distance(transform.position, sibling.transform.position)
+			if (Vector2.Distance(currentPos, sibling.transform.position)
 				< Constants.CHUNK_SIZE)
 			{
-				float scanAngle = -Vector2.SignedAngle(Vector2.up, sibling.transform.position - transform.position);
+				float scanAngle = -Vector2.SignedAngle(Vector2.up, (Vector2)sibling.transform.position - currentPos);
 				StartCoroutine(ScanRings(scanAngle, 30f, false, 0.3f));
 				sibling.enemies = enemies;
 				sibling.SetState(AIState.Attacking);
@@ -515,8 +518,11 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 		//bots attack by circling its target and firing
 		float orbitAngle = Mathf.PI * 2f / (hive?.childBots.Count ?? 0) * dockID + Pause.timeSinceOpen * orbitSpeed;
 		Vector2 orbitPos = new Vector2(Mathf.Sin(orbitAngle), Mathf.Cos(orbitAngle)) * orbitRange;
-		float distanceFromTarget = Vector2.Distance(transform.position, enemyPos);
-		GoToLocation(enemyPos + orbitPos, distanceFromTarget > firingRange, 0.2f, true,
+		float distanceFromTarget = Vector2.Distance(currentPos, enemyPos);
+
+		Vector2 direction = enemyPos - currentPos;
+		int count = Physics2D.RaycastNonAlloc(currentPos, direction, lineOfSight, distanceFromTarget);
+		GoToLocation(enemyPos + orbitPos, count > 1, 0.2f, true,
 			distanceFromTarget > firingRange ? null : (Vector2?)targetEntity.transform.position - transform.right);
 
 		//fire will in range

@@ -8,7 +8,7 @@ public class DistanceUI : MonoBehaviour
 	public const float UNITS_TO_METRES = 3f;
 	public const int maxRange = 10000;
 	private List<string> distStrings = new List<string>(maxRange + 1);
-	private const string unit = "m";
+	private const string unit = "m | zone: ";
 	private int dist = -1;
 	[SerializeField] private Text textComponent;
 	[SerializeField] private ShuttleTrackers shuttleTrackerSO;
@@ -33,13 +33,14 @@ public class DistanceUI : MonoBehaviour
 		if (dist != currentDist)
 		{
 			dist = currentDist;
+			int zone = Difficulty.DistanceBasedDifficulty(dist);
 			if (dist < maxRange && dist < distStrings.Count)
 			{
-				textComponent.text = distStrings[dist];
+				textComponent.text = distStrings[dist] + zone;
 			}
 			else
 			{
-				textComponent.text = distStrings[distStrings.Count - 1];
+				textComponent.text = distStrings[distStrings.Count - 1] + zone;
 			}
 		}
 	}

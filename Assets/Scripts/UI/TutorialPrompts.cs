@@ -37,7 +37,7 @@ public class TutorialPrompts : MonoBehaviour
 		SetUpRepairKitInputPrompt();
 	}
 
-	private void OnDisable()
+	private void OnDestroy()
 	{
 		IterateAll((PromptInfo pi) => pi.SetIgnore(true));
 	}
