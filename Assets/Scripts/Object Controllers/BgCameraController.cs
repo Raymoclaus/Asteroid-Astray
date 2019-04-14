@@ -4,39 +4,19 @@
 public class BgCameraController : MonoBehaviour
 {
 	private Camera mainCam;
+	private Camera MainCam { get { return mainCam ?? (mainCam = Camera.main); } }
 	public float zoomStrength = 50f;
-	[SerializeField]
 	private Camera cam;
+	public Camera Cam { get { return cam ?? (cam = GetComponent<Camera>()); } }
 	public float scrollSpeed = 0.3f;
-	[SerializeField]
-	private CameraCtrlTracker camTrackerSO;
-	[SerializeField]
-	private BgCamTracker trackerSO;
-
-	private void Awake()
-	{
-		mainCam = Camera.main;
-		cam = cam ?? GetComponent<Camera>();
-	}
+	private CameraCtrl mainCamCtrl;
+	private CameraCtrl MainCamCtrl { get { return mainCamCtrl ?? (mainCamCtrl = MainCam.GetComponent<CameraCtrl>()); } }
 
 	private void Update()
 	{
-		UpdateSO();
-		float zoomLevel = mainCam.orthographicSize - (camTrackerSO ? camTrackerSO.minCamSize : 0f);
-		transform.position = new Vector3(mainCam.transform.position.x  * scrollSpeed,
-			mainCam.transform.position.y * scrollSpeed,
-			Mathf.Max(0.4f, 100f - zoomLevel * zoomStrength + mainCam.transform.position.z));
-	}
-
-	private void UpdateSO()
-	{
-		if (!trackerSO)
-		{
-			print("Attach appropriate Scriptable Object tracker to " + GetType().Name);
-			return;
-		}
-
-		cam.fieldOfView = trackerSO.fieldOfView;
-		trackerSO.position = transform.position;
+		float zoomLevel = MainCam.orthographicSize - (MainCamCtrl?.minCamSize ?? 0f);
+		transform.position = new Vector3(MainCam.transform.position.x  * scrollSpeed,
+			MainCam.transform.position.y * scrollSpeed,
+			Mathf.Max(0.4f, 100f - zoomLevel * zoomStrength + MainCam.transform.position.z));
 	}
 }

@@ -30,6 +30,11 @@ public class EnergyShieldMaterialManager : MonoBehaviour
 		transform.eulerAngles = Vector3.zero;
 	}
 
+	public void Break()
+	{
+		sprRend.enabled = false;
+	}
+
 	public void TakeHit(Vector2 direction)
 	{
 		StopAllCoroutines();

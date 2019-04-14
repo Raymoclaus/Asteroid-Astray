@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 
-public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
+public class GatherBot : Character, IStunnable, ICombat
 {
 	protected enum AIState
 	{
@@ -34,14 +34,14 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 		Dying
 	}
 
+	[Header("Gather Bot Fields")]
+
 	#region Fields
 	//references
 	protected BotHive hive;
 	[SerializeField] private ShakeEffect shakeFX;
 	[SerializeField] private Animator anim;
 	[SerializeField] private SpriteRenderer sprRend;
-	private ContactPoint2D[] contacts = new ContactPoint2D[1];
-	private List<DrillBit> drillers = new List<DrillBit>();
 
 	//fields
 	[SerializeField] private AIState state;
@@ -72,7 +72,6 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 	private float searchTimer, scanInterval = 0.3f;
 	private int drillCount, drillLimit = 3;
 	private List<Entity> surroundingEntities = new List<Entity>(100);
-	private IDrillableObject drillableTarget;
 	[SerializeField] private int storageCapacity = 10;
 	private int itemsCollected;
 	private bool waitingForResources;
@@ -130,10 +129,6 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 	private bool stunned = false;
 	[SerializeField] private float stunDuration = 2f;
 	private float stunTimer = 0f;
-	private bool launched = false;
-	private float launchedDuration = 1f;
-	private Character launcher;
-	private LaunchTrailController launchTrail;
 	public float drillDamageResistance = 2f;
 	[SerializeField] private ExpandingCircle forcePulseWave;
 	[SerializeField] private List<Loot> loot;
@@ -322,7 +317,7 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 			float distLeft = Vector2.Distance(transform.position, targetPos);
 			if (distLeft <= 1f)
 			{
-				if (drillableTarget != null && drillableTarget.TakeDrillDamage(DrillDamageQuery(false),
+				if (targetEntity.TakeDrillDamage(DrillDamageQuery(false),
 					drill.transform.position, this))
 				{
 					DrillComplete();
@@ -755,7 +750,6 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 			{
 				shortestDist = dist;
 				targetEntity = e;
-				drillableTarget = targetEntity.GetComponent<IDrillableObject>();
 			}
 		}
 
@@ -1070,9 +1064,6 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 
 	protected override bool ShouldBeVisible() => activated;
 
-	public bool TakeDrillDamage(float drillDmg, Vector2 drillPos, Entity destroyer, int dropModifier = 0)
-		=> TakeDamage(drillDmg / drillDamageResistance, drillPos, destroyer, dropModifier, false);
-
 	protected virtual IEnumerator ChargeForcePulse()
 	{
 		if (!beingDrilled) yield break;
@@ -1158,11 +1149,11 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 		}
 	}
 
-	public void StartDrilling(DrillBit db)
+	public override void StartDrilling(DrillBit db)
 	{
-		rb.constraints = RigidbodyConstraints2D.FreezeAll;
+		base.StartDrilling(db);
+
 		beingDrilled = true;
-		AddDriller(db);
 		if (IsDrilling)
 		{
 			drill.StopDrilling(false);
@@ -1176,89 +1167,17 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 		}, drillToChargeTimer, true);
 	}
 
-	public void StopDrilling(DrillBit db)
+	public override void StopDrilling(DrillBit db)
 	{
-		rb.constraints = RigidbodyConstraints2D.None;
+		base.StopDrilling(db);
 		beingDrilled = false;
 		shakeFX.Stop();
-		RemoveDriller(db);
 	}
 
-	public void OnTriggerEnter2D(Collider2D other)
+	protected override void LaunchImpact(float angle, Vector2 contactPoint, Collider2D other)
 	{
-		int otherLayer = other.gameObject.layer;
-
-		if (otherLayer == layerDrill && IsDrillable())
-		{
-			DrillBit otherDrill = other.GetComponentInParent<DrillBit>();
-			if (otherDrill.CanDrill && otherDrill.drillTarget == null && otherDrill.Verify(this))
-			{
-				StartDrilling(otherDrill);
-				otherDrill.StartDrilling(this);
-			}
-		}
-	}
-
-	public void OnTriggerExit2D(Collider2D other)
-	{
-		int otherLayer = other.gameObject.layer;
-
-		if (otherLayer == layerDrill)
-		{
-			DrillBit otherDrill = other.GetComponentInParent<DrillBit>();
-
-			if ((Entity)otherDrill.drillTarget == this)
-			{
-				StopDrilling(otherDrill);
-				otherDrill.StopDrilling(false);
-			}
-		}
-	}
-
-	public void OnCollisionEnter2D(Collision2D collision)
-	{
-		Collider2D other = collision.collider;
-		int otherLayer = other.gameObject.layer;
-		//collision.GetContacts(contacts);
-		//Vector2 contactPoint = contacts[0].point;
-		Vector2 contactPoint = (collision.collider.bounds.center
-			- collision.otherCollider.bounds.center) / 2f
-			+ collision.otherCollider.bounds.center;
-		float angle = -Vector2.SignedAngle(Vector2.up, contactPoint - (Vector2)transform.position);
-
-		if (otherLayer == layerProjectile)
-		{
-			IProjectile projectile = other.GetComponent<IProjectile>();
-			projectile.Hit(this, contactPoint);
-		}
-
-		if (otherLayer == layerSolid)
-		{
-			if (launched)
-			{
-				if (launcher.GetLaunchImpactAnimation() != null)
-				{
-					Transform impact = Instantiate(launcher.GetLaunchImpactAnimation()).transform;
-					impact.parent = ParticleGenerator.holder;
-					impact.position = contactPoint;
-					impact.eulerAngles = Vector3.forward * angle;
-				}
-				if (launchTrail != null)
-				{
-					launchTrail.CutLaunchTrail();
-				}
-				Entity otherDamageable = other.attachedRigidbody.gameObject.GetComponent<Entity>();
-				float damage = launcher.GetLaunchDamage();
-				if (currentHP / maxHP < 0.5f)
-				{
-					damage *= 2f;
-				}
-				otherDamageable?.TakeDamage(damage, contactPoint, launcher);
-				TakeDamage(damage, contactPoint, launcher);
-				launched = false;
-				Stun();
-			}
-		}
+		base.LaunchImpact(angle, contactPoint, other);
+		Stun();
 	}
 
 	//returns whether the entity is a sibling gather bot (bot produced by the same hive)
@@ -1304,11 +1223,11 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 	public override bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer,
 		int dropModifier = 0, bool flash = true)
 	{
-		if (currentHP < 0f) return false;
+		bool dead = base.TakeDamage(damage, damagePos, destroyer, dropModifier, flash);
+		if (dead) return CheckHealth(destroyer, dropModifier);
 		//cannot be hit by projectiles from self or siblings
 		if (!IsSibling(destroyer) && destroyer != hive)
 		{
-			currentHP -= damage;
 			ICombat enemy = destroyer.GetICombat();
 			if (flash)
 			{
@@ -1336,7 +1255,6 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 		waitingForResources = false;
 		drillCount = 0;
 		targetEntity = null;
-		drillableTarget = null;
 		if (hiveOrders)
 		{
 			SetState(AIState.Exploring);
@@ -1487,28 +1405,10 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 		}
 	}
 
-	public void Launch(Vector2 launchDirection, Character launcher)
+	public override void Launch(Vector2 launchDirection, Character launcher)
 	{
-		this.launcher = launcher;
-		rb.velocity = launchDirection;
+		base.Launch(launchDirection, launcher);
 		shakeFX.Begin(0.1f, 0f, 1f / 30f);
-		launched = true;
-		if (launcher.GetLaunchTrailAnimation() != null)
-		{
-			launchTrail = Instantiate(launcher.GetLaunchTrailAnimation());
-			launchTrail.SetFollowTarget(transform, launchDirection);
-
-		}
-	   
-		Pause.DelayedAction(() =>
-		{
-			if (launchTrail != null)
-			{
-				launchTrail.EndLaunchTrail();
-			}
-			launched = false;
-			this.launcher = null;
-		}, launchedDuration, true);
 	}
 
 	public void Stun()
@@ -1517,9 +1417,7 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 		stunTimer = stunDuration;
 	}
 
-	public bool IsDrillable() => state != AIState.Dying;
-
-	public bool CanBeLaunched() => true;
+	public override bool IsDrillable() => base.IsDrillable() && state != AIState.Dying;
 
 	public void Alert(ICombat threat)
 	{
@@ -1581,32 +1479,4 @@ public class GatherBot : Character, IDrillableObject, IStunnable, ICombat
 	public override void AttachStraightWeapon(bool attach) => straightWeaponAttached = attach;
 
 	public override ICombat GetICombat() => this;
-
-	public List<DrillBit> GetDrillers() => drillers;
-
-	public void AddDriller(DrillBit db) => GetDrillers().Add(db);
-
-	public bool RemoveDriller(DrillBit db)
-	{
-		List<DrillBit> drills = GetDrillers();
-		for (int i = 0; i < drills.Count; i++)
-		{
-			if (drills[i] == db)
-			{
-				drills.RemoveAt(i);
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private void EjectFromAllDrillers(bool successful)
-	{
-		List<DrillBit> drills = GetDrillers();
-		for (int i = drills.Count - 1; i >= 0; i--)
-		{
-			drills[i].StopDrilling(successful);
-		}
-		drills.Clear();
-	}
 }

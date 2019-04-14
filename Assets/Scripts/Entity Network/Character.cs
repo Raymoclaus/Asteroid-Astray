@@ -2,41 +2,46 @@
 
 public class Character : Entity
 {
+	[Header("Character Fields")]
+
+	public Inventory storage;
 	public delegate void ItemUsedEventHandler(Item.Type type);
 	public event ItemUsedEventHandler OnItemUsed;
-	public Inventory storage;
 
-	#region Drill-related
-	protected bool canDrill, canDrillLaunch;
-	[SerializeField] protected DrillBit drill;
-	public bool IsDrilling { get { return drill == null ? false : drill.IsDrilling; } }
+	protected override void Awake()
+	{
+		base.Awake();
+		currentShield = maxShield;
+	}
 
-	public DrillBit GetDrill() => canDrill ? drill : null;
+	protected override void OnTriggerEnter2D(Collider2D collider)
+	{
+		base.OnTriggerEnter2D(collider);
 
-	public void AttachDrill(DrillBit db) => drill = db;
+		Vector2 contactPoint = (collider.bounds.center - transform.position) / 2f + transform.position;
 
-	public virtual bool CanDrillLaunch() => canDrillLaunch;
-	public virtual bool CanDrill() => canDrill;
+		if (collider.gameObject.layer == layerProjectile && HasShield)
+		{
+			IProjectile projectile = collider.GetComponent<IProjectile>();
+			if (projectile.GetShooter() != this)
+			{
+				projectile.Hit(this, contactPoint);
+			}
+		}
+	}
 
-	public virtual float GetLaunchDamage() => 0f;
-
-	public virtual Vector2 LaunchDirection(Transform launchableObject) => Vector2.zero;
-
-	public virtual bool ShouldLaunch() => false;
-
-	//This should be overridden. Called by a drill to alert the entity that the drilling has completed
-	public virtual void DrillComplete() { }
-
-	//some entities might want to avoid drilling other entities by accident, override to verify target
-	public virtual bool VerifyDrillTarget(Entity target) => true;
-
-	//This should be overridden. Called by a drill to determine how much damage it should deal to its target.
-	public virtual float DrillDamageQuery(bool firstHit) => 1f;
-
-	public virtual float MaxDrillDamage() => 1f;
-
-	public virtual void StoppedDrilling(bool successful) { }
-	#endregion Drill-related
+	public override bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer,
+		int dropModifier = 0, bool flash = true)
+	{
+		if (HasShield)
+		{
+			return TakeShieldDamage(damage, damagePos, destroyer, dropModifier, flash);
+		}
+		else
+		{
+			return base.TakeDamage(damage, damagePos, destroyer, dropModifier, flash);
+		}
+	}
 
 	public override ICombat GetICombat() => null;
 
@@ -107,4 +112,88 @@ public class Character : Entity
 	}
 
 	public virtual bool TakeItem(Item.Type type, int amount) => false;
+
+	#region Shield
+	[SerializeField] protected float maxShield = 500;
+	protected float currentShield;
+	protected bool HasShield { get { return currentShield > 0f; } }
+	public float ShieldRatio { get { return maxShield > 0f ? currentShield / maxShield : 0f; } }
+	[SerializeField] private EnergyShieldMaterialManager shieldVisualController;
+	[SerializeField] private Collider2D shieldCol;
+	public delegate void ShieldEventHandler(float oldVal, float newVal);
+	public event ShieldEventHandler OnShieldUpdated;
+
+	protected void SetShieldAmount(float value)
+	{
+		float oldVal = ShieldRatio;
+		currentShield = Mathf.Clamp(value, 0f, maxShield);
+		float newVal = ShieldRatio;
+		if (oldVal != newVal)
+		{
+			OnShieldUpdated?.Invoke(oldVal, newVal);
+		}
+	}
+
+	public virtual bool TakeShieldDamage(float damage, Vector2 damagePos, Entity destroyer,
+		int dropModifier = 0, bool flash = true)
+	{
+		float oldVal = ShieldRatio;
+		Vector2 damageDirection = damagePos - (Vector2)transform.position;
+		shieldVisualController?.TakeHit(damageDirection);
+
+		float difference = currentShield - damage;
+		if (difference > 0f)
+		{
+			currentShield = difference;
+			OnShieldUpdated?.Invoke(oldVal, ShieldRatio);
+			return false;
+		}
+
+		currentShield = 0f;
+		OnShieldUpdated?.Invoke(oldVal, 0f);
+		shieldVisualController?.Break();
+		return base.TakeDamage(Mathf.Abs(difference), damagePos, destroyer, dropModifier, flash);
+	}
+	#endregion Shield
+
+	#region Drill-related
+	protected bool canDrill, canDrillLaunch;
+	[SerializeField] protected DrillBit drill;
+	public bool IsDrilling { get { return drill == null ? false : drill.IsDrilling; } }
+
+	public DrillBit GetDrill() => canDrill ? drill : null;
+
+	public void AttachDrill(DrillBit db) => drill = db;
+
+	public virtual bool CanDrillLaunch() => canDrillLaunch;
+	public virtual bool CanDrill() => canDrill;
+
+	public virtual float GetLaunchDamage() => 0f;
+
+	public virtual Vector2 LaunchDirection(Transform launchableObject) => Vector2.zero;
+
+	public virtual bool ShouldLaunch() => false;
+
+	//This should be overridden. Called by a drill to alert the entity that the drilling has completed
+	public virtual void DrillComplete() { }
+
+	//some entities might want to avoid drilling other entities by accident, override to verify target
+	public virtual bool VerifyDrillTarget(Entity target) => true;
+
+	//This should be overridden. Called by a drill to determine how much damage it should deal to its target.
+	public virtual float DrillDamageQuery(bool firstHit) => 1f;
+
+	public virtual float MaxDrillDamage() => 1f;
+
+	public virtual void StoppedDrilling(bool successful) { }
+	#endregion Drill-related
+
+	#region Launch-related
+	[SerializeField] private LaunchTrailController launchTrailEffect;
+	[SerializeField] private GameObject drillLaunchImpactEffect;
+
+	public virtual LaunchTrailController GetLaunchTrailAnimation() => launchTrailEffect;
+
+	public virtual GameObject GetLaunchImpactAnimation() => drillLaunchImpactEffect;
+	#endregion Launch-related
 }

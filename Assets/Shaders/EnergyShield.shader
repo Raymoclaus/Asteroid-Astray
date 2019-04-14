@@ -13,6 +13,7 @@
 		_RippleAngle("Ripple Angle", float) = 0
 		_RippleProgress("Ripple Progress", Range(0, 1)) = 0.5
 		_RippleWidth("Ripple Width", float) = 0.1
+		_RippleColor("Ripple Color", Color) = (1, 1, 1, 1)
 	}
 	SubShader
 	{
@@ -58,7 +59,7 @@
 			}
 
 			sampler2D _MainTex;
-			fixed4 _Color, _ForceColor;
+			fixed4 _Color, _ForceColor, _RippleColor;
 			float _ForceLocationX, _ForceLocationY, _ForceRadius, _DistortionAmplitude, _DistortionRadius;
 			float _RippleAngle, _RippleProgress, _RippleWidth;
 
@@ -72,6 +73,8 @@
 				float run = forceLocation.x - pos.x;
 				float distFromForceLocation = sqrt(rise * rise + run * run);
 				float forceDistDelta = distFromForceLocation / max(0.001, _ForceRadius);
+				float inForceRadius = step(forceDistDelta, 1);
+				float forceAmountDelta = (1 - forceDistDelta) * inForceRadius;
 
 				float distortionRadiusDelta = distFromForceLocation / max(0.001, _DistortionRadius);
 				float2 distortedPos = float2(pos.x + run * distortionRadiusDelta * _DistortionAmplitude,
@@ -87,9 +90,6 @@
 				shieldCol.a *= col.a;
 				fixed4 shieldPlusForce = shieldCol + _ForceColor;
 				shieldPlusForce.a *= shieldCol.a;
-
-				float inForceRadius = step(forceDistDelta, 1);
-				float forceAmountDelta = (1 - forceDistDelta) * inForceRadius;
 				fixed4 forceAdjustedCol = lerp(shieldCol, shieldPlusForce, forceAmountDelta);
 
 				float a = _RippleAngle;
@@ -101,7 +101,10 @@
 				float inRipple = step(bottomOfRipple, ripplePos) * step(ripplePos, topOfRipple);
 				float rippleDelta = (1 - abs(ripplePos - _RippleProgress) / (_RippleWidth / 2));
 
-				fixed4 rippleAdjustedCol = lerp(forceAdjustedCol, shieldPlusForce, rippleDelta * inRipple);
+				fixed4 rippleCol = forceAdjustedCol + _RippleColor;
+				rippleCol.a *= forceAdjustedCol.a;
+				fixed4 rippleAdjustedCol = lerp(forceAdjustedCol, rippleCol, rippleDelta * inRipple);
+
 				return rippleAdjustedCol;
 			}
 			ENDCG

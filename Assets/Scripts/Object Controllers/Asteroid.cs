@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-public class Asteroid : Entity, IDrillableObject
+public class Asteroid : Entity
 {
 	[System.Serializable]
 	private struct ColliderInfo
@@ -12,13 +12,13 @@ public class Asteroid : Entity, IDrillableObject
 		public float rotation;
 	}
 
-	#region Fields
 	[Header("Asteroid Fields")]
+
+	#region Fields
 	[Tooltip("Reference to the sprite renderer of the asteroid.")]
 	public SpriteRenderer SprRend;
 	[Tooltip("Reference to the shake effect script on the sprite.")]
 	public ShakeEffect ShakeFX;
-	private CameraCtrl cameraCtrl;
 	[SerializeField]
 	private AsteroidSprites spritesSO;
 	[Tooltip("Picks a random value between given value and negative given value to determine its rotation speed")]
@@ -34,16 +34,10 @@ public class Asteroid : Entity, IDrillableObject
 	private bool isLarge;
 	//keeps track of size type and ID in that size type
 	private Vector2Int id = Vector2Int.zero;
-	private List<DrillBit> drillers = new List<DrillBit>();
 	//the amount of debris created when destroyed
 	public Vector2Int debrisAmount = new Vector2Int(3, 10);
 	[SerializeField] private float drillDebrisChance = 0.05f, drillDustChance = 0.2f;
 	private int collisionDustMultiplier = 3;
-	private bool launched = false;
-	[SerializeField] private float launchDuration = 1.5f;
-	private Character launcher;
-	private LaunchTrailController launchTrail;
-	private ContactPoint2D[] contacts = new ContactPoint2D[1];
 	[SerializeField] private List<Loot> loot;
 	#endregion
 
@@ -54,7 +48,7 @@ public class Asteroid : Entity, IDrillableObject
 	private AudioSO collisionSounds;
 	#endregion
 
-	public override void Awake()
+	protected override void Awake()
 	{
 		base.Awake();
 		
@@ -250,9 +244,7 @@ public class Asteroid : Entity, IDrillableObject
 	public override bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer,
 		int dropModifier = 0, bool flash = true)
 	{
-		if (currentHP <= 0f) return false;
-		//take damage
-		currentHP -= damage;
+		base.TakeDamage(damage, damagePos, destroyer, dropModifier, flash);
 
 		//particle effects
 		if (Random.value < drillDebrisChance)
@@ -268,178 +260,46 @@ public class Asteroid : Entity, IDrillableObject
 	}
 
 	//take the damage and if health drops to 0 then signal that this asteroid will be destroyed
-	public bool TakeDrillDamage(float damage, Vector2 drillPos, Entity destroyer, int dropModifier = 0)
+	public override bool TakeDrillDamage(float damage, Vector2 drillPos, Entity destroyer, int dropModifier = 0)
 	{
-		if (TakeDamage(damage, drillPos, destroyer, dropModifier))
-		{
-			//calculate shake intensity. Gets more intense the less health it has
-			ShakeFX.SetIntensity(damage / maxHP * (3f - (currentHP / maxHP * 2f)));
-			return true;
-		}
-		return false;
+		//calculate shake intensity. Gets more intense the less health it has
+		ShakeFX.SetIntensity(damage / maxHP * (3f - (currentHP / maxHP * 2f)));
+		return base.TakeDrillDamage(damage, drillPos, destroyer, dropModifier);
 	}
 
-	public void StartDrilling(DrillBit db)
+	public override void StartDrilling(DrillBit db)
 	{
-		rb.constraints = RigidbodyConstraints2D.FreezeAll;
+		base.StartDrilling(db);
 		ShakeFX.Begin();
-		AddDriller(db);
-	}
-	
-	public void OnTriggerEnter2D(Collider2D other)
-	{
-		int otherLayer = other.gameObject.layer;
-
-		if (otherLayer == layerDrill)
-		{
-			DrillBit otherDrill = other.GetComponentInParent<DrillBit>();
-			if (otherDrill.CanDrill && otherDrill.drillTarget == null && otherDrill.Verify(this))
-			{
-				StartDrilling(otherDrill);
-				otherDrill.StartDrilling(this);
-			}
-		}
 	}
 
-	public void OnTriggerExit2D(Collider2D other)
+	public override void StopDrilling(DrillBit db)
 	{
-		int otherLayer = other.gameObject.layer;
-
-		if (otherLayer == layerDrill)
-		{
-			DrillBit otherDrill = other.GetComponentInParent<DrillBit>();
-
-			if ((Entity)otherDrill.drillTarget == this)
-			{
-				StopDrilling(otherDrill);
-				otherDrill.StopDrilling(false);
-			}
-		}
-	}
-
-	public void StopDrilling(DrillBit db)
-	{
-		rb.constraints = RigidbodyConstraints2D.None;
+		base.StopDrilling(db);
 		ShakeFX.Stop();
-		RemoveDriller(db);
 	}
 
 	//If queried, this object will say that it is an asteroid-type Entity
 	public override EntityType GetEntityType() => EntityType.Asteroid;
 
-	private void OnCollisionEnter2D(Collision2D collision)
+	protected override void OnCollisionEnter2D(Collision2D collision)
 	{
+		base.OnCollisionEnter2D(collision);
+
 		float collisionStrength = collision.relativeVelocity.magnitude;
 		if (collisionStrength < 0.1f) return;
 
 		Collider2D other = collision.collider;
-		int otherLayer = other.gameObject.layer;
-		//collision.GetContacts(contacts);
-		//Vector2 contactPoint = contacts[0].point;
 		Vector2 contactPoint = (collision.collider.bounds.center
 			- collision.otherCollider.bounds.center) / 2f
 			+ collision.otherCollider.bounds.center;
-		float angle = -Vector2.SignedAngle(Vector2.up, contactPoint - (Vector2)transform.position);
 
-		//dust particle effect
 		CreateDust(contactPoint, (int)collisionStrength * collisionDustMultiplier, 0.1f + Random.value * 0.2f);
-
-		if (otherLayer == layerProjectile)
-		{
-			IProjectile projectile = other.GetComponent<IProjectile>();
-			projectile.Hit(this, contactPoint);
-		}
-
-		if (otherLayer == layerSolid)
-		{
-			if (launched)
-			{
-				if (launcher.GetLaunchImpactAnimation() != null)
-				{
-					Transform impact = Instantiate(launcher.GetLaunchImpactAnimation()).transform;
-					impact.parent = ParticleGenerator.holder;
-					impact.position = contactPoint;
-					impact.eulerAngles = Vector3.forward * angle;
-				}
-				if (launchTrail != null)
-				{
-					launchTrail.CutLaunchTrail();
-				}
-				Entity otherDamageable = other.attachedRigidbody.gameObject.GetComponent<Entity>();
-				float damage = launcher.GetLaunchDamage();
-				if (currentHP / maxHP < 0.7f)
-				{
-					damage *= 2f;
-				}
-				otherDamageable?.TakeDamage(damage, contactPoint, launcher);
-				TakeDamage(damage, contactPoint, launcher);
-				launched = false;
-				if (cameraCtrl && cameraCtrl.GetPanTarget() == transform)
-				{
-					cameraCtrl.Pan(null);
-				}
-			}
-		}
 	}
 
-	public void Launch(Vector2 launchDirection, Character launcher)
+	public override void Launch(Vector2 launchDirection, Character launcher)
 	{
-		this.launcher = launcher;
-		rb.velocity = launchDirection;
-		launched = true;
+		base.Launch(launchDirection, launcher);
 		ShakeFX.Begin(0.1f, 0f, 1f / 30f);
-		if (cameraCtrl) cameraCtrl.Pan(transform);
-		if (launcher.GetLaunchTrailAnimation() != null)
-		{
-			launchTrail = Instantiate(launcher.GetLaunchTrailAnimation());
-			launchTrail.SetFollowTarget(transform, launchDirection, isLarge ? 2f : 1f);
-
-		}
-
-		Pause.DelayedAction(() =>
-		{
-			if (launchTrail != null)
-			{
-				launchTrail.EndLaunchTrail();
-			}
-
-			this.launcher = null;
-			launched = false;
-			if (cameraCtrl && cameraCtrl.GetPanTarget() == transform)
-			{
-				cameraCtrl.Pan(null);
-			}
-		}, launchDuration, true);
-	}
-
-	public bool IsDrillable() => launched && currentHP > 0f;
-
-	public bool CanBeLaunched() => currentHP > 0f;
-
-	public List<DrillBit> GetDrillers() => drillers;
-
-	public void AddDriller(DrillBit db) => GetDrillers().Add(db);
-
-	public bool RemoveDriller(DrillBit db)
-	{
-		List<DrillBit> drills = GetDrillers();
-		for (int i = 0; i < drills.Count; i++)
-		{
-			if (drills[i] == db)
-			{
-				drills.RemoveAt(i);
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private void EjectFromAllDrillers(bool successful)
-	{
-		List<DrillBit> drills = GetDrillers();
-		for (int i = drills.Count - 1; i >= 0; i--)
-		{
-			drills[i].StopDrilling(successful);
-		}
 	}
 }

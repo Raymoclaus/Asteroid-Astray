@@ -7,7 +7,10 @@ public class Entity : MonoBehaviour
 	[SerializeField] protected ChunkCoords coords;
 	public Collider2D[] col;
 	public Rigidbody2D rb;
-	[SerializeField] protected CameraCtrlTracker camTrackerSO;
+	private static Camera mainCam;
+	protected static Camera MainCam { get { return mainCam ?? (mainCam = Camera.main); } }
+	private static CameraCtrl mainCamCtrl;
+	protected static CameraCtrl CameraCtrl { get { return mainCamCtrl ?? (mainCamCtrl = MainCam.GetComponent<CameraCtrl>()); } }
 	[SerializeField] protected static ParticleGenerator particleGenerator;
 	protected static AudioManager audioManager;
 	[SerializeField] protected ScreenRippleEffectController screenRippleSO;
@@ -22,11 +25,12 @@ public class Entity : MonoBehaviour
 	private float disableTime;
 	protected bool needsInit = true;
 	protected bool initialised = false;
+	[SerializeField] protected bool isInvulnerable;
 
 	[SerializeField] protected float maxHP = 1000f;
 	protected float currentHP;
 
-	//related layers
+	//layers
 	private static bool layersSet;
 	protected static int layerDrill, layerProjectile, layerSolid;
 
@@ -36,11 +40,10 @@ public class Entity : MonoBehaviour
 
 	public delegate void HealthUpdateHandler(float oldVal, float newVal);
 	public event HealthUpdateHandler OnHealthUpdate;
-	protected void HealthUpdated(float oldVal, float newVal) => OnHealthUpdate?.Invoke(oldVal, newVal);
 
 	private static int entitiesActive;
 
-	public virtual void Awake()
+	protected virtual void Awake()
 	{
 		currentHP = maxHP;
 		gameObject.SetActive(false);
@@ -112,9 +115,9 @@ public class Entity : MonoBehaviour
 
 	public void SetCoordinates(ChunkCoords newCc) => coords = newCc;
 
-	protected bool IsInView() => camTrackerSO?.IsCoordInView(coords) ?? false;
+	protected bool IsInView() => CameraCtrl?.IsCoordInView(coords) ?? false;
 
-	protected bool IsInPhysicsRange() => camTrackerSO?.IsCoordInPhysicsRange(coords) ?? false;
+	protected bool IsInPhysicsRange() => CameraCtrl?.IsCoordInPhysicsRange(coords) ?? false;
 
 	public void SetAllActivity(bool active)
 	{
@@ -186,10 +189,6 @@ public class Entity : MonoBehaviour
 
 	public override string ToString() => string.Format("{0} at coordinates {1}.", GetEntityType(), coords);
 
-	public virtual LaunchTrailController GetLaunchTrailAnimation() => null;
-
-	public virtual GameObject GetLaunchImpactAnimation() => null;
-
 	public virtual void PhysicsReEnabled() { }
 
 	private void GetLayers()
@@ -225,10 +224,201 @@ public class Entity : MonoBehaviour
 
 	public static int GetActive() => entitiesActive;
 
+	protected virtual void OnCollisionEnter2D(Collision2D collision)
+	{
+		Collider2D other = collision.collider;
+		int otherLayer = other.gameObject.layer;
+		//collision.GetContacts(contacts);
+		//Vector2 contactPoint = contacts[0].point;
+		Vector2 contactPoint = (collision.collider.bounds.center
+			- collision.otherCollider.bounds.center) / 2f
+			+ collision.otherCollider.bounds.center;
+		float angle = -Vector2.SignedAngle(Vector2.up, contactPoint - (Vector2)transform.position);
+
+		if (otherLayer == layerProjectile)
+		{
+			IProjectile projectile = other.GetComponent<IProjectile>();
+			projectile.Hit(this, contactPoint);
+		}
+
+		if (otherLayer == layerSolid)
+		{
+			if (launched)
+			{
+				LaunchImpact(angle, contactPoint, other);
+			}
+		}
+	}
+
 	public virtual bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer,
-		int dropModifier = 0, bool flash = true) => false;
+		int dropModifier = 0, bool flash = true)
+	{
+		if (destroyer == this || isInvulnerable) return false;
+
+		SetHP(currentHP - damage);
+		return GetHpRatio() <= 0f;
+	}
+
+	protected void SetHP(float value)
+	{
+		float oldVal = GetHpRatio();
+		currentHP = Mathf.Clamp(value, 0f, maxHP);
+		float newVal = GetHpRatio();
+		if (oldVal != newVal)
+		{
+			OnHealthUpdate?.Invoke(oldVal, newVal);
+		}
+	}
 
 	public void Teleport(Vector2 position) => transform.position = position;
+
+	#region Launch-related
+	[Header("Launch related variables")]
+	private Character launcher;
+	protected bool launched;
+	private LaunchTrailController launchTrail;
+	[SerializeField] protected float launchDuration = 2f;
+	[SerializeField] protected float launchTrailScale = 1f;
+	[SerializeField] protected bool isLaunchable = true;
+
+	public virtual bool CanBeLaunched() => isLaunchable;
+
+	public virtual void Launch(Vector2 launchDirection, Character launcher)
+	{
+		if (!isLaunchable) return;
+
+		this.launcher = launcher;
+		rb.velocity = launchDirection;
+		launched = true;
+		CameraCtrl?.Pan(transform);
+		if (launcher.GetLaunchTrailAnimation() != null)
+		{
+			launchTrail = Instantiate(launcher.GetLaunchTrailAnimation());
+			launchTrail.SetFollowTarget(transform, launchDirection, launchTrailScale);
+		}
+
+		Pause.DelayedAction(() =>
+		{
+			launchTrail?.EndLaunchTrail();
+
+			this.launcher = null;
+			launched = false;
+			if (CameraCtrl?.GetPanTarget() == transform)
+			{
+				CameraCtrl?.Pan(null);
+			}
+		}, launchDuration, true);
+	}
+
+	protected virtual void LaunchImpact(float angle, Vector2 contactPoint, Collider2D other)
+	{
+		if (launcher.GetLaunchImpactAnimation() != null)
+		{
+			Transform impact = Instantiate(launcher.GetLaunchImpactAnimation()).transform;
+			impact.parent = ParticleGenerator.holder;
+			impact.position = contactPoint;
+			impact.eulerAngles = Vector3.forward * angle;
+		}
+		if (launchTrail != null)
+		{
+			launchTrail.CutLaunchTrail();
+		}
+		Entity otherDamageable = other.attachedRigidbody.gameObject.GetComponent<Entity>();
+		float damage = launcher.GetLaunchDamage();
+		if (currentHP / maxHP < 0.5f)
+		{
+			damage *= 2f;
+		}
+		otherDamageable?.TakeDamage(damage, contactPoint, launcher);
+		TakeDamage(damage, contactPoint, launcher);
+		launched = false;
+		if (CameraCtrl?.GetPanTarget() == transform)
+		{
+			CameraCtrl.Pan(null);
+		}
+	}
+	#endregion
+
+	#region Drill-related
+	[Header("Drill related variables")]
+	private List<DrillBit> drillers = new List<DrillBit>();
+	[SerializeField] private bool isDrillable = true;
+
+	public virtual bool TakeDrillDamage(float drillDmg, Vector2 drillPos, Entity destroyer, int dropModifier = 0)
+		=> TakeDamage(drillDmg, drillPos, destroyer, dropModifier);
+
+	public virtual void StartDrilling(DrillBit db)
+	{
+		rb.constraints = RigidbodyConstraints2D.FreezeAll;
+		AddDriller(db);
+	}
+
+	public virtual void StopDrilling(DrillBit db)
+	{
+		rb.constraints = RigidbodyConstraints2D.None;
+		RemoveDriller(db);
+	}
+
+	protected virtual void OnTriggerEnter2D(Collider2D other)
+	{
+		int otherLayer = other.gameObject.layer;
+
+		if (otherLayer == layerDrill)
+		{
+			DrillBit otherDrill = other.GetComponentInParent<DrillBit>();
+			if (otherDrill.CanDrill && otherDrill.drillTarget == null && otherDrill.Verify(this))
+			{
+				StartDrilling(otherDrill);
+				otherDrill.StartDrilling(this);
+			}
+		}
+	}
+
+	protected virtual void OnTriggerExit2D(Collider2D other)
+	{
+		int otherLayer = other.gameObject.layer;
+
+		if (otherLayer == layerDrill && IsDrillable())
+		{
+			DrillBit otherDrill = other.GetComponentInParent<DrillBit>();
+
+			if (otherDrill.drillTarget == this)
+			{
+				StopDrilling(otherDrill);
+				otherDrill.StopDrilling(false);
+			}
+		}
+	}
+
+	public virtual bool IsDrillable() => isDrillable;
+
+	private List<DrillBit> GetDrillers() => drillers;
+
+	private void AddDriller(DrillBit db) => GetDrillers().Add(db);
+
+	private bool RemoveDriller(DrillBit db)
+	{
+		List<DrillBit> drills = GetDrillers();
+		for (int i = 0; i < drills.Count; i++)
+		{
+			if (drills[i] == db)
+			{
+				drills.RemoveAt(i);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	protected void EjectFromAllDrillers(bool successful)
+	{
+		List<DrillBit> drills = GetDrillers();
+		for (int i = drills.Count - 1; i >= 0; i--)
+		{
+			drills[i].StopDrilling(successful);
+		}
+	}
+	#endregion Drill-related
 }
 
 public enum EntityType

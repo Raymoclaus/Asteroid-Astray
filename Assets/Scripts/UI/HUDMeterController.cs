@@ -17,17 +17,17 @@ public class HUDMeterController : MonoBehaviour
 
 	private void Awake()
 	{
-		LoadingController.AddPostLoadAction(Setup);
+		LoadingController.AddListener(Setup);
 	}
 
 	private void Setup()
 	{
 		MainChar.OnHealthUpdate += health.UpdateValues;
-		//MainChar.OnShieldAmountChanged += shield.UpdateValues;
+		MainChar.OnShieldUpdated += shield.UpdateValues;
 		Shuttle.OnBoostAmountChanged += boost.UpdateValues;
 
 		health.SetValue(MeterValues.fillAmountString, MainChar.GetHpRatio());
-		shield.SetValue(MeterValues.fillAmountString, 0f);
+		shield.SetValue(MeterValues.fillAmountString, MainChar.ShieldRatio);
 		boost.SetValue(MeterValues.fillAmountString, MainChar.GetBoostRemaining());
 
 		MainChar.OnHealthUpdate += CheckShake;

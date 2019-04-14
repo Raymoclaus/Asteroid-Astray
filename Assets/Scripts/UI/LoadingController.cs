@@ -31,23 +31,38 @@ public class LoadingController : MonoBehaviour
 			holder.SetActive(false);
 		});
 
-		loadingReady.Add(false);
-		SceneryController.AddListener(() =>
+		if (FindObjectOfType<SceneryController>())
 		{
-			Ready(0);
-		});
+			Debug.Log("Loading Scenery Controller");
+			int ID = loadingReady.Count;
+			loadingReady.Add(false);
+			SceneryController.AddListener(() =>
+			{
+				Ready(ID);
+			});
+		}
 
-		loadingReady.Add(false);
-		EntityNetwork.AddListener(() =>
+		if (FindObjectOfType<EntityNetwork>())
 		{
-			Ready(1);
-		});
+			Debug.Log("Loading Entity Network");
+			int ID = loadingReady.Count;
+			loadingReady.Add(false);
+			EntityNetwork.AddListener(() =>
+			{
+				Ready(ID);
+			});
+		}
 		
-		loadingReady.Add(false);
-		EntityGenerator.AddListener(() =>
+		if (FindObjectOfType<EntityGenerator>())
 		{
-			Ready(2);
-		});
+			Debug.Log("Loading Entity Generator");
+			int ID = loadingReady.Count;
+			loadingReady.Add(false);
+			EntityGenerator.AddListener(() =>
+			{
+				Ready(ID);
+			});
+		}
 	}
 
 	public static void AddListener(System.Action action)
@@ -85,17 +100,5 @@ public class LoadingController : MonoBehaviour
 		}
 		finishedLoading = true;
 		return true;
-	}
-
-	public static void AddPostLoadAction(System.Action action)
-	{
-		if (IsLoading)
-		{
-			OnLoadingComplete += new LoadingCompleteEventHandler(action);
-		}
-		else
-		{
-			action?.Invoke();
-		}
 	}
 }

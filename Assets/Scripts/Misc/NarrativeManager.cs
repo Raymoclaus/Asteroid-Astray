@@ -108,7 +108,7 @@ public class NarrativeManager : MonoBehaviour
 		ShuttleTracker.SetKinematic(true);
 		MainHatch.Lock(true);
 		ShuttleTracker.SetNavigationActive(false);
-		LoadingController.AddPostLoadAction(() =>
+		LoadingController.AddListener(() =>
 		{
 			ShuttleTracker.SetControllable(true);
 			ShuttleTracker.SetKinematic(false);
@@ -125,7 +125,7 @@ public class NarrativeManager : MonoBehaviour
 					if (dgm.skipRepairTheShuttleQuest)
 					{
 						ShuttleRepaired = true;
-						LoadingController.AddPostLoadAction(() =>
+						LoadingController.AddListener(() =>
 						{
 							ShuttleTracker.SetNavigationActive(true);
 						});
@@ -133,33 +133,33 @@ public class NarrativeManager : MonoBehaviour
 						{
 							if (dgm.skipAquireAnEnergySourceQuest)
 							{
-								LoadingController.AddPostLoadAction(() =>
+								LoadingController.AddListener(() =>
 								{
 									mainChar.CollectResources(Item.Type.CorruptedCorvorite, 1);
 									CompletedFindEnergySourceQuest(null);
 								});
 								return;
 							}
-							LoadingController.AddPostLoadAction(() =>
+							LoadingController.AddListener(() =>
 							{
 								CompletedReturnToTheShipQuest(null);
 							});
 							return;
 						}
-						LoadingController.AddPostLoadAction(() =>
+						LoadingController.AddListener(() =>
 						{
 							CompletedRepairTheShuttleQuest(null);
 						});
 						return;
 					}
-					LoadingController.AddPostLoadAction(() =>
+					LoadingController.AddListener(() =>
 					{
 						mainChar.CollectResources(Item.Type.RepairKit, 1);
 						CompletedCraftYourFirstRepairKitQuest(null);
 					});
 					return;
 				}
-				LoadingController.AddPostLoadAction(() =>
+				LoadingController.AddListener(() =>
 				{
 					mainChar.CollectResources(Item.Type.Copper, 2);
 					mainChar.CollectResources(Item.Type.Iron, 1);
@@ -167,10 +167,10 @@ public class NarrativeManager : MonoBehaviour
 				});
 				return;
 			}
-			LoadingController.AddPostLoadAction(StartFirstGatheringQuest);
+			LoadingController.AddListener(StartFirstGatheringQuest);
 			return;
 		}
-		LoadingController.AddPostLoadAction(StartRecoveryDialogue);
+		LoadingController.AddListener(StartRecoveryDialogue);
 	}
 
 	private void StartRecoveryDialogue()

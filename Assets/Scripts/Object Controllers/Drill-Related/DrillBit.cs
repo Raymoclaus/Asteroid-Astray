@@ -8,7 +8,7 @@ public class DrillBit : MonoBehaviour
 	public bool IsDrilling { get; private set; }
 	public bool CanDrill { get { return parent.CanDrill(); } }
 	public bool CanLaunch { get { return parent.CanDrillLaunch(); } }
-	public IDrillableObject drillTarget;
+	public Entity drillTarget;
 	private bool firstHit = false;
 	public List<ParticleSystem> DrillSparks;
 	public float sparkSizeModifier = 20f;
@@ -123,7 +123,7 @@ public class DrillBit : MonoBehaviour
 		drillSoundSource.pitch = Mathf.MoveTowards(drillPitchRange.x, drillPitchRange.y, damage * pitchModifier);
 	}
 
-	public void StartDrilling(IDrillableObject newTarget)
+	public void StartDrilling(Entity newTarget)
 	{
 		if (parent.isActive)
 		{

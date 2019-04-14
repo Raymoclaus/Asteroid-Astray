@@ -3,11 +3,11 @@ using System.Collections.Generic;
 
 public class Shuttle : Character, IStunnable, ICombat
 {
-	#region Fields
+	[Header("Shuttle Fields")]
 
+	#region Fields
 	[Header("Required references")]
 	[SerializeField] private ShuttleTrackers trackerSO;
-	[SerializeField] private CameraCtrl cameraCtrl;
 	public Entity GetEntity { get { return this; } }
 	[Tooltip("Requires reference to the SpriteRenderer of the shuttle.")]
 	public SpriteRenderer SprRend;
@@ -72,8 +72,6 @@ public class Shuttle : Character, IStunnable, ICombat
 	public float drillLaunchSpeed = 10f;
 	[SerializeField] private float drillLaunchMaxAngle = 60f;
 	[SerializeField] private SpriteRenderer drillLaunchArcSprite;
-	[SerializeField] private GameObject drillLaunchImpact;
-	[SerializeField] private LaunchTrailController launchTrail;
 	private bool stunned = false;
 	private float stunDuration = 2f;
 	[SerializeField] private float launchZoomOutSize = 5f;
@@ -81,7 +79,7 @@ public class Shuttle : Character, IStunnable, ICombat
 	private List<ICombat> enemies = new List<ICombat>();
 	[SerializeField] private ShipInventory shipStorage;
 	[SerializeField] private ItemPopupUI popupUI;
-	private bool isInvulnerable = false;
+	private bool isTemporarilyInvincible = false;
 	private QuestLog questLog = new QuestLog();
 	[SerializeField] private ColorReplacementGroup cRGroup;
 	[SerializeField] private Transform defaultWaypointTarget;
@@ -137,14 +135,13 @@ public class Shuttle : Character, IStunnable, ICombat
 	}
 	#endregion Events
 
-	public override void Awake()
+	protected override void Awake()
 	{
 		base.Awake();
 		shipStorage = shipStorage ?? FindObjectOfType<ShipInventory>();
-		cameraCtrl = cameraCtrl ?? Camera.main.GetComponent<CameraCtrl>();
 		trackerSO.ResetDefaults();
 		trackerSO.SetDefaultWaypointTarget(defaultWaypointTarget);
-		if (cameraCtrl) cameraCtrl.followTarget = this;
+		if (CameraCtrl) CameraCtrl.followTarget = this;
 
 		canDrill = true;
 		canDrillLaunch = true;
@@ -447,8 +444,8 @@ public class Shuttle : Character, IStunnable, ICombat
 	{
 		if (ShouldLaunch())
 		{
-			cameraCtrl?.SetConstantSize(false);
-			cameraCtrl?.SetLookAheadDistance(false);
+			CameraCtrl?.SetConstantSize(false);
+			CameraCtrl?.SetLookAheadDistance(false);
 			return 0f;
 		}
 
@@ -467,8 +464,8 @@ public class Shuttle : Character, IStunnable, ICombat
 			arrow.eulerAngles = Vector3.forward * angle;
 			arrow.position = ((Entity)(drill.drillTarget)).transform.position;
 
-			cameraCtrl?.SetConstantSize(true, launchZoomOutSize);
-			cameraCtrl?.SetLookAheadDistance(true, launchLookAheadDistance);
+			CameraCtrl?.SetConstantSize(true, launchZoomOutSize);
+			CameraCtrl?.SetLookAheadDistance(true, launchLookAheadDistance);
 		}
 		else
 		{
@@ -501,8 +498,8 @@ public class Shuttle : Character, IStunnable, ICombat
 	public override void DrillComplete()
 	{
 		DrillLaunchArcDisable();
-		cameraCtrl.SetConstantSize(false);
-		cameraCtrl.SetLookAheadDistance(false);
+		CameraCtrl.SetConstantSize(false);
+		CameraCtrl.SetLookAheadDistance(false);
 	}
 
 	public override bool ShouldLaunch() =>
@@ -515,7 +512,7 @@ public class Shuttle : Character, IStunnable, ICombat
 
 	public void Stun()
 	{
-		if (isInvulnerable) return;
+		if (isInvulnerable || isTemporarilyInvincible) return;
 
 		drill.StopDrilling(false);
 		stunned = true;
@@ -550,41 +547,30 @@ public class Shuttle : Character, IStunnable, ICombat
 	{
 		DrillLaunchArcDisable();
 		OnDrillComplete?.Invoke(successful);
-		cameraCtrl.SetConstantSize(false);
-		cameraCtrl.SetLookAheadDistance(false);
-	}
-
-	public void OnCollisionEnter2D(Collision2D collision)
-	{
-		Collider2D other = collision.collider;
-		int otherLayer = other.gameObject.layer;
-		//collision.GetContacts(contacts);
-		//Vector2 contactPoint = contacts[0].point;
-		Vector2 contactPoint = (collision.collider.bounds.center
-			- collision.otherCollider.bounds.center) / 2f
-			+ collision.otherCollider.bounds.center;
-
-		if (otherLayer == layerProjectile)
-		{
-			IProjectile projectile = other.GetComponent<IProjectile>();
-			projectile.Hit(this, contactPoint);
-		}
+		CameraCtrl.SetConstantSize(false);
+		CameraCtrl.SetLookAheadDistance(false);
 	}
 
 	public override bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer,
 		int dropModifier = 0, bool flash = true)
 	{
-		if (destroyer == this || isInvulnerable) return false;
 		float oldVal = GetHpRatio();
-		currentHP -= damage;
-		HealthUpdated(oldVal, GetHpRatio());
-		cRGroup?.Flash(0.5f, Color.red);
-		if (currentHP <= 0f)
+		bool dead = base.TakeDamage(damage, damagePos, destroyer, dropModifier, flash);
+		float newVal = GetHpRatio();
+
+		if (oldVal == newVal) return false;
+
+		if (dead)
 		{
 			ty4pUI?.SetActive(true);
-			currentHP = maxHP;
+			SetHP(maxHP);
+			SetShieldAmount(maxShield);
 		}
-		return true;
+		else
+		{
+			cRGroup?.Flash(0.5f, Color.red);
+		}
+		return dead;
 	}
 
 	private void Boost(bool input)
@@ -605,8 +591,8 @@ public class Shuttle : Character, IStunnable, ICombat
 					effectRotation += transform.eulerAngles;
 					effect.eulerAngles = effectRotation;
 					screenRippleSO.StartRipple(this, distortionLevel: 0.02f);
-					isInvulnerable = true;
-					Pause.DelayedAction(() => isInvulnerable = false, boostInvulnerabilityTime, true);
+					isTemporarilyInvincible = true;
+					Pause.DelayedAction(() => isTemporarilyInvincible = false, boostInvulnerabilityTime, true);
 				}
 			}
 			isBoosting = true;
@@ -677,10 +663,6 @@ public class Shuttle : Character, IStunnable, ICombat
 		&& trackerSO.hasControl
 		&& trackerSO.canShoot;
 
-	public override GameObject GetLaunchImpactAnimation() => drillLaunchImpact;
-
-	public override LaunchTrailController GetLaunchTrailAnimation() => launchTrail;
-
 	public override Vector2 LaunchDirection(Transform launchableObject)
 	{
 		float shuttleAngle = -Vector2.SignedAngle(Vector2.up, transform.up);
@@ -708,8 +690,8 @@ public class Shuttle : Character, IStunnable, ICombat
 	{
 		trackerSO.LaunchInput();
 		DrillLaunchArcDisable();
-		cameraCtrl?.SetConstantSize(false);
-		cameraCtrl?.SetLookAheadDistance(false);
+		CameraCtrl?.SetConstantSize(false);
+		CameraCtrl?.SetLookAheadDistance(false);
 	}
 
 	public override float GetLaunchDamage() => trackerSO.launchDamage;

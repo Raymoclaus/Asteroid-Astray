@@ -2,13 +2,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(Camera))]
 public class CameraCtrl : MonoBehaviour
 {
-	public Camera Cam;
-	[SerializeField]
-	private CameraCtrlTracker trackerSO;
-	[SerializeField]
-	private Transform targetToFollow;
+	[HideInInspector] private Camera cam = null;
+	public Camera Cam { get { return cam ?? (cam = GetComponent<Camera>()); } }
+	[SerializeField] private Transform targetToFollow;
 	private Transform panView;
 	public float panRange = 5f;
 	public Character followTarget;
@@ -22,15 +21,19 @@ public class CameraCtrl : MonoBehaviour
 	public float camSizeModifier = 0.25f;
 	private float zoomModifier = 1f;
 	private Vector2 prevPos, aheadVector;
-	[SerializeField]
-	private float distanceAhead = 0.5f, moveAheadSpeed = 0.05f;
+	[SerializeField] private float distanceAhead = 0.5f, moveAheadSpeed = 0.05f;
 	public ChunkCoords coords;
 	private List<ChunkCoords> coordsInView = new List<ChunkCoords>(16);
 	private bool useConstantSize = false;
 	private bool useLookAheadModifier = false;
+	private const int ENTITY_VIEW_RANGE = 1;
+	public int RangeModifier { get { return (int)((Cam.orthographicSize - minCamSize) / 5f); } }
+	private float distanceAheadModifier = 2f;
+	private float moveAheadSpeedModifier = 2f;
+	private float constantSize = 2f;
 
 	public int TotalViewRange {
-		get { return trackerSO.ENTITY_VIEW_RANGE + trackerSO.RangeModifier; }
+		get { return ENTITY_VIEW_RANGE + RangeModifier; }
 	}
 
 	public ChunkFiller chunkFiller;
@@ -45,8 +48,6 @@ public class CameraCtrl : MonoBehaviour
 
 	private void Start()
 	{
-		//get ref to Camera component
-		Cam = Cam ?? GetComponent<Camera>();
 		//get ref to ChunkFiller component
 		chunkFiller = chunkFiller ?? GetComponent<ChunkFiller>();
 		//get camera's coordinates on the grid
@@ -61,7 +62,6 @@ public class CameraCtrl : MonoBehaviour
 
 	private void Update()
 	{
-		UpdateSO();
 		if (followTarget)
 		{
 			targetToFollow = followTarget.transform;
@@ -110,7 +110,7 @@ public class CameraCtrl : MonoBehaviour
 			Vector2 aheadTarget = new Vector2(
 				Mathf.Sin(-targetToFollow.eulerAngles.z * Mathf.Deg2Rad),
 				Mathf.Cos(-targetToFollow.eulerAngles.z * Mathf.Deg2Rad)) * distanceAhead
-				* (useLookAheadModifier ? trackerSO.distanceAheadModifier : 1f);
+				* (useLookAheadModifier ? distanceAheadModifier : 1f);
 			if (panView != null)
 			{
 				aheadTarget = (panView.position - transform.position) / 2f;
@@ -118,7 +118,7 @@ public class CameraCtrl : MonoBehaviour
 			float difference = Vector2.Distance(aheadTarget, aheadVector) / distanceAhead / 2f;
 			aheadVector = Vector2.MoveTowards(aheadVector, aheadTarget,
 				difference * distanceAhead * moveAheadSpeed
-				* (useLookAheadModifier ? trackerSO.moveAheadSpeedModifier : 1f)
+				* (useLookAheadModifier ? moveAheadSpeedModifier : 1f)
 				* Time.deltaTime * 60f);
 			transform.localPosition = targetToFollow.position
 				+ (Vector3)aheadVector
@@ -155,7 +155,7 @@ public class CameraCtrl : MonoBehaviour
 			}
 			if (useConstantSize)
 			{
-				targetSize = trackerSO.constantSize;
+				targetSize = constantSize;
 			}
 			//calculation to determine how quickly the camera zoom needs to change
 			float zoomDifference = targetSize - CamSize;
@@ -169,7 +169,7 @@ public class CameraCtrl : MonoBehaviour
 		//sets the camera size on the camera component
 		Cam.orthographicSize = CamSize * zoomModifier;
 		//ensures the ChunkFiller component fills a wide enough area to fill the camera's view
-		chunkFiller.RangeIncrease = trackerSO.RangeModifier;
+		chunkFiller.RangeIncrease = RangeModifier;
 	}
 
 	/// Disables all entities previously in view, gets a new list of entities and enables them.
@@ -180,8 +180,7 @@ public class CameraCtrl : MonoBehaviour
 		//keep track of coords previous in view
 		//query the EntityNetwork for a list of coordinates in view based on camera's size
 		newCoordsInView.Clear();
-		EntityNetwork.GetCoordsInRange(center,
-			trackerSO.ENTITY_VIEW_RANGE + trackerSO.RangeModifier, newCoordsInView);
+		EntityNetwork.GetCoordsInRange(center, ENTITY_VIEW_RANGE + RangeModifier, newCoordsInView);
 		//create a lists and filter out coordinates that are still in view
 		notInViewAnymore.Clear();
 		newCoords.Clear();
@@ -278,25 +277,23 @@ public class CameraCtrl : MonoBehaviour
 	public void SetConstantSize(bool enable = true, float size = 2f)
 	{
 		useConstantSize = enable;
-		trackerSO.constantSize = size;
+		constantSize = size;
 	}
 
 	public void SetLookAheadDistance(bool enable = true, float distanceModifier = 2f, float speedModifier = 2f)
 	{
 		useLookAheadModifier = enable;
-		trackerSO.distanceAheadModifier = distanceModifier;
-		trackerSO.moveAheadSpeedModifier = speedModifier;
+		distanceAheadModifier = distanceModifier;
+		moveAheadSpeedModifier = speedModifier;
 	}
 
-	private void UpdateSO()
+	public bool IsCoordInView(ChunkCoords coord)
 	{
-		if (!trackerSO)
-		{
-			print("Attach appropriate Scriptable Object tracker to " + GetType().Name);
-		}
+		return ChunkCoords.MaxDistance(coord, coords) <= ENTITY_VIEW_RANGE + RangeModifier;
+	}
 
-		trackerSO.camSize = CamSize;
-		trackerSO.coords = coords;
-		trackerSO.position = transform.position;
+	public bool IsCoordInPhysicsRange(ChunkCoords coord)
+	{
+		return ChunkCoords.MaxDistance(coord, coords) < Constants.MAX_PHYSICS_RANGE;
 	}
 }

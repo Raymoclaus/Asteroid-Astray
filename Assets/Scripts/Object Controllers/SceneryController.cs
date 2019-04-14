@@ -23,9 +23,9 @@ public class SceneryController : MonoBehaviour
 	[Range(0f, 1f)]
 	public float commonTypeFrequency = 0.9f;
 	public Vector2 imageBrightnessRange;
-	[SerializeField]
-	private BgCamTracker bgCamTrackerSO;
-	private int ViewDistance { get { return Mathf.CeilToInt(bgCamTrackerSO ? bgCamTrackerSO.fieldOfView : 1f); } }
+	[SerializeField] private Camera cam;
+	private Camera Cam { get { return cam ?? (cam = FindObjectOfType<Camera>()); } }
+	private int ViewDistance { get { return Mathf.CeilToInt(Cam?.fieldOfView ?? 1f); } }
 
 	private const int poolSize = 10000;
 	private Queue<StarFieldMaterialPropertyManager> pool = new Queue<StarFieldMaterialPropertyManager>(poolSize);
@@ -106,7 +106,6 @@ public class SceneryController : MonoBehaviour
 		ReserveListCapacity();
 		perlinOffset = new Vector2(Random.value, Random.value);
 		folderPath = Application.dataPath + typesPath;
-		//folderPath = Application.dataPath + "/../StarSystemImages";
 		lessFrequentImageFolderPath = folderPath + "/LessFrequentImages";
 		ready = true;
 	}
@@ -125,10 +124,8 @@ public class SceneryController : MonoBehaviour
 	{
 		if (!texturesGenerated) return;
 
-		if (bgCamTrackerSO)
-		{
-			transform.position = bgCamTrackerSO.position;
-		}
+		transform.position = Cam?.transform.position ?? transform.position;
+
 		if (types.Count >= variety)
 		{
 			ChunkCoords newCoords = new ChunkCoords(transform.position);
@@ -303,7 +300,6 @@ public class SceneryController : MonoBehaviour
 
 		//if textures have already been generated then don't worry about making more
 		if (texturesGenerated) yield break;
-		
 
 		StartCoroutine(CheckForExistingStars());
 

@@ -3,8 +3,10 @@ using System;
 using UnityEngine;
 
 [RequireComponent(typeof(HiveInventory))]
-public class BotHive : Character, IDrillableObject, ICombat
+public class BotHive : Character, ICombat
 {
+	[Header("Bot Hive Fields")]
+
 	#region Fields
 	//references
 	[SerializeField] private GatherBot botPrefab;
@@ -32,7 +34,6 @@ public class BotHive : Character, IDrillableObject, ICombat
 	private float emptyCoordWaitTime = 300f;
 	public WaitForSeconds maintenanceTime = new WaitForSeconds(3f);
 	private List<ICombat> enemies = new List<ICombat>();
-	private List<DrillBit> drillers = new List<DrillBit>();
 	[SerializeField] private List<Loot> lootDrops;
 	[SerializeField] private float burnTime = 3f;
 	private float burnTimer = 0f;
@@ -43,7 +44,6 @@ public class BotHive : Character, IDrillableObject, ICombat
 	//cache
 	private List<ChunkCoords> botOccupiedCoords = new List<ChunkCoords>();
 	private List<ChunkCoords> searchCoords = new List<ChunkCoords>();
-	private ContactPoint2D[] contacts = new ContactPoint2D[1];
 	#endregion
 
 	private void Start()
@@ -288,65 +288,11 @@ public class BotHive : Character, IDrillableObject, ICombat
 		SpendResources(b);
 	}
 
-	public void OnTriggerEnter2D(Collider2D other)
-	{
-		int otherLayer = other.gameObject.layer;
-
-		if (otherLayer == layerDrill && IsDrillable())
-		{
-			DrillBit otherDrill = other.GetComponentInParent<DrillBit>();
-			if (otherDrill.CanDrill && !IsDrilling)
-			{
-				StartDrilling(otherDrill);
-				otherDrill.StartDrilling(this);
-			}
-		}
-	}
-
-	public void OnTriggerExit2D(Collider2D other)
-	{
-		int otherLayer = other.gameObject.layer;
-
-		if (otherLayer == layerDrill)
-		{
-			DrillBit otherDrill = other.GetComponentInParent<DrillBit>();
-
-			if ((Entity)otherDrill.drillTarget == this)
-			{
-				otherDrill.StopDrilling(otherDrill);
-			}
-		}
-	}
-
-	public void OnCollisionEnter2D(Collision2D collision)
-	{
-		Collider2D other = collision.collider;
-		int otherLayer = other.gameObject.layer;
-		//collision.GetContacts(contacts);
-		//Vector2 contactPoint = contacts[0].point;
-		Vector2 contactPoint = (collision.collider.bounds.center
-			- collision.otherCollider.bounds.center) / 2f
-			+ collision.otherCollider.bounds.center;
-
-		if (otherLayer == layerProjectile)
-		{
-			IProjectile projectile = other.GetComponent<IProjectile>();
-			projectile.Hit(this, contactPoint);
-		}
-	}
-
-	public bool TakeDrillDamage(float drillDmg, Vector2 drillPos, Entity destroyer,
-		int dropModifier = 0) => TakeDamage(drillDmg, drillPos, destroyer, dropModifier);
-
-	public void StartDrilling(DrillBit db) => AddDriller(db);
-
-	public void StopDrilling(DrillBit db) => RemoveDriller(db);
-
 	public override bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer,
 		int dropModifier = 0, bool flash = true)
 	{
-		if (currentHP < 0f) return false;
-		currentHP -= damage;
+		bool dead = base.TakeDamage(damage, damagePos, destroyer, dropModifier, flash);
+		if (dead) return CheckHealth(destroyer, dropModifier);
 		ICombat threat = destroyer.GetICombat();
 		if (threat != null && threat.EngageInCombat(this))
 		{
@@ -470,12 +416,6 @@ public class BotHive : Character, IDrillableObject, ICombat
 
 	public override EntityType GetEntityType() => EntityType.BotHive;
 
-	public void Launch(Vector2 launchDirection, Character launcher) { }
-
-	public bool CanBeLaunched() => false;
-
-	public bool IsDrillable() => true;
-
 	public bool EngageInCombat(ICombat hostile)
 	{
 		if (IsChildBot((Entity)hostile) || enemies.Contains(hostile)) return false;
@@ -504,32 +444,5 @@ public class BotHive : Character, IDrillableObject, ICombat
 			if (e == threat) return;
 		}
 		enemies.Add(threat);
-	}
-
-	public List<DrillBit> GetDrillers() => drillers;
-
-	public void AddDriller(DrillBit db) => GetDrillers().Add(db);
-
-	public bool RemoveDriller(DrillBit db)
-	{
-		List<DrillBit> drills = GetDrillers();
-		for (int i = 0; i < drills.Count; i++)
-		{
-			if (drills[i] == db)
-			{
-				drills.RemoveAt(i);
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private void EjectFromAllDrillers(bool successful)
-	{
-		List<DrillBit> drills = GetDrillers();
-		for (int i = drills.Count - 1; i >= 0; i--)
-		{
-			drills[i].StopDrilling(successful);
-		}
 	}
 }
