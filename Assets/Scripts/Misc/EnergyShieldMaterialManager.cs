@@ -5,12 +5,13 @@ using UnityEngine;
 [RequireComponent(typeof(SpriteRenderer))]
 public class EnergyShieldMaterialManager : MonoBehaviour
 {
+	[SerializeField] private Character character;
 	private Material mat;
 	private SpriteRenderer sprRend;
 	private const string FORCE_RADIUS = "_ForceRadius", DISTORTION_AMPLITUDE = "_DistortionAmplitude",
 		FORCE_LOCATION_X = "_ForceLocationX", FORCE_LOCATION_Y = "_ForceLocationY",
 		RIPPLE_PROGRESS = "_RippleProgress", RIPPLE_ANGLE = "_RippleAngle";
-	[SerializeField] private float dist = Mathf.Sqrt(2f), duration = 0.2f, rippleDuration = 0.3f,
+	[SerializeField] private float dist = Mathf.Sqrt(2f), duration = 0.3f, rippleDuration = 0.3f,
 		targetForceRadius = 1f, targetDistortionAmplitude = 2f, startingRippleProgress = 0.4f,
 		targetRippleProgress = 0.7f;
 
@@ -18,6 +19,20 @@ public class EnergyShieldMaterialManager : MonoBehaviour
 	{
 		sprRend = GetComponent<SpriteRenderer>();
 		mat = sprRend.material;
+		UpdateShield(character.ShieldRatio, 1f);
+		character.OnShieldUpdated += UpdateShield;
+	}
+
+	private void UpdateShield(float oldVal, float newVal)
+	{
+		if (newVal <= 0f)
+		{
+			Break();
+		}
+		else
+		{
+			Restore();
+		}
 	}
 
 	private void Update()
@@ -30,7 +45,12 @@ public class EnergyShieldMaterialManager : MonoBehaviour
 		transform.eulerAngles = Vector3.zero;
 	}
 
-	public void Break()
+	private void Restore()
+	{
+		sprRend.enabled = true;
+	}
+
+	private void Break()
 	{
 		sprRend.enabled = false;
 	}

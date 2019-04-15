@@ -87,7 +87,7 @@
 				col.a *= step(0, texPos.x) * step(0, texPos.y) * step(texPos.x, 1) * step(texPos.y, 1);
 
 				fixed4 shieldCol = _Color;
-				shieldCol.a *= col.a;
+				shieldCol.a *= col.a * col.g;
 				fixed4 shieldPlusForce = shieldCol + _ForceColor;
 				shieldPlusForce.a *= shieldCol.a;
 				fixed4 forceAdjustedCol = lerp(shieldCol, shieldPlusForce, forceAmountDelta);
@@ -102,7 +102,7 @@
 				float rippleDelta = (1 - abs(ripplePos - _RippleProgress) / (_RippleWidth / 2));
 
 				fixed4 rippleCol = forceAdjustedCol + _RippleColor;
-				rippleCol.a *= forceAdjustedCol.a;
+				rippleCol *= (col.r + col.g + _RippleColor) * col.a;
 				fixed4 rippleAdjustedCol = lerp(forceAdjustedCol, rippleCol, rippleDelta * inRipple);
 
 				return rippleAdjustedCol;

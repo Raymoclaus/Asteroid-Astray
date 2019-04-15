@@ -11,7 +11,7 @@ public class Character : Entity
 	protected override void Awake()
 	{
 		base.Awake();
-		currentShield = maxShield;
+		SetShieldAmount(maxShield);
 	}
 
 	protected override void OnTriggerEnter2D(Collider2D collider)
@@ -115,7 +115,7 @@ public class Character : Entity
 
 	#region Shield
 	[SerializeField] protected float maxShield = 500;
-	protected float currentShield;
+	protected float currentShield = 500;
 	protected bool HasShield { get { return currentShield > 0f; } }
 	public float ShieldRatio { get { return maxShield > 0f ? currentShield / maxShield : 0f; } }
 	[SerializeField] private EnergyShieldMaterialManager shieldVisualController;
@@ -137,22 +137,19 @@ public class Character : Entity
 	public virtual bool TakeShieldDamage(float damage, Vector2 damagePos, Entity destroyer,
 		int dropModifier = 0, bool flash = true)
 	{
-		float oldVal = ShieldRatio;
 		Vector2 damageDirection = damagePos - (Vector2)transform.position;
 		shieldVisualController?.TakeHit(damageDirection);
 
 		float difference = currentShield - damage;
-		if (difference > 0f)
+		SetShieldAmount(difference);
+		if (difference < 0f)
 		{
-			currentShield = difference;
-			OnShieldUpdated?.Invoke(oldVal, ShieldRatio);
+			return base.TakeDamage(Mathf.Abs(difference), damagePos, destroyer, dropModifier, flash);
+		}
+		else
+		{
 			return false;
 		}
-
-		currentShield = 0f;
-		OnShieldUpdated?.Invoke(oldVal, 0f);
-		shieldVisualController?.Break();
-		return base.TakeDamage(Mathf.Abs(difference), damagePos, destroyer, dropModifier, flash);
 	}
 	#endregion Shield
 
