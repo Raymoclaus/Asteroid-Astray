@@ -42,6 +42,7 @@ public class SceneryController : MonoBehaviour
 	private int backgroundLayer;
 	public Color nebulaFadeBackground;
 	[SerializeField] private Material customSpriteMaterial;
+	[SerializeField] private bool loadStarPositions = true, adjustVisibility = true, adjustRotation = true;
 
 	[Header("Texture Variables")]
 	private bool texturesGenerated;
@@ -203,21 +204,27 @@ public class SceneryController : MonoBehaviour
 			}
 			//Color col = transparent ? nebulaFadeBackground : Color.white;
 			Color col = Color.white;
-			float delta = (1f - (item.pos.z - starMinDistance) / starDistanceRange) * 0.9f + 0.1f;
-			if (item.common)
-			{
-				col.a *= delta;
-			}
-			else
-			{
+            if (adjustVisibility)
+            {
+                float delta = (1f - (item.pos.z - starMinDistance) / starDistanceRange) * 0.9f + 0.1f;
+                if (item.common)
+                {
+                    col.a *= delta;
+                }
+                else
+                {
 
-				col = Color.Lerp(Color.black, Color.white,
-					Mathf.Clamp(delta, imageBrightnessRange.x, imageBrightnessRange.y));
-			}
+                    col = Color.Lerp(Color.black, Color.white,
+                        Mathf.Clamp(delta, imageBrightnessRange.x, imageBrightnessRange.y));
+                }
+            }
 			sfmpm.SetColor(col);
 			active.Enqueue(sfmpm);
 			tr.localScale = Vector2.one * item.size;
-			tr.eulerAngles = Vector3.forward * item.rotation * 45f;
+            if (adjustRotation)
+            {
+                tr.eulerAngles = Vector3.forward * item.rotation * 45f;
+            }
 		}
 
 		while (transitionActive.Count > 0)
@@ -253,20 +260,26 @@ public class SceneryController : MonoBehaviour
 
 	private void ReserveListCapacity()
 	{
-		items = new List<List<List<List<CosmicItem>>>>(directions);
-		for (int dir = 0; dir < directions; dir++)
+		if (loadStarPositions)
 		{
-			items.Add(new List<List<List<CosmicItem>>>(largeDistance));
-			for (int x = 0; x < largeDistance; x++)
+			items = CosmicItemFileReader.Load(items, largeDistance, reserveSize);
+		}
+		else
+		{
+			items = new List<List<List<List<CosmicItem>>>>(directions);
+			for (int dir = 0; dir < directions; dir++)
 			{
-				items[dir].Add(new List<List<CosmicItem>>(largeDistance));
-				for (int y = 0; y < largeDistance; y++)
+				items.Add(new List<List<List<CosmicItem>>>(largeDistance));
+				for (int x = 0; x < largeDistance; x++)
 				{
-					items[dir][x].Add(new List<CosmicItem>(reserveSize));
+					items[dir].Add(new List<List<CosmicItem>>(largeDistance));
+					for (int y = 0; y < largeDistance; y++)
+					{
+						items[dir][x].Add(new List<CosmicItem>(reserveSize));
+					}
 				}
 			}
 		}
-		items = CosmicItemFileReader.Load(items, largeDistance, reserveSize);
 	}
 
 	public void Save()
@@ -299,9 +312,11 @@ public class SceneryController : MonoBehaviour
 		InitialSetup();
 
 		//if textures have already been generated then don't worry about making more
+		int needToGenerate = Mathf.Max(variety - types.Count, 0);
+		texturesGenerated = needToGenerate <= 0;
 		if (texturesGenerated) yield break;
 
-		StartCoroutine(CheckForExistingStars());
+		StartCoroutine(CheckForExistingStars(needToGenerate));
 
 		while (!done)
 		{
@@ -324,7 +339,7 @@ public class SceneryController : MonoBehaviour
 			int maxFreeWorkers = freeWorkers;
 
 			//prepare colour arrays
-			Color[][] tex = new Color[variety][];
+			Color[][] tex = new Color[needToGenerate][];
 			for (int i = 0; i < tex.Length; i++)
 			{
 				tex[i] = new Color[textureSize.x * textureSize.y];
@@ -333,7 +348,7 @@ public class SceneryController : MonoBehaviour
 			int linesPerJob = 256;
 
 			//prepare star systems
-			Star[][] systems = new Star[variety][];
+			Star[][] systems = new Star[needToGenerate][];
 			for (int i = 0; i < systems.Length; i++)
 			{
 				System.Random rnd = new System.Random();
@@ -370,7 +385,7 @@ public class SceneryController : MonoBehaviour
 					//which texture are we up to?
 					int textureCounter = completedLines / textureSize.y;
 					//have we made enough?
-					if (textureCounter >= variety)
+					if (textureCounter >= needToGenerate)
 					{
 						allWorkDone = true;
 						break;
@@ -535,7 +550,7 @@ public class SceneryController : MonoBehaviour
 		}
 	}
 
-	private IEnumerator CheckForExistingStars()
+	private IEnumerator CheckForExistingStars(int needToGenerate)
 	{
 		Debug.Log("Checking for existing Star Systems");
 		done = false;
@@ -549,17 +564,17 @@ public class SceneryController : MonoBehaviour
 		//get common type images
 		StartCoroutine(SearchForImages(folderPath, "*.png", types));
 		while (!searchCompleted) yield return null;
-		variety -= searchAmount;
+		needToGenerate -= searchAmount;
 		StartCoroutine(SearchForImages(folderPath, "*.jpg", types));
 		while (!searchCompleted) yield return null;
-		variety -= searchAmount;
+		needToGenerate -= searchAmount;
 		yield return null;
 		//get images from folder marked as less frequent
 		StartCoroutine(SearchForImages(lessFrequentImageFolderPath, "*.png", lessFrequentTypes));
 		while (!searchCompleted) yield return null;
 		StartCoroutine(SearchForImages(lessFrequentImageFolderPath, "*.jpg", lessFrequentTypes));
 		while (!searchCompleted) yield return null;
-		found = variety <= 0;
+		found = needToGenerate <= 0;
 		done = true;
 	}
 
