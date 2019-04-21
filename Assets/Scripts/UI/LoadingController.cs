@@ -8,7 +8,17 @@ public class LoadingController : MonoBehaviour
 	private List<bool> loadingReady = new List<bool>();
 	[SerializeField] private GameObject holder;
 	private bool finishedLoading = false;
-	public static bool IsLoading { get { return !instance?.finishedLoading ?? true; } }
+	public static bool IsLoading
+	{
+		get
+		{
+			if (instance == null)
+			{
+				instance = FindObjectOfType<LoadingController>();
+			}
+			return !instance?.finishedLoading ?? false;
+		}
+	}
 
 	public delegate void LoadingCompleteEventHandler();
 	private static event LoadingCompleteEventHandler OnLoadingComplete;
@@ -19,7 +29,7 @@ public class LoadingController : MonoBehaviour
 		{
 			instance = this;
 		}
-		else
+		else if (instance != this)
 		{
 			Destroy(gameObject);
 			return;

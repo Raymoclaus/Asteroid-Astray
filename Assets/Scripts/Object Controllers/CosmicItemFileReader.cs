@@ -89,8 +89,8 @@ public static class CosmicItemFileReader
 	}
 
 	private static void AddItem(
-		SceneryController.CosmicItem item, List<List<List<List<SceneryController.CosmicItem>>>> items, int quad, int x, int y, int i, int largeDistance,
-		int reserveSize)
+		SceneryController.CosmicItem item, List<List<List<List<SceneryController.CosmicItem>>>> items,
+		int quad, int x, int y, int i, int largeDistance, int reserveSize)
 	{
 		while (items[quad].Count <= x || items[quad][x].Count <= y)
 		{

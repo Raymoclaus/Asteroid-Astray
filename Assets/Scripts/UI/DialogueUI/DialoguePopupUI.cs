@@ -33,8 +33,6 @@ public class DialoguePopupUI : PopupUI
 
 	protected virtual void Update()
 	{
-		if (LoadingController.IsLoading) return;
-
 		for (int i = 0; i < activePopups.Count; i++)
 		{
 			DialoguePopupObject po = activePopups[i];

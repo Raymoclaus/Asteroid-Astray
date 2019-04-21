@@ -7,15 +7,18 @@ public class AutoCurveTracer : CurveTracer
 
 	private void Update()
 	{
-		if (!Application.isPlaying && !checkMovementInEditor) return;
-
 		IncrementDelta(GetFrameIncrement());
-		SetPosition(GetInterpolatedPosition());
+		SetInterpolatedPosition(GetCurveData());
 	}
 
 	protected virtual float GetFrameIncrement()
 	{
 		float increment = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
 		return increment * speedMultiplier;
+	}
+
+	protected override void OnValidate()
+	{
+		Update();
 	}
 }

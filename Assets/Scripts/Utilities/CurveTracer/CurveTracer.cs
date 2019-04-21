@@ -1,42 +1,71 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 
-[ExecuteInEditMode]
-public class CurveTracer : MonoBehaviour
+public class CurveTracer : Tracer
 {
-	[SerializeField] protected bool checkMovementInEditor;
-	public AnimationCurve curve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
-	[SerializeField] private float delta;
-	private static float Delta { get; set; }
-	public Vector3 positionA, positionB;
-	public bool useWorldSpace;
+	[SerializeField] private List<CurveData> curves = new List<CurveData>();
+	[SerializeField] private int path; 
 
-	protected virtual void IncrementDelta(float increment) => Delta += increment;
-
-	protected virtual void SetDelta(float value) => Delta = value;
-
-	public float GetDelta() => Delta;
-
-	protected virtual Vector3 GetInterpolatedPosition()
-		=> Vector3.LerpUnclamped(positionA, positionB, curve.Evaluate(Delta));
-
-	protected virtual void SetPosition(Vector3 pos)
+	public override float SetDelta(float value)
 	{
-		if (!Application.isPlaying && !checkMovementInEditor) return;
-
-		if (useWorldSpace)
+		while (value >= 1f)
 		{
-			transform.position = pos;
+			value -= 1f;
+			IncrementPath(1);
+		}
+		return base.SetDelta(value);
+	}
+
+	public int GetPath() => ValidatePath();
+
+	public int SetPath(int value)
+	{
+		path = value;
+		return ValidatePath();
+	}
+
+	private int ValidatePath() => path = curves.Count == 0 ? -1 : path % curves.Count;
+
+	public int IncrementPath(int value) => SetPath(GetPath() + value);
+
+	protected override Vector3 GetInterpolatedPosition(CurveData cd, float delta)
+	{
+		if (curves.Count == 0)
+		{
+			return transform.position;
 		}
 		else
 		{
-			transform.localPosition = pos;
+			return base.GetInterpolatedPosition(curves[GetPath()], GetDelta());
 		}
 	}
 
-	protected virtual void OnValidate()
+	protected CurveData GetCurveData() => curves.Count == 0 ? new CurveData() : curves[GetPath()];
+
+	protected override void OnValidate() => SetInterpolatedPosition(GetCurveData());
+
+	public void GoToEndOfPath(float speedMultiplier = 1f, int? pathNum = null, bool resetDistance = true, System.Action reachedPathEndAction = null)
 	{
-		if (!checkMovementInEditor) return;
-		Delta = delta;
-		SetPosition(GetInterpolatedPosition());
+		SetPath(pathNum ?? GetPath());
+		SetDelta(resetDistance ? 0f : GetDelta());
+		StartCoroutine(FollowPath(speedMultiplier, reachedPathEndAction));
+	}
+
+	private IEnumerator FollowPath(float speedMultiplier, System.Action reachedPathEndAction)
+	{
+		float timer = GetDelta();
+		while (timer < 1f)
+		{
+			timer += Time.deltaTime * speedMultiplier;
+			if (timer > 1f)
+			{
+				timer = 1f;
+			}
+			SetPosition(GetInterpolatedPosition(GetCurveData(), timer));
+			SetDelta(timer);
+			yield return null;
+		}
+		reachedPathEndAction?.Invoke();
 	}
 }

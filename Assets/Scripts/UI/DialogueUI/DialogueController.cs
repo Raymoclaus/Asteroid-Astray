@@ -166,13 +166,16 @@ public class DialogueController : MonoBehaviour
 		GetNextLine();
 	}
 
-	public void StartDialogue(ConversationEvent newDialogue)
+	public void StartDialogue(ConversationEvent newDialogue, bool pause = true)
 	{
 		if (dialogueIsRunning || !newDialogue) return;
 
 		dialogueIsRunning = true;
 		Setup(newDialogue);
-		Pause.InstantPause(true);
+		if (pause)
+		{
+			Pause.InstantPause(true);
+		}
 		MoveTriggerObjects(false);
 	}
 

@@ -15,9 +15,8 @@ public class SceneryController : MonoBehaviour
 	public static bool IsDone { get { return instance != null && instance.texturesGenerated; } }
 
 	private List<List<List<List<CosmicItem>>>> items;
-	private const int reserveSize = 100;
-	private const int largeDistance = 500;
-	private const int directions = 4;
+	private const int RESERVE_SIZE = 100;
+	private const int LARGE_DISTANCE = 500;
 	public List<Sprite> types, lessFrequentTypes;
 	//less frequent types will appear (1f - commonTypeFrequency  x100)% of the time
 	[Range(0f, 1f)]
@@ -81,6 +80,7 @@ public class SceneryController : MonoBehaviour
 			return;
 		}
 
+		InitialSetup();
 		StartCoroutine(CreateStarSystems(null));
 	}
 
@@ -152,6 +152,7 @@ public class SceneryController : MonoBehaviour
 		for (int i = 0; i < coords.Count; i++)
 		{
 			ChunkCoords c = coords[i];
+			FillSpace(c);
 			//create new cosmic items
 			if (Chunk(c).Count == 0)
 			{
@@ -204,27 +205,27 @@ public class SceneryController : MonoBehaviour
 			}
 			//Color col = transparent ? nebulaFadeBackground : Color.white;
 			Color col = Color.white;
-            if (adjustVisibility)
-            {
-                float delta = (1f - (item.pos.z - starMinDistance) / starDistanceRange) * 0.9f + 0.1f;
-                if (item.common)
-                {
-                    col.a *= delta;
-                }
-                else
-                {
+			if (adjustVisibility)
+			{
+				float delta = (1f - (item.pos.z - starMinDistance) / starDistanceRange) * 0.9f + 0.1f;
+				if (item.common)
+				{
+					col.a *= delta;
+				}
+				else
+				{
 
-                    col = Color.Lerp(Color.black, Color.white,
-                        Mathf.Clamp(delta, imageBrightnessRange.x, imageBrightnessRange.y));
-                }
-            }
+					col = Color.Lerp(Color.black, Color.white,
+						Mathf.Clamp(delta, imageBrightnessRange.x, imageBrightnessRange.y));
+				}
+			}
 			sfmpm.SetColor(col);
 			active.Enqueue(sfmpm);
 			tr.localScale = Vector2.one * item.size;
-            if (adjustRotation)
-            {
-                tr.eulerAngles = Vector3.forward * item.rotation * 45f;
-            }
+			if (adjustRotation)
+			{
+				tr.eulerAngles = Vector3.forward * item.rotation * 45f;
+			}
 		}
 
 		while (transitionActive.Count > 0)
@@ -260,25 +261,23 @@ public class SceneryController : MonoBehaviour
 
 	private void ReserveListCapacity()
 	{
-		if (loadStarPositions)
+		items = new List<List<List<List<CosmicItem>>>>(EntityNetwork.QUADRANT_COUNT);
+		for (int dir = 0; dir < EntityNetwork.QUADRANT_COUNT; dir++)
 		{
-			items = CosmicItemFileReader.Load(items, largeDistance, reserveSize);
-		}
-		else
-		{
-			items = new List<List<List<List<CosmicItem>>>>(directions);
-			for (int dir = 0; dir < directions; dir++)
+			items.Add(new List<List<List<CosmicItem>>>(LARGE_DISTANCE));
+			for (int x = 0; x < LARGE_DISTANCE; x++)
 			{
-				items.Add(new List<List<List<CosmicItem>>>(largeDistance));
-				for (int x = 0; x < largeDistance; x++)
+				items[dir].Add(new List<List<CosmicItem>>(LARGE_DISTANCE));
+				for (int y = 0; y < LARGE_DISTANCE; y++)
 				{
-					items[dir].Add(new List<List<CosmicItem>>(largeDistance));
-					for (int y = 0; y < largeDistance; y++)
-					{
-						items[dir][x].Add(new List<CosmicItem>(reserveSize));
-					}
+					items[dir][x].Add(new List<CosmicItem>(RESERVE_SIZE));
 				}
 			}
+		}
+
+		if (loadStarPositions)
+		{
+			items = CosmicItemFileReader.Load(items, LARGE_DISTANCE, RESERVE_SIZE);
 		}
 	}
 
@@ -307,15 +306,10 @@ public class SceneryController : MonoBehaviour
 	public IEnumerator CreateStarSystems(System.Action a)
 	{
 		yield return null;
-
-		//ensure this class is setup properly first
-		InitialSetup();
-
 		//if textures have already been generated then don't worry about making more
 		int needToGenerate = Mathf.Max(variety - types.Count, 0);
 		texturesGenerated = needToGenerate <= 0;
 		if (texturesGenerated) yield break;
-
 		StartCoroutine(CheckForExistingStars(needToGenerate));
 
 		while (!done)
@@ -654,6 +648,33 @@ public class SceneryController : MonoBehaviour
 	private List<List<List<CosmicItem>>> Direction(ChunkCoords cc)
 	{
 		return items[(int)cc.Direction];
+	}
+
+	private bool ChunkExists(ChunkCoords cc)
+	{
+		if (cc.Direction < 0 || (int)cc.Direction >= items.Count) return false;
+		if (cc.X < 0 || cc.X >= Direction(cc).Count) return false;
+		return cc.Y > 0 && cc.Y < Column(cc).Count;
+	}
+
+	private void FillSpace(ChunkCoords cc)
+	{
+		if (ChunkExists(cc) && cc.IsValid()) return;
+
+		while (items.Count <= (int)cc.Direction)
+		{
+			items.Add(new List<List<List<CosmicItem>>>());
+		}
+
+		while (Direction(cc).Count <= cc.X)
+		{
+			Direction(cc).Add(new List<List<CosmicItem>>());
+		}
+
+		while (Column(cc).Count <= cc.Y)
+		{
+			Column(cc).Add(new List<CosmicItem>());
+		}
 	}
 	#endregion
 }
