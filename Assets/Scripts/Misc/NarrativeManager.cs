@@ -74,18 +74,6 @@ public class NarrativeManager : MonoBehaviour
 
 	[SerializeField] private Entity botHivePrefab, soloBotPrefab;
 
-	private void Update()
-	{
-		if (Input.GetKeyDown(KeyCode.Alpha0))
-		{
-			DevCheatSpawn(botHivePrefab);
-		}
-		if (Input.GetKeyDown(KeyCode.Alpha1))
-		{
-			DevCheatSpawn(soloBotPrefab);
-		}
-	}
-
 	private void DevCheatSpawn(Entity e)
 	{
 		Vector2 centerPos = mainChar.transform.position;

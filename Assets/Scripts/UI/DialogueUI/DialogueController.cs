@@ -4,6 +4,14 @@ using UnityEngine;
 public class DialogueController : MonoBehaviour
 {
 	[SerializeField] private DialoguePopupUI dialogueUI, chatUI;
+	private DialoguePopupUI DialogueUI
+	{
+		get { return dialogueUI ?? (dialogueUI = FindObjectOfType<DialoguePopupUI>()); }
+	}
+	private DialoguePopupUI ChatUI
+	{
+		get { return chatUI ?? (chatUI = FindObjectOfType<DialoguePopupUI>()); }
+	}
 	private ConversationEvent currentConversation;
 	private DialogueLineEvent[] currentLines;
 	private EntityProfile[] speakers;
@@ -24,6 +32,8 @@ public class DialogueController : MonoBehaviour
 
 	private void Update()
 	{
+		if (Console.DeveloperConsole.IsActive) return;
+
 		if (dialogueIsRunning && InputHandler.GetInputDown(InputAction.ScrollDialogue) > 0f)
 		{
 			if (dialogueUI.IsTyping())

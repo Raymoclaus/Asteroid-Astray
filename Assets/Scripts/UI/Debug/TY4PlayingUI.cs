@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class TY4PlayingUI : MonoBehaviour
 {
@@ -8,10 +6,7 @@ public class TY4PlayingUI : MonoBehaviour
 	private bool active = false;
 	[SerializeField] private ShuttleTrackers shuttleTracker;
 
-	private void Awake()
-	{
-		cGroup.alpha = active ? 1f : 0f;
-	}
+	private void Awake() => cGroup.alpha = active ? 1f : 0f;
 
 	private void Update()
 	{
@@ -31,6 +26,7 @@ public class TY4PlayingUI : MonoBehaviour
 	public void SetActive(bool active)
 	{
 		if (active == this.active) return;
+		if (Pause.IsStopped && !this.active) return;
 
 		this.active = active;
 		Pause.InstantPause(this.active);

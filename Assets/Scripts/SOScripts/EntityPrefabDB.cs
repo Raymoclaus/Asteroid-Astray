@@ -14,4 +14,13 @@ public class EntityPrefabDB : ScriptableObject
 		}
 		return null;
 	}
+
+	public SpawnableEntity GetSpawnableEntity(string entityName)
+	{
+		for (int i = 0; i < spawnableEntities.Count; i++)
+		{
+			if (spawnableEntities[i].name.ToLower() == entityName) return spawnableEntities[i];
+		}
+		return null;
+	}
 }

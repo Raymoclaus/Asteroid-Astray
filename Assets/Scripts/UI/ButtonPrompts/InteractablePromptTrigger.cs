@@ -25,7 +25,7 @@ public class InteractablePromptTrigger : PromptTrigger
 
 	protected virtual void Update()
 	{
-		if (IsTriggerActive() && InputHandler.GetInputDown(action) > 0f)
+		if (IsTriggerActive() && InputHandler.GetInputDown(action) > 0f && !Pause.IsStopped)
 		{
 			OnInteraction?.Invoke();
 		}

@@ -86,8 +86,26 @@ public class EntityGenerator : MonoBehaviour
 		}
 	}
 
+	public static Entity SpawnEntity(SpawnableEntity se)
+	{
+		if (se == null) return null;
+
+		if (!IsReady)
+		{
+			AddListener(() => SpawnEntity(se));
+			return null;
+		}
+
+		ChunkCoords cc = instance.ClosestValidNonFilledChunk(se);
+		if (cc == ChunkCoords.Invalid) return null;
+
+		return SpawnOneInEmptyChunk(cc, se);
+	}
+
 	public static Entity SpawnEntity(Entity e)
 	{
+		if (e == null) return null;
+
 		if (!IsReady)
 		{
 			AddListener(() => SpawnEntity(e));
@@ -95,12 +113,7 @@ public class EntityGenerator : MonoBehaviour
 		}
 
 		SpawnableEntity se = instance.GetSpawnableEntity(e);
-		if (se == null) return null;
-
-		ChunkCoords cc = instance.ClosestValidNonFilledChunk(se);
-		if (cc == ChunkCoords.Invalid) return null;
-
-		return SpawnOneInEmptyChunk(cc, se);
+		return SpawnEntity(se);
 	}
 
 	private SpawnableEntity GetSpawnableEntity(Entity e)
