@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEditor;
 using System.Collections.Generic;
 
 public class SceneLoader : MonoBehaviour
@@ -25,13 +26,21 @@ public class SceneLoader : MonoBehaviour
 
 	public void Quit()
 	{
-		Application.Quit();
+		if (Application.isEditor)
+		{
+#if UNITY_EDITOR
+			EditorApplication.isPlaying = false;
+#endif
+		}
+		else
+		{
+			Application.Quit();
+		}
 	}
 
 	private void ClearEvents()
 	{
 		InputHandler.ClearEvent();
-		Shuttle.ClearEvent();
 		GameEvents.ClearEvent();
 		PromptUI.ClearEvent();
 		Pause.ClearEvent();

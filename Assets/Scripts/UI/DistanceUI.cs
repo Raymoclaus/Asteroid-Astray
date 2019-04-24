@@ -11,14 +11,15 @@ public class DistanceUI : MonoBehaviour
 	private const string unit = "m | zone: ";
 	private int dist = -1;
 	[SerializeField] private Text textComponent;
-	[SerializeField] private ShuttleTrackers shuttleTrackerSO;
+	[SerializeField] private Image img;
+	[SerializeField] private Shuttle mainChar;
+	private Shuttle MainChar { get { return mainChar ?? (mainChar = FindObjectOfType<Shuttle>()); } }
 
 	private void Start()
 	{
 		textComponent = textComponent ?? GetComponent<Text>();
 		StartCoroutine(FillStrings());
-		shuttleTrackerSO.NavigationUpdated += UpdateHUD;
-		UpdateHUD();
+		MainChar.OnNavigationUpdated += Activate;
 	}
 
 	private void Update()
@@ -28,8 +29,8 @@ public class DistanceUI : MonoBehaviour
 
 	private void UpdateText()
 	{
-		if (!shuttleTrackerSO) return;
-		int currentDist = (int)(shuttleTrackerSO.GetDistanceToWaypoint() * UNITS_TO_METRES);
+		if (!textComponent.enabled) return;
+		int currentDist = (int)(DistanceToWaypoint() * UNITS_TO_METRES);
 		if (dist != currentDist)
 		{
 			dist = currentDist;
@@ -45,9 +46,10 @@ public class DistanceUI : MonoBehaviour
 		}
 	}
 
-	private void UpdateHUD()
+	public void Activate(bool active)
 	{
-		gameObject.SetActive(shuttleTrackerSO.navigationActive);
+		textComponent.enabled = active;
+		img.enabled = active;
 	}
 
 	private IEnumerator FillStrings()
@@ -59,4 +61,10 @@ public class DistanceUI : MonoBehaviour
 		}
 		distStrings.Add(maxRange.ToString() + "+" + unit);
 	}
+
+	private Vector2 GetCurrentPosition() => MainChar?.transform.position ?? Vector2.zero;
+
+	private float DistanceToWaypoint() => Vector2.Distance(GetWaypointPosition(), GetCurrentPosition());
+
+	private Vector2 GetWaypointPosition() => MainChar?.waypoint.GetPosition() ?? Vector2.zero;
 }

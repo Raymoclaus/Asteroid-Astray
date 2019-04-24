@@ -16,7 +16,10 @@ public class CollisionSFXTrigger : MonoBehaviour
 	private ContactPoint2D[] contacts = new ContactPoint2D[1];
 	[SerializeField] private float ignoreCollisionStrength = 0.05f;
 	private static AudioListener listener;
-	private static AudioListener Listener { get { return listener ?? (listener = FindObjectOfType<AudioListener>()); } }
+	private static AudioListener Listener
+	{
+		get { return listener ?? (listener = FindObjectOfType<AudioListener>()); }
+	}
 
 	private void OnCollisionEnter2D(Collision2D collision)
 	{
@@ -33,4 +36,6 @@ public class CollisionSFXTrigger : MonoBehaviour
 		AudioMngr?.PlaySFX(collisionSounds.PickRandomClip(), contactPoint, null,
 			collisionSounds.PickRandomVolume() * collisionStrength, collisionSounds.PickRandomPitch());
 	}
+
+	private void OnDestroy() => listener = null;
 }

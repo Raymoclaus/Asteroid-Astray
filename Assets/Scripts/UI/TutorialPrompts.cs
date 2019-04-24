@@ -5,8 +5,11 @@ using System.Collections.Generic;
 public class TutorialPrompts : MonoBehaviour
 {
 	private PromptUI ui;
-	[SerializeField] private ShuttleTrackers shuttleTracker;
-	[SerializeField] private Character mainChar;
+	private Shuttle mainChar;
+	private Shuttle MainChar
+	{
+		get { return mainChar ?? (mainChar = FindObjectOfType<Shuttle>()); }
+	}
 	
 	public PromptInfo goInputPromptInfo;
 	public PromptInfo launchInputPromptInfo;
@@ -18,7 +21,6 @@ public class TutorialPrompts : MonoBehaviour
 
 	private void Awake()
 	{
-		shuttleTracker = shuttleTracker ?? Resources.Load<ShuttleTrackers>("ShuttleTrackerSO");
 		ui = GetComponent<PromptUI>();
 		mainChar = mainChar ?? FindObjectOfType<Shuttle>();
 
@@ -46,15 +48,15 @@ public class TutorialPrompts : MonoBehaviour
 	{
 		goInputPromptInfo.SetListeners(() =>
 		{
-			shuttleTracker.OnGoInput += goInputPromptInfo.Deactivate;
+			MainChar.OnGoInput += goInputPromptInfo.Deactivate;
 		}, () =>
 		{
-			shuttleTracker.OnGoInput -= goInputPromptInfo.Deactivate;
+			MainChar.OnGoInput -= goInputPromptInfo.Deactivate;
 		});
 
 		goInputPromptInfo.SetCondition(() =>
 		{
-			return !Pause.IsStopped && shuttleTracker.hasControl;
+			return !Pause.IsStopped && MainChar.hasControl;
 		});
 	}
 
@@ -66,12 +68,12 @@ public class TutorialPrompts : MonoBehaviour
 		};
 		launchInputPromptInfo.SetListeners(() =>
 		{
-			shuttleTracker.OnLaunchInput += launchInputPromptInfo.Deactivate;
-			Shuttle.OnDrillComplete += action;
+			MainChar.OnLaunchInput += launchInputPromptInfo.Deactivate;
+			MainChar.OnDrillComplete += action;
 		}, () =>
 		{
-			shuttleTracker.OnLaunchInput -= launchInputPromptInfo.Deactivate;
-			Shuttle.OnDrillComplete -= action;
+			MainChar.OnLaunchInput -= launchInputPromptInfo.Deactivate;
+			MainChar.OnDrillComplete -= action;
 		});
 
 		launchInputPromptInfo.SetCondition(() =>
@@ -82,7 +84,7 @@ public class TutorialPrompts : MonoBehaviour
 
 	private void SetUpDrillInputPrompt()
 	{
-		Shuttle.OnDrillComplete += (bool successful) =>
+		MainChar.OnDrillComplete += (bool successful) =>
 		{
 			if (successful) return;
 			drillInputPromptInfo.Activate();
@@ -129,12 +131,16 @@ public class TutorialPrompts : MonoBehaviour
 		{
 			Item.Type repairKit = Item.Type.RepairKit;
 			int id = mainChar.storage.FirstInstanceId(Item.Type.RepairKit);
-			if (id < 0) return false;
+			if (id < 0 || Pause.IsStopped) return false;
 			string typeName = Item.TypeName(repairKit);
 			string text = id < 8 ? $"Press [Slot {id + 1}:] to use the {typeName}"
 			: $"Place the {typeName} in one of the first 8 inventory slots";
-			repairKitInputPromptInfo.SetText(text);
-			return true;
+			if (repairKitInputPromptInfo.text != text)
+			{
+				repairKitInputPromptInfo.SetText(text);
+				return true;
+			}
+			return false;
 		});
 	}
 
@@ -167,7 +173,6 @@ public class TutorialPrompts : MonoBehaviour
 		public bool isRepeatable;
 		private int activationCount;
 		private bool isActivated;
-		public float fadeInTime, fadeOutTime;
 		[Tooltip("If true, and if the \"Deactivate\" condition is triggered early, then the prompt will never appear.")]
 		public bool ignoreOnDeactivate;
 		public bool ignore;
@@ -216,7 +221,7 @@ public class TutorialPrompts : MonoBehaviour
 			text = s;
 			if (isActivated)
 			{
-				ui.ActivatePrompt(text, 0f);
+				ui.ActivatePrompt(text);
 			}
 		}
 
@@ -248,7 +253,7 @@ public class TutorialPrompts : MonoBehaviour
 			
 			if (isTimedPrompt)
 			{
-				ui.ActivatePromptTimer(text, fadeInTime, fadeOutTime, promptDuration);
+				ui.ActivatePromptTimer(text, promptDuration);
 				PromptUI.PromptUpdatedEventHandler action = null;
 				action = (string promptText, bool activating) =>
 				{
@@ -262,7 +267,7 @@ public class TutorialPrompts : MonoBehaviour
 			}
 			else
 			{
-				ui.ActivatePrompt(text, fadeInTime);
+				ui.ActivatePrompt(text);
 			}
 			SetIsActivated(true);
 			activationCount++;
@@ -277,7 +282,7 @@ public class TutorialPrompts : MonoBehaviour
 			
 			if (!isActivated) return;
 
-			ui.DeactivatePrompt(text, fadeOutTime);
+			ui.DeactivatePrompt(text);
 			SetIsActivated(false);
 		}
 

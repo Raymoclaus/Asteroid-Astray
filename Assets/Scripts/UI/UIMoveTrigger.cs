@@ -1,7 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
+[RequireComponent(typeof(RectTransform))]
 public class UIMoveTrigger : MoveTrigger
 {
 	protected override void SetPosition(Vector3 pos)

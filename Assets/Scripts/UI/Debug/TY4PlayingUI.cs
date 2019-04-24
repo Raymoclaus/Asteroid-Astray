@@ -1,12 +1,21 @@
 ﻿using UnityEngine;
 
+[RequireComponent(typeof(CanvasGroup))]
 public class TY4PlayingUI : MonoBehaviour
 {
-	[SerializeField] private CanvasGroup cGroup;
+	private CanvasGroup cGroup;
+	private CanvasGroup CGroup
+	{
+		get { return cGroup ?? (cGroup = GetComponent<CanvasGroup>()); }
+	}
 	private bool active = false;
-	[SerializeField] private ShuttleTrackers shuttleTracker;
+	private Shuttle mainChar;
+	private Shuttle MainChar
+	{
+		get { return mainChar ?? (mainChar = FindObjectOfType<Shuttle>()); }
+	}
 
-	private void Awake() => cGroup.alpha = active ? 1f : 0f;
+	private void Awake() => CGroup.alpha = active ? 1f : 0f;
 
 	private void Update()
 	{
@@ -15,12 +24,12 @@ public class TY4PlayingUI : MonoBehaviour
 			SetActive(!active);
 		}
 
-		if (active && InputHandler.GetInputDown(InputAction.ScrollDialogue) > 0f && cGroup.alpha == 1f)
+		if (active && InputHandler.GetInputDown(InputAction.ScrollDialogue) > 0f && CGroup.alpha == 1f)
 		{
 			SetActive(false);
 		}
 
-		cGroup.alpha = Mathf.MoveTowards(cGroup.alpha, active ? 1f : 0f, Time.unscaledDeltaTime);
+		CGroup.alpha = Mathf.MoveTowards(CGroup.alpha, active ? 1f : 0f, Time.unscaledDeltaTime);
 	}
 
 	public void SetActive(bool active)
@@ -32,8 +41,8 @@ public class TY4PlayingUI : MonoBehaviour
 		Pause.InstantPause(this.active);
 		if (active)
 		{
-			shuttleTracker.canLaunch = true;
-			shuttleTracker.canShoot = true;
+			MainChar.CanLaunch = true;
+			MainChar.CanShoot = true;
 		}
 	}
 }

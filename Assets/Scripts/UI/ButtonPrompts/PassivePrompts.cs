@@ -1,24 +1,11 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class PassivePrompts : MonoBehaviour
 {
-	private ShuttleTrackers shuttleTrackers;
-	private ShuttleTrackers Trackers
+	private Shuttle mainChar;
+	private Shuttle MainChar
 	{
-		get
-		{
-			return shuttleTrackers ?? (shuttleTrackers = Resources.Load<ShuttleTrackers>("ShuttleTrackerSO"));
-		}
-	}
-	private Character mainChar;
-	private Character MainChar
-	{
-		get
-		{
-			return mainChar ?? (mainChar = FindObjectOfType<Shuttle>());
-		}
+		get { return mainChar ?? (mainChar = FindObjectOfType<Shuttle>()); }
 	}
 
 	[SerializeField] private GameObject
@@ -30,15 +17,15 @@ public class PassivePrompts : MonoBehaviour
 
 	private void Update()
 	{
-		SetActive(shootPrompt, Trackers.canShoot);
-		SetActive(boostPrompt, Trackers.canBoost);
-		SetActive(launchPrompt, (MainChar?.IsDrilling ?? false) && Trackers.canLaunch);
+		SetActive(shootPrompt, MainChar?.CanShoot ?? false);
+		SetActive(boostPrompt, MainChar?.CanBoost ?? false);
+		SetActive(launchPrompt,
+			MainChar == null ? false : MainChar.IsDrilling && MainChar.CanLaunch);
 	}
 
 	private void SetActive(GameObject obj, bool active)
 	{
 		if (active == obj.activeSelf) return;
-
 		obj.SetActive(active);
 	}
 }

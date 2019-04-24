@@ -4,7 +4,6 @@ public class PromptTrigger : VicinityTrigger
 {
 	private static PromptUI promptUI;
 	[SerializeField] protected string text;
-	[SerializeField] protected float fadeInTime = 0f, fadeOutTime = 0f;
 	protected bool disablePrompt = false;
 	private PromptUI PromptUI { get { return promptUI ?? (promptUI = FindObjectOfType<PromptUI>()); } }
 
@@ -20,7 +19,7 @@ public class PromptTrigger : VicinityTrigger
 		base.EnterTrigger();
 		if (disablePrompt) return;
 
-		PromptUI?.ActivatePrompt(text, fadeInTime);
+		PromptUI?.ActivatePrompt(text);
 	}
 
 	protected override void ExitTrigger()
@@ -31,5 +30,5 @@ public class PromptTrigger : VicinityTrigger
 		DeactivatePrompt();
 	}
 
-	private void DeactivatePrompt() => PromptUI?.DeactivatePrompt(text, fadeOutTime);
+	private void DeactivatePrompt() => PromptUI?.DeactivatePrompt(text);
 }

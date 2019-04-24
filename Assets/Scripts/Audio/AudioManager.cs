@@ -43,7 +43,17 @@ public class AudioManager : MonoBehaviour
 	{
 		if (!clip) return;
 
-		AudioSource src = pool.Dequeue();
+		AudioSource src = null;
+		while (src == null)
+		{
+
+			if (pool.Count == 0)
+			{
+				SetUpPoolReserve();
+			}
+			src = pool.Dequeue();
+		}
+
 		active.Add(new SourceManager(src, clip.length));
 		GameObject obj = src.gameObject;
 		obj.SetActive(true);

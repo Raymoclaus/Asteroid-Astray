@@ -7,8 +7,11 @@ public class DynamicEngineNoise : MonoBehaviour
 	public Vector2 pitchRange;
 	public float pitchMultiplier = 0.1f;
 	public float volume = 0.15f;
-	[SerializeField]
-	private ShuttleTrackers shuttleTrackerSO;
+	private Shuttle mainChar;
+	private Shuttle MainChar
+	{
+		get { return mainChar ?? (mainChar = FindObjectOfType<Shuttle>()); }
+	}
 
 	private void Awake()
 	{
@@ -20,10 +23,10 @@ public class DynamicEngineNoise : MonoBehaviour
 
 	private void Update()
 	{
-		source.enabled = shuttleTrackerSO;
-		if (!shuttleTrackerSO) return;
+		source.enabled = MainChar != null;
+		if (!source.enabled) return;
 
 		source.volume = Pause.IsStopped ? 0f : volume;
-		source.pitch = Mathf.Lerp(pitchRange.x, pitchRange.y, shuttleTrackerSO.velocity.magnitude * pitchMultiplier);
+		source.pitch = Mathf.Lerp(pitchRange.x, pitchRange.y, MainChar.velocity.magnitude * pitchMultiplier);
 	}
 }

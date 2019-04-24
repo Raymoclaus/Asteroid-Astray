@@ -41,45 +41,51 @@ namespace Console
 			string firstArg = args[0];
 			if (firstArg == LIST_ARG)
 			{
-				DeveloperConsole.Log(entityNameList);
+				List();
 			}
 
 			if (entityNames.Contains(firstArg))
 			{
-				if (Object.FindObjectOfType<EntityGenerator>() == null)
+				Spawn(args, firstArg);
+			}
+		}
+
+		private void Spawn(string[] args, string firstArg)
+		{
+			if (Object.FindObjectOfType<EntityGenerator>() == null)
+			{
+				DeveloperConsole.Log("You cannot spawn entities right now.");
+				return;
+			}
+
+			int amount = args.Length == 1 ? 1 : int.Parse(args[1]);
+
+			SpawnableEntity se = EntityPrefabs.GetSpawnableEntity(firstArg);
+			if (se == null)
+			{
+				DeveloperConsole.Log($"Entity type {firstArg} not found.");
+				return;
+			}
+
+			DeveloperConsole.Log($"Spawning {amount} {firstArg}{(amount > 1 ? "s" : string.Empty)}.");
+			for (int i = 0; i < amount; i++)
+			{
+				Entity newEntity = EntityGenerator.SpawnEntity(se);
+				if (newEntity == null)
 				{
-					DeveloperConsole.Log("You cannot spawn entities right now.");
+					DeveloperConsole.Log($"{i + 1}: {firstArg} spawn attempt was unsuccessful.");
 				}
 				else
 				{
-					int amount = args.Length == 1 ? 1 : int.Parse(args[1]);
-
-					SpawnableEntity se = EntityPrefabs.GetSpawnableEntity(firstArg);
-					if (se != null)
-					{
-						DeveloperConsole.Log($"Spawning {amount} {firstArg}{(amount > 1 ? "s" : string.Empty)}.");
-						for (int i = 0; i < amount; i++)
-						{
-							Entity newEntity = EntityGenerator.SpawnEntity(se);
-							if (newEntity == null)
-							{
-								DeveloperConsole.Log($"{i + 1}: {firstArg} spawn attempt was unsuccessful.");
-							}
-							else
-							{
-								DeveloperConsole.Log($"{i + 1}: {firstArg} spawn attempt was successful.");
-								Vector2 pos = newEntity.transform.position;
-								DeveloperConsole.Log($"{firstArg} spawned at location x:{pos.x} y:{pos.y}.");
-							}
-						}
-					}
-					else
-					{
-						DeveloperConsole.Log($"Entity type {firstArg} not found.");
-					}
+					DeveloperConsole.Log($"{i + 1}: {firstArg} spawn attempt was successful.");
+					Vector2 pos = Camera.main.transform.position;
+					pos += new Vector2(Random.value - 0.5f, Random.value - 0.5f) * 5f;
+					newEntity.transform.position = pos;
 				}
 			}
 		}
+
+		private void List() => DeveloperConsole.Log(entityNameList);
 
 		public override bool ArgsAreValid(string[] args)
 		{

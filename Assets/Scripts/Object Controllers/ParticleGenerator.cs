@@ -41,7 +41,16 @@ public class ParticleGenerator : MonoBehaviour
 		Color? tint = null, float fadeIn = 0f, int sortingLayer = 0, int sortingOrder = 0,
 		float growthOverLifetime = 1f)
 	{
-		ParticlePropertyManager ppm = pool.Dequeue();
+		ParticlePropertyManager ppm = null;
+		do
+		{
+			if (pool.Count == 0)
+			{
+				SetUpPoolReserve();
+			}
+			ppm = pool.Dequeue();
+		} while (ppm.rend == null);
+
 		SpriteRenderer rend = ppm.rend;
 		rend.sprite = spr;
 		rend.sortingLayerID = sortingLayer;

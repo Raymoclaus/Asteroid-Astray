@@ -1,42 +1,42 @@
 ﻿using UnityEngine;
 
+[RequireComponent(typeof(SpriteRenderer))]
 public class DirectionMarker : MonoBehaviour
 {
 	[SerializeField] private float radius = 0.5f;
-	private Transform parent;
-	private Vector2 locationTarget;
-	[SerializeField] private ShuttleTrackers shuttleTrackerSO;
+	private Shuttle mainChar;
+	private Shuttle MainChar { get { return mainChar ?? (mainChar = FindObjectOfType<Shuttle>()); } }
+	private Vector2 LocationTarget { get { return MainChar?.waypoint.GetPosition() ?? Vector2.zero; } }
+	private Transform parent { get { return MainChar?.transform ?? transform.parent; } }
+	private SpriteRenderer sprRend;
 
 	private void Awake()
 	{
-		parent = transform.parent;
-		shuttleTrackerSO.NavigationUpdated += UpdateHUD;
-		UpdateHUD();
+		sprRend = GetComponent<SpriteRenderer>();
+		MainChar.OnNavigationUpdated += Activate;
 	}
 
-	private void UpdateHUD()
-	{
-		gameObject.SetActive(shuttleTrackerSO.navigationActive);
-	}
+	public void Activate(bool active) => sprRend.enabled = active;
 
 	private void Update()
 	{
+		if (!sprRend.enabled) return;
 		//get angle of current position to target position in degrees
 		float angle = GetAngle();
 		//rotate transform by angle
 		transform.eulerAngles = Vector3.back * angle;
 		//place transform at the current position relative to the parent
 		angle *= Mathf.Deg2Rad;
-		transform.position = parent.position + new Vector3(Mathf.Sin(angle), Mathf.Cos(angle), 0f) * radius;
+		transform.position = MainChar.transform.position + new Vector3(Mathf.Sin(angle), Mathf.Cos(angle), 0f) * radius;
 	}
 
 	private float GetAngle()
 	{
-		return -Vector2.SignedAngle(Vector2.up, shuttleTrackerSO.GetWaypointLocation() - parent.position);
+		return -Vector2.SignedAngle(Vector2.up, LocationTarget - GetCurrentPosition());
 	}
 
-	private void OnDestroy()
+	private Vector2 GetCurrentPosition()
 	{
-		shuttleTrackerSO.NavigationUpdated -= UpdateHUD;
+		return parent?.position ?? transform.position;
 	}
 }

@@ -45,7 +45,7 @@ namespace Console
 		{
 			get { return Instance?.consoleCanvas.gameObject.activeInHierarchy ?? false; }
 		}
-		private static Dictionary<string, ConsoleCommand> Commands { get; set; }
+		private Dictionary<string, ConsoleCommand> commands { get; set; }
 			= new Dictionary<string, ConsoleCommand>();
 
 		private delegate void ConsoleLogEventHandler(string log);
@@ -62,7 +62,11 @@ namespace Console
 
 		private void Start()
 		{
-			if (Instance != this) return;
+			if (Instance != this)
+			{
+				Destroy(gameObject);
+				return;
+			}
 
 			consoleCanvas.gameObject.SetActive(false);
 			for (int i = 0; i < HELP_COMMANDS.Count; i++) HELP_COMMANDS[i] = HELP_COMMANDS[i].ToLower();
@@ -81,11 +85,13 @@ namespace Console
 
 		private void OnDisable() => OnConsoleLog -= AddMessageToConsole;
 
+		private void OnDestroy() => instance = null;
+
 		public static void AddCommandsToConsole(string name, ConsoleCommand command)
 		{
-			if (!Commands.ContainsKey(name))
+			if (!Instance.commands.ContainsKey(name))
 			{
-				Commands.Add(name.ToLower(), command);
+				Instance.commands.Add(name.ToLower(), command);
 			}
 		}
 
@@ -144,7 +150,7 @@ namespace Console
 
 		private ConsoleCommand FindCommandByAlias(string alias)
 		{
-			foreach (KeyValuePair<string , ConsoleCommand> command in Commands)
+			foreach (KeyValuePair<string , ConsoleCommand> command in commands)
 			{
 				ConsoleCommand cc = command.Value;
 				for (int i = 0; i < cc.CommandAliases.Length; i++)
@@ -190,9 +196,9 @@ namespace Console
 		public static List<ConsoleCommand> GetCommandNames()
 		{
 			List<ConsoleCommand> commandNames = new List<ConsoleCommand>();
-			foreach (KeyValuePair<string, ConsoleCommand> command in Commands)
+			foreach (KeyValuePair<string, ConsoleCommand> cc in Instance.commands)
 			{
-				commandNames.Add(command.Value);
+				commandNames.Add(cc.Value);
 			}
 			return commandNames;
 		}

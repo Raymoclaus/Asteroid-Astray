@@ -4,7 +4,7 @@ public class HUDMeterController : MonoBehaviour
 {
 	[SerializeField] private MeterValues health, shield, boost;
 
-	[SerializeField] private Shuttle mainChar;
+	private Shuttle mainChar;
 	private Shuttle MainChar
 	{
 		get
@@ -24,7 +24,7 @@ public class HUDMeterController : MonoBehaviour
 	{
 		MainChar.OnHealthUpdate += health.UpdateValues;
 		MainChar.OnShieldUpdated += shield.UpdateValues;
-		Shuttle.OnBoostAmountChanged += boost.UpdateValues;
+		MainChar.OnBoostAmountChanged += boost.UpdateValues;
 
 		health.SetValue(MeterValues.fillAmountString, MainChar.GetHpRatio());
 		shield.SetValue(MeterValues.fillAmountString, MainChar.ShieldRatio);

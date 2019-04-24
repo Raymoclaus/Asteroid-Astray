@@ -10,7 +10,10 @@ public class Entity : MonoBehaviour
 	private static Camera mainCam;
 	protected static Camera MainCam { get { return mainCam ?? (mainCam = Camera.main); } }
 	private static CameraCtrl mainCamCtrl;
-	protected static CameraCtrl CameraCtrl { get { return mainCamCtrl ?? (mainCamCtrl = MainCam.GetComponent<CameraCtrl>()); } }
+	protected static CameraCtrl CameraCtrl
+	{
+		get { return mainCamCtrl ?? (mainCamCtrl = MainCam.GetComponent<CameraCtrl>()); }
+	}
 	[SerializeField] protected static ParticleGenerator particleGenerator;
 	protected static AudioManager audioManager;
 	[SerializeField] protected ScreenRippleEffectController screenRippleSO;
@@ -65,7 +68,12 @@ public class Entity : MonoBehaviour
 
 	public virtual void LateUpdate() => RepositionInNetwork();
 
-	private void OnDestroy() => EntityNetwork.RemoveEntity(this);
+	private void OnDestroy()
+	{
+		EntityNetwork.RemoveEntity(this);
+		mainCam = null;
+		mainCamCtrl = null;
+	}
 
 	public void RepositionInNetwork()
 	{
@@ -303,6 +311,7 @@ public class Entity : MonoBehaviour
 
 			this.launcher = null;
 			launched = false;
+			if (this == null) return;
 			if (CameraCtrl?.GetPanTarget() == transform)
 			{
 				CameraCtrl?.Pan(null);

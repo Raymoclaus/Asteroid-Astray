@@ -2,10 +2,12 @@
 
 public class ShipEntryPanel : MonoBehaviour
 {
-	[SerializeField]
 	private Shuttle shuttle;
-	[SerializeField]
-	private GameObject holder;
+	private Shuttle Shuttle
+	{
+		get { return shuttle ?? (shuttle = FindObjectOfType<Shuttle>()); }
+	}
+	[SerializeField] private GameObject holder;
 
 	private void Update()
 	{
@@ -33,9 +35,5 @@ public class ShipEntryPanel : MonoBehaviour
 		}
 	}
 
-	public void Store()
-	{
-		shuttle = shuttle ?? FindObjectOfType<Shuttle>();
-		shuttle.StoreInShip();
-	}
+	public void Store() => Shuttle.StoreInShip();
 }

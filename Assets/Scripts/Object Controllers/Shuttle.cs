@@ -6,9 +6,6 @@ public class Shuttle : Character, IStunnable, ICombat
 	[Header("Shuttle Fields")]
 
 	#region Fields
-	[Header("Required references")]
-	[SerializeField] private ShuttleTrackers trackerSO;
-	public Entity GetEntity { get { return this; } }
 	[Tooltip("Requires reference to the SpriteRenderer of the shuttle.")]
 	public SpriteRenderer SprRend;
 	[Tooltip("Requires reference to the Animator of the shuttle's transform.")]
@@ -82,13 +79,23 @@ public class Shuttle : Character, IStunnable, ICombat
 	private bool isTemporarilyInvincible = false;
 	private QuestLog questLog = new QuestLog();
 	[SerializeField] private ColorReplacementGroup cRGroup;
-	[SerializeField] private Transform defaultWaypointTarget;
-
+	public Waypoint waypoint;
+	[SerializeField] private bool drillIsActive = true;
+	[SerializeField] private bool canShoot;
+	public bool CanShoot { get { return canShoot; } set { canShoot = value; } }
+	[SerializeField] private bool canLaunch;
+	public bool CanLaunch { get { return canLaunch; } set { canLaunch = value; } }
+	[SerializeField] private float launchDamage = 500f;
+	public bool hasControl = true;
+	[SerializeField] private bool autoPilot;
+	public bool isKinematic;
 	[SerializeField] private TY4PlayingUI ty4pUI;
-	
+
 	#region Boost
-		//how long a boost can last
-		[SerializeField] private float boostCapacity = 1f;
+	private bool canBoost = true;
+	public bool CanBoost { get { return canBoost; } }
+	//how long a boost can last
+	[SerializeField] private float boostCapacity = 1f;
 	//represents how much boost is currently available
 	private float boostLevel;
 	//how much a boost affects speed
@@ -124,23 +131,22 @@ public class Shuttle : Character, IStunnable, ICombat
 	#endregion
 
 	#region Events
+	public delegate void NavigationEventHandler(bool activate);
+	public event NavigationEventHandler OnNavigationUpdated;
+	public delegate void GoInputEventHandler();
+	public event GoInputEventHandler OnGoInput;
+	public delegate void LaunchInputEventHandler();
+	public event LaunchInputEventHandler OnLaunchInput;
 	public delegate void DrillCompleteEventHandler(bool successful);
-	public static event DrillCompleteEventHandler OnDrillComplete;
+	public event DrillCompleteEventHandler OnDrillComplete;
 	public delegate void BoostAmountEventHandler(float oldVal, float newVal);
-	public static event BoostAmountEventHandler OnBoostAmountChanged;
-	public static void ClearEvent()
-	{
-		OnDrillComplete = null;
-		OnBoostAmountChanged = null;
-	}
+	public event BoostAmountEventHandler OnBoostAmountChanged;
 	#endregion Events
 
 	protected override void Awake()
 	{
 		base.Awake();
 		shipStorage = shipStorage ?? FindObjectOfType<ShipInventory>();
-		trackerSO.ResetDefaults();
-		trackerSO.SetDefaultWaypointTarget(defaultWaypointTarget);
 		if (CameraCtrl) CameraCtrl.followTarget = this;
 
 		canDrill = true;
@@ -159,8 +165,6 @@ public class Shuttle : Character, IStunnable, ICombat
 			//get input for item usage
 			GetItemUsageInput();
 		}
-
-		UpdateShuttleTrackerSO();
 	}
 
 	private void FixedUpdate() => rb.AddForce(accel);
@@ -168,10 +172,10 @@ public class Shuttle : Character, IStunnable, ICombat
 	//Checks for input related to movement and calculates acceleration
 	private void GetMovementInput()
 	{
-		if (!trackerSO.hasControl) return;
+		if (!hasControl) return;
 
 		//Check if the player is attempting to boost
-		if (!trackerSO.autoPilot) Boost(InputHandler.GetInput(InputAction.Boost) > 0f);
+		if (!autoPilot) Boost(InputHandler.GetInput(InputAction.Boost) > 0f);
 		//used for artificially adjusting speed, used by the auto pilot only
 		float speedMod = 1f;
 		//update rotation variable with transform's current rotation
@@ -182,7 +186,7 @@ public class Shuttle : Character, IStunnable, ICombat
 		if (float.IsPositiveInfinity(lookDirection)) lookDirection = lastLookDirection;
 
 		//automatically look for the nearest asteroid
-		if (trackerSO.autoPilot)
+		if (autoPilot)
 		{
 			if (Pause.timeSinceOpen - autoPilotTimer > 0f || followTarget == null)
 			{
@@ -231,7 +235,7 @@ public class Shuttle : Character, IStunnable, ICombat
 		//reset acceleration
 		accel = Vector2.zero;
 		//get movement input
-		if (trackerSO.autoPilot)
+		if (autoPilot)
 		{
 			accel = Vector2.up * EngineStrength * speedMultiplier;
 		}
@@ -240,7 +244,7 @@ public class Shuttle : Character, IStunnable, ICombat
 			float input = Mathf.Clamp01(InputHandler.GetInput(InputAction.Go));
 			if (input > 0f)
 			{
-				trackerSO.GoInput();
+				OnGoInput?.Invoke();
 			}
 			if (IsDrilling)
 			{
@@ -276,7 +280,7 @@ public class Shuttle : Character, IStunnable, ICombat
 	//use calculated rotation and speed to determine where to move to
 	private void CalculateForces()
 	{
-		rb.bodyType = trackerSO.isKinematic ? RigidbodyType2D.Kinematic : RigidbodyType2D.Dynamic;
+		rb.bodyType = isKinematic ? RigidbodyType2D.Kinematic : RigidbodyType2D.Dynamic;
 		//calculate drag factor
 		float checkSpeed = SpeedCheck;
 		float decelerationModifier = 1f;
@@ -505,10 +509,10 @@ public class Shuttle : Character, IStunnable, ICombat
 	public override bool ShouldLaunch() =>
 		CanDrillLaunch()
 		&& InputHandler.GetInputUp(InputAction.DrillLaunch) > 0f
-		&& trackerSO.hasControl
-		&& trackerSO.canLaunch;
+		&& hasControl
+		&& canLaunch;
 
-	public override bool CanDrillLaunch() => base.CanDrillLaunch() && trackerSO.canLaunch;
+	public override bool CanDrillLaunch() => base.CanDrillLaunch() && canLaunch;
 
 	public void Stun()
 	{
@@ -536,7 +540,7 @@ public class Shuttle : Character, IStunnable, ICombat
 	{
 		if (accel == Vector2.zero) return false;
 		
-		if (trackerSO.autoPilot)
+		if (autoPilot)
 		{
 			return target.GetEntityType() == EntityType.Asteroid;
 		}
@@ -575,7 +579,7 @@ public class Shuttle : Character, IStunnable, ICombat
 
 	private void Boost(bool input)
 	{
-		if (trackerSO.canBoost && input && boostLevel > 0f && !Pause.IsStopped)
+		if (canBoost && input && boostLevel > 0f && !Pause.IsStopped)
 		{
 			if (!isBoosting)
 			{
@@ -652,21 +656,21 @@ public class Shuttle : Character, IStunnable, ICombat
 		&& !isBoosting
 		&& InputHandler.GetInput(InputAction.Shoot) > 0f
 		&& !Pause.IsStopped
-		&& trackerSO.hasControl
-		&& trackerSO.canShoot;
+		&& hasControl
+		&& canShoot;
 
 	public override bool CanFireStraightWeapon() =>
 		straightWeaponAttached
 		&& !isBoosting
 		&& InputHandler.GetInput(InputAction.Shoot) > 0f
 		&& !Pause.IsStopped
-		&& trackerSO.hasControl
-		&& trackerSO.canShoot;
+		&& hasControl
+		&& canShoot;
 
 	public override Vector2 LaunchDirection(Transform launchableObject)
 	{
 		float shuttleAngle = -Vector2.SignedAngle(Vector2.up, transform.up);
-		if (!trackerSO.hasControl)
+		if (!hasControl)
 		{
 			shuttleAngle *= Mathf.Deg2Rad;
 			return new Vector2(Mathf.Sin(shuttleAngle), Mathf.Cos(shuttleAngle));
@@ -688,13 +692,13 @@ public class Shuttle : Character, IStunnable, ICombat
 
 	public override void Launching()
 	{
-		trackerSO.LaunchInput();
+		OnLaunchInput?.Invoke();
 		DrillLaunchArcDisable();
 		CameraCtrl?.SetConstantSize(false);
 		CameraCtrl?.SetLookAheadDistance(false);
 	}
 
-	public override float GetLaunchDamage() => trackerSO.launchDamage;
+	public override float GetLaunchDamage() => launchDamage;
 
 	public bool EngageInCombat(ICombat hostile)
 	{
@@ -716,22 +720,6 @@ public class Shuttle : Character, IStunnable, ICombat
 				return;
 			}
 		}
-	}
-
-	private void UpdateShuttleTrackerSO()
-	{
-		if (!trackerSO)
-		{
-			print("Attach appropriate Scriptable Object tracker to " + GetType().Name);
-			return;
-		}
-
-		trackerSO.SetPosition(transform.position);
-		trackerSO.rotation = transform.eulerAngles;
-		trackerSO.velocity = velocity;
-		trackerSO.lastLookDirection = lastLookDirection;
-		trackerSO.boostRemaining = GetBoostRemaining();
-		trackerSO.storageCount = storage.Count(Item.Type.Stone);
 	}
 
 	public override void AttachLaser(bool attach) => laserAttached = attach;
@@ -762,4 +750,8 @@ public class Shuttle : Character, IStunnable, ICombat
 	protected override int GetLevel() => base.GetLevel();
 
 	protected override int GetValue() => storage.GetValue();
+
+	public override bool CanDrill() => base.CanDrill() && drillIsActive;
+
+	public void SetNavigationActive(bool activate) => OnNavigationUpdated?.Invoke(activate);
 }

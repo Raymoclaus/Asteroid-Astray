@@ -21,15 +21,11 @@ public class NarrativeManager : MonoBehaviour
 	[SerializeField] private DebugGameplayManager dgm;
 	[SerializeField] private SpotlightEffectController spotlightEffectController;
 	[SerializeField] private CustomScreenEffect screenEffects;
-	private ShuttleTrackers shuttleTracker;
-	private ShuttleTrackers ShuttleTracker
+	[SerializeField] private Shuttle mainChar;
+	private Shuttle MainChar
 	{
-		get
-		{
-			return shuttleTracker ?? (shuttleTracker = Resources.Load<ShuttleTrackers>("ShuttleTrackerSO"));
-		}
+		get { return mainChar ?? (mainChar = FindObjectOfType<Shuttle>()); }
 	}
-	[SerializeField] private Character mainChar;
 	private MainHatchPrompt mainHatch;
 	private MainHatchPrompt MainHatch
 	{
@@ -92,14 +88,14 @@ public class NarrativeManager : MonoBehaviour
 			ChooseStartingLocation();
 		}
 
-		ShuttleTracker.SetControllable(false);
-		ShuttleTracker.SetKinematic(true);
+		MainChar.hasControl = false;
+		MainChar.isKinematic = true;
 		MainHatch.Lock(true);
-		ShuttleTracker.SetNavigationActive(false);
+		MainChar.SetNavigationActive(false);
 		LoadingController.AddListener(() =>
 		{
-			ShuttleTracker.SetControllable(true);
-			ShuttleTracker.SetKinematic(false);
+			MainChar.hasControl = true;
+			MainChar.isKinematic = false;
 		});
 
 		if (dgm.skipRecoveryDialogue)
@@ -115,7 +111,7 @@ public class NarrativeManager : MonoBehaviour
 						ShuttleRepaired = true;
 						LoadingController.AddListener(() =>
 						{
-							ShuttleTracker.SetNavigationActive(true);
+							MainChar.SetNavigationActive(true);
 						});
 						if (dgm.skipReturnToTheShipQuest)
 						{
@@ -248,7 +244,7 @@ public class NarrativeManager : MonoBehaviour
 
 	private void CompletedRepairTheShuttleQuest(Quest quest)
 	{
-		ShuttleTracker.SetNavigationActive(true);
+		MainChar.SetNavigationActive(true);
 		ShuttleRepaired = true;
 		StartDialogue(findShipDialogue, true, null);
 		StartReturnToTheShipQuest();
@@ -297,7 +293,7 @@ public class NarrativeManager : MonoBehaviour
 		//create a deranged bot
 		Entity newEntity = EntityGenerator.SpawnEntity(derangedSoloBotPrefab);
 		//set waypoint to new bot
-		ShuttleTracker.SetWaypoint(newEntity.transform, null);
+		MainChar.waypoint = new Waypoint(newEntity.transform, null);
 		//attach dialogue prompt when player approaches bot
 		VicinityTrigger entityPrompt = newEntity.GetComponentInChildren<VicinityTrigger>();
 		VicinityTrigger.VicinityTriggerEventHandler triggerEnterAction = null;
@@ -377,6 +373,6 @@ public class NarrativeManager : MonoBehaviour
 		Vector2 randomPos = new Vector2(Mathf.Sin(randomAngle),	Mathf.Cos(randomAngle));
 		float div = DistanceUI.UNITS_TO_METRES;
 		randomPos *= UnityEngine.Random.value * 100f / div + 300f / div;
-		mainChar.Teleport(pos + randomPos);
+		MainChar?.Teleport(pos + randomPos);
 	}
 }

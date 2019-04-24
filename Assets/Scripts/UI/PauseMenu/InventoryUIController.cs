@@ -59,8 +59,8 @@ public class InventoryUIController : PauseTab
 		UpdateSlotGroup(mainGroup, 1f);
 		UpdateSlotGroup(craftingInputGroup, 1f);
 		UpdateSlotGroup(craftingOutputGroup, 1f);
-		UpdateSlotGroup(ghostInputGroup, 0.5f);
-		UpdateSlotGroup(ghostOutputGroup, 0.5f);
+		UpdateSlotGroup(ghostInputGroup, 0.8f);
+		UpdateSlotGroup(ghostOutputGroup, 0.8f);
 	}
 
 	private void UpdateSlotGroup(SlotGroup sg, float alpha)
