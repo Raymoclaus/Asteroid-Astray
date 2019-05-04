@@ -1,9 +1,10 @@
 ﻿public class ConversationEventPosition
 {
-	public ConversationEvent conversation;
+	public ConversationWithActions conversation;
 	public int position;
 
-	public ConversationEventPosition(ConversationEvent conversation = null, int position = 0)
+	public ConversationEventPosition(ConversationWithActions conversation = null,
+		int position = 0)
 	{
 		this.conversation = conversation;
 		this.position = position;

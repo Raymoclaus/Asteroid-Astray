@@ -8,6 +8,7 @@ public class EnergyShieldMaterialManager : MonoBehaviour
 	[SerializeField] private Character character;
 	private Material mat;
 	private SpriteRenderer sprRend;
+	[SerializeField] private Animator anim;
 	private const string FORCE_RADIUS = "_ForceRadius", DISTORTION_AMPLITUDE = "_DistortionAmplitude",
 		FORCE_LOCATION_X = "_ForceLocationX", FORCE_LOCATION_Y = "_ForceLocationY",
 		RIPPLE_PROGRESS = "_RippleProgress", RIPPLE_ANGLE = "_RippleAngle";
@@ -29,7 +30,7 @@ public class EnergyShieldMaterialManager : MonoBehaviour
 		{
 			Break();
 		}
-		else
+		else if (oldVal <= 0f)
 		{
 			Restore();
 		}
@@ -48,9 +49,16 @@ public class EnergyShieldMaterialManager : MonoBehaviour
 	private void Restore()
 	{
 		sprRend.enabled = true;
+		anim.SetTrigger("Idle");
 	}
 
 	private void Break()
+	{
+		Debug.Log("Break");
+		anim.SetTrigger("Break");
+	}
+
+	private void Hide()
 	{
 		sprRend.enabled = false;
 	}

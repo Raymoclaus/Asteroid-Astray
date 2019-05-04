@@ -3,7 +3,7 @@
 public class MainHatchPrompt : InteractablePromptTrigger
 {
 	[SerializeField] private ShipEntryPanel shipEntryUI;
-	[SerializeField] private ConversationEvent interactBeforeRepairedShuttle,
+	[SerializeField] private ConversationWithActions interactBeforeRepairedShuttle,
 		interactBeforeRechargedShip;
 
 	private bool isLocked = false;

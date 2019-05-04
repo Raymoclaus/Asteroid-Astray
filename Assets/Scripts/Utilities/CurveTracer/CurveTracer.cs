@@ -45,6 +45,11 @@ public class CurveTracer : Tracer
 
 	protected override void OnValidate() => SetInterpolatedPosition(GetCurveData());
 
+	public void GoToEndOfPath(float speedMultiplier = 1f)
+	{
+		GoToEndOfPath(speedMultiplier, null, true, null);
+	}
+
 	public void GoToEndOfPath(float speedMultiplier = 1f, int? pathNum = null, bool resetDistance = true, System.Action reachedPathEndAction = null)
 	{
 		SetPath(pathNum ?? GetPath());

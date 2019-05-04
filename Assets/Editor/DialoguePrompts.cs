@@ -1,7 +1,7 @@
 ﻿using UnityEditor;
 using UnityEngine;
 
-[CustomPropertyDrawer(typeof(ConversationEvent), true)]
+[CustomPropertyDrawer(typeof(ConversationWithActions), true)]
 public class DialoguePromptsEditor : PropertyDrawer
 {
 	private const float DEFAULT_HEIGHT = 16f;
@@ -11,82 +11,68 @@ public class DialoguePromptsEditor : PropertyDrawer
 	{
 		EditorGUI.BeginChangeCheck();
 		Object target = property.serializedObject.targetObject;
-		ConversationEvent prompt = (ConversationEvent)fieldInfo.GetValue(target);
+		ConversationWithActions prompt = (ConversationWithActions)fieldInfo.GetValue(target);
+		prompt.EnsureLength();
 
 		EditorGUI.BeginProperty(position, label, property);
 		int indent = EditorGUI.indentLevel;
 		EditorStyles.label.wordWrap = true;
 		EditorStyles.label.fontStyle = FontStyle.Normal;
 
-		EditorGUI.PropertyField(position, property, label, true);
+		SerializedProperty conversationEventProperty
+			= property.FindPropertyRelative("conversationEvent");
+		EditorGUI.PropertyField(position, conversationEventProperty, label, true);
+		height = DEFAULT_HEIGHT;
 		EditorGUI.indentLevel++;
 
-		height = DEFAULT_HEIGHT;
-		Rect foldoutRect = new Rect(position.x, position.y + height, position.width, DEFAULT_HEIGHT);
-		height += DEFAULT_HEIGHT;
-		property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, label);
-		if (property.isExpanded && prompt != null)
+		if (prompt.conversationEvent != null)
 		{
-			SerializedObject convoObject = new SerializedObject(property.objectReferenceValue);
-			SerializedProperty conversationProperty = convoObject.FindProperty("conversation");
-			int length = prompt.conversation.Length;
-			for (int i = 0; i < length; i++)
+			SerializedProperty eventsListProperty = property.FindPropertyRelative("events");
+			Rect foldoutRect = new Rect(position.x, position.y + height, position.width, DEFAULT_HEIGHT);
+			height += DEFAULT_HEIGHT;
+			property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, label);
+			if (property.isExpanded && prompt != null)
 			{
-				Rect toggleRect = new Rect(position.x, position.y + height,
-					position.width, DEFAULT_HEIGHT);
-				float textWidth = position.width - 15f;
-				Rect textRect = new Rect(position.x + 15f, position.y + height,
-					textWidth, DEFAULT_HEIGHT * 3f);
-
-				bool hasAction = prompt.conversation[i].hasAction;
-				if (EditorGUI.Toggle(toggleRect, hasAction) != hasAction)
+				int length = prompt.Length;
+				for (int i = 0; i < length; i++)
 				{
-					prompt.conversation[i].hasAction = !hasAction;
-				}
-				string text = prompt.conversation[i].line;
-				GUIContent textLabel = new GUIContent(text);
-				EditorGUI.LabelField(textRect, textLabel);
-				height += EditorStyles.label.CalcHeight(textLabel, textWidth);
+					float textWidth = position.width - 15f;
+					Rect textRect = new Rect(position.x + 15f, position.y + height,
+						textWidth, DEFAULT_HEIGHT * 3f);
 
-				if (hasAction)
-				{
-					SerializedProperty lineProperty = conversationProperty.GetArrayElementAtIndex(i);
+					string text = prompt.GetLines()[i].line;
+					GUIContent textLabel = new GUIContent(text);
+					EditorGUI.LabelField(textRect, textLabel);
+					height += EditorStyles.label.CalcHeight(textLabel, textWidth);
 
+					SerializedProperty eventProperty = eventsListProperty.GetArrayElementAtIndex(i);
 					Rect eventRect = new Rect(position.x + 15f, position.y + height,
 						position.width - 20f, DEFAULT_HEIGHT * 5);
-					SerializedProperty actionProperty = lineProperty.FindPropertyRelative("action");
-					EditorGUI.PropertyField(eventRect, actionProperty, true);
-					height += EditorGUI.GetPropertyHeight(actionProperty);
-
-					Rect skipEventRect = new Rect(position.x + 15f, position.y + height,
-						position.width - 20f, DEFAULT_HEIGHT * 5);
-					SerializedProperty skipActionProperty = lineProperty.FindPropertyRelative("skipAction");
-					EditorGUI.PropertyField(skipEventRect, skipActionProperty, true);
-					height += EditorGUI.GetPropertyHeight(skipActionProperty);
+					EditorGUI.PropertyField(eventRect, eventProperty);
+					height += EditorGUI.GetPropertyHeight(eventProperty);
 				}
+
+				height += DEFAULT_HEIGHT;
+				Rect labelRect = new Rect(position.x, position.y + height,
+					position.width, DEFAULT_HEIGHT);
+				EditorGUI.LabelField(labelRect, "End of conversation action");
+				height += DEFAULT_HEIGHT;
+
+				Rect endEventRect = new Rect(position.x + 15f, position.y + height,
+					position.width - 20f, DEFAULT_HEIGHT * 5);
+				SerializedProperty endEventProperty = property.FindPropertyRelative("endEvent");
+				EditorGUI.PropertyField(endEventRect, endEventProperty);
+				height += EditorGUI.GetPropertyHeight(endEventProperty);
+
+				//convoEventObj.ApplyModifiedProperties();
+				//convoObject.ApplyModifiedProperties();
+				//endEventObj.ApplyModifiedProperties();
 			}
-
-			height += DEFAULT_HEIGHT;
-			Rect labelRect = new Rect(position.x, position.y + height,
-				position.width, DEFAULT_HEIGHT);
-			EditorGUI.LabelField(labelRect, "End of conversation action");
-			height += DEFAULT_HEIGHT;
-
-			Rect endEventRect = new Rect(position.x + 15f, position.y + height,
-				position.width - 20f, DEFAULT_HEIGHT * 5);
-			SerializedObject endActionObject = new SerializedObject(prompt);
-			SerializedProperty eventProperty = endActionObject
-				.FindProperty("conversationEndAction");
-			EditorGUI.PropertyField(endEventRect, eventProperty);
-			height += EditorGUI.GetPropertyHeight(eventProperty);
-
-			convoObject.ApplyModifiedProperties();
-			endActionObject.ApplyModifiedProperties();
 		}
 
 		EditorGUI.indentLevel = indent;
-		EditorGUI.EndProperty();
 		property.serializedObject.ApplyModifiedProperties();
+		EditorGUI.EndProperty();
 		EditorGUI.EndChangeCheck();
 
 		if (GUI.changed)

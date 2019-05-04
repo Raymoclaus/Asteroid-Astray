@@ -3,12 +3,12 @@
 [CreateAssetMenu(menuName = "Scriptable Objects/Dialogue/Branch Event")]
 public class BranchEvent : ScriptableObject
 {
-	public ConversationEvent[] nextConversations;
+	public ConversationWithActions[] nextConversations;
 	[SerializeField]
 	protected DialogueChoiceDirection[] options;
 	private int choice;
 
-	public ConversationEvent GetConversation()
+	public ConversationWithActions GetConversation()
 	{
 		return nextConversations[choice];
 	}

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class NarrativeManager : MonoBehaviour
@@ -53,7 +54,7 @@ public class NarrativeManager : MonoBehaviour
 	}
 	[SerializeField] private TY4PlayingUI ty4pUI;
 
-	[SerializeField] private ConversationEvent
+	[SerializeField] private ConversationWithActions
 		recoveryDialogue,
 		UseThrustersDialogue,
 		completedFirstGatheringQuestDialogue,
@@ -73,7 +74,7 @@ public class NarrativeManager : MonoBehaviour
 	private void DevCheatSpawn(Entity e)
 	{
 		Vector2 centerPos = mainChar.transform.position;
-		float randomAngle = Random.value * Mathf.PI * 2f;
+		float randomAngle = UnityEngine.Random.value * Mathf.PI * 2f;
 		Vector2 randomUnit = new Vector2(Mathf.Sin(randomAngle), Mathf.Cos(randomAngle));
 		Vector2 spawnPos = centerPos + randomUnit * 3f;
 
@@ -299,7 +300,7 @@ public class NarrativeManager : MonoBehaviour
 		VicinityTrigger.VicinityTriggerEventHandler triggerEnterAction = null;
 		triggerEnterAction = () =>
 		{
-			UnityEngine.Events.UnityAction delayedDialogue = () =>
+			Action delayedDialogue = () =>
 			{
 				Pause.DelayedAction(() =>
 				{
@@ -346,15 +347,12 @@ public class NarrativeManager : MonoBehaviour
 
 	private void GiveQuest(Character c, Quest q) => c.AcceptQuest(q);
 
-	private void StartDialogue(ConversationEvent ce, bool chat = false,
-		UnityEngine.Events.UnityAction action = null)
+	private void StartDialogue(ConversationWithActions ce, bool chat = false,
+		Action action = null)
 	{
 		DialogueCtrl.SkipEntireChat(true);
 
-		if (action != null)
-		{
-			ce.conversationEndAction.AddListener(action);
-		}
+		ce.AddActionToEnd(action);
 
 		if (chat)
 		{

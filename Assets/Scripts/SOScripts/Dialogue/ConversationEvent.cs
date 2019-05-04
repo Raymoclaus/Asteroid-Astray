@@ -10,7 +10,6 @@ public class ConversationEvent : ScriptableObject
 	[SerializeField] private TextAsset conversationFile;
 	public EntityProfile[] speakers;
 	public DialogueLineEvent[] conversation;
-	[HideInInspector] public UnityEvent conversationEndAction;
 
 	public virtual ConversationEventPosition GetNextConversation()
 	{
@@ -27,16 +26,6 @@ public class ConversationEvent : ScriptableObject
 			lines[i] = conversation[i].line;
 		}
 		return lines;
-	}
-
-	public void HasAction(int i, bool b)
-	{
-		conversation[i].SetHasAction(b);
-	}
-
-	public bool GetHasAction(int i)
-	{
-		return conversation[i].hasAction;
 	}
 
 	public void Load()

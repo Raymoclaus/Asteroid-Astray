@@ -12,12 +12,12 @@ public class DialogueController : MonoBehaviour
 	{
 		get { return chatUI ?? (chatUI = FindObjectOfType<DialoguePopupUI>()); }
 	}
-	private ConversationEvent currentConversation;
+	private ConversationWithActions currentConversation;
 	private DialogueLineEvent[] currentLines;
 	private EntityProfile[] speakers;
 	private int currentPosition = -1;
 	private bool dialogueIsRunning, chatIsRunning;
-	private List<ConversationEvent> chatQueue = new List<ConversationEvent>();
+	private List<ConversationWithActions> chatQueue = new List<ConversationWithActions>();
 	private float chatQueueTimer = 0f;
 	[SerializeField] private float chatQueueWaitDuration = 2f;
 	private float chatContinueTimer = 0f;
@@ -54,7 +54,7 @@ public class DialogueController : MonoBehaviour
 				chatQueueTimer = 0f;
 				if (chatQueue.Count > 0)
 				{
-					ConversationEvent nextChat = chatQueue[0];
+					ConversationWithActions nextChat = chatQueue[0];
 					StartChat(nextChat);
 					chatQueue.RemoveAt(0);
 				}
@@ -95,13 +95,13 @@ public class DialogueController : MonoBehaviour
 			if (cep != null)
 			{
 				currentConversation = cep.conversation;
-				currentLines = currentConversation.conversation;
-				speakers = currentConversation.speakers;
+				currentLines = currentConversation.GetLines();
+				speakers = currentConversation.GetSpeakers();
 				currentPosition = cep.position;
 			}
 			else
 			{
-				currentConversation.conversationEndAction?.Invoke();
+				currentConversation.InvokeEndEvent();
 				currentPosition = -1;
 				currentLines = null;
 				speakers = null;
@@ -131,10 +131,7 @@ public class DialogueController : MonoBehaviour
 		string line = currentLines[currentPosition].line;
 		Sprite face = speakers[speakerID].face;
 
-		if (currentConversation.conversation[currentPosition].hasAction)
-		{
-			currentConversation.conversation[currentPosition].action.Invoke();
-		}
+		currentConversation.InvokeEvent(currentPosition);
 
 		DialoguePopupUI popupUI = dialogueIsRunning ? dialogueUI : chatUI;
 		popupUI.GeneratePopup(name, line, face, speakerID);
@@ -147,10 +144,7 @@ public class DialogueController : MonoBehaviour
 
 		for (; currentPosition < currentLines.Length; currentPosition++)
 		{
-			if (currentConversation.conversation[currentPosition].hasAction)
-			{
-				currentConversation.conversation[currentPosition].skipAction?.Invoke();
-			}
+			currentConversation.InvokeEvent(currentPosition);
 		}
 
 		GetNextLine();
@@ -167,18 +161,15 @@ public class DialogueController : MonoBehaviour
 
 		for (; currentPosition < currentLines.Length; currentPosition++)
 		{
-			if (currentConversation.conversation[currentPosition].hasAction)
-			{
-				currentConversation.conversation[currentPosition].skipAction?.Invoke();
-			}
+			currentConversation.InvokeEvent(currentPosition);
 		}
 
 		GetNextLine();
 	}
 
-	public void StartDialogue(ConversationEvent newDialogue, bool pause = true)
+	public void StartDialogue(ConversationWithActions newDialogue, bool pause = true)
 	{
-		if (dialogueIsRunning || !newDialogue) return;
+		if (dialogueIsRunning || newDialogue == null) return;
 
 		dialogueIsRunning = true;
 		Setup(newDialogue);
@@ -189,7 +180,7 @@ public class DialogueController : MonoBehaviour
 		MoveTriggerObjects(false);
 	}
 
-	public void StartChat(ConversationEvent newDialogue)
+	public void StartChat(ConversationWithActions newDialogue)
 	{
 		if (dialogueIsRunning || chatIsRunning)
 		{
@@ -201,11 +192,11 @@ public class DialogueController : MonoBehaviour
 		Setup(newDialogue);
 	}
 
-	private void Setup(ConversationEvent dialogue)
+	private void Setup(ConversationWithActions dialogue)
 	{
 		currentConversation = dialogue;
-		currentLines = currentConversation.conversation;
-		speakers = currentConversation.speakers;
+		currentLines = currentConversation.GetLines();
+		speakers = currentConversation.GetSpeakers();
 		currentPosition = 0;
 		SendPopup();
 	}
