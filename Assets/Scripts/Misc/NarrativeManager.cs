@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class NarrativeManager : MonoBehaviour
@@ -8,7 +7,6 @@ public class NarrativeManager : MonoBehaviour
 	public static bool ShuttleRepaired { get; private set; }
 	public static bool ShipRecharged { get; private set; }
 	#endregion
-
 
 	[SerializeField] private bool randomiseStartingLocation;
 	private DialogueController dialogueController;
@@ -73,7 +71,7 @@ public class NarrativeManager : MonoBehaviour
 
 	private void DevCheatSpawn(Entity e)
 	{
-		Vector2 centerPos = mainChar.transform.position;
+		Vector2 centerPos = MainChar.transform.position;
 		float randomAngle = UnityEngine.Random.value * Mathf.PI * 2f;
 		Vector2 randomUnit = new Vector2(Mathf.Sin(randomAngle), Mathf.Cos(randomAngle));
 		Vector2 spawnPos = centerPos + randomUnit * 3f;
@@ -101,7 +99,7 @@ public class NarrativeManager : MonoBehaviour
 
 		if (dgm.skipRecoveryDialogue)
 		{
-			screenEffects.SetBlit(spotlightEffectController.spotlightMaterial, false);
+			ActivateSpotlight(false);
 			spotlightEffectController.SetSpotlight();
 			if (dgm.skipFirstGatheringQuest)
 			{
@@ -120,7 +118,7 @@ public class NarrativeManager : MonoBehaviour
 							{
 								LoadingController.AddListener(() =>
 								{
-									mainChar.CollectResources(Item.Type.CorruptedCorvorite, 1);
+									MainChar.CollectResources(Item.Type.CorruptedCorvorite, 1);
 									CompletedFindEnergySourceQuest(null);
 								});
 								return;
@@ -139,15 +137,15 @@ public class NarrativeManager : MonoBehaviour
 					}
 					LoadingController.AddListener(() =>
 					{
-						mainChar.CollectResources(Item.Type.RepairKit, 1);
+						MainChar.CollectResources(Item.Type.RepairKit, 1);
 						CompletedCraftYourFirstRepairKitQuest(null);
 					});
 					return;
 				}
 				LoadingController.AddListener(() =>
 				{
-					mainChar.CollectResources(Item.Type.Copper, 2);
-					mainChar.CollectResources(Item.Type.Iron, 1);
+					MainChar.CollectResources(Item.Type.Copper, 2);
+					MainChar.CollectResources(Item.Type.Iron, 1);
 					CompletedFirstGatheringQuest(null);
 				});
 				return;
@@ -158,15 +156,11 @@ public class NarrativeManager : MonoBehaviour
 		LoadingController.AddListener(StartRecoveryDialogue);
 	}
 
-	private void StartRecoveryDialogue()
-	{
-		StartDialogue(recoveryDialogue, false, StartFirstGatheringQuest);
-		screenEffects.SetBlit(spotlightEffectController.spotlightMaterial, true);
-	}
+	private void StartRecoveryDialogue() => StartDialogue(recoveryDialogue, false);
 
-	private void StartFirstGatheringQuest()
+	public void StartFirstGatheringQuest()
 	{
-		if (mainChar == null) return;
+		if (MainChar == null) return;
 
 		List<QuestReward> qRewards = new List<QuestReward>();
 
@@ -178,9 +172,9 @@ public class NarrativeManager : MonoBehaviour
 			"Gather materials",
 			"We need some materials so that we can repair our communications system. Once that" +
 			" is done, we should be able to find our way back to Dendro and the ship.",
-			mainChar, claire, qRewards, qReqs, CompletedFirstGatheringQuest);
+			MainChar, claire, qRewards, qReqs, CompletedFirstGatheringQuest);
 
-		GiveQuest(mainChar, q);
+		GiveQuest(MainChar, q);
 		FirstQuestScriptedDrops.scriptedDropsActive = true;
 		StartDialogue(UseThrustersDialogue, true);
 		TutPrompts?.drillInputPromptInfo.SetIgnore(false);
@@ -189,14 +183,12 @@ public class NarrativeManager : MonoBehaviour
 	private void CompletedFirstGatheringQuest(Quest quest)
 	{
 		StartDialogue(completedFirstGatheringQuestDialogue, true);
-		StartCraftYourFirstRepairKitQuest();
-		FirstQuestScriptedDrops.scriptedDropsActive = false;
 		TutPrompts.drillInputPromptInfo.SetIgnore(true);
 	}
 
-	private void StartCraftYourFirstRepairKitQuest()
+	public void StartCraftYourFirstRepairKitQuest()
 	{
-		if (mainChar == null) return;
+		if (MainChar == null) return;
 
 		List<QuestReward> qRewards = new List<QuestReward>();
 
@@ -206,9 +198,9 @@ public class NarrativeManager : MonoBehaviour
 		Quest q = new Quest(
 			"Construct a Repair Kit",
 			"Now that we have the necessary materials, we should try constructing a repair kit.",
-			mainChar, claire, qRewards, qReqs, CompletedCraftYourFirstRepairKitQuest);
+			MainChar, claire, qRewards, qReqs, CompletedCraftYourFirstRepairKitQuest);
 
-		GiveQuest(mainChar, q);
+		GiveQuest(MainChar, q);
 		TutPrompts?.pauseInputPromptInfo.SetIgnore(false);
 
 		CraftingRecipe? recipe = Crafting.GetRecipeByName("Repair Kit Recipe");
@@ -220,14 +212,13 @@ public class NarrativeManager : MonoBehaviour
 
 	private void CompletedCraftYourFirstRepairKitQuest(Quest quest)
 	{
-		StartRepairTheShuttleQuest();
-		StartDialogue(useRepairKitDialogue, true, null);
+		StartDialogue(useRepairKitDialogue, true);
 		TutPrompts?.pauseInputPromptInfo.SetIgnore(true);
 	}
 
-	private void StartRepairTheShuttleQuest()
+	public void StartRepairTheShuttleQuest()
 	{
-		if (mainChar == null) return;
+		if (MainChar == null) return;
 
 		List<QuestReward> qRewards = new List<QuestReward>();
 
@@ -237,24 +228,21 @@ public class NarrativeManager : MonoBehaviour
 		Quest q = new Quest(
 			"Repair the Shuttle",
 			"Using this repair kit should be enough to fix the communications system. Then we can finally get back to the ship.",
-			mainChar, claire, qRewards, qReqs, CompletedRepairTheShuttleQuest);
+			MainChar, claire, qRewards, qReqs, CompletedRepairTheShuttleQuest);
 
-		GiveQuest(mainChar, q);
+		GiveQuest(MainChar, q);
 		TutPrompts?.repairKitInputPromptInfo.SetIgnore(false);
 	}
 
 	private void CompletedRepairTheShuttleQuest(Quest quest)
 	{
-		MainChar.SetNavigationActive(true);
-		ShuttleRepaired = true;
-		StartDialogue(findShipDialogue, true, null);
-		StartReturnToTheShipQuest();
+		StartDialogue(findShipDialogue, true);
 		TutPrompts?.repairKitInputPromptInfo.SetIgnore(true);
 	}
 
-	private void StartReturnToTheShipQuest()
+	public void StartReturnToTheShipQuest()
 	{
-		if (mainChar == null) return;
+		if (MainChar == null) return;
 
 		List<QuestReward> qRewards = new List<QuestReward>();
 
@@ -264,33 +252,29 @@ public class NarrativeManager : MonoBehaviour
 		Quest q = new Quest(
 			"Find your way back to the ship",
 			"Communication and Navigation systems on the shuttle have been restored, but we still can't contact Dendro. Find your way back to the ship and check if Dendro is still alright.",
-			mainChar, claire, qRewards, qReqs, CompletedReturnToTheShipQuest);
+			MainChar, claire, qRewards, qReqs, CompletedReturnToTheShipQuest);
 
-		GiveQuest(mainChar, q);
+		GiveQuest(MainChar, q);
 		MainHatch.EnableDialogueResponses(false);
 	}
 
-	private void CompletedReturnToTheShipQuest(Quest quest)
-	{		
-		StartDialogue(foundShipDialogue, false, StartFindEnergySourceQuest);
-		MainHatch.EnableDialogueResponses(true);
-	}
+	private void CompletedReturnToTheShipQuest(Quest quest) => StartDialogue(foundShipDialogue, false);
 
-	private void StartFindEnergySourceQuest()
+	public void StartFindEnergySourceQuest()
 	{
-		if (mainChar == null) return;
+		if (MainChar == null) return;
 
 		List<QuestReward> qRewards = new List<QuestReward>();
 
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-		qReqs.Add(new GatheringQRec(Item.Type.CorruptedCorvorite, 1, "Acquire an energy source.", false));
+		qReqs.Add(new GatheringQRec(Item.Type.CorruptedCorvorite, 1, "Find the nearby energy source.", false));
 
 		Quest q = new Quest(
 			"Acquire an Energy Source",
 			"The ship appears intact, however it is in a powered-down state. We need to find an energy source.",
-			mainChar, claire, qRewards, qReqs, CompletedFindEnergySourceQuest);
+			MainChar, claire, qRewards, qReqs, CompletedFindEnergySourceQuest);
 
-		GiveQuest(mainChar, q);
+		GiveQuest(MainChar, q);
 		//create a deranged bot
 		Entity newEntity = EntityGenerator.SpawnEntity(derangedSoloBotPrefab);
 		//set waypoint to new bot
@@ -300,59 +284,63 @@ public class NarrativeManager : MonoBehaviour
 		VicinityTrigger.VicinityTriggerEventHandler triggerEnterAction = null;
 		triggerEnterAction = () =>
 		{
-			Action delayedDialogue = () =>
-			{
-				Pause.DelayedAction(() =>
-				{
-					if (newEntity.GetHpRatio() < 0.9f) return;
-					StartDialogue(questionHowToObtainEnergySourceDialogue, true);
-				}, 5f, true);
-			};
-			StartDialogue(foundDerangedBotDialogue, true, delayedDialogue);
+			StartDialogue(foundDerangedBotDialogue, true);
 			entityPrompt.OnEnterTrigger -= triggerEnterAction;
 		};
 		entityPrompt.OnEnterTrigger += triggerEnterAction;
 	}
 
-	private void CompletedFindEnergySourceQuest(Quest quest)
-	{
-		StartDialogue(acquiredEnergySourceDialogue, true);
-		StartRechargeTheShipQuest();
-	}
+	private void CompletedFindEnergySourceQuest(Quest quest) => StartDialogue(acquiredEnergySourceDialogue, true);
 
-	private void StartRechargeTheShipQuest()
+	public void StartRechargeTheShipQuest()
 	{
-		if (mainChar == null) return;
+		if (MainChar == null) return;
 
 		List<QuestReward> qRewards = new List<QuestReward>();
 
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-		qReqs.Add(new WaypointQReq(MainHatch.transform, "Return to the ship."));
+
+		Waypoint wp = new Waypoint(MainHatch.transform);
+		MainChar.waypoint = wp;
+		qReqs.Add(new WaypointQReq(wp, "Return to the ship."));
 
 		Quest q = new Quest(
 			"Recharge the Ship",
 			"Now that we have an energy source, we should take it back to the ship and restore power so that we can finally get back inside.",
-			mainChar, claire, qRewards, qReqs, CompletedRechargeTheShipQuest);
+			MainChar, claire, qRewards, qReqs, CompletedRechargeTheShipQuest);
 
-		GiveQuest(mainChar, q);
+		GiveQuest(MainChar, q);
 	}
 
 	private void CompletedRechargeTheShipQuest(Quest quest)
 	{
-		ShipRecharged = true;
-		StartDialogue(rechargedTheShipDialogue, false, () => ty4pUI?.SetActive(true));
-		mainChar.TakeItem(Item.Type.CorruptedCorvorite, 1);
-		MainHatch.Lock(false);
+		StartDialogue(rechargedTheShipDialogue, false);
+		TakeItem(Item.Type.CorruptedCorvorite, 1);
 	}
+
+	public void ActivateSpotlight(bool activate) => screenEffects.SetBlit(spotlightEffectController.spotlightMaterial, activate);
+
+	public void ActivateScriptedDrops(bool activate) => FirstQuestScriptedDrops.scriptedDropsActive = activate;
+
+	public void SetShuttleRepaired(bool repaired) => ShuttleRepaired = repaired;
+
+	public void SetShipRecharged(bool recharged) => ShipRecharged = recharged;
+
+	public void StartQuestionHowToObtainEnergySourceDialogueAfterDelay(float delay = 3f)
+	{
+		Pause.DelayedAction(() =>
+		{
+			StartDialogue(questionHowToObtainEnergySourceDialogue, true);
+		}, delay, true);
+	}
+
+	public void TakeItem(Item.Type type, int amount) => MainChar.TakeItem(type, amount);
 
 	private void GiveQuest(Character c, Quest q) => c.AcceptQuest(q);
 
-	private void StartDialogue(ConversationWithActions ce, bool chat = false,
-		Action action = null)
+	public void StartDialogue(ConversationWithActions ce, bool chat = false)
 	{
 		DialogueCtrl.SkipEntireChat(true);
-
-		ce.AddActionToEnd(action);
 
 		if (chat)
 		{

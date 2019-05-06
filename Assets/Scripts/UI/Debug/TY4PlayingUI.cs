@@ -35,7 +35,6 @@ public class TY4PlayingUI : MonoBehaviour
 	public void SetActive(bool active)
 	{
 		if (active == this.active) return;
-		if (Pause.IsStopped && !this.active) return;
 
 		this.active = active;
 		Pause.InstantPause(this.active);

@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 [RequireComponent(typeof(Animator))]
 public class LaunchTrailController : MonoBehaviour
@@ -30,11 +28,9 @@ public class LaunchTrailController : MonoBehaviour
 
 	public void EndLaunchTrail()
 	{
-		anim.SetTrigger("End");
+		if (anim == null) return;
+		anim?.SetTrigger("End");
 	}
 
-	public void CutLaunchTrail()
-	{
-		Destroy(gameObject);
-	}
+	public void CutLaunchTrail() => Destroy(gameObject);
 }

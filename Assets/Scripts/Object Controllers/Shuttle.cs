@@ -165,6 +165,8 @@ public class Shuttle : Character, IStunnable, ICombat
 			//get input for item usage
 			GetItemUsageInput();
 		}
+
+		CheckWaypoint();
 	}
 
 	private void FixedUpdate() => rb.AddForce(accel);
@@ -754,4 +756,13 @@ public class Shuttle : Character, IStunnable, ICombat
 	public override bool CanDrill() => base.CanDrill() && drillIsActive;
 
 	public void SetNavigationActive(bool activate) => OnNavigationUpdated?.Invoke(activate);
+
+	private void CheckWaypoint()
+	{
+		float distance = Vector2.Distance(transform.position, waypoint.GetPosition());
+		if (distance <= 3f)
+		{
+			GameEvents.WaypointReached(waypoint);
+		}
+	}
 }

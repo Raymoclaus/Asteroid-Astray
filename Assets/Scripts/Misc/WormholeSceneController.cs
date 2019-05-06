@@ -24,7 +24,7 @@ public class WormholeSceneController : MonoBehaviour
 		fadeScreen.alpha = 1f;
 		wormhole.SetFloat("_Radius", 0f);
 
-		StartCoroutine(Timer(fadeInTime, (float delta) =>
+		StartCoroutine(TimerAction(fadeInTime, (float delta) =>
 		{
 			fadeScreen.alpha = 1f - delta;
 		}, () =>
@@ -39,7 +39,7 @@ public class WormholeSceneController : MonoBehaviour
 
 	private void OpenWormhole()
 	{
-		StartCoroutine(Timer(1f, (float delta) =>
+		StartCoroutine(TimerAction(1f, (float delta) =>
 		{
 			wormhole.SetFloat("_Radius", delta * 0.35f);
 		}, () =>
@@ -50,7 +50,7 @@ public class WormholeSceneController : MonoBehaviour
 
 	private void ShipEnterWormhole()
 	{
-		StartCoroutine(Timer(3f, null, () =>
+		StartCoroutine(TimerAction(3f, null, () =>
 		{
 			shipTracer.GoToEndOfPath(shipTraceSpeed * 10f, reachedPathEndAction: () =>
 			{
@@ -65,7 +65,7 @@ public class WormholeSceneController : MonoBehaviour
 	private void DistortWormhole(float distortionAmplitude, Action finishAction = null)
 	{
 		float currentAmount = wormhole.GetFloat("_DistortionAmplitude");
-		StartCoroutine(Timer(1f, (float delta) =>
+		StartCoroutine(TimerAction(1f, (float delta) =>
 		{
 			float amount = Mathf.Lerp(currentAmount, distortionAmplitude, delta);
 			wormhole.SetFloat("_DistortionAmplitude", amount);
@@ -77,18 +77,21 @@ public class WormholeSceneController : MonoBehaviour
 		shuttleTracer.GoToEndOfPath(shuttleTraceSpeed * 10f, reachedPathEndAction: () =>
 		{
 			ShrinkShuttle();
-			DistortWormhole(-1.5f, () => DistortWormhole(1f, () => CloseWormhole()));
+			DistortWormhole(-1.5f, () => DistortWormhole(1f, () =>
+			{
+				StartCoroutine(TimerAction(1.5f, null, () => CloseWormhole()));
+			}));
 		});
 	}
 
 	private void CloseWormhole()
 	{
-		StartCoroutine(Timer(1f, (float delta) =>
+		StartCoroutine(TimerAction(1f, (float delta) =>
 		{
 			wormhole.SetFloat("_Radius", (1f - delta) * 0.35f);
 		}, () =>
 		{
-			StartCoroutine(Timer(fadeOutTime, (float delta) =>
+			StartCoroutine(TimerAction(fadeOutTime / 2f, (float delta) =>
 			{
 				fadeScreen.alpha = delta;
 			}, () => sceneLoader.LoadScene("GameScene")));
@@ -97,7 +100,7 @@ public class WormholeSceneController : MonoBehaviour
 
 	private void ShrinkShip()
 	{
-		StartCoroutine(Timer(1f, (float delta) =>
+		StartCoroutine(TimerAction(1f, (float delta) =>
 		{
 			shipTracer.transform.localScale = Vector3.one * (1f - delta);
 		}, null));
@@ -105,7 +108,7 @@ public class WormholeSceneController : MonoBehaviour
 
 	private void ShrinkShuttle()
 	{
-		StartCoroutine(Timer(1f, (float delta) =>
+		StartCoroutine(TimerAction(1f, (float delta) =>
 		{
 			shuttleTracer.transform.localScale = Vector3.one * (1f - delta);
 		}, null));
@@ -123,7 +126,7 @@ public class WormholeSceneController : MonoBehaviour
 
 	public void FadeOutAndStartOpeningWormholeDialogue()
 	{
-		StartCoroutine(Timer(fadeOutTime, (float delta) =>
+		StartCoroutine(TimerAction(fadeOutTime, (float delta) =>
 		{
 			fadeScreen.alpha = delta;
 		}, () =>
@@ -134,7 +137,7 @@ public class WormholeSceneController : MonoBehaviour
 
 	public void FadeInAndOpenWormhole()
 	{
-		StartCoroutine(Timer(fadeInTime, (float delta) =>
+		StartCoroutine(TimerAction(fadeInTime, (float delta) =>
 		{
 			fadeScreen.alpha = 1f - delta;
 		}, () =>
@@ -146,22 +149,26 @@ public class WormholeSceneController : MonoBehaviour
 	public void SpeedUp()
 	{
 		float originalSpeed = cameraMover.GetSpeed();
-		StartCoroutine(Timer(cameraSpeedUpTime, (float delta) =>
+		StartCoroutine(TimerAction(cameraSpeedUpTime, (float delta) =>
 		{
 			cameraMover.SetSpeed(Mathf.Lerp(
 				originalSpeed, originalSpeed * cameraSpeedMultiplier, delta));
 		}, null));
 	}
 
-	private IEnumerator Timer(float duration, Action<float> action, Action finishTimerAction)
+	private Action MethodName = () =>
 	{
-		float timer = 0f;
-		while (timer < duration)
-		{
-			timer += Time.deltaTime;
-			action?.Invoke(Mathf.Clamp01(timer / duration));
-			yield return null;
-		}
+
+	};
+
+	private Func<bool> FunctionName = () =>
+	{
+		return false;
+	};
+
+	private IEnumerator TimerAction(float duration, Action<float> action, Action finishTimerAction)
+	{
+		yield return new ActionOverTime(duration, action);
 		finishTimerAction?.Invoke();
 	}
 }

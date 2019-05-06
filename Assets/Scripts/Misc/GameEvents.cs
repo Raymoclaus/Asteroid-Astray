@@ -20,9 +20,9 @@ public static class GameEvents
 	public static event ItemUsedEventHandler OnItemUsed;
 	public static void ItemUsed(Item.Type type) => OnItemUsed?.Invoke(type);
 
-	public delegate void WaypointReachedEventHandler(Vector3 location);
+	public delegate void WaypointReachedEventHandler(Waypoint waypoint);
 	public static event WaypointReachedEventHandler OnWaypointReached;
-	public static void WaypointReached(Vector3 location) => OnWaypointReached?.Invoke(location);
+	public static void WaypointReached(Waypoint waypoint) => OnWaypointReached?.Invoke(waypoint);
 
 	public static void ClearEvent()
 	{

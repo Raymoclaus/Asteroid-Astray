@@ -75,6 +75,23 @@ public class CustomScreenEffect : MonoBehaviour
 		if (!shouldBlit) enabled = true;
 	}
 
+	public void SetBlit(Material mat)
+	{
+		int index = FindMaterialID(mat);
+		if (index < 0) return;
+
+		effects[index].blit = true;
+	}
+
+	public void SetNoBlit(Material mat)
+	{
+		int index = FindMaterialID(mat);
+		if (index < 0) return;
+
+		effects[index].blit = false;
+		enabled = true;
+	}
+
 	private int FindMaterialID(Material mat)
 	{
 		for (int i = 0; i < effects.Length; i++)

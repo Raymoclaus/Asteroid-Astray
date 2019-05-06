@@ -3,19 +3,12 @@
 public class WaypointQReq : QuestRequirement
 {
 	private string description;
-	private Transform targetToReach;
-	private Vector3? location;
+	private Waypoint waypoint;
 
-	public WaypointQReq(Transform targetToReach, string description)
+	public WaypointQReq(Waypoint waypoint, string description)
 	{
 		this.description = description;
-		this.targetToReach = targetToReach;
-	}
-
-	public WaypointQReq(Vector3 location, string description)
-	{
-		this.description = description;
-		this.location = location;
+		this.waypoint = waypoint;
 	}
 
 	public override void Activate()
@@ -24,24 +17,18 @@ public class WaypointQReq : QuestRequirement
 		GameEvents.OnWaypointReached += EvaluateEvent;
 	}
 
-	private void EvaluateEvent(Vector3 location)
+	private void EvaluateEvent(Waypoint waypoint)
 	{
 		if (IsComplete() || !active) return;
 
-		if (Vector3.Distance(location, (Vector3)TargetLocation()) < 5f)
+		if (this.waypoint == waypoint)
 		{
 			QuestRequirementCompleted();
 			GameEvents.OnWaypointReached -= EvaluateEvent;
 		}
 	}
 
-	public override string GetDescription()
-	{
-		return description;
-	}
+	public override string GetDescription() => description;
 
-	public override Vector3? TargetLocation()
-	{
-		return targetToReach != null ? targetToReach.position : location;
-	}
+	public override Vector3? TargetLocation() => waypoint.GetPosition();
 }

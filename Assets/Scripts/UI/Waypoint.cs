@@ -11,8 +11,15 @@ public struct Waypoint
 		this.position = position ?? Vector2.zero;
 	}
 
-	public Vector2 GetPosition()
-	{
-		return target?.position ?? position;
-	}
+	public Vector2 GetPosition() => target == null ? position : (Vector2)target.position;
+
+	public static bool operator ==(Waypoint a, Waypoint b)
+		=> a.target == b.target || a.GetPosition() == b.GetPosition();
+
+	public static bool operator !=(Waypoint a, Waypoint b)
+		=> a.target != b.target || a.GetPosition() != b.GetPosition();
+
+	public override bool Equals(object obj) => base.Equals(obj);
+
+	public override int GetHashCode() => base.GetHashCode();
 }
