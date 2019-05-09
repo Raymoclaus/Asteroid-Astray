@@ -296,4 +296,9 @@ public class CameraCtrl : MonoBehaviour
 	{
 		return ChunkCoords.MaxDistance(coord, coords) < Constants.MAX_PHYSICS_RANGE;
 	}
+
+	public void Zoom(float zoomLevel)
+	{
+		zoomModifier = zoomLevel;
+	}
 }

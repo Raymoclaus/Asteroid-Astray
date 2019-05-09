@@ -5,9 +5,20 @@ using System.Collections.Generic;
 
 public class SceneLoader : MonoBehaviour
 {
+	private static SceneLoader instance;
+	private static SceneLoader Instance
+	{
+		get { return instance ?? (instance = FindObjectOfType<SceneLoader>()); }
+	}
+
 	public delegate void SceneLoadEventHandler(string sceneName);
 	public static event SceneLoadEventHandler OnSceneLoad;
-	private static void ClearEvent() => OnSceneLoad = null;
+	public static void SceneLoaded(string sceneName)
+	{
+		OnSceneLoad?.Invoke(sceneName);
+		OnSceneLoad = null;
+		Instance.ClearEvents();
+	}
 
 	private List<string> sceneNames = new List<string>();
 
@@ -16,12 +27,35 @@ public class SceneLoader : MonoBehaviour
 		GetScenesFromBuild();
 	}
 
+	public static SceneAsync PrepareScene(string sceneName,
+		System.Action<AsyncOperation> preparedAction = null)
+	{
+		AsyncOperation ao = SceneManager.LoadSceneAsync(sceneName);
+		ao.allowSceneActivation = false;
+		ao.completed += preparedAction;
+		return new SceneAsync(ao, sceneName);
+	}
+
+	public static void LoadPreparedSceneStatic(SceneAsync scene)
+	{
+		Instance.LoadPreparedScene(scene);
+	}
+
+	public static void LoadSceneStatic(string sceneName)
+	{
+		Instance.LoadScene(sceneName);
+	}
+
 	public void LoadScene(string sceneName)
 	{
-		if (SceneExists(sceneName)) return;
-		OnSceneLoad?.Invoke(sceneName);
-		ClearEvents();
+		SceneLoaded(sceneName);
 		SceneManager.LoadScene(sceneName);
+	}
+
+	public void LoadPreparedScene(SceneAsync scene)
+	{
+		SceneLoaded(scene.name);
+		scene.ao.allowSceneActivation = true;
 	}
 
 	public void Quit()
@@ -61,6 +95,18 @@ public class SceneLoader : MonoBehaviour
 		for (int i = 0; i < SceneManager.sceneCountInBuildSettings; i++)
 		{
 			sceneNames.Add(SceneUtility.GetScenePathByBuildIndex(i));
+		}
+	}
+
+	public struct SceneAsync
+	{
+		public AsyncOperation ao;
+		public string name;
+
+		public SceneAsync(AsyncOperation ao, string name)
+		{
+			this.ao = ao;
+			this.name = name;
 		}
 	}
 }

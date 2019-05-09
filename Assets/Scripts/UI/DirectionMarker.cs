@@ -14,6 +14,7 @@ public class DirectionMarker : MonoBehaviour
 	{
 		sprRend = GetComponent<SpriteRenderer>();
 		MainChar.OnNavigationUpdated += Activate;
+		MainChar.EnteringShip += () => Activate(false);
 	}
 
 	public void Activate(bool active) => sprRend.enabled = active;

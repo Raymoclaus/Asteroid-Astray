@@ -1,8 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-public static class GameEvents
+﻿public static class GameEvents
 {
 	public delegate void EntityDestroyedEventHandler(EntityType type);
 	public static event EntityDestroyedEventHandler OnEntityDestroyed;
@@ -23,6 +19,10 @@ public static class GameEvents
 	public delegate void WaypointReachedEventHandler(Waypoint waypoint);
 	public static event WaypointReachedEventHandler OnWaypointReached;
 	public static void WaypointReached(Waypoint waypoint) => OnWaypointReached?.Invoke(waypoint);
+
+	public delegate void SaveEventHandler();
+	public static event SaveEventHandler OnSave;
+	public static void Save() => OnSave?.Invoke();
 
 	public static void ClearEvent()
 	{

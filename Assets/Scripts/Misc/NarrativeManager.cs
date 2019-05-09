@@ -14,7 +14,8 @@ public class NarrativeManager : MonoBehaviour
 	{
 		get
 		{
-			return dialogueController ?? (dialogueController = FindObjectOfType<DialogueController>());
+			return dialogueController
+				?? (dialogueController = FindObjectOfType<DialogueController>());
 		}
 	}
 	[SerializeField] private DebugGameplayManager dgm;
@@ -28,27 +29,18 @@ public class NarrativeManager : MonoBehaviour
 	private MainHatchPrompt mainHatch;
 	private MainHatchPrompt MainHatch
 	{
-		get
-		{
-			return mainHatch ?? (mainHatch = FindObjectOfType<MainHatchPrompt>());
-		}
+		get { return mainHatch ?? (mainHatch = FindObjectOfType<MainHatchPrompt>()); }
 	}
 	[SerializeField] private DerangedSoloBot derangedSoloBotPrefab;
 	private TutorialPrompts tutPrompts;
 	private TutorialPrompts TutPrompts
 	{
-		get
-		{
-			return tutPrompts ?? (tutPrompts = FindObjectOfType<TutorialPrompts>());
-		}
+		get { return tutPrompts ?? (tutPrompts = FindObjectOfType<TutorialPrompts>()); }
 	}
 	[SerializeField] private InventoryUIController inventoryUI;
 	private InventoryUIController InventoryUI
 	{
-		get
-		{
-			return inventoryUI ?? (inventoryUI = FindObjectOfType<InventoryUIController>());
-		}
+		get { return inventoryUI ?? (inventoryUI = FindObjectOfType<InventoryUIController>()); }
 	}
 	[SerializeField] private TY4PlayingUI ty4pUI;
 
@@ -255,7 +247,6 @@ public class NarrativeManager : MonoBehaviour
 			MainChar, claire, qRewards, qReqs, CompletedReturnToTheShipQuest);
 
 		GiveQuest(MainChar, q);
-		MainHatch.EnableDialogueResponses(false);
 	}
 
 	private void CompletedReturnToTheShipQuest(Quest quest) => StartDialogue(foundShipDialogue, false);

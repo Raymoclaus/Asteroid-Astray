@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(SpriteRenderer))]
@@ -15,6 +14,7 @@ public class EnergyShieldMaterialManager : MonoBehaviour
 	[SerializeField] private float dist = Mathf.Sqrt(2f), duration = 0.3f, rippleDuration = 0.3f,
 		targetForceRadius = 1f, targetDistortionAmplitude = 2f, startingRippleProgress = 0.4f,
 		targetRippleProgress = 0.7f;
+	[SerializeField] private Vector3 defaultScale = Vector3.one * 1.2f;
 
 	private void Awake()
 	{
@@ -22,6 +22,8 @@ public class EnergyShieldMaterialManager : MonoBehaviour
 		mat = sprRend.material;
 		UpdateShield(character.ShieldRatio, 1f);
 		character.OnShieldUpdated += UpdateShield;
+		SetDefaultScale();
+		character.EnteringShip += Shrink;
 	}
 
 	private void UpdateShield(float oldVal, float newVal)
@@ -52,16 +54,9 @@ public class EnergyShieldMaterialManager : MonoBehaviour
 		anim.SetTrigger("Idle");
 	}
 
-	private void Break()
-	{
-		Debug.Log("Break");
-		anim.SetTrigger("Break");
-	}
+	private void Break() => anim.SetTrigger("Break");
 
-	private void Hide()
-	{
-		sprRend.enabled = false;
-	}
+	private void Hide() => sprRend.enabled = false;
 
 	public void TakeHit(Vector2 direction)
 	{
@@ -110,15 +105,10 @@ public class EnergyShieldMaterialManager : MonoBehaviour
 		SetDistortionAmplitude(0f);
 	}
 
-	private void SetForceRadius(float radius)
-	{
-		mat?.SetFloat(FORCE_RADIUS, radius);
-	}
+	private void SetForceRadius(float radius) => mat?.SetFloat(FORCE_RADIUS, radius);
 
 	private void SetDistortionAmplitude(float amplitude)
-	{
-		mat?.SetFloat(DISTORTION_AMPLITUDE, amplitude);
-	}
+		=> mat?.SetFloat(DISTORTION_AMPLITUDE, amplitude);
 
 	private void SetForcePosition(Vector2 pos)
 	{
@@ -127,12 +117,19 @@ public class EnergyShieldMaterialManager : MonoBehaviour
 	}
 
 	private void SetRippleProgress(float progress)
+		=> mat?.SetFloat(RIPPLE_PROGRESS, progress);
+
+	private void SetRippleAngle(float angle) => mat?.SetFloat(RIPPLE_ANGLE, angle);
+
+	private void Shrink()
 	{
-		mat?.SetFloat(RIPPLE_PROGRESS, progress);
+		Coroutines.TimedAction(1f, (float delta) =>
+		{
+			SetScaleMod(1f - delta);
+		}, null);
 	}
 
-	private void SetRippleAngle(float angle)
-	{
-		mat?.SetFloat(RIPPLE_ANGLE, angle);
-	}
+	public void SetDefaultScale() => SetScaleMod(1f);
+
+	public void SetScaleMod(float mod) => transform.localScale = defaultScale * mod;
 }

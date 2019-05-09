@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.Events;
 
 public class InteractablePromptTrigger : PromptTrigger
 {
@@ -15,7 +16,9 @@ public class InteractablePromptTrigger : PromptTrigger
 			return dialogueController ?? (dialogueController = FindObjectOfType<DialogueController>());
 		}
 	}
-	protected bool enabledDialogueResponses;
+	protected bool enabledInteractionActions = true;
+
+	[SerializeField] protected UnityEvent interactionActions;
 
 	protected override void Awake()
 	{
@@ -33,13 +36,21 @@ public class InteractablePromptTrigger : PromptTrigger
 
 	protected virtual void OnInteracted()
 	{
-		if (enabledDialogueResponses)
+		if (enabledInteractionActions)
 		{
-			DialogueResponse();
+			ActivateInteractionActions();
 		}
 	}
 
-	protected virtual void DialogueResponse() { }
+	protected virtual void ActivateInteractionActions() => interactionActions?.Invoke();
 
-	public void EnableDialogueResponses(bool enable) => enabledDialogueResponses = enable;
+	public void AddInteractionAction(UnityAction action)
+		=> interactionActions.AddListener(action);
+
+	public void RemoveInteractionAction(UnityAction action)
+		=> interactionActions.RemoveListener(action);
+
+	public void RemoveAllInteractionActions() => interactionActions.RemoveAllListeners();
+
+	public void EnableInteractionActions(bool enable) => enabledInteractionActions = enable;
 }

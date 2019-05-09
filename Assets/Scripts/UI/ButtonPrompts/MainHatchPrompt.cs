@@ -1,25 +1,31 @@
 ﻿using UnityEngine;
+using UnityEngine.Events;
 
 public class MainHatchPrompt : InteractablePromptTrigger
 {
-	[SerializeField] private ShipEntryPanel shipEntryUI;
-	[SerializeField] private ConversationWithActions interactBeforeRepairedShuttle,
-		interactBeforeRechargedShip;
+	[SerializeField] private ConversationWithActions
+		interactBeforeRepairedShuttle,
+		interactBeforeRechargedShip,
+		genericCantEnterShipDialogue;
 
+	public UnityEvent lockedActions;
 	private bool isLocked = false;
+
+	[SerializeField] private Animator anim;
+
+	protected override void Awake()
+	{
+		base.Awake();
+		FindObjectOfType<Shuttle>().EnteringShip += Open;
+	}
 
 	protected override void OnInteracted()
 	{
-		base.OnInteracted();
-
 		if (isLocked) return;
-
-		Pause.InstantPause(true);
-		shipEntryUI = shipEntryUI ?? FindObjectOfType<ShipEntryPanel>();
-		shipEntryUI?.OpenPanel();
+		base.OnInteracted();
 	}
 
-	protected override void DialogueResponse()
+	public void PlayDialogueResponse()
 	{
 		if (DialogueController.DialogueIsActive()) return;
 
@@ -31,10 +37,21 @@ public class MainHatchPrompt : InteractablePromptTrigger
 		{
 			DialogueController.StartChat(interactBeforeRechargedShip);
 		}
+		else
+		{
+			DialogueController.StartChat(genericCantEnterShipDialogue);
+		}
 	}
 
-	public void Lock(bool lockDoor)
+	protected override void ActivateInteractionActions()
 	{
-		isLocked = lockDoor;
+		if (!isLocked)
+		{
+			base.ActivateInteractionActions();
+		}
 	}
+
+	public void Lock(bool lockDoor) => isLocked = lockDoor;
+
+	public void Open() => anim.SetTrigger("Open");
 }

@@ -10,7 +10,7 @@ public class Entity : MonoBehaviour
 	private static Camera mainCam;
 	protected static Camera MainCam { get { return mainCam ?? (mainCam = Camera.main); } }
 	private static CameraCtrl mainCamCtrl;
-	protected static CameraCtrl CameraCtrl
+	protected static CameraCtrl CameraControl
 	{
 		get { return mainCamCtrl ?? (mainCamCtrl = MainCam.GetComponent<CameraCtrl>()); }
 	}
@@ -123,9 +123,9 @@ public class Entity : MonoBehaviour
 
 	public void SetCoordinates(ChunkCoords newCc) => coords = newCc;
 
-	protected bool IsInView() => CameraCtrl?.IsCoordInView(coords) ?? false;
+	protected bool IsInView() => CameraControl?.IsCoordInView(coords) ?? false;
 
-	protected bool IsInPhysicsRange() => CameraCtrl?.IsCoordInPhysicsRange(coords) ?? false;
+	protected bool IsInPhysicsRange() => CameraControl?.IsCoordInPhysicsRange(coords) ?? false;
 
 	public void SetAllActivity(bool active)
 	{
@@ -298,7 +298,7 @@ public class Entity : MonoBehaviour
 		this.launcher = launcher;
 		rb.velocity = launchDirection;
 		launched = true;
-		CameraCtrl?.Pan(transform);
+		CameraControl?.Pan(transform);
 		if (launcher.GetLaunchTrailAnimation() != null)
 		{
 			launchTrail = Instantiate(launcher.GetLaunchTrailAnimation());
@@ -312,9 +312,9 @@ public class Entity : MonoBehaviour
 			this.launcher = null;
 			launched = false;
 			if (this == null) return;
-			if (CameraCtrl?.GetPanTarget() == transform)
+			if (CameraControl?.GetPanTarget() == transform)
 			{
-				CameraCtrl?.Pan(null);
+				CameraControl?.Pan(null);
 			}
 		}, launchDuration, true);
 	}
@@ -341,9 +341,9 @@ public class Entity : MonoBehaviour
 		otherDamageable?.TakeDamage(damage, contactPoint, launcher);
 		TakeDamage(damage, contactPoint, launcher);
 		launched = false;
-		if (CameraCtrl?.GetPanTarget() == transform)
+		if (CameraControl?.GetPanTarget() == transform)
 		{
-			CameraCtrl.Pan(null);
+			CameraControl.Pan(null);
 		}
 	}
 	#endregion

@@ -112,6 +112,7 @@ public class Shuttle : Character, IStunnable, ICombat
 	//reference to sonic boom animation
 	[SerializeField] private GameObject sonicBoomBoostEffect;
 	public float boostInvulnerabilityTime = 0.2f;
+	[SerializeField] private AnimationCurve cameraZoomOnEnterShip;
 	#endregion Boost
 
 	#endregion Fields
@@ -147,7 +148,7 @@ public class Shuttle : Character, IStunnable, ICombat
 	{
 		base.Awake();
 		shipStorage = shipStorage ?? FindObjectOfType<ShipInventory>();
-		if (CameraCtrl) CameraCtrl.followTarget = this;
+		if (CameraControl) CameraControl.followTarget = this;
 
 		canDrill = true;
 		canDrillLaunch = true;
@@ -450,8 +451,8 @@ public class Shuttle : Character, IStunnable, ICombat
 	{
 		if (ShouldLaunch())
 		{
-			CameraCtrl?.SetConstantSize(false);
-			CameraCtrl?.SetLookAheadDistance(false);
+			CameraControl?.SetConstantSize(false);
+			CameraControl?.SetLookAheadDistance(false);
 			return 0f;
 		}
 
@@ -470,8 +471,8 @@ public class Shuttle : Character, IStunnable, ICombat
 			arrow.eulerAngles = Vector3.forward * angle;
 			arrow.position = ((Entity)(drill.drillTarget)).transform.position;
 
-			CameraCtrl?.SetConstantSize(true, launchZoomOutSize);
-			CameraCtrl?.SetLookAheadDistance(true, launchLookAheadDistance);
+			CameraControl?.SetConstantSize(true, launchZoomOutSize);
+			CameraControl?.SetLookAheadDistance(true, launchLookAheadDistance);
 		}
 		else
 		{
@@ -504,8 +505,8 @@ public class Shuttle : Character, IStunnable, ICombat
 	public override void DrillComplete()
 	{
 		DrillLaunchArcDisable();
-		CameraCtrl.SetConstantSize(false);
-		CameraCtrl.SetLookAheadDistance(false);
+		CameraControl.SetConstantSize(false);
+		CameraControl.SetLookAheadDistance(false);
 	}
 
 	public override bool ShouldLaunch() =>
@@ -553,8 +554,8 @@ public class Shuttle : Character, IStunnable, ICombat
 	{
 		DrillLaunchArcDisable();
 		OnDrillComplete?.Invoke(successful);
-		CameraCtrl.SetConstantSize(false);
-		CameraCtrl.SetLookAheadDistance(false);
+		CameraControl.SetConstantSize(false);
+		CameraControl.SetLookAheadDistance(false);
 	}
 
 	public override bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer,
@@ -696,8 +697,8 @@ public class Shuttle : Character, IStunnable, ICombat
 	{
 		OnLaunchInput?.Invoke();
 		DrillLaunchArcDisable();
-		CameraCtrl?.SetConstantSize(false);
-		CameraCtrl?.SetLookAheadDistance(false);
+		CameraControl?.SetConstantSize(false);
+		CameraControl?.SetLookAheadDistance(false);
 	}
 
 	public override float GetLaunchDamage() => launchDamage;
@@ -760,9 +761,51 @@ public class Shuttle : Character, IStunnable, ICombat
 	private void CheckWaypoint()
 	{
 		float distance = Vector2.Distance(transform.position, waypoint.GetPosition());
-		if (distance <= 3f)
+		if (distance <= 2f)
 		{
 			GameEvents.WaypointReached(waypoint);
 		}
+	}
+
+	public void EnterShip(Transform shipHatch)
+	{
+		EnteringShip?.Invoke();
+		GameEvents.Save();
+
+		hasControl = false;
+		isKinematic = true;
+		ActivateAllColliders(false);
+		AnimationCurve easeInEaseOut = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+
+		//load next scene
+		SceneLoader.SceneAsync scene = SceneLoader.PrepareScene("ShipScene");
+		Coroutines.TimedAction(3f, null, () => SceneLoader.LoadPreparedSceneStatic(scene));
+
+		//move shuttle to center
+		velocity = Vector3.zero;
+		accel = Vector2.zero;
+		rb.velocity = Vector3.zero;
+		Vector3 currentPos = transform.position;
+		float currentAngle = rot.z;
+		Coroutines.TimedAction(2f, (float delta) =>
+		{
+			float evaluation = easeInEaseOut.Evaluate(delta);
+			rot.z = Mathf.LerpAngle(currentAngle, 0f, evaluation);
+			transform.position = Vector3.Lerp(currentPos, shipHatch.position, evaluation);
+			CameraControl.SetLookAheadDistance(true, 1f - delta);
+		}, () =>
+		{
+			//zoom camera in when movement is finished
+			Coroutines.TimedAction(1f, (float delta) =>
+			{
+				float evaluation = cameraZoomOnEnterShip.Evaluate(1f - delta);
+				CameraControl.Zoom(0.5f + evaluation * 0.5f);
+			}, null);
+		});
+
+		//fade out
+		FadeScreen.FadeOut(3f);
+
+		//open hatch
 	}
 }
