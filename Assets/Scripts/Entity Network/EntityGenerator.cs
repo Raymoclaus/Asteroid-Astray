@@ -86,7 +86,7 @@ public class EntityGenerator : MonoBehaviour
 		}
 	}
 
-	public static Entity SpawnEntity(SpawnableEntity se)
+	public static Entity SpawnEntity(SpawnableEntity se, EntityData? data = null)
 	{
 		if (se == null) return null;
 
@@ -99,7 +99,7 @@ public class EntityGenerator : MonoBehaviour
 		ChunkCoords cc = instance.ClosestValidNonFilledChunk(se);
 		if (cc == ChunkCoords.Invalid) return null;
 
-		return SpawnOneInEmptyChunk(cc, se);
+		return SpawnOneInEmptyChunk(cc, se, data);
 	}
 
 	public static Entity SpawnEntity(Entity e)
@@ -116,10 +116,24 @@ public class EntityGenerator : MonoBehaviour
 		return SpawnEntity(se);
 	}
 
-	private SpawnableEntity GetSpawnableEntity(Entity e)
+	public static Entity SpawnEntity(EntityData data)
 	{
-		return prefabs.GetSpawnableEntity(e);
+		if (data.type == null) return null;
+		
+		if (!IsReady)
+		{
+			AddListener(() => SpawnEntity(data));
+			return null;
+		}
+
+		SpawnableEntity se = instance.GetSpawnableEntity(data.type);
+		return SpawnEntity(se, data);
 	}
+
+	private SpawnableEntity GetSpawnableEntity(Entity e) => prefabs.GetSpawnableEntity(e);
+
+	private SpawnableEntity GetSpawnableEntity(System.Type type)
+		=> prefabs.GetSpawnableEntity(type);
 
 	private ChunkCoords ClosestValidNonFilledChunk(SpawnableEntity se)
 	{
@@ -192,7 +206,8 @@ public class EntityGenerator : MonoBehaviour
 		}
 	}
 
-	public static Entity SpawnOneInEmptyChunk(ChunkCoords cc, SpawnableEntity se)
+	public static Entity SpawnOneInEmptyChunk(ChunkCoords cc, SpawnableEntity se,
+		EntityData? data = null)
 	{
 		if (!IsReady)
 		{
@@ -225,7 +240,10 @@ public class EntityGenerator : MonoBehaviour
 				break;
 		}
 		//spawn it
-		return Instantiate(e.prefab, spawnPos, Quaternion.identity, instance.holders[e.name].transform);
+		Entity newEntity = Instantiate(e.prefab, spawnPos, Quaternion.identity,
+			instance.holders[e.name].transform);
+		newEntity.ApplyData(data);
+		return newEntity;
 	}
 
 	private List<SpawnableEntity> ChooseEntitiesToSpawn(float distance, bool excludePriority = false,
@@ -348,6 +366,10 @@ public class EntityGenerator : MonoBehaviour
 	/// Fills up the list of fill triggers
 	private IEnumerator FillTriggerList(System.Action a)
 	{
+		if (wasFilled == null)
+		{
+			wasFilled = new List<List<List<bool>>>();
+		}
 		if (wasFilled.Count == 0)
 		{
 			for (int dir = 0; dir < EntityNetwork.QUADRANT_COUNT; dir++)

@@ -6,13 +6,24 @@ public class Inventory : MonoBehaviour
 {
 	public int size = 10;
 	public List<ItemStack> stacks = new List<ItemStack>();
-	private bool initialised = false;
+	[SerializeField] private string saveKey;
 
 	protected virtual void Awake()
 	{
-		if (initialised) return;
+		Load();
+		GameEvents.OnSave += Save;
+	}
+
+	private void OnDestroy()
+	{
+		GameEvents.OnSave -= Save;
+	}
+
+	public void SetData(InventoryData data)
+	{
+		size = data.size;
+		stacks = data.stacks;
 		TrimPadStacks();
-		initialised = true;
 	}
 
 	public int AmountOfItem(Item.Type type)
@@ -179,6 +190,11 @@ public class Inventory : MonoBehaviour
 
 	private void TrimPadStacks()
 	{
+		if (stacks == null)
+		{
+			stacks = new List<ItemStack>();
+		}
+
 		while (stacks.Count < size)
 		{
 			stacks.Add(new ItemStack());
@@ -341,5 +357,32 @@ public class Inventory : MonoBehaviour
 			if (stacks[i].GetItemType() == type) return i;
 		}
 		return -1;
+	}
+
+	public void Save()
+	{
+		if (saveKey == null || saveKey == string.Empty) return;
+		SaveLoad.Save(GetInventoryData(), saveKey);
+	}
+
+	public InventoryData GetInventoryData() => new InventoryData(stacks, size);
+
+	public void Load()
+	{
+		InventoryData data = SaveLoad.Load<InventoryData>(saveKey);
+		SetData(data);
+	}
+
+	[Serializable]
+	public struct InventoryData
+	{
+		public List<ItemStack> stacks;
+		public int size;
+
+		public InventoryData(List<ItemStack> stacks, int size)
+		{
+			this.stacks = stacks;
+			this.size = size;
+		}
 	}
 }

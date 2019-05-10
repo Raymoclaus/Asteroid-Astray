@@ -332,7 +332,7 @@ public class GatherBot : Character, IStunnable, ICombat
 
 	protected virtual void Exploring()
 	{
-		if (GoToLocation(targetLocation, isInPhysicsRange))
+		if (GoToLocation(targetLocation, true))
 		{
 			SetState(AIState.Scanning);
 		}
@@ -1479,4 +1479,17 @@ public class GatherBot : Character, IStunnable, ICombat
 	public override void AttachStraightWeapon(bool attach) => straightWeaponAttached = attach;
 
 	public override ICombat GetICombat() => this;
+
+	public GatherBotData GetData() => new GatherBotData();
+
+	public void ApplyData(GatherBotData data)
+	{
+
+	}
+
+	[Serializable]
+	public struct GatherBotData
+	{
+
+	}
 }

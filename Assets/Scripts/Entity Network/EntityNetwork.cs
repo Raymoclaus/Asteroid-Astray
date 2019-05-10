@@ -12,6 +12,9 @@ public class EntityNetwork : MonoBehaviour
 {
 	private static EntityNetwork instance;
 
+	[SerializeField] private string saveKey;
+	private List<EntityData> savedEntities = new List<EntityData>();
+
 	#region Fields
 	//4 directions in the grid
 	public const int QUADRANT_COUNT = 4;
@@ -53,7 +56,9 @@ public class EntityNetwork : MonoBehaviour
 			Destroy(gameObject);
 			return;
 		}
-		
+
+		GameEvents.OnSave += Save;
+		OnGridSetUp += Load;
 		StartCoroutine(CreateGrid());
 	}
 
@@ -394,5 +399,29 @@ public class EntityNetwork : MonoBehaviour
 	public static int GetEntityCount()
 	{
 		return instance.numEntities;
+	}
+
+	public static void AddToSavedEntities(EntityData data)
+	{
+		instance.savedEntities.Add(data);
+	}
+
+	public void Save()
+	{
+		if (saveKey == null || saveKey == string.Empty) return;
+		Coroutines.TimedAction(0.1f, null, () =>
+		{
+			SaveLoad.Save(savedEntities, saveKey);
+		});
+	}
+
+	public void Load()
+	{
+		List<EntityData> loadedEntities = SaveLoad.Load<List<EntityData>>(saveKey);
+		for (int i = 0; loadedEntities != null && i < loadedEntities.Count; i++)
+		{
+			EntityGenerator.SpawnEntity(loadedEntities[i]);
+		}
+		OnGridSetUp -= Load;
 	}
 }

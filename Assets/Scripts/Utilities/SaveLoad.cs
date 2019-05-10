@@ -11,7 +11,7 @@ public static class SaveLoad
 	{
 		Directory.CreateDirectory(path);
 		BinaryFormatter formatter = new BinaryFormatter();
-		using (FileStream stream = new FileStream(path + key, FileMode.Create))
+		using (FileStream stream = new FileStream(path + key + extension, FileMode.Create))
 		{
 			formatter.Serialize(stream, objectToSave);
 		}
@@ -19,6 +19,7 @@ public static class SaveLoad
 
 	public static T Load<T>(string key)
 	{
+		if (!SaveExists(key)) return default;
 		BinaryFormatter formatter = new BinaryFormatter();
 		T loadedObject = default;
 		using (FileStream stream = new FileStream(path + key + extension, FileMode.Open))

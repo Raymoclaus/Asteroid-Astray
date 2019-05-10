@@ -55,6 +55,8 @@ public class Entity : MonoBehaviour
 			Initialise();
 			gameObject.SetActive(true);
 		});
+
+		GameEvents.OnSave += Save;
 	}
 
 	public virtual void Initialise()
@@ -73,6 +75,7 @@ public class Entity : MonoBehaviour
 		EntityNetwork.RemoveEntity(this);
 		mainCam = null;
 		mainCamCtrl = null;
+		GameEvents.OnSave -= Save;
 	}
 
 	public void RepositionInNetwork()
@@ -280,6 +283,18 @@ public class Entity : MonoBehaviour
 
 	public void Teleport(Vector2 position) => transform.position = position;
 
+	private void Save()
+	{
+		object obj = CreateDataObject();
+		if (obj == null) return;
+		EntityData data = new EntityData(GetType(), obj);
+		EntityNetwork.AddToSavedEntities(data);
+	}
+
+	protected virtual object CreateDataObject() => null;
+
+	public virtual void ApplyData(EntityData? data) { }
+
 	#region Launch-related
 	[Header("Launch related variables")]
 	private Character launcher;
@@ -438,4 +453,22 @@ public enum EntityType
 	Nebula,
 	BotHive,
 	GatherBot
+}
+
+[System.Serializable]
+public struct EntityData
+{
+	public System.Type type;
+	public object data;
+
+	public EntityData(System.Type type, object data)
+	{
+		this.type = type;
+		this.data = data;
+	}
+
+	public override string ToString()
+	{
+		return type.ToString();
+	}
 }

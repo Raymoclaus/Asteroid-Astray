@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "Scriptable Objects/EntityPrefabDatabase")]
@@ -20,6 +21,15 @@ public class EntityPrefabDB : ScriptableObject
 		for (int i = 0; i < spawnableEntities.Count; i++)
 		{
 			if (spawnableEntities[i].name.ToLower() == entityName) return spawnableEntities[i];
+		}
+		return null;
+	}
+
+	public SpawnableEntity GetSpawnableEntity(Type type)
+	{
+		for (int i = 0; i < spawnableEntities.Count; i++)
+		{
+			if (spawnableEntities[i].prefab.GetType() == type) return spawnableEntities[i];
 		}
 		return null;
 	}

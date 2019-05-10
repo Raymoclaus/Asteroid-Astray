@@ -74,7 +74,6 @@ public class Shuttle : Character, IStunnable, ICombat
 	[SerializeField] private float launchZoomOutSize = 5f;
 	[SerializeField] private float launchLookAheadDistance = 5f;
 	private List<ICombat> enemies = new List<ICombat>();
-	[SerializeField] private ShipInventory shipStorage;
 	[SerializeField] private ItemPopupUI popupUI;
 	private bool isTemporarilyInvincible = false;
 	private QuestLog questLog = new QuestLog();
@@ -147,7 +146,6 @@ public class Shuttle : Character, IStunnable, ICombat
 	protected override void Awake()
 	{
 		base.Awake();
-		shipStorage = shipStorage ?? FindObjectOfType<ShipInventory>();
 		if (CameraControl) CameraControl.followTarget = this;
 
 		canDrill = true;
@@ -531,12 +529,6 @@ public class Shuttle : Character, IStunnable, ICombat
 			stunned = false;
 			rb.constraints = RigidbodyConstraints2D.FreezeRotation;
 		}, stunDuration, true);
-	}
-
-	public void StoreInShip()
-	{
-		shipStorage = shipStorage ?? FindObjectOfType<ShipInventory>();
-		if (shipStorage) shipStorage.Store(storage.stacks);
 	}
 
 	public override bool VerifyDrillTarget(Entity target)

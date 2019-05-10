@@ -46,15 +46,18 @@ public class BotHive : Character, ICombat
 	private List<ChunkCoords> searchCoords = new List<ChunkCoords>();
 	#endregion
 
-	private void Start()
+	protected override void Awake()
 	{
-		occupiedDocks = new bool[maxBotCount];
+		base.Awake();
 		docks = new Transform[dockHolder.childCount];
 		for (int i = 0; i < dockHolder.childCount; i++)
 		{
 			docks[i] = dockHolder.GetChild(i);
 		}
-		currentHP = maxHP;
+	}
+
+	private void Start()
+	{
 		resourceCount = UnityEngine.Random.Range(
 			minLeftoverResources + botCreationCost * minInitialBotCount,
 			minLeftoverResources + (botCreationCost + botUpgradeCost * maxInitialUpgrades) * maxBotCount + 1);
@@ -131,19 +134,21 @@ public class BotHive : Character, ICombat
 				UpgradeBot(newBot);
 				needToUpgrade--;
 			}
-			BuildBot(dockID);
 		}
 	}
 
 	public void BuildBot(int dockID) => dockAnims[dockID].SetTrigger("Spawn1");
 
-	private GatherBot CreateBot(int dockID)
+	private GatherBot CreateBot(int dockID, bool ignoreCost = false)
 	{
-		if (resourceCount < botCreationCost + minLeftoverResources) return null;
-		
-		resourceCount -= botCreationCost;
-		toBeSpent -= botCreationCost;
-		inventory.RemoveItem(Item.Type.PureCorvorite, botCreationCost);
+		if (!ignoreCost)
+		{
+			if (resourceCount < botCreationCost + minLeftoverResources) return null;
+
+			resourceCount -= botCreationCost;
+			toBeSpent -= botCreationCost;
+			inventory.RemoveItem(Item.Type.PureCorvorite, botCreationCost);
+		}
 		GatherBot bot = Instantiate(botPrefab);
 		bot.Create(this, botBaseHP, dockID);
 		bot.Activate(false);
@@ -153,6 +158,7 @@ public class BotHive : Character, ICombat
 		bot.transform.parent = transform.parent;
 		childBots.Add(bot);
 		AssignUnoccupiedCoords(bot);
+		BuildBot(dockID);
 		return bot;
 	}
 
@@ -180,6 +186,10 @@ public class BotHive : Character, ICombat
 
 	private int GetAvailableDockID()
 	{
+		if (occupiedDocks == null)
+		{
+			occupiedDocks = new bool[maxBotCount];
+		}
 		for (int i = 0; i < occupiedDocks.Length; i++)
 		{
 			if (!occupiedDocks[i]) return i;
@@ -444,5 +454,43 @@ public class BotHive : Character, ICombat
 			if (e == threat) return;
 		}
 		enemies.Add(threat);
+	}
+
+	protected override object CreateDataObject()
+	{
+		List<GatherBot.GatherBotData> botData = new List<GatherBot.GatherBotData>();
+		for (int i = 0; i < childBots.Count; i++)
+		{
+			botData.Add(childBots[i].GetData());
+		}
+		return new HiveSaveData(transform.position, storage.GetInventoryData(), botData);
+	}
+
+	public override void ApplyData(EntityData? data)
+	{
+		if (data == null) return;
+		HiveSaveData d = (HiveSaveData)((EntityData)data).data;
+		transform.position = d.position;
+		storage.SetData(d.inventory);
+		for (int i = 0; i < d.botData.Count; i++)
+		{
+			CreateBot(GetAvailableDockID(), true).ApplyData(d.botData[i]);
+		}
+	}
+
+	[Serializable]
+	private struct HiveSaveData
+	{
+		public SerializableVector3 position;
+		public Inventory.InventoryData inventory;
+		public List<GatherBot.GatherBotData> botData;
+
+		public HiveSaveData(SerializableVector3 position, Inventory.InventoryData inventory,
+			List<GatherBot.GatherBotData> botData)
+		{
+			this.position = position;
+			this.inventory = inventory;
+			this.botData = botData;
+		}
 	}
 }
