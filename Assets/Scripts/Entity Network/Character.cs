@@ -7,7 +7,6 @@ public class Character : Entity
 	public Inventory storage;
 	public delegate void ItemUsedEventHandler(Item.Type type);
 	public event ItemUsedEventHandler OnItemUsed;
-	public System.Action EnteringShip;
 
 	protected override void Awake()
 	{

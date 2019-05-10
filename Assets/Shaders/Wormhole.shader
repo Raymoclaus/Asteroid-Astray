@@ -54,10 +54,11 @@
 
 			sampler2D _MainTex;
 			float _PositionX, _PositionY, _Radius, _DistortionAmplitude, _RotationSpeed;
-			float pi = 3.14159265359;
+			float _Arb, _Arb2;
 
 			fixed4 frag (v2f i) : SV_Target
 			{
+				float pi = 3.14159265359;
 				float radius = clamp(_Radius, 0.001, 1);
 				float width = _ScreenParams.x;
 				float height = _ScreenParams.y;
@@ -67,23 +68,22 @@
 
 				float rise = pos.y - distortionCenterPos.y;
 				float run = pos.x - distortionCenterPos.x;
-				run *= aspectRatio;
 				float distanceFromPos = sqrt(run * run + rise * rise);
+				run *= aspectRatio;
+				float distanceFromAdjustedPos = sqrt(run * run + rise * rise);
 				float distortionDelta = distanceFromPos / radius;
 				distortionDelta = pow(distortionDelta, _DistortionAmplitude);
-				float isInRadius = step(distanceFromPos, radius);
+				float isInRadius = step(distanceFromAdjustedPos, radius);
 
 				float angleFromDistortion = atan2(pos.y - distortionCenterPos.y, pos.x - distortionCenterPos.x);
 				float2 distortionPos = distortionCenterPos;
 				float adjustedAngle = angleFromDistortion + distortionDelta * _DistortionAmplitude - _Time.x * _RotationSpeed;
-				float2 adjustedPos = float2(sin(adjustedAngle + pi / 2), cos(adjustedAngle + pi / 2)) / 2;
+				float2 adjustedPos = float2(sin(adjustedAngle + pi / 2), -cos(adjustedAngle + pi / 2));
 				distortionPos += adjustedPos * distanceFromPos;
-				//distortionPos *= distortionDelta;
 
 
 				pos = lerp(pos, distortionPos, isInRadius);
 				fixed4 col = tex2D(_MainTex, pos);
-
 				return col;
 			}
 			ENDCG

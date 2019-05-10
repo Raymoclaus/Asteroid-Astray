@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.Events;
 
 public class Shuttle : Character, IStunnable, ICombat
 {
@@ -89,6 +90,7 @@ public class Shuttle : Character, IStunnable, ICombat
 	[SerializeField] private bool autoPilot;
 	public bool isKinematic;
 	[SerializeField] private TY4PlayingUI ty4pUI;
+	public UnityEvent EnteringShip;
 
 	#region Boost
 	private bool canBoost = true;

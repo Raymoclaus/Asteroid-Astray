@@ -23,7 +23,6 @@ public class EnergyShieldMaterialManager : MonoBehaviour
 		UpdateShield(character.ShieldRatio, 1f);
 		character.OnShieldUpdated += UpdateShield;
 		SetDefaultScale();
-		character.EnteringShip += Shrink;
 	}
 
 	private void UpdateShield(float oldVal, float newVal)
@@ -121,7 +120,7 @@ public class EnergyShieldMaterialManager : MonoBehaviour
 
 	private void SetRippleAngle(float angle) => mat?.SetFloat(RIPPLE_ANGLE, angle);
 
-	private void Shrink()
+	public void Shrink()
 	{
 		Coroutines.TimedAction(1f, (float delta) =>
 		{

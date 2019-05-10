@@ -16,7 +16,6 @@ public class MainHatchPrompt : InteractablePromptTrigger
 	protected override void Awake()
 	{
 		base.Awake();
-		FindObjectOfType<Shuttle>().EnteringShip += Open;
 	}
 
 	protected override void OnInteracted()
