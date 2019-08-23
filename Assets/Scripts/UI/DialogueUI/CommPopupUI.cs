@@ -37,7 +37,7 @@ public class CommPopupUI : DialoguePopupUI
 		}
 	}
 
-	public override void GeneratePopup(string name, string line, Sprite face, int speakerID)
+	public override void GeneratePopup(string name, string line, Sprite face, int speakerID, AudioClip tone)
 	{
 		bool useLeftSide = speakerID == 0;
 		if (activePopups.Count == 0)
@@ -49,6 +49,7 @@ public class CommPopupUI : DialoguePopupUI
 			RemovePopup(activePopups.Count - 1);
 		}
 		AddSpeakerID(speakerID);
+		SetSpeakerTone(tone);
 		DialoguePopupObject po = GetInactivePopup(useLeftSide);
 		activePopups.Insert(0, po);
 		inactivePopups.Remove(po);

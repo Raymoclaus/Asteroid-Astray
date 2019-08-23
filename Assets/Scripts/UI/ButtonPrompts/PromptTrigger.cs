@@ -2,33 +2,33 @@
 
 public class PromptTrigger : VicinityTrigger
 {
-	private static PromptUI promptUI;
+	private static PromptUI prompts;
+	private PromptUI Prompts => prompts ?? (prompts = FindObjectOfType<PromptUI>());
 	[SerializeField] protected string text;
-	protected bool disablePrompt = false;
-	private PromptUI PromptUI { get { return promptUI ?? (promptUI = FindObjectOfType<PromptUI>()); } }
+	[SerializeField] protected bool promptsEnabled = true;
 
-	public void DisablePrompt(bool disable)
+	public void EnablePrompts(bool enable)
 	{
-		disablePrompt = disable;
-		if (!disable) return;
+		promptsEnabled = enable;
+		if (enable) return;
 		DeactivatePrompt();
 	}
 
-	protected override void EnterTrigger()
+	protected override void EnterTrigger(Triggerer actor)
 	{
-		base.EnterTrigger();
-		if (disablePrompt) return;
+		base.EnterTrigger(actor);
+		if (!promptsEnabled || !actor.canTriggerPrompts) return;
 
-		PromptUI?.ActivatePrompt(text);
+		Prompts.ActivatePrompt(text);
 	}
 
-	protected override void ExitTrigger()
+	protected override void ExitTrigger(Triggerer actor)
 	{
-		base.ExitTrigger();
-		if (disablePrompt) return;
+		base.ExitTrigger(actor);
+		if (!actor.canTriggerPrompts) return;
 
 		DeactivatePrompt();
 	}
 
-	private void DeactivatePrompt() => PromptUI?.DeactivatePrompt(text);
+	private void DeactivatePrompt() => Prompts.DeactivatePrompt(text);
 }

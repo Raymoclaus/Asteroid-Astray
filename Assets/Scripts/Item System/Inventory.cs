@@ -5,6 +5,7 @@ using UnityEngine;
 public class Inventory : MonoBehaviour
 {
 	public int size = 10;
+	public bool noLimit = false;
 	public List<ItemStack> stacks = new List<ItemStack>();
 	[SerializeField] private string saveKey;
 
@@ -21,8 +22,11 @@ public class Inventory : MonoBehaviour
 
 	public void SetData(InventoryData data)
 	{
-		size = data.size;
-		stacks = data.stacks;
+		if (data.stacks != null)
+		{
+			size = data.size;
+			stacks = data.stacks;
+		}
 		TrimPadStacks();
 	}
 
@@ -53,17 +57,14 @@ public class Inventory : MonoBehaviour
 		return count;
 	}
 
-	public bool HasItems()
-	{
-		return EmptySlotCount() < size;
-	}
+	public bool HasItems() => EmptySlotCount() < size;
 
 	public int AddItem(Item.Type type, int num = 1, List<ItemStack> inv = null)
 	{
 		if (num <= 0) return 0;
 		if (type == Item.Type.Blank) return 0;
 
-		inv = inv != null ? inv : stacks;
+		inv = inv ?? stacks;
 		for (int i = 0; i < inv.Count; i++)
 		{
 			ItemStack stack = inv[i];
@@ -107,6 +108,11 @@ public class Inventory : MonoBehaviour
 				stack.AddAmount(add);
 			}
 			if (num <= 0) return 0;
+			if (i == inv.Count - 1 && noLimit)
+			{
+				inv.Add(new ItemStack());
+				size++;
+			}
 		}
 
 		return num;

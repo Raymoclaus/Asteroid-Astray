@@ -15,6 +15,14 @@ public static class TmpTeleType
 		coroutines.Add(new TextMeshCoroutine(textMesh, coro, mono));
 	}
 
+	public static void Type(MonoBehaviour mono, TextMeshProUGUI textMesh,
+		WaitForSecondsRealtime timeBetweenStrokes = null, System.Action onFinishTyping = null)
+	{
+		if (IsTyping(textMesh)) return;
+		Coroutine coro = mono.StartCoroutine(Typing(textMesh, timeBetweenStrokes, onFinishTyping));
+		coroutines.Add(new TextMeshCoroutine(textMesh, coro, mono));
+	}
+
 	public static void RevealAllCharacters(TextMeshProUGUI textMesh)
 	{
 		textMesh.maxVisibleCharacters = textMesh.textInfo.characterCount;
@@ -32,6 +40,28 @@ public static class TmpTeleType
 
 	private static IEnumerator Typing(TextMeshProUGUI textMesh,
 		WaitForSeconds timeBetweenStrokes = null, System.Action onFinishTyping = null)
+	{
+		textMesh.ForceMeshUpdate();
+		textMesh.enableWordWrapping = true;
+
+		int totalVisibleCharacters = textMesh.textInfo.characterCount;
+		int counter = 0;
+		int visibleCount = 0;
+
+		while (visibleCount < totalVisibleCharacters)
+		{
+			visibleCount = counter % (totalVisibleCharacters + 1);
+			textMesh.maxVisibleCharacters = visibleCount;
+			counter += 1;
+			yield return timeBetweenStrokes;
+		}
+
+		RevealAllCharacters(textMesh);
+		onFinishTyping?.Invoke();
+	}
+
+	private static IEnumerator Typing(TextMeshProUGUI textMesh,
+		WaitForSecondsRealtime timeBetweenStrokes = null, System.Action onFinishTyping = null)
 	{
 		textMesh.ForceMeshUpdate();
 		textMesh.enableWordWrapping = true;

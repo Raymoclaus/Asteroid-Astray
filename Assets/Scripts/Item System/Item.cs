@@ -26,7 +26,11 @@ public static class Item
 		NioleriumCrystals,
 		NiolerDung,
 		StoneAmmo,
-		CureShotAmmo
+		CureShotAmmo,
+		BlueKey,
+		RedKey,
+		YellowKey,
+		GreenKey,
 	}
 
 	public const int MAX_RARITY = 10;
@@ -35,8 +39,8 @@ public static class Item
 	{
 		switch (type)
 		{
+			default: return "<Unnamed>";
 			case Type.Blank: return "Blank";
-
 			case Type.Stone: return "Stone";
 			case Type.Iron: return "Iron";
 			case Type.Copper: return "Copper";
@@ -59,8 +63,10 @@ public static class Item
 			case Type.NiolerDung: return "Nioler Dung";
 			case Type.StoneAmmo: return "Stone Ammo";
 			case Type.CureShotAmmo: return "CureShot Ammo";
-
-			default: return "<Unnamed>";
+			case Type.BlueKey: return "Blue Key";
+			case Type.RedKey: return "Red Key";
+			case Type.YellowKey: return "Yellow Key";
+			case Type.GreenKey: return "Green Key";
 		}
 	}
 
@@ -68,8 +74,8 @@ public static class Item
 	{
 		switch (type)
 		{
+			default: return 1;
 			case Type.Blank: return 0;
-
 			case Type.Stone: return 1;
 			case Type.Iron: return 2;
 			case Type.Copper: return 2;
@@ -92,8 +98,10 @@ public static class Item
 			case Type.NiolerDung: return 6;
 			case Type.StoneAmmo: return 2;
 			case Type.CureShotAmmo: return 3;
-
-			default: return 1;
+			case Type.BlueKey: return 1;
+			case Type.RedKey: return 1;
+			case Type.YellowKey: return 1;
+			case Type.GreenKey: return 1;
 		}
 	}
 
@@ -101,8 +109,8 @@ public static class Item
 	{
 		switch (type)
 		{
+			default: return 100;
 			case Type.Blank: return 0;
-
 			case Type.Stone: return 100;
 			case Type.Iron: return 100;
 			case Type.Copper: return 100;
@@ -125,8 +133,22 @@ public static class Item
 			case Type.NiolerDung: return 30;
 			case Type.StoneAmmo: return 100;
 			case Type.CureShotAmmo: return 100;
+			case Type.BlueKey: return 1;
+			case Type.RedKey: return 1;
+			case Type.YellowKey: return 1;
+			case Type.GreenKey: return 1;
+		}
+	}
 
-			default: return 100;
+	public static bool IsKeyItem(Type type)
+	{
+		switch (type)
+		{
+			default: return false;
+			case Type.BlueKey: return true;
+			case Type.RedKey: return true;
+			case Type.YellowKey: return true;
+			case Type.GreenKey: return true;
 		}
 	}
 
@@ -135,8 +157,8 @@ public static class Item
 	{
 		switch (type)
 		{
+			default: return string.Empty;
 			case Type.Blank: return string.Empty;
-
 			case Type.Stone: return "A lump of rock. Can be broken down for a chance to find" +
 					" other items.";
 			case Type.Iron: return "A refined metal. Can be used in crafting more complex items.";
@@ -144,9 +166,8 @@ public static class Item
 					" items.";
 			case Type.PureCorvorite: return "A mysteriously rare mineral with uniquely powerful" +
 					" properties.";
-			case Type.CorruptedCorvorite:
-				return "An impure source of energy resource derived from the legend known as" +
-					" \"Pure Corvorite\".";
+			case Type.CorruptedCorvorite: return "An impure source of energy resource derived" +
+					" from the legend known as \"Pure Corvorite\".";
 			case Type.CoreCrystal: return string.Empty;
 			case Type.BugFood: return string.Empty;
 			case Type.ProximityMine: return string.Empty;
@@ -162,12 +183,18 @@ public static class Item
 			case Type.RepairKit: return string.Empty;
 			case Type.NioleriumCrystals: return string.Empty;
 			case Type.NiolerDung: return string.Empty;
-			case Type.StoneAmmo: return "A stone-based ammunition that is low-damage but is" +
-					" useful for penetrating shields.";
-			case Type.CureShotAmmo: return "Ammunition designed to inject nanobots into the" +
-					" target and repair mechanical systems.";
-
-			default: return string.Empty;
+			case Type.StoneAmmo: return "Stone-based ammunition that is low-damage but is useful" +
+					" for penetrating shields.";
+			case Type.CureShotAmmo: return "Ammunition for injecting nanobots into the target" +
+					" and repair mechanical systems.";
+			case Type.BlueKey: return "A blue key. Found on any planet, but mysteriously crumble" +
+					" on leaving a planet.";
+			case Type.RedKey: return "A red key. Found on any planet, but mysteriously crumble" +
+					" on leaving a planet.";
+			case Type.YellowKey: return "A yellow key. Found on any planet, but mysteriously" +
+					" crumble on leaving a planet.";
+			case Type.GreenKey: return "A green key. Found on any planet, but mysteriously" +
+					" crumble on leaving a planet.";
 		}
 	}
 
@@ -175,8 +202,8 @@ public static class Item
 	{
 		switch (type)
 		{
+			default: return string.Empty;
 			case Type.Blank: return string.Empty;
-
 			case Type.Stone: return "\"Charged with two counts of murder by the Avian Court of" +
 					" Caw Law.\"";
 			case Type.Iron: return "\"Not quite as effective at removing creases from clothing" +
@@ -216,8 +243,14 @@ public static class Item
 					" them off. CureShot ammunition later saw some more practical use between" +
 					" squads, but hasn't seen much more use due to its difficulty to use in" +
 					" combat and has few other applications.";
-
-			default: return string.Empty;
+			case Type.BlueKey: return "These curious keys appear to only be able to exist in one" +
+					" piece while on a planet. They have a strange reaction with certain objects" +
+					" on their respective planets, causing both the key and the object to" +
+					" disappear. Most believe them to be magical items of tricksters, but no" +
+					" such \"trickster\" has been sighted, nor does magic exist.";
+			case Type.RedKey: goto case Type.BlueKey;
+			case Type.YellowKey: goto case Type.BlueKey;
+			case Type.GreenKey: goto case Type.BlueKey;
 		}
 	}
 }

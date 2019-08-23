@@ -18,27 +18,27 @@ public class MainHatchPrompt : InteractablePromptTrigger
 		base.Awake();
 	}
 
-	protected override void OnInteracted()
+	protected override void OnInteracted(Triggerer actor)
 	{
 		if (isLocked) return;
-		base.OnInteracted();
+		base.OnInteracted(actor);
 	}
 
 	public void PlayDialogueResponse()
 	{
-		if (DialogueController.DialogueIsActive()) return;
+		if (DlgCtrl.DialogueIsActive()) return;
 
 		if (!NarrativeManager.ShuttleRepaired)
 		{
-			DialogueController.StartChat(interactBeforeRepairedShuttle);
+			DlgCtrl.StartChat(interactBeforeRepairedShuttle);
 		}
 		else if (!NarrativeManager.ShipRecharged)
 		{
-			DialogueController.StartChat(interactBeforeRechargedShip);
+			DlgCtrl.StartChat(interactBeforeRechargedShip);
 		}
 		else
 		{
-			DialogueController.StartChat(genericCantEnterShipDialogue);
+			DlgCtrl.StartChat(genericCantEnterShipDialogue);
 		}
 	}
 

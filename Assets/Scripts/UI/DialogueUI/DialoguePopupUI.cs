@@ -7,6 +7,7 @@ public class DialoguePopupUI : PopupUI
 	protected List<DialoguePopupObject> activePopups = new List<DialoguePopupObject>();
 	protected List<DialoguePopupObject> inactivePopups = new List<DialoguePopupObject>();
 	protected List<int> speakerIDs = new List<int>();
+	[SerializeField] private AudioSource audioSource;
 
 	public bool hasName = true, hasLine = true, hasFace = true;
 
@@ -91,10 +92,19 @@ public class DialoguePopupUI : PopupUI
 
 	public void Type(WaitForSeconds timeBetweenStrokes = null, System.Action onFinishTyping = null)
 	{
+		onFinishTyping += () => SetAudioLoop(false);
 		TmpTeleType.Type(this, activePopups[0].line.textMesh, timeBetweenStrokes, onFinishTyping);
 	}
 
-	public virtual void GeneratePopup(string name, string line, Sprite face, int speakerID)
+	public void Type(WaitForSecondsRealtime timeBetweenStrokes = null, System.Action onFinishTyping = null)
+	{
+		onFinishTyping += () => SetAudioLoop(false);
+		TmpTeleType.Type(this, activePopups[0].line.textMesh, timeBetweenStrokes, onFinishTyping);
+	}
+
+	private void SetAudioLoop(bool active) => audioSource.loop = active;
+
+	public virtual void GeneratePopup(string name, string line, Sprite face, int speakerID, AudioClip tone)
 	{
 		bool useLeftSide = speakerID == 0;
 		if (activePopups.Count == 0)
@@ -106,6 +116,7 @@ public class DialoguePopupUI : PopupUI
 			RemovePopup(activePopups.Count - 1);
 		}
 		AddSpeakerID(speakerID);
+		SetSpeakerTone(tone);
 		DialoguePopupObject po = GetInactivePopup(useLeftSide);
 		activePopups.Insert(0, po);
 		inactivePopups.Remove(po);
@@ -115,6 +126,13 @@ public class DialoguePopupUI : PopupUI
 		pos.y = -popupHeight;
 		po.transform.anchoredPosition = pos;
 		po.transform.gameObject.SetActive(true);
+	}
+
+	protected void SetSpeakerTone(AudioClip tone)
+	{
+		audioSource.clip = tone;
+		SetAudioLoop(true);
+		audioSource.Play();
 	}
 
 	protected void AddSpeakerID(int speakerID)

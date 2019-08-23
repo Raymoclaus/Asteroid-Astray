@@ -130,12 +130,13 @@ public class DialogueController : MonoBehaviour
 		string name = speakers[speakerID].entityName;
 		string line = currentLines[currentPosition].line;
 		Sprite face = speakers[speakerID].face;
+		AudioClip tone = speakers[speakerID].chatTone;
 
 		currentConversation.InvokeEvent(currentPosition);
 
 		DialoguePopupUI popupUI = dialogueIsRunning ? dialogueUI : chatUI;
-		popupUI.GeneratePopup(name, line, face, speakerID);
-		popupUI.Type();
+		popupUI.GeneratePopup(name, line, face, speakerID, tone);
+		popupUI.Type(new WaitForSecondsRealtime(0.03f));
 	}
 
 	public void SkipEntireDialogue()

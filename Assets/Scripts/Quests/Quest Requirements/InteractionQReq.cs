@@ -4,12 +4,14 @@ public class InteractionQReq : QuestRequirement
 {
 	private string description;
 	private InteractablePromptTrigger interactableTrigger;
+	private Triggerer actor;
 	private Vector3? location;
 
-	public InteractionQReq(InteractablePromptTrigger interactableTrigger, string description)
+	public InteractionQReq(InteractablePromptTrigger interactableTrigger, Triggerer actor, string description)
 	{
 		this.description = description;
 		this.interactableTrigger = interactableTrigger;
+		this.actor = actor;
 	}
 
 	public override void Activate()
@@ -18,9 +20,9 @@ public class InteractionQReq : QuestRequirement
 		interactableTrigger.OnInteraction += EvaluateEvent;
 	}
 
-	private void EvaluateEvent()
+	private void EvaluateEvent(Triggerer actor)
 	{
-		if (IsComplete() || !active) return;
+		if (IsComplete() || !active || this.actor != actor) return;
 
 		QuestRequirementCompleted();
 	}

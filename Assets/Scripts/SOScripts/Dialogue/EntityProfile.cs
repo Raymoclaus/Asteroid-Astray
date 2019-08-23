@@ -5,4 +5,5 @@ public class EntityProfile : ScriptableObject
 {
 	public string entityName;
 	public Sprite face;
+	public AudioClip chatTone;
 }

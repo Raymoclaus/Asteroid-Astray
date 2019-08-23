@@ -27,7 +27,11 @@ public class ItemSprites : ScriptableObject
 		NioleriumCrystals,
 		NiolerDung,
 		StoneAmmo,
-		CureShotAmmo;
+		CureShotAmmo,
+		BlueKey,
+		RedKey,
+		YellowKey,
+		GreenKey;
 
 	public Sprite GetItemSprite(Item.Type type)
 	{
@@ -57,6 +61,10 @@ public class ItemSprites : ScriptableObject
 			case Item.Type.NiolerDung: return NiolerDung;
 			case Item.Type.StoneAmmo: return StoneAmmo;
 			case Item.Type.CureShotAmmo: return CureShotAmmo;
+			case Item.Type.BlueKey: return BlueKey;
+			case Item.Type.RedKey: return RedKey;
+			case Item.Type.YellowKey: return YellowKey;
+			case Item.Type.GreenKey: return GreenKey;
 		}
 	}
 }

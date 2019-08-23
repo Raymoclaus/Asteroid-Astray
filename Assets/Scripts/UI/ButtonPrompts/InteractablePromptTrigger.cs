@@ -3,20 +3,15 @@ using UnityEngine.Events;
 
 public class InteractablePromptTrigger : PromptTrigger
 {
-	[SerializeField] protected InputAction action = InputAction.Interact;
-
-	public delegate void InteractionEventHandler();
+	public delegate void InteractionEventHandler(Triggerer actor);
 	public event InteractionEventHandler OnInteraction;
 
-	private static DialogueController dialogueController;
-	protected static DialogueController DialogueController
-	{
-		get
-		{
-			return dialogueController ?? (dialogueController = FindObjectOfType<DialogueController>());
-		}
-	}
+	private static DialogueController dlgCtrl;
+	protected static DialogueController DlgCtrl
+		=> dlgCtrl ?? (dlgCtrl = FindObjectOfType<DialogueController>());
 	protected bool enabledInteractionActions = true;
+	[SerializeField] protected InputAction action = InputAction.Interact;
+	public InputAction Action => action;
 
 	[SerializeField] protected UnityEvent interactionActions;
 
@@ -28,13 +23,16 @@ public class InteractablePromptTrigger : PromptTrigger
 
 	protected virtual void Update()
 	{
-		if (IsTriggerActive() && InputHandler.GetInputDown(action) > 0f && !Pause.IsStopped)
+		for (int i = 0; i < nearbyActors.Count; i++)
 		{
-			OnInteraction?.Invoke();
+			if (!Pause.IsStopped && nearbyActors[i].IsInteracting(this))
+			{
+				OnInteraction?.Invoke(nearbyActors[i]);
+			}
 		}
 	}
 
-	protected virtual void OnInteracted()
+	protected virtual void OnInteracted(Triggerer actor)
 	{
 		if (enabledInteractionActions)
 		{

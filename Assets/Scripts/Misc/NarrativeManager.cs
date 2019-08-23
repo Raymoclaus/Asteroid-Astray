@@ -9,39 +9,27 @@ public class NarrativeManager : MonoBehaviour
 	#endregion
 
 	[SerializeField] private bool randomiseStartingLocation;
-	private DialogueController dialogueController;
-	private DialogueController DialogueCtrl
-	{
-		get
-		{
-			return dialogueController
-				?? (dialogueController = FindObjectOfType<DialogueController>());
-		}
-	}
+	private DialogueController dlgCtrl;
+	private DialogueController DlgCtrl
+		=> dlgCtrl ?? (dlgCtrl = FindObjectOfType<DialogueController>());
 	[SerializeField] private DebugGameplayManager dgm;
 	[SerializeField] private SpotlightEffectController spotlightEffectController;
 	[SerializeField] private CustomScreenEffect screenEffects;
 	[SerializeField] private Shuttle mainChar;
-	private Shuttle MainChar
-	{
-		get { return mainChar ?? (mainChar = FindObjectOfType<Shuttle>()); }
-	}
+	private Shuttle MainChar => mainChar ?? (mainChar = FindObjectOfType<Shuttle>());
+	[SerializeField] private Triggerer playerTriggerer;
+	private Triggerer PlayerTriggerer
+		=> playerTriggerer ?? (playerTriggerer = MainChar.GetComponent<Triggerer>());
 	private MainHatchPrompt mainHatch;
 	private MainHatchPrompt MainHatch
-	{
-		get { return mainHatch ?? (mainHatch = FindObjectOfType<MainHatchPrompt>()); }
-	}
+		=> mainHatch ?? (mainHatch = FindObjectOfType<MainHatchPrompt>());
 	[SerializeField] private DerangedSoloBot derangedSoloBotPrefab;
 	private TutorialPrompts tutPrompts;
 	private TutorialPrompts TutPrompts
-	{
-		get { return tutPrompts ?? (tutPrompts = FindObjectOfType<TutorialPrompts>()); }
-	}
+		=> tutPrompts ?? (tutPrompts = FindObjectOfType<TutorialPrompts>());
 	[SerializeField] private InventoryUIController inventoryUI;
 	private InventoryUIController InventoryUI
-	{
-		get { return inventoryUI ?? (inventoryUI = FindObjectOfType<InventoryUIController>()); }
-	}
+		=> inventoryUI ?? (inventoryUI = FindObjectOfType<InventoryUIController>());
 	[SerializeField] private TY4PlayingUI ty4pUI;
 
 	[SerializeField] private ConversationWithActions
@@ -239,7 +227,7 @@ public class NarrativeManager : MonoBehaviour
 		List<QuestReward> qRewards = new List<QuestReward>();
 
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-		qReqs.Add(new InteractionQReq(MainHatch, "Return to the ship."));
+		qReqs.Add(new InteractionQReq(MainHatch, MainChar.GetComponent<Triggerer>(), "Return to the ship."));
 
 		Quest q = new Quest(
 			"Find your way back to the ship",
@@ -273,7 +261,7 @@ public class NarrativeManager : MonoBehaviour
 		//attach dialogue prompt when player approaches bot
 		VicinityTrigger entityPrompt = newEntity.GetComponentInChildren<VicinityTrigger>();
 		VicinityTrigger.VicinityTriggerEventHandler triggerEnterAction = null;
-		triggerEnterAction = () =>
+		triggerEnterAction = (Triggerer actor) =>
 		{
 			StartDialogue(foundDerangedBotDialogue, true);
 			entityPrompt.OnEnterTrigger -= triggerEnterAction;
@@ -331,15 +319,15 @@ public class NarrativeManager : MonoBehaviour
 
 	public void StartDialogue(ConversationWithActions ce, bool chat = false)
 	{
-		DialogueCtrl.SkipEntireChat(true);
+		DlgCtrl.SkipEntireChat(true);
 
 		if (chat)
 		{
-			DialogueCtrl.StartChat(ce);
+			DlgCtrl.StartChat(ce);
 		}
 		else
 		{
-			DialogueCtrl.StartDialogue(ce);
+			DlgCtrl.StartDialogue(ce);
 		}
 	}
 

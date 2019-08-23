@@ -198,7 +198,7 @@ public class ItemPopupUI : PopupUI
 			}
 			else
 			{
-				name.text = type.ToString();
+				name.text = Item.TypeName(type);
 			}
 		}
 
