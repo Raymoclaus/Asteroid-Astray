@@ -12,6 +12,7 @@ public abstract class RoomObject
 		None,
 		Lock,
 		Key,
-		ExitTrigger
+		ExitTrigger,
+		LandingPad
 	}
 }

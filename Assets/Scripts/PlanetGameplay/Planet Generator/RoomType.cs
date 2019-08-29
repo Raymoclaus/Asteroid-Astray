@@ -5,10 +5,10 @@ using UnityEngine;
 public enum RoomType
 {
 	Start,
+	Boss,
 	Empty,
 	Puzzle,
 	Enemies,
 	Treasure,
-	Boss,
 	NPC,
 }

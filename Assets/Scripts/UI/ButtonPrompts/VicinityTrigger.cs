@@ -53,4 +53,6 @@ public class VicinityTrigger : MonoBehaviour
 	protected virtual void ExitTrigger(Triggerer actor) { }
 
 	public void EnableTrigger(bool enable) => col.enabled = enable;
+
+	protected void SetColliderOffset(Vector2 pos) => col.offset = pos;
 }

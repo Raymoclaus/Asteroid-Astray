@@ -11,6 +11,7 @@ public class RoomViewer : MonoBehaviour
 	[SerializeField] private PlanetRoomExitTrigger exitTriggerPrefab;
 	[SerializeField] private PlanetRoomKey keyPrefab;
 	[SerializeField] private PlanetRoomLock lockPrefab;
+	[SerializeField] private PlanetRoomLandingPad landingPadPrefab;
 
 	[SerializeField] private Camera cam;
 
@@ -19,6 +20,7 @@ public class RoomViewer : MonoBehaviour
 		if (parentObject != null && destroyExisting)
 		{
 			Destroy(parentObject);
+			parentObject = null;
 		}
 		parentObject = parentObject ?? new GameObject("Room");
 
@@ -28,8 +30,14 @@ public class RoomViewer : MonoBehaviour
 		SetCameraPosition(room.GetCenter());
 	}
 
-	public IEnumerator ShowAllRooms(PlanetData data)
+	public void ShowAllRooms(PlanetData data)
 	{
+		if (parentObject != null)
+		{
+			Destroy(parentObject);
+			parentObject = null;
+		}
+
 		List<Room> rooms = data.GetRooms();
 		for (int i = 0; i < rooms.Count; i++)
 		{
@@ -37,7 +45,7 @@ public class RoomViewer : MonoBehaviour
 			Vector2Int offset = rooms[i].position;
 			offset.Scale(dimensions);
 			ShowRoom(data, rooms[i], offset, false);
-			yield return new WaitForSeconds(1f);
+			//yield return new WaitForSeconds(1f);
 		}
 		SetCameraPosition(rooms[0].GetCenter());
 	}
@@ -137,6 +145,11 @@ public class RoomViewer : MonoBehaviour
 						(PlanetRoomExitTrigger)CreateObject(exitTriggerPrefab, room, objs[i], dataSet);
 					roomObj = triggerObj;
 					break;
+				case RoomObject.ObjType.LandingPad:
+					PlanetRoomLandingPad landingPadObj =
+						(PlanetRoomLandingPad)CreateObject(landingPadPrefab, room, objs[i], dataSet);
+					roomObj = landingPadObj;
+					break;
 			}
 
 			roomObj.transform.position = objs[i].position + offset;
@@ -153,7 +166,7 @@ public class RoomViewer : MonoBehaviour
 		Sprite randomSprite = spriteSet[randomIndex];
 
 		PlanetTile tile = (PlanetTile)CreateObject(tilePrefab, null, null, null);
-		tile.SprRend.sprite = randomSprite;
+		tile.sprRend.sprite = randomSprite;
 		Vector2 position = new Vector2(x, y);
 		tile.transform.position = position;
 	}

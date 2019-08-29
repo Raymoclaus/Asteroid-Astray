@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using MazeGenerator;
 
 public class Room
 {
@@ -9,63 +10,300 @@ public class Room
 	private bool upLocked, rightLocked, downLocked, leftLocked;
 	private RoomLock upLock, rightLock, downLock, leftLock;
 	private Room upRoom, rightRoom, downRoom, leftRoom;
-	private int roomWidth = 24, roomHeight = 12, exitWidth = 2, exitLength = 2;
+	protected int roomWidth = 28, roomHeight = 16, exitWidth = 2, exitLength = 2;
 	protected List<RoomTile> tiles = new List<RoomTile>();
 	public Vector2Int position;
 	public List<RoomObject> roomObjects = new List<RoomObject>();
+	private PuzzleTypeWeightings puzzleWeightings;
 
 	public delegate void ExitUnlockedEventHandler(Direction direction);
 	public event ExitUnlockedEventHandler OnExitUnlocked;
 
-	public Room(RoomType type, Vector2Int position)
+	public Room(RoomType type, Vector2Int position, PuzzleTypeWeightings puzzleWeightings)
 	{
 		this.type = type;
 		this.position = position;
-		GenerateContent();
+		this.puzzleWeightings = puzzleWeightings;
 	}
 
-	protected virtual void GenerateContent()
+	public void GenerateContent()
 	{
-		for (int x = -1; x <= roomWidth; x++)
+		switch (type)
 		{
-			for (int y = -1; y <= roomHeight; y++)
+			case RoomType.Start:
+				GenerateStartRoom();
+				break;
+			case RoomType.Empty:
+				GenerateEmptyRoom();
+				break;
+			case RoomType.Puzzle:
+				GeneratePuzzleRoom();
+				break;
+			case RoomType.Enemies:
+				GenerateEmptyRoom();
+				break;
+			case RoomType.Treasure:
+				GenerateEmptyRoom();
+				break;
+			case RoomType.Boss:
+				GenerateEmptyRoom();
+				break;
+			case RoomType.NPC:
+				GenerateEmptyRoom();
+				break;
+		}
+	}
+
+	public void GenerateOuterWalls()
+	{
+		for (int x = 0; x < roomWidth; x++)
+		{
+			for (int y = 0; y < roomHeight; y++)
 			{
 				RoomTile.TileType tileType = RoomTile.TileType.Floor;
-				if (x == -1)
+				if (x == 0)
 				{
 					tileType = RoomTile.TileType.LeftWall;
-					if (y == -1)
+					if (y == 0)
 					{
 						tileType = RoomTile.TileType.DownLeftInnerWall;
 					}
-					if (y == roomHeight)
+					if (y == roomHeight - 1)
 					{
 						tileType = RoomTile.TileType.UpLeftInnerWall;
 					}
+					AddTile(x, y, tileType);
 				}
-				else if (x == roomWidth)
+				else if (x == roomWidth - 1)
 				{
 					tileType = RoomTile.TileType.RightWall;
-					if (y == -1)
+					if (y == 0)
 					{
 						tileType = RoomTile.TileType.DownRightInnerWall;
 					}
-					if (y == roomHeight)
+					if (y == roomHeight - 1)
 					{
 						tileType = RoomTile.TileType.UpRightInnerWall;
 					}
+					AddTile(x, y, tileType);
 				}
-				else if (y == -1)
+				else if (y == 0)
 				{
 					tileType = RoomTile.TileType.DownWall;
+					AddTile(x, y, tileType);
 				}
-				else if (y == roomHeight)
+				else if (y == roomHeight - 1)
 				{
 					tileType = RoomTile.TileType.UpWall;
+					AddTile(x, y, tileType);
 				}
+			}
+		}
+
+		if (upExit)
+		{
+			int x = upExitPos.x;
+			x = x < roomWidth - exitWidth - 1 ? x : roomWidth - exitWidth - 1;
+			x = x >= 1 ? x : 1;
+			AddExitFlooring(x, roomHeight - 1, new Vector2Int(exitWidth, exitLength));
+			for (int i = 0; i < exitLength; i++)
+			{
+				AddTile(x - 1, roomHeight - 1 + i,
+					i == 0 ? RoomTile.TileType.DownRightOuterWall : RoomTile.TileType.LeftWall);
+				AddTile(x + exitWidth, roomHeight - 1 + i,
+					i == 0 ? RoomTile.TileType.DownLeftOuterWall : RoomTile.TileType.RightWall);
+			}
+		}
+		if (rightExit)
+		{
+			int y = rightExitPos.y;
+			y = y < roomHeight - exitWidth - 1 ? y : roomHeight - exitWidth - 1;
+			y = y >= 1 ? y : 1;
+			AddExitFlooring(roomWidth - 1, y, new Vector2Int(exitLength, exitWidth));
+			for (int i = 0; i < exitLength; i++)
+			{
+				AddTile(roomWidth - 1 + i, y + exitWidth,
+					i == 0 ? RoomTile.TileType.DownLeftOuterWall : RoomTile.TileType.UpWall);
+				AddTile(roomWidth - 1 + i, y - 1,
+					i == 0 ? RoomTile.TileType.UpLeftOuterWall : RoomTile.TileType.DownWall);
+			}
+		}
+		if (downExit)
+		{
+			int x = downExitPos.x;
+			x = x < roomWidth - exitWidth - 1 ? x : roomWidth - exitWidth - 1;
+			x = x >= 1 ? x : 1;
+			AddExitFlooring(x, 1 - exitLength, new Vector2Int(exitWidth, exitLength));
+			for (int i = 0; i < exitLength; i++)
+			{
+				AddTile(x - 1, -i,
+					i == 0 ? RoomTile.TileType.UpRightOuterWall : RoomTile.TileType.LeftWall);
+				AddTile(x + exitWidth, -i,
+					 i == 0 ? RoomTile.TileType.UpLeftOuterWall : RoomTile.TileType.RightWall);
+			}
+		}
+		if (leftExit)
+		{
+			int y = leftExitPos.y;
+			y = y < roomHeight - exitWidth - 1 ? y : roomHeight - exitWidth - 1;
+			y = y >= 1 ? y : 1;
+			AddExitFlooring(1 - exitLength, y, new Vector2Int(exitLength, exitWidth));
+			for (int i = 0; i < exitLength; i++)
+			{
+				AddTile(-i, y + exitWidth,
+					i == 0 ? RoomTile.TileType.DownRightOuterWall : RoomTile.TileType.UpWall);
+				AddTile(-i, y - 1,
+					i == 0 ? RoomTile.TileType.UpRightOuterWall : RoomTile.TileType.DownWall);
+			}
+		}
+	}
+
+	private void GenerateEmptyRoom()
+	{
+		for (int x = 1; x < roomWidth - 1; x++)
+		{
+			for (int y = 1; y < roomHeight - 1; y++)
+			{
+				RoomTile.TileType tileType = RoomTile.TileType.Floor;
 				AddTile(x, y, tileType);
 			}
 		}
+	}
+
+	private void GenerateStartRoom()
+	{
+		GenerateEmptyRoom();
+		PlanetLandingPad landingPad = new PlanetLandingPad();
+		landingPad.position = new Vector2Int(GetWidth() / 2, 3);
+		roomObjects.Add(landingPad);
+	}
+
+	private void GeneratePuzzleRoom()
+	{
+		PuzzleType pType = PickRandomPuzzleType();
+		GenerateEmptyRoom();
+
+		switch (pType)
+		{
+			case PuzzleType.Maze:
+				GenerateMazePuzzle();
+				break;
+			case PuzzleType.TileLight:
+				break;
+			case PuzzleType.BeamRedirection:
+				break;
+			case PuzzleType.BlockPush:
+				break;
+			case PuzzleType.PatternMatching:
+				break;
+		}
+	}
+
+	private void GenerateMazePuzzle()
+	{
+		Generator gen = new Generator();
+		float scale = 0.5f;
+		Vector2Int roomSize = new Vector2Int(GetWidth(), GetHeight());
+		Vector2Int mazeSize = new Vector2Int((int)(GetWidth() * scale), (int)(GetHeight() * scale));
+		Vector2Int[] exits = new Vector2Int[ExitCount()];
+
+		int count = 0;
+		if (upExit)
+		{
+			//Debug.Log("Up: " + upExitPos);
+			exits[count] = new Vector2Int((int)(upExitPos.x * scale), mazeSize.y - 2);
+			Debug.Log("Up: " + exits[count]);
+			count++;
+		}
+
+		if (rightExit)
+		{
+			//Debug.Log("Right: " + rightExitPos);
+			exits[count] = new Vector2Int(mazeSize.x - 2, (int)(rightExitPos.y * scale));
+			Debug.Log("Right: " + exits[count]);
+			count++;
+		}
+
+		if (downExit)
+		{
+			//Debug.Log("Down: " + downExitPos);
+			exits[count] = new Vector2Int((int)(downExitPos.x * scale), 1);
+			Debug.Log("Down: " + exits[count]);
+			count++;
+		}
+		if (leftExit)
+		{
+			//Debug.Log("Left: " + leftExitPos);
+			exits[count] = new Vector2Int(1, (int)(leftExitPos.y * scale));
+			Debug.Log("Left: " + exits[count]);
+			count++;
+		}
+
+		Maze maze = gen.Generate(roomSize, exits);
+		//maze = gen.DoubleSize(maze);
+
+		//exclude walls
+		for (int x = 1; x < maze.GetSize().x - 1; x++)
+		{
+			for (int y = 1; y < maze.GetSize().y - 1; y++)
+			{
+				int index = maze.Index(x, y);
+				bool wall = maze.Get(index);
+				AddTile(x, y, wall ? RoomTile.TileType.UpWall : RoomTile.TileType.Floor);
+			}
+		}
+
+		//draw walls
+		//for (int x = 0; x < maze.GetSize().x; x++)
+		//{
+		//	for (int y = 0; y < maze.GetSize().y; y++)
+		//	{
+		//		int index = maze.Index(x, y);
+		//		bool wall = maze.Get(index);
+		//		AddTile(x, y, wall ? RoomTile.TileType.UpWall : RoomTile.TileType.Floor);
+		//	}
+		//}
+
+		//reset exits
+		for (int i = 0; i < exits.Length; i++)
+		{
+			Debug.Log("A: " + exits[i]);
+			if (exits[i].x == 1 || exits[i].x == roomSize.x - 2)
+			{
+				leftExitPos.y = exits[i].y;
+			}
+			if (exits[i].y == 1 || exits[i].y == roomSize.y - 2)
+			{
+				downExitPos.x = exits[i].x;
+			}
+		}
+	}
+
+	private PuzzleType PickRandomPuzzleType()
+	{
+		PuzzleTypeWeightings ptw = puzzleWeightings;
+		if (ptw == null) return PuzzleType.Maze;
+
+		float totalWeighting =
+			ptw.randomMazeRoomWeighting +
+			ptw.randomTileLightRoomWeighting +
+			ptw.randomBeamRedirectionRoomWeighting +
+			ptw.randomBlockPushRoomWeighting;
+		float randomValue = Random.Range(0f, totalWeighting);
+
+		if ((randomValue = randomValue - ptw.randomMazeRoomWeighting) < 0f)
+		{
+			return PuzzleType.Maze;
+		}
+		if ((randomValue = randomValue - ptw.randomTileLightRoomWeighting) < 0f)
+		{
+			return PuzzleType.TileLight;
+		}
+		if ((randomValue = randomValue - ptw.randomBeamRedirectionRoomWeighting) < 0f)
+		{
+			return PuzzleType.BeamRedirection;
+		}
+		return PuzzleType.BlockPush;
 	}
 
 	public void AddUpExit(int x)
@@ -74,19 +312,10 @@ public class Room
 		{
 			Debug.Log("Up exit already exists");
 		}
-		x = x < roomWidth - exitWidth - 1 ? x : roomWidth - exitWidth - 1;
-		x = x >= 1 ? x : 1;
-		AddExitFlooring(x, roomHeight, new Vector2Int(exitWidth, exitLength));
-		for (int i = 0; i < exitLength; i++)
-		{
-			AddTile(x - 1, roomHeight + i,
-				i == 0 ? RoomTile.TileType.DownRightOuterWall : RoomTile.TileType.LeftWall);
-			AddTile(x + exitWidth, roomHeight + i,
-				i == 0 ? RoomTile.TileType.DownLeftOuterWall : RoomTile.TileType.RightWall);
-		}
-		SetExit(Direction.Up, true, x, roomHeight);
+		int y = roomHeight - 1;
+		SetExit(Direction.Up, true, x, y);
 		RoomExitTrigger newTrigger = new RoomExitTrigger(Direction.Up);
-		newTrigger.position = new Vector2Int(x, roomHeight);
+		newTrigger.position = new Vector2Int(x, y);
 		roomObjects.Add(newTrigger);
 	}
 
@@ -96,19 +325,10 @@ public class Room
 		{
 			Debug.Log("Right exit already exists");
 		}
-		y = y < roomHeight - exitWidth - 1 ? y : roomHeight - exitWidth - 1;
-		y = y >= 1 ? y : 1;
-		AddExitFlooring(roomWidth, y, new Vector2Int(exitLength, exitWidth));
-		for (int i = 0; i < exitLength; i++)
-		{
-			AddTile(roomWidth + i, y + exitWidth,
-				i == 0 ? RoomTile.TileType.DownLeftOuterWall : RoomTile.TileType.UpWall);
-			AddTile(roomWidth + i, y - 1,
-				i == 0 ? RoomTile.TileType.UpLeftOuterWall : RoomTile.TileType.DownWall);
-		}
-		SetExit(Direction.Right, true, roomWidth, y);
+		int x = roomWidth - 1;
+		SetExit(Direction.Right, true, x, y);
 		RoomExitTrigger newTrigger = new RoomExitTrigger(Direction.Right);
-		newTrigger.position = new Vector2Int(roomWidth, y);
+		newTrigger.position = new Vector2Int(x, y);
 		roomObjects.Add(newTrigger);
 	}
 
@@ -118,19 +338,10 @@ public class Room
 		{
 			Debug.Log("Down exit already exists");
 		}
-		x = x < roomWidth - exitWidth - 1 ? x : roomWidth - exitWidth - 1;
-		x = x >= 1 ? x : 1;
-		AddExitFlooring(x, -exitLength, new Vector2Int(exitWidth, exitLength));
-		for (int i = 0; i < exitLength; i++)
-		{
-			AddTile(x - 1, -1 - i,
-				i == 0 ? RoomTile.TileType.UpRightOuterWall : RoomTile.TileType.LeftWall);
-			AddTile(x + exitWidth, -1 - i,
-				 i == 0 ? RoomTile.TileType.UpLeftOuterWall : RoomTile.TileType.RightWall);
-		}
-		SetExit(Direction.Down, true, x, -exitLength);
+		int y = 1 - exitLength;
+		SetExit(Direction.Down, true, x, y);
 		RoomExitTrigger newTrigger = new RoomExitTrigger(Direction.Down);
-		newTrigger.position = new Vector2Int(x, -1);
+		newTrigger.position = new Vector2Int(x, y);
 		roomObjects.Add(newTrigger);
 	}
 
@@ -140,19 +351,10 @@ public class Room
 		{
 			Debug.Log("Left exit already exists");
 		}
-		y = y < roomHeight - exitWidth - 1 ? y : roomHeight - exitWidth - 1;
-		y = y >= 1 ? y : 1;
-		AddExitFlooring(-exitLength, y, new Vector2Int(exitLength, exitWidth));
-		for (int i = 0; i < exitLength; i++)
-		{
-			AddTile(-1 - i, y + exitWidth,
-				i == 0 ? RoomTile.TileType.DownRightOuterWall : RoomTile.TileType.UpWall);
-			AddTile(-1 - i, y - 1,
-				i == 0 ? RoomTile.TileType.UpRightOuterWall : RoomTile.TileType.DownWall);
-		}
-		SetExit(Direction.Left, true, -exitLength, y);
+		int x = 1 - exitLength;
+		SetExit(Direction.Left, true, x, y);
 		RoomExitTrigger newTrigger = new RoomExitTrigger(Direction.Left);
-		newTrigger.position = new Vector2Int(-1, y);
+		newTrigger.position = new Vector2Int(x, y);
 		roomObjects.Add(newTrigger);
 	}
 
@@ -212,9 +414,9 @@ public class Room
 	public int GetHeight() => roomHeight;
 
 	public Vector2Int GetDimensions()
-		=> new Vector2Int(roomWidth + exitLength * 2, roomHeight + exitLength * 2);
+		=> new Vector2Int(roomWidth + (exitLength - 1) * 2, roomHeight + (exitLength - 1) * 2);
 
-	public Vector2 GetCenter() => new Vector2(GetWidth() / 2f, GetHeight() / 2f);
+	public Vector2 GetCenter() => new Vector2(GetWidth() / 2f - 0.5f, GetHeight() / 2f - 0.5f);
 
 	public void SetRoom(Room room, Direction direction)
 	{

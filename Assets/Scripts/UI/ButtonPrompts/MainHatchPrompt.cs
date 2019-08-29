@@ -13,11 +13,6 @@ public class MainHatchPrompt : InteractablePromptTrigger
 
 	[SerializeField] private Animator anim;
 
-	protected override void Awake()
-	{
-		base.Awake();
-	}
-
 	protected override void OnInteracted(Triggerer actor)
 	{
 		if (isLocked) return;

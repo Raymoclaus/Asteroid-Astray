@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -10,44 +10,60 @@ public class PlanetGenerator : MonoBehaviour
 	private RoomViewer viewer;
 	private Room activeRoom;
 
+	public int minBranchLength, maxBranchLength;
+	public int minBranchCount;
+	private const int MAX_BRANCH_COUNT = 4;
+	public int minDeadEndCount, maxDeadEndCount;
+
 	public delegate void RoomChangedEventHandler(Room newRoom, Direction direction);
 	public static event RoomChangedEventHandler OnRoomChanged;
+
+	public float randomEmptyRoomWeighting,
+		randomPuzzleRoomWeighting,
+		randomEnemiesRoomWeighting,
+		randomTreasureRoomWeighting,
+		randomNpcRoomWeighting;
+
+	public PuzzleTypeWeightings puzzleRoomWeightings;
 
 	private void Start()
 	{
 		viewer = GetComponent<RoomViewer>();
-		planetData = Generate();
+		Generate();
 		activeRoom = startRoom;
 		//LoadCurrentRoom();
-		StartCoroutine(viewer.ShowAllRooms(planetData));
+		viewer.ShowAllRooms(planetData);
 	}
 
-	private PlanetData Generate()
+	private void Generate()
 	{
 		//return TestGeneration();
 
-		PlanetData data = new PlanetData();
+		planetData = new PlanetData();
 		
 		Room currentRoom = null;
 		int keyLevel = 0;
 
 		//rule 1 -	Create starter room
-		startRoom = data.AddRoom(RoomType.Start, new Vector2Int(0, 0));
+		startRoom = planetData.AddRoom(RoomType.Start, new Vector2Int(0, 0), puzzleRoomWeightings);
 
 		//rule 2 -	"Current Room" is starter room
 		currentRoom = startRoom;
 
 		//rule 7 -	Repeat steps 3 - 6 Y amount of times.
-		int branchCount = 4;
+		int branchCount = Mathf.Max(1, Random.Range(minBranchCount, MAX_BRANCH_COUNT));
 		for (int j = 0; j < branchCount; j++)
 		{
 			//rule 3 -	Create a single branch from the "Current room" until X rooms have been
 			//			created. Branch can't overlap with existing rooms. If branch meets a dead
 			//			end, end the branch.
-			int branchLength = 3;
+			int branchLength = Mathf.Max(1,
+				Random.Range(minBranchLength, maxBranchLength));
 			for (int i = 0; i < branchLength; i++)
 			{
-				currentRoom = CreateRandomExit(data, currentRoom);
+				Room newRoom = CreateRandomExit(planetData, currentRoom);
+				if (newRoom == currentRoom) break;
+				currentRoom = newRoom;
 			}
 
 			//rule 4 -	Place a key at the end of that branch
@@ -55,34 +71,67 @@ public class PlanetGenerator : MonoBehaviour
 
 			//rule 5 -	Create a locked exit to a new room from any existing room except the end of
 			//			that branch.
-			List<Room> existingRooms = data.GetRooms();
+			List<Room> existingRooms = planetData.GetRooms();
 			Room lockRoom = currentRoom;
 			do
 			{
-				int randomIndex = UnityEngine.Random.Range(0, existingRooms.Count);
+				int randomIndex = Random.Range(0, existingRooms.Count);
 				lockRoom = existingRooms[randomIndex];
 			} while (lockRoom == currentRoom || lockRoom.ExitCount() == 4);
-			lockRoom = CreateRandomExit(data, lockRoom, true, (RoomKey.KeyColour)keyLevel);
+			lockRoom = CreateRandomExit(planetData, lockRoom, true, (RoomKey.KeyColour)keyLevel,
+				j == branchCount - 1);
 			keyLevel++;
 
 			//rule 6 -	"Current room" is the new room on the other side of the locked exit
 			currentRoom = lockRoom;
 		}
 
-		//rule 8 -	"Current room" is the final boss room
-		currentRoom.type = RoomType.Boss;
+		//rule 8 -	"Current room" is the final room
+		planetData.finalRoom = currentRoom;
 
-		return data;
+		//rule 9 -	Create "Dead end" branches Z times of X length from any room except the boss
+		//			room.
+		branchCount = Mathf.Max(0, UnityEngine.Random.Range(minDeadEndCount, maxDeadEndCount));
+		for (int i = 0; i < branchCount; i++)
+		{
+			List<Room> existingRooms = planetData.GetRooms();
+			Room deadEndStart = null;
+			do
+			{
+				int randomIndex = UnityEngine.Random.Range(0, existingRooms.Count);
+				deadEndStart = existingRooms[randomIndex];
+			} while (deadEndStart == planetData.finalRoom || deadEndStart.ExitCount() == 4);
+			currentRoom = deadEndStart;
+
+			int branchLength = Mathf.Max(1,
+				UnityEngine.Random.Range(minBranchLength, maxBranchLength));
+			for (int j = 0; j < branchLength; j++)
+			{
+				Room newRoom = CreateRandomExit(planetData, currentRoom);
+				if (newRoom == currentRoom) break;
+				currentRoom = newRoom;
+			}
+		}
+
+		for (int i = 0; i < planetData.GetRoomCount(); i++)
+		{
+			planetData.GetRooms()[i].GenerateContent();
+		}
+
+		for (int i = 0; i < planetData.GetRoomCount(); i++)
+		{
+			planetData.GetRooms()[i].GenerateOuterWalls();
+		}
 	}
 
 	private PlanetData TestGeneration()
 	{
 		PlanetData data = new PlanetData();
 
-		startRoom = data.AddRoom(RoomType.Start, 0, 0);
-		Room endRoom = data.AddRoom(RoomType.Treasure, -1, 1);
-		Room aRoom = data.AddRoom(RoomType.Empty, -1, 0);
-		Room bRoom = data.AddRoom(RoomType.Empty, 0, 1);
+		startRoom = data.AddRoom(RoomType.Start, 0, 0, puzzleRoomWeightings);
+		Room endRoom = data.AddRoom(RoomType.Treasure, -1, 1, puzzleRoomWeightings);
+		Room aRoom = data.AddRoom(RoomType.Empty, -1, 0, puzzleRoomWeightings);
+		Room bRoom = data.AddRoom(RoomType.Empty, 0, 1, puzzleRoomWeightings);
 
 		aRoom.AddKey(RoomKey.KeyColour.Blue);
 		bRoom.AddKey(RoomKey.KeyColour.Red);
@@ -95,9 +144,9 @@ public class PlanetGenerator : MonoBehaviour
 	}
 
 	private Room CreateRandomExit(PlanetData data, Room room, bool locked = false,
-		RoomKey.KeyColour colour = RoomKey.KeyColour.Blue)
+		RoomKey.KeyColour colour = RoomKey.KeyColour.Blue, bool bossRoom = false)
 	{
-		if (room.ExitCount() == 4) return null;
+		if (room.ExitCount() == 4) return room;
 
 		List<Direction> directions = new List<Direction>
 			{
@@ -114,11 +163,12 @@ public class PlanetGenerator : MonoBehaviour
 		}
 
 		//if no available directions then we're in a dead end
-		if (directions.Count == 0) return null;
+		if (directions.Count == 0) return room;
 
 		Direction randomDirection = directions[UnityEngine.Random.Range(0, directions.Count)];
 		Vector2Int pos = AddDirection(room.position, randomDirection);
-		Room newRoom = data.AddRoom(RoomType.Empty, pos);
+		RoomType type = bossRoom ? RoomType.Boss : PickRandomRoomType();
+		Room newRoom = data.AddRoom(type, pos, puzzleRoomWeightings);
 		if (locked)
 		{
 			ConnectWithLock(room, newRoom, randomDirection, colour);
@@ -128,6 +178,35 @@ public class PlanetGenerator : MonoBehaviour
 			Connect(room, newRoom, randomDirection);
 		}
 		return newRoom;
+	}
+
+	private RoomType PickRandomRoomType()
+	{
+		float totalWeighting =
+			randomEmptyRoomWeighting +
+			randomPuzzleRoomWeighting +
+			randomEnemiesRoomWeighting +
+			randomTreasureRoomWeighting +
+			randomNpcRoomWeighting;
+		float randomValue = UnityEngine.Random.Range(0f, totalWeighting);
+
+		if ((randomValue = randomValue - randomEmptyRoomWeighting) < 0f)
+		{
+			return RoomType.Empty;
+		}
+		if ((randomValue = randomValue - randomPuzzleRoomWeighting) < 0f)
+		{
+			return RoomType.Puzzle;
+		}
+		if ((randomValue = randomValue - randomEnemiesRoomWeighting) < 0f)
+		{
+			return RoomType.Enemies;
+		}
+		if ((randomValue = randomValue - randomTreasureRoomWeighting) < 0f)
+		{
+			return RoomType.Treasure;
+		}
+		return RoomType.NPC;
 	}
 
 	private void Connect(Room a, Room b, Direction dir)
@@ -170,7 +249,7 @@ public class PlanetGenerator : MonoBehaviour
 
 	private void ConnectVertically(Room lower, Room upper)
 	{
-		int exitXPos = UnityEngine.Random.Range(1, lower.GetWidth() - 1);
+		int exitXPos = Random.Range(3, lower.GetWidth() - 3);
 		lower.AddUpExit(exitXPos);
 		lower.SetRoom(upper, Direction.Up);
 		upper.AddDownExit(exitXPos);
@@ -186,7 +265,7 @@ public class PlanetGenerator : MonoBehaviour
 
 	private void ConnectHorizontally(Room left, Room right)
 	{
-		int exitYPos = UnityEngine.Random.Range(1, left.GetHeight() - 1);
+		int exitYPos = Random.Range(3, left.GetHeight() - 3);
 		left.AddRightExit(exitYPos);
 		left.SetRoom(right, Direction.Right);
 		right.AddLeftExit(exitYPos);

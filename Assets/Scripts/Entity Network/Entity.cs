@@ -452,7 +452,8 @@ public enum EntityType
 	Shuttle,
 	Nebula,
 	BotHive,
-	GatherBot
+	GatherBot,
+	Planet
 }
 
 [System.Serializable]
