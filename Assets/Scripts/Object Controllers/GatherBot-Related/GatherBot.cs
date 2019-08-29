@@ -511,7 +511,7 @@ public class GatherBot : Character, IStunnable, ICombat
 		if (IncrementOutOfRangeCounter(found)) return;
 
 		//bots attack by circling its target and firing
-		float orbitAngle = Mathf.PI * 2f / (hive?.childBots.Count ?? 0) * dockID + Pause.timeSinceOpen * orbitSpeed;
+		float orbitAngle = Mathf.PI * 2f / (hive?.childBots.Count ?? 1) * dockID + Pause.timeSinceOpen * orbitSpeed;
 		Vector2 orbitPos = new Vector2(Mathf.Sin(orbitAngle), Mathf.Cos(orbitAngle)) * orbitRange;
 		float distanceFromTarget = Vector2.Distance(currentPos, enemyPos);
 
