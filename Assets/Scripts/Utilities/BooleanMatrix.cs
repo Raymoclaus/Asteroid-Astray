@@ -110,6 +110,35 @@ public struct BooleanMatrix
 		return arr;
 	}
 
+	public BooleanMatrix GetRange(BooleanMatrix existingMatrix,
+		Vector2Int center, int range)
+	{
+		//range = 0, width = 1
+		//range = 1, width = 3
+		//range = 2, width = 5
+		int width = range * 2 + 1;
+		int height = width;
+		BooleanMatrix newMatrix = new BooleanMatrix(width, height);
+
+		for (int x = 0; x < width; x++)
+		{
+			for (int y = 0; y < height; y++)
+			{
+				Vector2Int position = new Vector2Int(
+					center.x - range + x, center.y - range + y);
+				if (position.x < 0
+					|| position.y < 0
+					|| position.x >= existingMatrix.Width
+					|| position.y >= existingMatrix.Height) continue;
+
+				newMatrix.matrix[x][y] =
+					existingMatrix.matrix[position.x][position.y];
+			}
+		}
+
+		return newMatrix;
+	}
+
 	public override string ToString()
 	{
 		string s = string.Empty;

@@ -1,10 +1,13 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public class RoomViewer : MonoBehaviour
 {
-	private GameObject parentObject = null;
+	private Transform objectParent = null;
+	[SerializeField] private Tilemap floorMap, wallMap;
+	[SerializeField] private TileBase floorTile, wallTile;
 	[SerializeField] private List<PlanetVisualData> visualDataSets;
 	[SerializeField] private PlanetFloorTile floorTilePrefab;
 	[SerializeField] private PlanetWallTile wallTilePrefab;
@@ -17,12 +20,13 @@ public class RoomViewer : MonoBehaviour
 
 	public void ShowRoom(PlanetData data, Room room, Vector2 offset, bool destroyExisting = true)
 	{
-		if (parentObject != null && destroyExisting)
+		if (destroyExisting)
 		{
-			Destroy(parentObject);
-			parentObject = null;
+			RemoveAllTiles();
+			Destroy(objectParent.gameObject);
+			objectParent = null;
 		}
-		parentObject = parentObject ?? new GameObject("Room");
+		objectParent = objectParent ?? new GameObject("Room Object Parent").transform;
 
 		DrawTiles(data.areaType, room, offset);
 		DrawRoomObjects(data.areaType, room, offset);
@@ -30,13 +34,17 @@ public class RoomViewer : MonoBehaviour
 		SetCameraPosition(room.GetCenter());
 	}
 
+	private void RemoveAllTiles()
+	{
+		foreach (Tilemap tm in GetComponentsInChildren<Tilemap>())
+		{
+			tm.ClearAllTiles();
+		}
+	}
+
 	public void ShowAllRooms(PlanetData data)
 	{
-		if (parentObject != null)
-		{
-			Destroy(parentObject);
-			parentObject = null;
-		}
+		RemoveAllTiles();
 
 		List<Room> rooms = data.GetRooms();
 		for (int i = 0; i < rooms.Count; i++)
@@ -113,7 +121,7 @@ public class RoomViewer : MonoBehaviour
 					tilePrefab = wallTilePrefab;
 					break;
 			}
-			CreateTile((float)tiles[i].position.x + offset.x, (float)tiles[i].position.y + offset.y, spriteSet, tilePrefab);
+			CreateTile(tiles[i].position.x + (int)offset.x, tiles[i].position.y + (int)offset.y, tiles[i].type);
 		}
 	}
 
@@ -156,19 +164,18 @@ public class RoomViewer : MonoBehaviour
 		}
 	}
 
-	private void CreateTile(float x, float y, List<Sprite> spriteSet, PlanetTile tilePrefab)
+	private void CreateTile(int x, int y, RoomTile.TileType tileType)
 	{
-		if (spriteSet == null) return;
-
-		//pick randomly from tile set given
-		int setLength = spriteSet.Count;
-		int randomIndex = Random.Range(0, setLength);
-		Sprite randomSprite = spriteSet[randomIndex];
-
-		PlanetTile tile = (PlanetTile)CreateObject(tilePrefab, null, null, null);
-		tile.sprRend.sprite = randomSprite;
-		Vector2 position = new Vector2(x, y);
-		tile.transform.position = position;
+		Vector3Int position = new Vector3Int(x, y, 0);
+		switch (tileType)
+		{
+			default:
+				wallMap.SetTile(position, wallTile);
+				break;
+			case RoomTile.TileType.Floor:
+				floorMap.SetTile(position, floorTile);
+				break;
+		}
 	}
 
 	private void CreateExitTrigger(Direction direction)
@@ -182,7 +189,7 @@ public class RoomViewer : MonoBehaviour
 	{
 		PlanetRoomObject newObj = Instantiate(obj);
 		newObj.Setup(room, roomObj, dataSet);
-		newObj.transform.parent = parentObject.transform;
+		newObj.transform.parent = objectParent;
 		return newObj;
 	}
 
@@ -202,6 +209,4 @@ public class RoomViewer : MonoBehaviour
 			cam.transform.position = new Vector3(pos.x, pos.y, cam.transform.position.z);
 		}
 	}
-
-	private void AddToParent(GameObject obj) => obj.transform.parent = parentObject.transform;
 }
