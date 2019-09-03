@@ -6,7 +6,7 @@ public class PlanetData
 {
 	private List<Room> rooms = new List<Room>();
 	public Room finalRoom;
-	public AreaType areaType = AreaType.Rocky;
+	public AreaType areaType = AreaType.Cave;
 
 	public Room AddRoom(RoomType type, int x, int y, PuzzleTypeWeightings puzzleWeightings)
 	{

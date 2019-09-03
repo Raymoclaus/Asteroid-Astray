@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace MazeGenerator
+namespace MazePuzzle
 {
 	public class Maze
 	{
@@ -9,6 +9,7 @@ namespace MazeGenerator
 		private Vector2Int size;
 		private Vector2Int[] exits;
 		private List<Vector2Int> visitedExits = new List<Vector2Int>();
+		private List<Vector2Int> longestPath;
 
 		public Maze(Vector2Int size, Vector2Int[] exits, bool startEmpty = false)
 		{
@@ -202,5 +203,9 @@ namespace MazeGenerator
 		public Vector2Int GetPos(int index) => new Vector2Int(index % size.x, index / size.x);
 
 		public Vector2Int[] GetExits() => exits;
+
+		public void SetLongestPath(List<Vector2Int> path) => longestPath = path;
+
+		public List<Vector2Int> GetLongestPath() => longestPath;
 	}
 }

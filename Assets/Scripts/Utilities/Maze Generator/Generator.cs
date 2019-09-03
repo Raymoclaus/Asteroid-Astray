@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace MazeGenerator
+namespace MazePuzzle
 {
-	public class Generator
+	public class MazeGenerator
 	{
-		public Maze Generate(Vector2Int size, Vector2Int[] exits)
+		public Maze GeneratePuzzle(Vector2Int size, Vector2Int[] exits)
 		{
 			Maze maze = new Maze(size, exits);
 			Vector2Int currentSpot = exits[0];
@@ -34,6 +34,10 @@ namespace MazeGenerator
 				}
 				else if (path.Count > 0)
 				{
+					if (path.Count > (maze.GetLongestPath()?.Count ?? 0))
+					{
+						maze.SetLongestPath(new List<Vector2Int>(path));
+					}
 					path.RemoveAt(path.Count - 1);
 					if (path.Count > 0)
 					{

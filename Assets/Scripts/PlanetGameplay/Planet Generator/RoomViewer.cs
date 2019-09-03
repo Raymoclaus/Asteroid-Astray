@@ -7,14 +7,12 @@ public class RoomViewer : MonoBehaviour
 {
 	private Transform objectParent = null;
 	[SerializeField] private Tilemap floorMap, wallMap;
-	[SerializeField] private TileBase floorTile, wallTile;
 	[SerializeField] private List<PlanetVisualData> visualDataSets;
-	[SerializeField] private PlanetFloorTile floorTilePrefab;
-	[SerializeField] private PlanetWallTile wallTilePrefab;
 	[SerializeField] private PlanetRoomExitTrigger exitTriggerPrefab;
 	[SerializeField] private PlanetRoomKey keyPrefab;
 	[SerializeField] private PlanetRoomLock lockPrefab;
 	[SerializeField] private PlanetRoomLandingPad landingPadPrefab;
+	[SerializeField] private PlanetRoomTileLight tileLightPrefab;
 
 	[SerializeField] private Camera cam;
 
@@ -64,64 +62,9 @@ public class RoomViewer : MonoBehaviour
 		List<RoomTile> tiles = room.GetTiles();
 		for (int i = 0; i < tiles.Count; i++)
 		{
-			List<Sprite> spriteSet = null;
-			PlanetTile tilePrefab = null;
-			switch (tiles[i].type)
-			{
-				case RoomTile.TileType.Floor:
-					spriteSet = dataSet.floorTiles;
-					tilePrefab = floorTilePrefab;
-					break;
-				case RoomTile.TileType.UpWall:
-					spriteSet = dataSet.topWallTiles;
-					tilePrefab = wallTilePrefab;
-					break;
-				case RoomTile.TileType.UpRightInnerWall:
-					spriteSet = dataSet.topRightInnerWallTiles;
-					tilePrefab = wallTilePrefab;
-					break;
-				case RoomTile.TileType.UpRightOuterWall:
-					spriteSet = dataSet.topRightOuterWallTiles;
-					tilePrefab = wallTilePrefab;
-					break;
-				case RoomTile.TileType.RightWall:
-					spriteSet = dataSet.rightWallTiles;
-					tilePrefab = wallTilePrefab;
-					break;
-				case RoomTile.TileType.DownRightInnerWall:
-					spriteSet = dataSet.bottomRightInnerWallTiles;
-					tilePrefab = wallTilePrefab;
-					break;
-				case RoomTile.TileType.DownRightOuterWall:
-					spriteSet = dataSet.bottomRightOuterWallTiles;
-					tilePrefab = wallTilePrefab;
-					break;
-				case RoomTile.TileType.DownWall:
-					spriteSet = dataSet.bottomWallTiles;
-					tilePrefab = wallTilePrefab;
-					break;
-				case RoomTile.TileType.DownLeftInnerWall:
-					spriteSet = dataSet.bottomLeftInnerWallTiles;
-					tilePrefab = wallTilePrefab;
-					break;
-				case RoomTile.TileType.DownLeftOuterWall:
-					spriteSet = dataSet.bottomLeftOuterWallTiles;
-					tilePrefab = wallTilePrefab;
-					break;
-				case RoomTile.TileType.LeftWall:
-					spriteSet = dataSet.leftWallTiles;
-					tilePrefab = wallTilePrefab;
-					break;
-				case RoomTile.TileType.UpLeftInnerWall:
-					spriteSet = dataSet.topLeftInnerWallTiles;
-					tilePrefab = wallTilePrefab;
-					break;
-				case RoomTile.TileType.UpLeftOuterWall:
-					spriteSet = dataSet.topLeftOuterWallTiles;
-					tilePrefab = wallTilePrefab;
-					break;
-			}
-			CreateTile(tiles[i].position.x + (int)offset.x, tiles[i].position.y + (int)offset.y, tiles[i].type);
+			CreateTile(tiles[i].position.x + (int)offset.x,
+				tiles[i].position.y + (int)offset.y,
+				tiles[i].type, dataSet);
 		}
 	}
 
@@ -141,22 +84,19 @@ public class RoomViewer : MonoBehaviour
 			{
 				default: continue;
 				case RoomObject.ObjType.Lock:
-					PlanetRoomLock lockObj =
-						(PlanetRoomLock)CreateObject(lockPrefab, room, objs[i], dataSet);
-					roomObj = lockObj;
+					roomObj = CreateObject(lockPrefab, room, objs[i], dataSet);
 					break;
 				case RoomObject.ObjType.Key:
 					roomObj = CreateObject(keyPrefab, room, objs[i], dataSet);
 					break;
 				case RoomObject.ObjType.ExitTrigger:
-					PlanetRoomExitTrigger triggerObj =
-						(PlanetRoomExitTrigger)CreateObject(exitTriggerPrefab, room, objs[i], dataSet);
-					roomObj = triggerObj;
+					roomObj = CreateObject(exitTriggerPrefab, room, objs[i], dataSet);
 					break;
 				case RoomObject.ObjType.LandingPad:
-					PlanetRoomLandingPad landingPadObj =
-						(PlanetRoomLandingPad)CreateObject(landingPadPrefab, room, objs[i], dataSet);
-					roomObj = landingPadObj;
+					roomObj = CreateObject(landingPadPrefab, room, objs[i], dataSet);
+					break;
+				case RoomObject.ObjType.TileLight:
+					roomObj = CreateObject(tileLightPrefab, room, objs[i], dataSet);
 					break;
 			}
 
@@ -164,16 +104,17 @@ public class RoomViewer : MonoBehaviour
 		}
 	}
 
-	private void CreateTile(int x, int y, RoomTile.TileType tileType)
+	private void CreateTile(int x, int y, RoomTile.TileType tileType,
+		PlanetVisualData dataSet)
 	{
 		Vector3Int position = new Vector3Int(x, y, 0);
 		switch (tileType)
 		{
-			default:
-				wallMap.SetTile(position, wallTile);
+			case RoomTile.TileType.Wall:
+				wallMap.SetTile(position, dataSet.wallTile);
 				break;
 			case RoomTile.TileType.Floor:
-				floorMap.SetTile(position, floorTile);
+				floorMap.SetTile(position, dataSet.floorTile);
 				break;
 		}
 	}

@@ -1,6 +1,6 @@
 ﻿using UnityEngine.Tilemaps;
 using UnityEngine;
-using MazeGenerator;
+using MazePuzzle;
 
 public class TestingTilemaps : MonoBehaviour
 {
@@ -10,8 +10,8 @@ public class TestingTilemaps : MonoBehaviour
 
 	private void Start()
 	{
-		Generator gen = new Generator();
-		Maze maze = gen.Generate(new Vector2Int(28, 16), new Vector2Int[]
+		MazePuzzle.MazeGenerator gen = new MazePuzzle.MazeGenerator();
+		Maze maze = gen.GeneratePuzzle(new Vector2Int(28, 16), new Vector2Int[]
 		{
 			new Vector2Int(1, 5),
 			new Vector2Int(10, 9)

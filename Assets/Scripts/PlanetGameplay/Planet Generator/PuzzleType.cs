@@ -5,7 +5,7 @@ using UnityEngine;
 public enum PuzzleType
 {
 	Maze,
-	TileLight,
+	TileLights,
 	BeamRedirection,
 	BlockPush,
 	PatternMatching

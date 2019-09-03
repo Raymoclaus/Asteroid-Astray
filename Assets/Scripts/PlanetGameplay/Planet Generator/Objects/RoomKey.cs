@@ -1,4 +1,7 @@
-﻿public class RoomKey : RoomObject
+﻿using System.Collections.Generic;
+using UnityEngine;
+
+public class RoomKey : RoomObject
 {
 	public enum KeyColour
 	{
@@ -8,12 +11,20 @@
 		Green
 	}
 
-	public RoomKey(KeyColour colour)
+	public KeyColour colour;
+
+	public RoomKey(Room room, KeyColour colour)
 	{
+		this.room = room;
+		room.OnMazeAdded += FindNewPlaceInMaze;
 		this.colour = colour;
 	}
 
-	public KeyColour colour;
+	private void FindNewPlaceInMaze(MazePuzzle.Maze maze)
+	{
+		List<Vector2Int> path = maze.GetLongestPath();
+		position = path[path.Count - 1];
+	}
 
 	public override ObjType GetObjectType() => ObjType.Key;
 

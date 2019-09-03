@@ -7,14 +7,7 @@ public struct RoomTile
 	public enum TileType
 	{
 		Floor,
-		UpWall,
-		UpRightInnerWall, UpRightOuterWall,
-		RightWall,
-		DownRightInnerWall, DownRightOuterWall,
-		DownWall,
-		DownLeftInnerWall, DownLeftOuterWall,
-		LeftWall,
-		UpLeftInnerWall, UpLeftOuterWall,
+		Wall
 	}
 
 	public Vector2Int position;

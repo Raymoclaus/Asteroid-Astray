@@ -13,6 +13,7 @@ public abstract class RoomObject
 		Lock,
 		Key,
 		ExitTrigger,
-		LandingPad
+		LandingPad,
+		TileLight
 	}
 }
