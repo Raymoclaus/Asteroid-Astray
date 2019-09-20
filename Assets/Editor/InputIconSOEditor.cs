@@ -16,7 +16,7 @@ public class InputIconSOEditor : Editor
 			Object[] objects = Selection.objects;
 			for (int i = 0; i < objects.Length; i++)
 			{
-				if (objects[i].GetType() == typeof(Texture2D))
+				if (objects[i] is Texture2D)
 				{
 					Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(AssetDatabase.GetAssetPath(objects[i]));
 					((InputIconSO)target).AddToList(sprite);

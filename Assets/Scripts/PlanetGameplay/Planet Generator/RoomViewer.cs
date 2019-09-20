@@ -6,13 +6,15 @@ using UnityEngine.Tilemaps;
 public class RoomViewer : MonoBehaviour
 {
 	private Transform objectParent = null;
-	[SerializeField] private Tilemap floorMap, wallMap;
+	[SerializeField] private Tilemap floorMap, floorDetailMap, wallMap;
 	[SerializeField] private List<PlanetVisualData> visualDataSets;
 	[SerializeField] private PlanetRoomExitTrigger exitTriggerPrefab;
 	[SerializeField] private PlanetRoomKey keyPrefab;
 	[SerializeField] private PlanetRoomLock lockPrefab;
 	[SerializeField] private PlanetRoomLandingPad landingPadPrefab;
 	[SerializeField] private PlanetRoomTileLight tileLightPrefab;
+	[SerializeField] private PlanetRoomPushableBlock pushableBlockPrefab;
+	[SerializeField] private PlanetRoomGroundButton greenGroundButtonPrefab, redGroundButtonPrefab;
 
 	[SerializeField] private Camera cam;
 
@@ -29,7 +31,7 @@ public class RoomViewer : MonoBehaviour
 		DrawTiles(data.areaType, room, offset);
 		DrawRoomObjects(data.areaType, room, offset);
 
-		SetCameraPosition(room.GetCenter());
+		SetCameraPosition(room.GetCenter() + offset);
 	}
 
 	private void RemoveAllTiles()
@@ -73,6 +75,13 @@ public class RoomViewer : MonoBehaviour
 		List<RoomObject> objs = room.roomObjects;
 		PlanetVisualData dataSet = GetVisualDataSet(type);
 
+		GameObject puzzleHolder = new GameObject("Block push puzzle holder");
+		Rigidbody2D rb = puzzleHolder.AddComponent<Rigidbody2D>();
+		rb.gravityScale = 0f;
+		rb.bodyType = RigidbodyType2D.Static;
+		puzzleHolder.AddComponent<CompositeCollider2D>();
+		puzzleHolder.transform.parent = objectParent;
+
 		for (int i = 0; i < objs.Count; i++)
 		{
 			RoomObject.ObjType objType = objs[i].GetObjectType();
@@ -98,9 +107,19 @@ public class RoomViewer : MonoBehaviour
 				case RoomObject.ObjType.TileLight:
 					roomObj = CreateObject(tileLightPrefab, room, objs[i], dataSet);
 					break;
+				case RoomObject.ObjType.PushableBlock:
+					roomObj = CreateObject(pushableBlockPrefab, room, objs[i], dataSet);
+					roomObj.transform.parent = puzzleHolder.transform;
+					break;
+				case RoomObject.ObjType.GreenGroundButton:
+					roomObj = CreateObject(greenGroundButtonPrefab, room, objs[i], dataSet);
+					break;
+				case RoomObject.ObjType.RedGroundButton:
+					roomObj = CreateObject(redGroundButtonPrefab, room, objs[i], dataSet);
+					break;
 			}
 
-			roomObj.transform.position = objs[i].position + offset;
+			roomObj.transform.position = objs[i].GetPosition() + offset;
 		}
 	}
 
@@ -115,6 +134,11 @@ public class RoomViewer : MonoBehaviour
 				break;
 			case RoomTile.TileType.Floor:
 				floorMap.SetTile(position, dataSet.floorTile);
+				float randomVal = Random.value;
+				if (randomVal <= dataSet.detailChance)
+				{
+					floorDetailMap.SetTile(position, dataSet.floorDetailTile);
+				}
 				break;
 		}
 	}

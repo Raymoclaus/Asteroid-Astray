@@ -11,11 +11,13 @@ public abstract class PlanetInteractable : PlanetRoomObject
 
 	protected virtual void Interacted(Triggerer actor)
 	{
-		if (actor is PlanetTriggerer)
+		if (actor is PlanetTriggerer && VerifyPlanetActor((PlanetTriggerer)actor))
 		{
 			((PlanetTriggerer)actor).Interacted(this);
 		}
 	}
+
+	protected virtual bool VerifyPlanetActor(PlanetTriggerer actor) => true;
 
 	public void EnableInteraction(bool enable) => Trigger.EnableInteractionActions(enable);
 

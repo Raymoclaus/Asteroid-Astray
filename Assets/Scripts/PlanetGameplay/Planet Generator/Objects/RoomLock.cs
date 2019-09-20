@@ -16,7 +16,7 @@ public class RoomLock : RoomObject
 	private void AdjustPosition(Direction direction, Vector2Int position)
 	{
 		if (this.direction != direction) return;
-		this.position = position;
+		SetPosition(position);
 	}
 
 	public void SetDirection(Direction direction) => this.direction = direction;

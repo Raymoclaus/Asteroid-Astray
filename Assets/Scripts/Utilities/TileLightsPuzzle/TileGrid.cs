@@ -59,7 +59,7 @@ namespace TileLightsPuzzle
 			if (PuzzleIsCompleted())
 			{
 				OnPuzzleCompleted?.Invoke();
-				Debug.Log("Puzzle Completed");
+				Debug.Log("Tile Lights Puzzle Completed");
 			}
 		}
 

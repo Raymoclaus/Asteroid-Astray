@@ -8,16 +8,19 @@ public class PlanetData
 	public Room finalRoom;
 	public AreaType areaType = AreaType.Cave;
 
-	public Room AddRoom(RoomType type, int x, int y, PuzzleTypeWeightings puzzleWeightings)
+	public Room AddRoom(RoomType type, int x, int y,
+		PuzzleTypeWeightings puzzleWeightings, Room previousRoom)
 	{
-		Room room = new Room(type, new Vector2Int(x, y), puzzleWeightings);
+		Room room = new Room(type, new Vector2Int(x, y), puzzleWeightings,
+			previousRoom);
 		rooms.Add(room);
 		return room;
 	}
 
-	public Room AddRoom(RoomType type, Vector2Int position, PuzzleTypeWeightings puzzleWeightings)
+	public Room AddRoom(RoomType type, Vector2Int position,
+		PuzzleTypeWeightings puzzleWeightings, Room previousRoom)
 	{
-		Room room = new Room(type, position, puzzleWeightings);
+		Room room = new Room(type, position, puzzleWeightings, previousRoom);
 		rooms.Add(room);
 		return room;
 	}

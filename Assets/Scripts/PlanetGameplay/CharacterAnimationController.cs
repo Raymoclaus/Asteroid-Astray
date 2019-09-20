@@ -14,12 +14,14 @@ public class CharacterAnimationController : MonoBehaviour
 	public void SetRunning(bool running)
 	{
 		this.running = running;
+		if (anim.runtimeAnimatorController == null) return;
 		anim.SetBool(movingName, running);
 	}
 
 	public void SetDirection(int direction)
 	{
 		this.direction = direction;
+		if (anim.runtimeAnimatorController == null) return;
 		anim.SetInteger(directionName, direction);
 	}
 }

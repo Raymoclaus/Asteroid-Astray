@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.Events;
+using InputHandler;
 
 public class Shuttle : Character, IStunnable, ICombat
 {
@@ -178,13 +179,13 @@ public class Shuttle : Character, IStunnable, ICombat
 		if (!hasControl) return;
 
 		//Check if the player is attempting to boost
-		if (!autoPilot) Boost(InputHandler.GetInput(InputAction.Boost) > 0f);
+		if (!autoPilot) Boost(InputManager.GetInput("Boost"));
 		//used for artificially adjusting speed, used by the auto pilot only
 		float speedMod = 1f;
 		//update rotation variable with transform's current rotation
 		rot.z = transform.eulerAngles.z;
 		//get rotation input
-		float lookDirection = InputHandler.GetLookDirection(transform.position);
+		float lookDirection = InputManager.GetLookAngle(transform.position);
 		//if no rotation input has been given then use the same as last frame
 		if (float.IsPositiveInfinity(lookDirection)) lookDirection = lastLookDirection;
 
@@ -244,14 +245,14 @@ public class Shuttle : Character, IStunnable, ICombat
 		}
 		else
 		{
-			float input = Mathf.Clamp01(InputHandler.GetInput(InputAction.Go));
+			float input = InputManager.GetInput("Go") ? 1f : 0f;
 			if (input > 0f)
 			{
 				OnGoInput?.Invoke();
 			}
 			if (IsDrilling)
 			{
-				float launchInput = InputHandler.GetInput(InputAction.DrillLaunch);
+				float launchInput = InputManager.GetInput("DrillLaunch") ? 1f : 0f;
 				input = Mathf.Clamp01(input + launchInput);
 				if (!CanDrillLaunch() && launchInput > 0f)
 				{
@@ -421,19 +422,19 @@ public class Shuttle : Character, IStunnable, ICombat
 
 	private void GetItemUsageInput()
 	{
-		CheckItemUsage(InputAction.Slot1, 0);
-		CheckItemUsage(InputAction.Slot2, 1);
-		CheckItemUsage(InputAction.Slot3, 2);
-		CheckItemUsage(InputAction.Slot4, 3);
-		CheckItemUsage(InputAction.Slot5, 4);
-		CheckItemUsage(InputAction.Slot6, 5);
-		CheckItemUsage(InputAction.Slot7, 6);
-		CheckItemUsage(InputAction.Slot8, 7);
+		CheckItemUsage("Slot1", 0);
+		CheckItemUsage("Slot2", 1);
+		CheckItemUsage("Slot3", 2);
+		CheckItemUsage("Slot4", 3);
+		CheckItemUsage("Slot5", 4);
+		CheckItemUsage("Slot6", 5);
+		CheckItemUsage("Slot7", 6);
+		CheckItemUsage("Slot8", 7);
 	}
 
-	private void CheckItemUsage(InputAction action, int i)
+	private void CheckItemUsage(string action, int i)
 	{
-		if (InputHandler.GetInputDown(action) <= 0f) return;
+		if (!InputManager.GetInput(action)) return;
 
 		List<ItemStack> stacks = storage.stacks;
 		if (stacks[i].GetAmount() > 0)
@@ -456,7 +457,7 @@ public class Shuttle : Character, IStunnable, ICombat
 			return 0f;
 		}
 
-		if (InputHandler.GetInput(InputAction.DrillLaunch) > 0f && CanDrillLaunch())
+		if (InputManager.GetInput("DrillLaunch") && CanDrillLaunch())
 		{
 			GameObject launchCone = drillLaunchArcSprite.gameObject;
 			launchCone.SetActive(true);
@@ -484,11 +485,11 @@ public class Shuttle : Character, IStunnable, ICombat
 		{
 			return calculation * 50f;
 		}
-		else if (InputHandler.GetInput(InputAction.Go) > 0f)
+		else if (InputManager.GetInput("Go"))
 		{
-			return (InputHandler.GetInput(InputAction.DrillLaunch) > 0f && !CanDrillLaunch()) ? 0f : calculation;
+			return (InputManager.GetInput("DrillLaunch") && !CanDrillLaunch()) ? 0f : calculation;
 		}
-		else if (InputHandler.GetInput(InputAction.DrillLaunch) > 0f)
+		else if (InputManager.GetInput("DrillLaunch"))
 		{
 			return CanDrillLaunch() ? 0.001f : 0f;
 		}
@@ -511,7 +512,7 @@ public class Shuttle : Character, IStunnable, ICombat
 
 	public override bool ShouldLaunch() =>
 		CanDrillLaunch()
-		&& InputHandler.GetInputUp(InputAction.DrillLaunch) > 0f
+		&& !InputManager.GetInput("DrillLaunch")
 		&& hasControl
 		&& canLaunch;
 
@@ -651,7 +652,7 @@ public class Shuttle : Character, IStunnable, ICombat
 	public override bool CanFireLaser() =>
 		laserAttached
 		&& !isBoosting
-		&& InputHandler.GetInput(InputAction.Shoot) > 0f
+		&& InputManager.GetInput("Shoot")
 		&& !Pause.IsStopped
 		&& hasControl
 		&& canShoot;
@@ -659,7 +660,7 @@ public class Shuttle : Character, IStunnable, ICombat
 	public override bool CanFireStraightWeapon() =>
 		straightWeaponAttached
 		&& !isBoosting
-		&& InputHandler.GetInput(InputAction.Shoot) > 0f
+		&& InputManager.GetInput("Shoot")
 		&& !Pause.IsStopped
 		&& hasControl
 		&& canShoot;
@@ -672,7 +673,7 @@ public class Shuttle : Character, IStunnable, ICombat
 			shuttleAngle *= Mathf.Deg2Rad;
 			return new Vector2(Mathf.Sin(shuttleAngle), Mathf.Cos(shuttleAngle));
 		}
-		float launchAngle = InputHandler.GetLookDirection(transform.position);
+		float launchAngle = InputManager.GetLookAngle(transform.position);
 		if (float.IsPositiveInfinity(launchAngle)) launchAngle = lastLookDirection;
 		float launchAngleRad = launchAngle * Mathf.Deg2Rad;
 		Vector2 launchDir = new Vector2(Mathf.Sin(launchAngleRad), Mathf.Cos(launchAngleRad));

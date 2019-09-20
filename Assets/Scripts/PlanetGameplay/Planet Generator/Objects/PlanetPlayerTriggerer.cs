@@ -1,15 +1,13 @@
 ﻿using UnityEngine;
+using InputHandler;
 
 [RequireComponent(typeof(PlanetPlayer))]
 public class PlanetPlayerTriggerer : PlanetTriggerer
 {
-	private PlanetPlayer player;
-	private PlanetPlayer Player => player ?? (player = GetComponent<PlanetPlayer>());
+	private PlanetPlayer Player => (PlanetPlayer)RoomObj;
 
 	public override bool IsInteracting(InteractablePromptTrigger trigger)
-	{
-		return InputHandler.GetInputDown(trigger.Action) != 0f;
-	}
+		=> InputManager.GetInput(trigger.Action);
 
 	public override void Interacted(PlanetInteractable trigger)
 	{
@@ -23,10 +21,17 @@ public class PlanetPlayerTriggerer : PlanetTriggerer
 		if (trigger is PlanetRoomLock)
 		{
 			PlanetRoomLock planetLock = (PlanetRoomLock)trigger;
-			if (Player.RemoveKey(planetLock.colour))
+			if (Player.RemoveKeyFromInventory(planetLock.colour))
 			{
 				planetLock.Unlock();
 			}
+			return;
+		}
+
+		if (trigger is PlanetRoomPushableBlock)
+		{
+			PlanetRoomPushableBlock pushableBlock = (PlanetRoomPushableBlock)trigger;
+			pushableBlock.Push(MovementBehaviour.DirectionValue);
 			return;
 		}
 	}

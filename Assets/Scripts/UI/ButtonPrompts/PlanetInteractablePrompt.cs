@@ -18,12 +18,6 @@ public class PlanetInteractablePrompt : InteractablePromptTrigger
 		SetColliderOffset(modifiedPos);
 	}
 
-	public void SetSeed(int seed)
-	{
-		this.seed = seed;
-		Random.InitState(seed);
-	}
-
 	protected override void OnInteracted(Triggerer actor)
 	{
 		base.OnInteracted(actor);

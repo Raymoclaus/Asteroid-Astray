@@ -260,7 +260,7 @@ public class NarrativeManager : MonoBehaviour
 		MainChar.waypoint = new Waypoint(newEntity.transform, null);
 		//attach dialogue prompt when player approaches bot
 		VicinityTrigger entityPrompt = newEntity.GetComponentInChildren<VicinityTrigger>();
-		VicinityTrigger.VicinityTriggerEventHandler triggerEnterAction = null;
+		VicinityTrigger.EnteredTriggerEventHandler triggerEnterAction = null;
 		triggerEnterAction = (Triggerer actor) =>
 		{
 			StartDialogue(foundDerangedBotDialogue, true);

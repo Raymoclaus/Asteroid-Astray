@@ -4,6 +4,7 @@ using UnityEngine;
 
 public enum AreaType
 {
+	Rocky,
 	DenseJungle,
 	Cave,
 	Islands

@@ -1,25 +1,43 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class PlanetRoomKey : PlanetNonSolid
 {
 	[SerializeField] private SpriteRenderer sprRend;
 	private RoomKey.KeyColour colour;
+	private RoomKey key;
 
 	public override void Setup(Room room, RoomObject roomObject, PlanetVisualData dataSet)
 	{
 		base.Setup(room, roomObject, dataSet);
-
-		RoomKey key = (RoomKey)roomObject;
+		
+		key = (RoomKey)roomObject;
+		if (key.hidden)
+		{
+			HideKey();
+			key.OnKeyRevealed += RevealKey;
+		}
 		colour = key.colour;
 		sprRend.sprite = dataSet.keys[(int)colour];
 	}
+
+	private void OnDisable() => key.OnKeyRevealed -= RevealKey;
 
 	protected override void Interacted(Triggerer actor)
 	{
 		base.Interacted(actor);
 		Pickup();
+	}
+
+	private void HideKey()
+	{
+		sprRend.enabled = false;
+		EnableTrigger(false);
+	}
+
+	private void RevealKey()
+	{
+		sprRend.enabled = true;
+		EnableTrigger(true);
 	}
 
 	public void Pickup()

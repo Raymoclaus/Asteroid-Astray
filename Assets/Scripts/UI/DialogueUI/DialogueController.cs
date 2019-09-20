@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using InputHandler;
 
 public class DialogueController : MonoBehaviour
 {
@@ -34,7 +35,7 @@ public class DialogueController : MonoBehaviour
 	{
 		if (Console.DeveloperConsole.IsActive) return;
 
-		if (dialogueIsRunning && InputHandler.GetInputDown(InputAction.ScrollDialogue) > 0f)
+		if (dialogueIsRunning && InputManager.GetInput("ScrollDialogue"))
 		{
 			if (dialogueUI.IsTyping())
 			{
@@ -63,7 +64,7 @@ public class DialogueController : MonoBehaviour
 
 		if (chatIsRunning)
 		{
-			if (InputHandler.GetInputDown(InputAction.ScrollDialogue) > 0f)
+			if (InputManager.GetInput("ScrollDialogue"))
 			{
 				if (chatUI.IsTyping())
 				{

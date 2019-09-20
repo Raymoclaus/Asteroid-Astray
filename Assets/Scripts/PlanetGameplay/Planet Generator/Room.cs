@@ -2,6 +2,7 @@
 using UnityEngine;
 using MazePuzzle;
 using TileLightsPuzzle;
+using BlockPushPuzzle;
 
 public class Room
 {
@@ -16,6 +17,7 @@ public class Room
 	public Vector2Int position;
 	public List<RoomObject> roomObjects = new List<RoomObject>();
 	private PuzzleTypeWeightings puzzleWeightings;
+	public Room previousRoom;
 
 	public delegate void ExitUnlockedEventHandler(Direction direction);
 	public event ExitUnlockedEventHandler OnExitUnlocked;
@@ -25,16 +27,24 @@ public class Room
 
 	public delegate void MazeAddedEventHandler(Maze maze);
 	public event MazeAddedEventHandler OnMazeAdded;
+	public delegate void TileLightsAddedEventHandler(TileGrid tileGrid);
+	public event TileLightsAddedEventHandler OnTileLightsAdded;
+	public delegate void BlockPushAddedEventHandler(PushPuzzle puzzle);
+	public event BlockPushAddedEventHandler OnBlockPushAdded;
 
-	public Room(RoomType type, Vector2Int position, PuzzleTypeWeightings puzzleWeightings)
+	public Room(RoomType type, Vector2Int position,
+		PuzzleTypeWeightings puzzleWeightings, Room previousRoom)
 	{
 		this.type = type;
 		this.position = position;
 		this.puzzleWeightings = puzzleWeightings;
+		this.previousRoom = previousRoom;
 	}
 
 	public void GenerateContent()
 	{
+		GenerateEmptyFloor();
+
 		switch (type)
 		{
 			case RoomType.Start:
@@ -56,20 +66,27 @@ public class Room
 		}
 	}
 
+	private void GenerateEmptyFloor()
+	{
+		for (int x = 1; x < GetWidth() - 1; x++)
+		{
+			for (int y = 1; y < GetHeight() - 1; y++)
+			{
+				AddTile(x, y, RoomTile.TileType.Floor);
+			}
+		}
+	}
+
 	public void GenerateOuterWalls()
 	{
 		for (int x = 1 - exitLength; x < roomWidth - 1 + exitLength; x++)
 		{
 			for (int y = 1 - exitLength; y < roomHeight - 1 + exitLength; y++)
 			{
-				bool isOuterEdge = x <= 0
+				if (x <= 0
 					|| x >= roomWidth - 1
 					|| y <= 0
-					|| y >= roomHeight - 1;
-
-				RoomTile.TileType tileType = isOuterEdge ?
-					RoomTile.TileType.Wall : RoomTile.TileType.Floor;
-				AddTile(x, y, tileType);
+					|| y >= roomHeight - 1) AddTile(x, y, RoomTile.TileType.Wall);
 			}
 		}
 
@@ -125,8 +142,8 @@ public class Room
 
 	private void GenerateStartRoom()
 	{
-		PlanetLandingPad landingPad = new PlanetLandingPad();
-		landingPad.position = new Vector2Int(GetWidth() / 2, GetHeight() / 2 - 3);
+		RoomLandingPad landingPad = new RoomLandingPad();
+		landingPad.SetPosition(new Vector2Int(GetWidth() / 2, GetHeight() / 2 - 3));
 		roomObjects.Add(landingPad);
 	}
 
@@ -145,6 +162,7 @@ public class Room
 			case PuzzleType.BeamRedirection:
 				break;
 			case PuzzleType.BlockPush:
+				GenerateBlockPushPuzzle();
 				break;
 			case PuzzleType.PatternMatching:
 				break;
@@ -207,7 +225,7 @@ public class Room
 
 	private void GenerateTileLightsPuzzle()
 	{
-		Vector2Int puzzleSize = new Vector2Int((GetWidth()) / 2, (GetHeight()) / 2);
+		Vector2Int puzzleSize = new Vector2Int(GetWidth() / 2, GetHeight() / 2);
 		int difficulty = 10;
 
 		TileLightsGenerator gen = new TileLightsGenerator();
@@ -220,14 +238,48 @@ public class Room
 			Vector2Int position = puzzleGrid.GetPosition(i);
 
 			bool flipped = puzzleGrid.IsFlipped(i);
-			RoomTileLight tileLight = new RoomTileLight(puzzleGrid, i)
-			{
-				position = position + offset
-			};
+			RoomTileLight tileLight = new RoomTileLight(puzzleGrid, i);
+			tileLight.SetPosition(position + offset);
 			roomObjects.Add(tileLight);
-			//AddTile(position.x + offset.x, position.y + offset.y,
-			//	flipped ? RoomTile.TileType.UpWall : RoomTile.TileType.Floor);
 		}
+
+		OnTileLightsAdded?.Invoke(puzzleGrid);
+	}
+
+	private void GenerateBlockPushPuzzle()
+	{
+		BlockPushGenerator gen = new BlockPushGenerator();
+		Vector2Int puzzleSize = new Vector2Int(GetWidth() - 2, GetHeight() - 2);
+		int padding = 1;
+		int minimumSolutionCount = 1;
+		PushPuzzle puzzle = gen.Generate(puzzleSize, padding, minimumSolutionCount);
+
+		Vector2Int offset = Vector2Int.one;
+
+		for (int i = 0; i < puzzle.grid.Length; i++)
+		{
+			Vector2Int position = puzzle.GetPositionFromIndex(i);
+			bool isBlock = puzzle.BlockExists(position);
+			if (!isBlock) continue;
+
+			RoomPushableBlock roomBlock = new RoomPushableBlock(puzzle, position);
+			roomBlock.SetPosition(position + offset);
+			roomObjects.Add(roomBlock);
+		}
+		RoomGreenGroundButton finishButton = new RoomGreenGroundButton();
+		finishButton.SetPosition(puzzle.finishTile + offset);
+		finishButton.OnButtonTriggered += puzzle.CompletePuzzle;
+		roomObjects.Add(finishButton);
+
+		for (int i = 0; i < puzzle.resetTiles.Length; i++)
+		{
+			RoomRedGroundButton resetButton = new RoomRedGroundButton();
+			resetButton.SetPosition(puzzle.resetTiles[i] + offset);
+			resetButton.SubscribeToHeldEvent(puzzle.RevertLastChange, 1f / 10f);
+			roomObjects.Add(resetButton);
+		}
+
+		OnBlockPushAdded?.Invoke(puzzle);
 	}
 
 	private PuzzleType PickRandomPuzzleType()
@@ -262,7 +314,7 @@ public class Room
 		int y = roomHeight - 1;
 		SetExit(Direction.Up, true, x, y);
 		RoomExitTrigger newTrigger = new RoomExitTrigger(this, Direction.Up);
-		newTrigger.position = new Vector2Int(x, y);
+		newTrigger.SetPosition(new Vector2Int(x, y));
 		roomObjects.Add(newTrigger);
 	}
 
@@ -271,7 +323,7 @@ public class Room
 		int x = roomWidth - 1;
 		SetExit(Direction.Right, true, x, y);
 		RoomExitTrigger newTrigger = new RoomExitTrigger(this, Direction.Right);
-		newTrigger.position = new Vector2Int(x, y);
+		newTrigger.SetPosition(new Vector2Int(x, y));
 		roomObjects.Add(newTrigger);
 	}
 
@@ -280,7 +332,7 @@ public class Room
 		int y = 0;
 		SetExit(Direction.Down, true, x, y);
 		RoomExitTrigger newTrigger = new RoomExitTrigger(this, Direction.Down);
-		newTrigger.position = new Vector2Int(x, y);
+		newTrigger.SetPosition(new Vector2Int(x, y));
 		roomObjects.Add(newTrigger);
 	}
 
@@ -289,7 +341,7 @@ public class Room
 		int x = 0;
 		SetExit(Direction.Left, true, x, y);
 		RoomExitTrigger newTrigger = new RoomExitTrigger(this, Direction.Left);
-		newTrigger.position = new Vector2Int(x, y);
+		newTrigger.SetPosition(new Vector2Int(x, y));
 		roomObjects.Add(newTrigger);
 	}
 
@@ -328,30 +380,26 @@ public class Room
 
 	public List<RoomTile> GetTiles() => tiles;
 
-	public void SetWidth(int width) => roomWidth = width;
-
-	public void SetHeight(int height) => roomHeight = height;
-
-	public void SetDimensions(int width, int height)
-	{
-		SetWidth(width);
-		SetHeight(height);
-	}
-
-	public void SetDimensions(Vector2Int dimensions)
-	{
-		roomWidth = dimensions.x;
-		roomHeight = dimensions.y;
-	}
-
 	public int GetWidth() => roomWidth;
 
 	public int GetHeight() => roomHeight;
+
+	public Vector2Int GetInnerDimensions() => new Vector2Int(GetWidth(), GetHeight());
+
+	public Vector2Int GetWorldSpacePosition()
+	{
+		return position * GetInnerDimensions() + position * (exitLength - 1) * 2;
+	}
 
 	public Vector2Int GetDimensions()
 		=> new Vector2Int(roomWidth + (exitLength - 1) * 2, roomHeight + (exitLength - 1) * 2);
 
 	public Vector2 GetCenter() => new Vector2(GetWidth() / 2f, GetHeight() / 2f);
+	public Vector2Int GetCenterInt()
+	{
+		Vector2 floatCenter = GetCenter();
+		return new Vector2Int((int)floatCenter.x, (int)floatCenter.y);
+	}
 
 	public void SetRoom(Room room, Direction direction)
 	{
@@ -397,18 +445,34 @@ public class Room
 		{
 			case Direction.Up:
 				upLock = newLock;
-				upLocked = true;
 				break;
 			case Direction.Right:
 				rightLock = newLock;
-				rightLocked = true;
 				break;
 			case Direction.Down:
 				downLock = newLock;
-				downLocked = true;
 				break;
 			case Direction.Left:
 				leftLock = newLock;
+				break;
+		}
+		LockWithoutKey(direction);
+	}
+
+	public void LockWithoutKey(Direction direction)
+	{
+		switch (direction)
+		{
+			case Direction.Up:
+				upLocked = true;
+				break;
+			case Direction.Right:
+				rightLocked = true;
+				break;
+			case Direction.Down:
+				downLocked = true;
+				break;
+			case Direction.Left:
 				leftLocked = true;
 				break;
 		}
@@ -417,7 +481,7 @@ public class Room
 	private RoomLock CreateLock(Direction direction, RoomKey.KeyColour colour)
 	{
 		RoomLock newLock = new RoomLock(this, colour, direction);
-		newLock.position = GetExitPos(direction);
+		newLock.SetPosition(GetExitPos(direction));
 		return newLock;
 	}
 
@@ -440,8 +504,9 @@ public class Room
 	public void AddKey(RoomKey.KeyColour colour)
 	{
 		RoomKey key = new RoomKey(this, colour);
-		key.position = new Vector2Int(
+		Vector2Int pos = new Vector2Int(
 			Random.Range(1, roomWidth - 1), Random.Range(1, roomHeight - 1));
+		key.SetPosition(pos);
 		roomObjects.Add(key);
 	}
 
@@ -457,8 +522,6 @@ public class Room
 		RoomLock otherRoomLock = otherRoom.GetLock(Opposite(direction));
 		otherRoomLock.Unlock();
 		otherRoom.roomObjects.Remove(otherRoomLock);
-
-		OnExitUnlocked?.Invoke(direction);
 		return true;
 	}
 
@@ -483,6 +546,8 @@ public class Room
 				leftLock = null;
 				break;
 		}
+
+		OnExitUnlocked?.Invoke(direction);
 	}
 
 	public void RemoveObject(RoomObject obj) => roomObjects.Remove(obj);
@@ -533,6 +598,19 @@ public class Room
 			case Direction.Left:
 				return leftLocked;
 		}
+	}
+
+	public RoomExitTrigger GetExit(Direction direction)
+	{
+		for (int i = 0; i < roomObjects.Count; i++)
+		{
+			if (roomObjects[i].GetObjectType() == RoomObject.ObjType.ExitTrigger)
+			{
+				RoomExitTrigger exitTrigger = (RoomExitTrigger)roomObjects[i];
+				if (exitTrigger.direction == direction) return exitTrigger;
+			}
+		}
+		return null;
 	}
 
 	public bool HasExit(Direction direction)

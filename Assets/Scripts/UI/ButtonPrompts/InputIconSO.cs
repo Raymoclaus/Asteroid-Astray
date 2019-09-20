@@ -1,19 +1,29 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using InputHandler;
 
 [CreateAssetMenu(menuName = "Scriptable Objects/Input Icon List")]
 public class InputIconSO : ScriptableObject
 {
+	public InputMode inputMode;
 	[SerializeField] private List<InputIcon> inputIcons;
-	public string ignoreSubstring;
+	[SerializeField] private string ignoreSubstring;
 
-	public Sprite GetSprite(KeyCode kc)
+	public Sprite GetSprite(InputCode key)
+		=> inputIcons.Where(t => t.input.Equals(key)).First().sprite;
+
+	public List<Sprite> GetSprites(InputCombination combo)
 	{
+		List<Sprite> sprites = new List<Sprite>();
 		for (int i = 0; i < inputIcons.Count; i++)
 		{
-			if (inputIcons[i].keyCode == kc) return inputIcons[i].spr;
+			if (combo.Contains(inputIcons[i].input))
+			{
+				sprites.Add(inputIcons[i].sprite);
+			}
 		}
-		return null;
+		return sprites;
 	}
 
 	public void AddToList(List<Sprite> sprites)
@@ -26,54 +36,30 @@ public class InputIconSO : ScriptableObject
 
 	public void AddToList(Sprite sprite)
 	{
-		bool found = false;
-		for (int i = 0; i < inputIcons?.Count; i++)
+		if (ContainsSprite(sprite)) return;
+		inputIcons.Add(new InputIcon(sprite, ignoreSubstring));
+	}
+
+	private bool ContainsSprite(Sprite sprite)
+	{
+		for (int i = 0; i < inputIcons.Count; i++)
 		{
-			if (inputIcons[i].spr == sprite)
-			{
-				found = true;
-				break;
-			}
+			if (inputIcons[i].sprite == sprite) return true;
 		}
-		if (!found)
-		{
-			InputIcon ii;
-			if (ignoreSubstring == string.Empty)
-			{
-				ii = new InputIcon(sprite);
-			}
-			else
-			{
-				ii = new InputIcon(sprite, sprite.name.Replace(ignoreSubstring, string.Empty));
-			}
-			inputIcons.Add(ii);
-		}
+		return false;
 	}
 }
 
 [System.Serializable]
 public struct InputIcon
 {
-	public Sprite spr;
-	public KeyCode keyCode;
+	public Sprite sprite;
+	public InputCode input;
 
-	public InputIcon(Sprite spr)
+	public InputIcon(Sprite sprite, string ignoreSubstring = "")
 	{
-		this.spr = spr;
-		keyCode = 0;
-		keyCode = FindkeyCode(spr.name);
-	}
-
-	public InputIcon(Sprite spr, string s)
-	{
-		this.spr = spr;
-		keyCode = 0;
-		keyCode = FindkeyCode(s);
-	}
-
-	public static KeyCode FindkeyCode(string s)
-	{
-		KeyCode kc;
-		return System.Enum.TryParse(s, out kc) ? kc : 0;
+		this.sprite = sprite;
+		input = new InputCode(InputCode.InputType.Button);
+		System.Enum.TryParse(sprite.name.Replace(ignoreSubstring, string.Empty), out input.buttonCode);
 	}
 }

@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using UnityEngine;
+using InputHandler;
 
 public class Pause : MonoBehaviour
 {
@@ -50,7 +51,7 @@ public class Pause : MonoBehaviour
 	{
 		timeSinceOpen += Time.deltaTime;
 
-		if (InputHandler.GetInputDown(InputAction.Pause) > 0f && !isShifting && canPause)
+		if (InputManager.GetInput("Pause") && !isShifting && canPause)
 		{
 			OnPause?.Invoke(!IsPaused);
 			if (IsPaused)

@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class PlanetRoomTileLight : PlanetNonSolid
 {
@@ -12,11 +10,25 @@ public class PlanetRoomTileLight : PlanetNonSolid
 		base.Setup(room, roomObject, dataSet);
 
 		roomTileLight = (RoomTileLight)roomObject;
-		roomTileLight.OnTileFlipped += Flip;
+		if (roomTileLight.puzzleCompleted)
+		{
+			RemoveInteraction();
+		}
+		else
+		{
+			roomTileLight.OnTileFlipped += Flip;
+			roomTileLight.OnPuzzleCompleted += RemoveInteraction;
+		}
 		Flip(roomTileLight.flipped);
 	}
 
-	private void OnDisable() => roomTileLight.OnTileFlipped -= Flip;
+	private void RemoveInteraction() => EnableTrigger(false);
+
+	private void OnDisable()
+	{
+		roomTileLight.OnTileFlipped -= Flip;
+		roomTileLight.OnPuzzleCompleted -= RemoveInteraction;
+	}
 
 	protected override void Interacted(Triggerer actor)
 	{

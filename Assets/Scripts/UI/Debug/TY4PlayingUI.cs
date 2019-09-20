@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using InputHandler;
 
 [RequireComponent(typeof(CanvasGroup))]
 public class TY4PlayingUI : MonoBehaviour
@@ -24,7 +25,7 @@ public class TY4PlayingUI : MonoBehaviour
 			SetActive(!active);
 		}
 
-		if (active && InputHandler.GetInputDown(InputAction.ScrollDialogue) > 0f && CGroup.alpha == 1f)
+		if (active && InputManager.GetInput("ScrollDialogue") && CGroup.alpha == 1f)
 		{
 			SetActive(false);
 		}

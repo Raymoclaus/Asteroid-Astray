@@ -1,0 +1,14 @@
+{
+    "name": "InputHandler.Editor",
+    "references": [
+        "GUID:c678c86eb9703354f8a74511bd35f4d4"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}

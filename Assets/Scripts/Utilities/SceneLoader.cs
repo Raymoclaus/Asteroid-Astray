@@ -2,6 +2,7 @@
 using UnityEngine.SceneManagement;
 using UnityEditor;
 using System.Collections.Generic;
+using InputHandler;
 
 public class SceneLoader : MonoBehaviour
 {
@@ -74,7 +75,7 @@ public class SceneLoader : MonoBehaviour
 
 	private void ClearEvents()
 	{
-		InputHandler.ClearEvent();
+		InputManager.ClearEvent();
 		GameEvents.ClearEvent();
 		PromptUI.ClearEvent();
 		Pause.ClearEvent();

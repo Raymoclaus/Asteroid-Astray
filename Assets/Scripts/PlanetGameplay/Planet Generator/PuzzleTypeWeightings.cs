@@ -8,5 +8,6 @@ public class PuzzleTypeWeightings : ScriptableObject
 	public float randomMazeRoomWeighting,
 		randomTileLightRoomWeighting,
 		randomBeamRedirectionRoomWeighting,
-		randomBlockPushRoomWeighting;
+		randomBlockPushRoomWeighting,
+		randomPatternMatchRoomWeighting;
 }

@@ -8,8 +8,10 @@ public class VicinityTrigger : MonoBehaviour
 
 	protected List<Triggerer> nearbyActors = new List<Triggerer>();
 
-	public delegate void VicinityTriggerEventHandler(Triggerer actor);
-	public VicinityTriggerEventHandler OnEnterTrigger;
+	public delegate void EnteredTriggerEventHandler(Triggerer actor);
+	public EnteredTriggerEventHandler OnEnterTrigger;
+	public delegate void ExitedTriggerEventHandler(Triggerer actor);
+	public ExitedTriggerEventHandler OnExitedTrigger;
 
 	protected virtual void Awake()
 	{
@@ -34,6 +36,7 @@ public class VicinityTrigger : MonoBehaviour
 			nearbyActors.Add(actor);
 			EnterTrigger(actor);
 			actor.EnteredTrigger(this);
+			OnEnterTrigger?.Invoke(actor);
 		}
 	}
 
@@ -44,12 +47,14 @@ public class VicinityTrigger : MonoBehaviour
 			nearbyActors.Remove(actor);
 			ExitTrigger(actor);
 			actor.ExitedTrigger(this);
+			OnExitedTrigger?.Invoke(actor);
 		}
 	}
 
 	protected bool IsTriggerActive() => nearbyActors.Count > 0;
 
 	protected virtual void EnterTrigger(Triggerer actor) { }
+
 	protected virtual void ExitTrigger(Triggerer actor) { }
 
 	public void EnableTrigger(bool enable) => col.enabled = enable;

@@ -6,7 +6,7 @@ namespace TileLightsPuzzle
 {
 	public class TileLightsGenerator
 	{
-		public TileGrid GeneratePuzzle(Vector2Int size, int difficultySetting)
+		public TileGrid GeneratePuzzle(Vector2Int size, int difficultySetting = 4)
 		{
 			TileGrid tg = new TileGrid(size);
 			for (int i = 0; i < difficultySetting; i++)

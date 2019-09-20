@@ -10,8 +10,8 @@ public class InteractablePromptTrigger : PromptTrigger
 	protected static DialogueController DlgCtrl
 		=> dlgCtrl ?? (dlgCtrl = FindObjectOfType<DialogueController>());
 	protected bool enabledInteractionActions = true;
-	[SerializeField] protected InputAction action = InputAction.Interact;
-	public InputAction Action => action;
+	[SerializeField] protected string action = "Interact";
+	public string Action => action;
 
 	[SerializeField] protected UnityEvent interactionActions;
 

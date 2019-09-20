@@ -6,6 +6,7 @@ using UnityEngine.Tilemaps;
 public class PlanetVisualData : ScriptableObject
 {
 	public AreaType type;
-	public TileBase wallTile, floorTile;
+	public TileBase wallTile, floorTile, floorDetailTile;
+	public float detailChance = 0.2f;
 	public List<Sprite> keys, locks;
 }

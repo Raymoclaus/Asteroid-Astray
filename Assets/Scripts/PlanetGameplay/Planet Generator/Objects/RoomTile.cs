@@ -1,8 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
-public struct RoomTile
+public class RoomTile : RoomObject
 {
 	public enum TileType
 	{
@@ -13,9 +11,15 @@ public struct RoomTile
 	public Vector2Int position;
 	public TileType type;
 
-	public RoomTile(int x, int y, TileType type)
+	public RoomTile(Vector2Int position, TileType type)
 	{
-		position = new Vector2Int(x, y);
+		this.position = position;
+		this.type = type;
+	}
+
+	public RoomTile(int posX, int posY, TileType type)
+	{
+		this.position = new Vector2Int(posX, posY);
 		this.type = type;
 	}
 }

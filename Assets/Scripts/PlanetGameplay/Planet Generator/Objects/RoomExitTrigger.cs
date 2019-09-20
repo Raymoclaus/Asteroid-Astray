@@ -1,6 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
+using TileLightsPuzzle;
+using BlockPushPuzzle;
 
 public class RoomExitTrigger : RoomObject
 {
@@ -10,13 +10,41 @@ public class RoomExitTrigger : RoomObject
 	{
 		this.room = room;
 		room.OnChangeExitPosition += AdjustPosition;
+		room.OnTileLightsAdded += LockWithTileGrid;
+		room.OnBlockPushAdded += LockWithBlockPush;
 		this.direction = direction;
 	}
+
+	private void LockWithTileGrid(TileGrid tileGrid)
+	{
+		Room leadingRoom = room.GetRoom(direction);
+		if (leadingRoom != null
+			&& leadingRoom != room.previousRoom
+			&& !room.IsLocked(direction))
+		{
+			room.LockWithoutKey(direction);
+			tileGrid.OnPuzzleCompleted += UnlockExit;
+		}
+	}
+
+	private void LockWithBlockPush(PushPuzzle puzzle)
+	{
+		Room leadingRoom = room.GetRoom(direction);
+		if (leadingRoom != null
+			&& leadingRoom != room.previousRoom
+			&& !room.IsLocked(direction))
+		{
+			room.LockWithoutKey(direction);
+			puzzle.OnPuzzleCompleted += UnlockExit;
+		}
+	}
+
+	private void UnlockExit() => room.Unlock(direction);
 
 	private void AdjustPosition(Direction direction, Vector2Int position)
 	{
 		if (this.direction != direction) return;
-		this.position = position;
+		SetPosition(position);
 	}
 
 	public override ObjType GetObjectType() => ObjType.ExitTrigger;

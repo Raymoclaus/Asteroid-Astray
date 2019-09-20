@@ -1,38 +1,43 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
-using System.Collections;
+using System.Linq;
 using TMPro;
+using InputHandler;
 
 [RequireComponent(typeof(TextMeshProUGUI))]
 public class InputIconTextMesh : MonoBehaviour
 {
 	public TextMeshProUGUI textMesh;
-	private static List<SpriteAssetInputActionPair> spriteAssetActions = new List<SpriteAssetInputActionPair>(20);
+	private static List<ContextualInputIconContainer> iconContainers
+		= new List<ContextualInputIconContainer>();
 	[SerializeField] [TextArea(1, 3)] private string text;
-	private static InputIconSO keyboardIcons, ps4Icons;
-	private const string keyboardIconsString = "Keyboard Icons", ps4IconsString = "Ps4 Icons";
-	private const string spriteAssetString = " TmpSpriteAsset";
+	private static List<InputIconSO> modeIcons = new List<InputIconSO>();
 
 	private void Awake()
 	{
-		InputHandler.InputModeChanged += UpdateIcon;
+		InputManager.InputModeChanged += UpdateIcon;
 		UpdateIcon();
 	}
 
 	private void OnDestroy()
 	{
-		InputHandler.InputModeChanged -= UpdateIcon;
+		InputManager.InputModeChanged -= UpdateIcon;
 	}
 
 	private void GetIconSoReferences()
 	{
-		keyboardIcons = keyboardIcons ?? GetInputIconSO(keyboardIconsString);
-		ps4Icons = ps4Icons ?? GetInputIconSO(ps4IconsString);
+		List<InputIconSO> so = Resources.LoadAll<InputIconSO>("")
+			.Where(t => !IsDuplicate(t)).ToList();
+		modeIcons.AddRange(so);
 	}
 
-	private InputIconSO GetInputIconSO(string name)
+	private bool IsDuplicate(InputIconSO inputIconSo)
 	{
-		return Resources.Load<InputIconSO>(name);
+		for (int i = 0; i < modeIcons.Count; i++)
+		{
+			if (modeIcons[i].inputMode == inputIconSo.inputMode) return true;
+		}
+		return false;
 	}
 
 	private void UpdateIcon()
@@ -44,10 +49,7 @@ public class InputIconTextMesh : MonoBehaviour
 		textMesh.gameObject.SetActive(true);
 	}
 
-	public string GetText()
-	{
-		return text;
-	}
+	public string GetText() => text;
 
 	public void SetText(string s)
 	{
@@ -59,82 +61,91 @@ public class InputIconTextMesh : MonoBehaviour
 	{
 		string s = input;
 
-		InputAction[] actions =
-			(InputAction[])System.Enum.GetValues(typeof(InputAction));
-		for (int i = 0; i < actions.Length; i++)
+		List<string> actions = InputManager.GetCurrentActions();
+		for (int i = 0; i < actions?.Count; i++)
 		{
-			InputAction action = actions[i];
-			string actionString = InputHandler.GetActionString(actions[i]);
-			string check = $"[{actionString}]";
+			string action = actions[i];
+			string check;
+			InputCombination inputCombo = InputManager.GetBinding(action);
+
+			check = $"[:{action}]";
 			if (s.Contains(check))
 			{
-				InputIconSO iconSet = GetIconSet();
-				if (iconSet == null) continue;
-				KeyCode kc = InputHandler.GetBinding(actions[i]);
-				TMP_SpriteAsset tmpSpriteAsset = GetSpriteAsset(actions[i]);
-				tmpSpriteAsset.spriteSheet = iconSet.GetSprite(kc).texture;
-				tmpSpriteAsset.material.mainTexture = tmpSpriteAsset.spriteSheet;
-				s = s.Replace(check, $"<sprite=\"{tmpSpriteAsset.name}\" index=0>" +
-					$" <color=#00FFFF>{actionString}</color>");
+				s = s.Replace(check, $"<color=#00FFFF>{action}</color>");
 			}
 
-			check = $"[{actionString}:]";
+			InputIconSO iconSet = GetCurrentIconSet();
+			if (iconSet == null) continue;
+
+			List<Sprite> sprites = iconSet.GetSprites(inputCombo);
+			TMP_SpriteAssetContainer container = GetCurrentSpriteContainer(action);
+			List<TMP_SpriteAsset> assets = container.spriteAssets;
+
+			check = $"[{action}]";
 			if (s.Contains(check))
 			{
-				InputIconSO iconSet = GetIconSet();
-				if (iconSet == null) continue;
-				KeyCode kc = InputHandler.GetBinding(actions[i]);
-				TMP_SpriteAsset tmpSpriteAsset = GetSpriteAsset(actions[i]);
-				tmpSpriteAsset.spriteSheet = iconSet.GetSprite(kc).texture;
-				tmpSpriteAsset.material.mainTexture = tmpSpriteAsset.spriteSheet;
-				s = s.Replace(check, $"<sprite=\"{tmpSpriteAsset.name}\" index=0>");
+				string tmpIconString = "";
+				for (int j = 0; j < sprites.Count; j++)
+				{
+					assets[j].spriteSheet = sprites[j].texture;
+					assets[j].material.mainTexture = assets[j].spriteSheet;
+					tmpIconString += $"<sprite=\"{assets[j].name}\" index=0>";
+					if (j != sprites.Count - 1)
+					{
+						tmpIconString += " + ";
+					}
+				}
+				s = s.Replace(check, $"{tmpIconString} <color=#00FFFF>{action}</color>");
 			}
 
-			check = $"[:{actionString}]";
+			check = $"[{action}:]";
 			if (s.Contains(check))
 			{
-				s = s.Replace(check, $"<color=#00FFFF>{actionString}</color>");
+				string tmpIconString = "";
+				for (int j = 0; j < sprites.Count; j++)
+				{
+					assets[j].spriteSheet = sprites[j].texture;
+					assets[j].material.mainTexture = assets[j].spriteSheet;
+					tmpIconString += $"<sprite=\"{assets[j].name}\" index=0>";
+					if (j != sprites.Count - 1)
+					{
+						tmpIconString += " + ";
+					}
+				}
+				s = s.Replace(check, tmpIconString);
 			}
 		}
 
 		return s;
 	}
 
-	private TMP_SpriteAsset GetSpriteAsset(InputAction action)
+	private TMP_SpriteAssetContainer GetCurrentSpriteContainer(string action)
+		=> GetSpriteContainer(action, InputManager.CurrentContext);
+
+	private TMP_SpriteAssetContainer GetSpriteContainer(string action, InputContext context)
 	{
-		for (int i = 0; i < spriteAssetActions.Count; i++)
+		for (int i = 0; i < iconContainers.Count; i++)
 		{
-			if (spriteAssetActions[i].action == action)
-			{
-				return spriteAssetActions[i].tmpSpriteAsset;
-			}
+			if (iconContainers[i].context == context)
+				return iconContainers[i].GetContainer(action);
 		}
-		TMP_SpriteAsset newAsset = Resources.Load<TMP_SpriteAsset>(
-			$"Sprite Assets/{InputHandler.GetActionString(action)}{spriteAssetString}");
-		spriteAssetActions.Add(new SpriteAssetInputActionPair(newAsset, action));
-		return newAsset;
+		ContextualInputIconContainer container = Resources.LoadAll<ContextualInputIconContainer>("")
+			.Where(t => t.context == context).First();
+		iconContainers.Add(container);
+		return container.GetContainer(action);
 	}
 
-	private InputIconSO GetIconSet()
+	private InputIconSO GetCurrentIconSet()
+		=> GetIconSet(InputManager.GetMode());
+
+	private InputIconSO GetIconSet(InputMode mode)
 	{
 		GetIconSoReferences();
-		switch (InputHandler.GetMode())
+		for (int i = 0; i < modeIcons.Count; i++)
 		{
-			case InputHandler.InputMode.Keyboard: return keyboardIcons;
-			case InputHandler.InputMode.Ps4: return ps4Icons;
-			default: return null;
+			InputIconSO so = modeIcons[i];
+			if (so.inputMode == mode) return so;
 		}
-	}
-
-	private struct SpriteAssetInputActionPair
-	{
-		public TMP_SpriteAsset tmpSpriteAsset;
-		public InputAction action;
-
-		public SpriteAssetInputActionPair(TMP_SpriteAsset tmpSpriteAsset, InputAction action)
-		{
-			this.tmpSpriteAsset = tmpSpriteAsset;
-			this.action = action;
-		}
+		return null;
 	}
 }
