@@ -7,7 +7,12 @@ public class Coroutines : MonoBehaviour
 	private static Coroutines instance;
 	public static Coroutines Instance
 	{
-		get { return instance ?? (instance = FindObjectOfType<Coroutines>()); }
+		get
+		{
+			return instance
+				?? (instance = FindObjectOfType<Coroutines>())
+				?? (instance = new GameObject("Coroutine Manager").AddComponent<Coroutines>());
+		}
 	}
 
 	private void Awake()
@@ -18,22 +23,29 @@ public class Coroutines : MonoBehaviour
 		}
 	}
 
-	private void OnDestroy()
-	{
-		instance = null;
-	}
+	private void OnDestroy() => instance = null;
 
 	public static void TimedAction(float duration, Action<float> timedAction,
 		Action finishedAction)
-	{
-		Instance.StartCoroutine(Instance.ActionTimer(duration, timedAction, finishedAction));
-	}
+		=> Start(Instance.ActionTimer(new ActionOverTime(duration, timedAction), finishedAction));
 
-	private IEnumerator ActionTimer(float duration, Action<float> timedAction,
+	private IEnumerator ActionTimer(ActionOverTime timerAction,
 		Action finishedAction)
 	{
-		yield return new ActionOverTime(duration, timedAction);
+		yield return timerAction;
 		finishedAction?.Invoke();
 	}
+
+	public static void DelayedAction(float time, Action action)
+		=> Start(Instance.DelayedAction(new WaitForSeconds(time), action));
+
+	private IEnumerator DelayedAction(WaitForSeconds wait, Action action)
+	{
+		yield return wait;
+		action?.Invoke();
+	}
+
+	private static void Start(IEnumerator coroutineMethod)
+		=> Instance.StartCoroutine(coroutineMethod);
 
 }

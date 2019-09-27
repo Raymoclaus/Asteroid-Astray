@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using InputHandler;
+using AttackData;
 
 [RequireComponent(typeof(PlanetPlayerTriggerer))]
 public class PlanetPlayer : PlanetRoomEntity
@@ -12,14 +13,33 @@ public class PlanetPlayer : PlanetRoomEntity
 	private ItemPopupUI PopupUI
 		=> popupUI ?? (popupUI = FindObjectOfType<ItemPopupUI>());
 	[SerializeField] private GameObject attackPrefab;
+	[SerializeField] private float rangedAttackCooldownDuration = 1f;
+	private string rangedAttackCooldownTimerID;
+	[SerializeField] private float rangedAttackRecoveryDuration = 0.5f;
+	private string attackRecoveryTimerID;
 
 	protected override void Awake()
 	{
 		base.Awake();
+
 		roomObject = new RoomPlayer();
 		if (planetGenerator != null)
 		{
 			planetGenerator.OnRoomChanged += ResetPosition;
+		}
+		rangedAttackCooldownTimerID = gameObject.GetInstanceID() + "Ranged Attack Cooldown Timer";
+		TimerTracker.AddTimer(rangedAttackCooldownTimerID, 0f, null, null);
+		attackRecoveryTimerID = gameObject.GetInstanceID() + "Attack Recovery Timer";
+		TimerTracker.AddTimer(attackRecoveryTimerID, 0f, null, null);
+	}
+
+	protected override void Update()
+	{
+		base.Update();
+
+		if (ShouldRangedAttack)
+		{
+			RangedAttack();
 		}
 	}
 
@@ -31,34 +51,50 @@ public class PlanetPlayer : PlanetRoomEntity
 		}
 	}
 
-	protected override bool ShouldAttack()
-		=> base.ShouldAttack() && InputManager.GetInput("Attack");
+	private bool ShouldAttack
+		=> !RecoveringFromAttack
+		&& !IsStunned;	   		
 
-	protected override void Attack()
+	private bool ShouldRangedAttack
+		=> ShouldAttack
+		&& InputManager.GetInput("RangedAttack") > 0f
+		&& !RangedAttackOnCooldown;
+
+	private bool RangedAttackOnCooldown
+		=> TimerTracker.GetTimer(rangedAttackCooldownTimerID) > 0f;
+
+	private bool RecoveringFromAttack => TimerTracker.GetTimer(attackRecoveryTimerID) > 0f;
+
+	private void RangedAttack()
 	{
+		TimerTracker.SetTimer(rangedAttackCooldownTimerID, rangedAttackCooldownDuration);
+
 		GameObject attack = Instantiate(attackPrefab);
 
-		AttackData.AttackManager atkM = attack.GetComponent<AttackData.AttackManager>();
+		AttackManager atkM = attack.GetComponent<AttackManager>();
 		float damage = 15f;
-		atkM.AddAttackComponent<AttackData.AttackDamageData>(damage);
+		atkM.AddAttackComponent<DamageComponent>(damage);
 
-		Vector3 direction = PhysicsController.GetDirection();
-		Vector3 facingDirection = PhysicsController.GetFacingDirection();
+		Vector3 direction = PhysicsController.GetMovementDirection;
+		Vector3 facingDirection = PhysicsController.GetFacingDirection;
 		attack.transform.position =
 			pivot.position + facingDirection;
-		atkM.AddAttackComponent<AttackData.AttackDirectionData>(direction);
-		atkM.AddAttackComponent<AttackData.AttackOwnerData>(this);
-		atkM.AddAttackComponent<AttackData.AttackKnockbackData>(direction * damage);
-		atkM.AddAttackComponent<AttackData.AttackStunData>(1f);
+		atkM.AddAttackComponent<DirectionComponent>(direction);
+		atkM.AddAttackComponent<OwnerComponent>(this);
+		atkM.AddAttackComponent<KnockbackComponent>(direction * damage);
+		atkM.AddAttackComponent<StunComponent>(1f);
+		atkM.AddAttackComponent<IsProjectileComponent>(true);
+		float projectileSpeed = 20f;
+		atkM.AddAttackComponent<VelocityComponent>(direction.normalized * projectileSpeed);
+		LayerComponent.ComponentData layerMask = new LayerComponent.ComponentData("Wall");
+		atkM.AddAttackComponent<DestroyOnContactWithLayersComponent>(layerMask);
 
 		attack.transform.parent = transform;
 		attack.transform.eulerAngles =
 			Vector3.forward * Vector2.SignedAngle(Vector2.up, facingDirection);
 
 		PhysicsController.SlowDown();
-		PhysicsController.PreventMovementInputForDuration(new WaitForSeconds(0.5f));
-
-		StartCoroutine(SetAttackCooldown(new WaitForSeconds(1f)));
+		PhysicsController.PreventMovementInputForDuration(rangedAttackRecoveryDuration);
 	}
 
 	private void ResetPosition(Room newRoom, Direction direction)

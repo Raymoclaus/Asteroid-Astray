@@ -1,12 +1,8 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public abstract class PlanetRoomEnemy : PlanetRoomEntity
 {
-	[SerializeField] protected ProjectileAttack attackPrefab;
 	protected PlanetPlayer player;
-	[SerializeField] protected float attackRange = 2f;
 	protected float DistanceToPlayer
 		=> player != null ?
 		Vector3.Distance(GetPivotPosition(), player.GetPivotPosition())

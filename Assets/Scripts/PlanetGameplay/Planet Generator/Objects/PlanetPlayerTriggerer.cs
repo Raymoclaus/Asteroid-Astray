@@ -7,7 +7,7 @@ public class PlanetPlayerTriggerer : PlanetTriggerer
 	private PlanetPlayer Player => (PlanetPlayer)RoomObj;
 
 	public override bool IsInteracting(InteractablePromptTrigger trigger)
-		=> InputManager.GetInput(trigger.Action);
+		=> InputManager.GetInputDown(trigger.Action);
 
 	public override void Interacted(PlanetInteractable trigger)
 	{

@@ -28,8 +28,14 @@ namespace InputHandler
 		public List<InputCombination> GetDefaults(InputContext context)
 			=> GetInputMethod(context)?.defaultCombinations;
 
-		public bool GetInput(string key, InputContext context)
-			=> GetInputMethod(context)?.GetInput(key) ?? false;
+		public float GetInput(string key, InputContext context)
+			=> GetInputMethod(context)?.GetInput(key) ?? 0f;
+
+		public bool GetInputDown(string key, InputContext context)
+			=> GetInputMethod(context)?.GetInputDown(key) ?? false;
+
+		public bool GetInputUp(string key, InputContext context)
+			=> GetInputMethod(context)?.GetInputUp(key) ?? false;
 
 		public InputCombination GetBinding(string key, InputContext context)
 			=> GetInputMethod(context)?.GetCombination(key);

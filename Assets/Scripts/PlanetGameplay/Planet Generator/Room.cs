@@ -56,6 +56,7 @@ public class Room
 				GeneratePuzzleRoom();
 				break;
 			case RoomType.Enemies:
+				GenerateEnemiesRoom();
 				break;
 			case RoomType.Treasure:
 				break;
@@ -309,6 +310,19 @@ public class Room
 		return PuzzleType.BlockPush;
 	}
 
+	private void GenerateEnemiesRoom()
+	{
+		List<RoomEnemy> enemies = EnemyRoomData.GenerateChallenge(2f);
+		roomObjects.AddRange(enemies);
+
+		for (int i = 0; i < enemies.Count; i++)
+		{
+			int xPos = Random.Range(3, GetWidth() - 3);
+			int yPos = Random.Range(3, GetHeight() - 3);
+			enemies[i].SetPosition(new Vector2Int(xPos, yPos));
+		}
+	}
+
 	public void AddUpExit(int x)
 	{
 		int y = roomHeight - 1;
@@ -386,9 +400,11 @@ public class Room
 
 	public Vector2Int GetInnerDimensions() => new Vector2Int(GetWidth(), GetHeight());
 
-	public Vector2Int GetWorldSpacePosition()
+	public Vector3 GetWorldSpacePosition()
 	{
-		return position * GetInnerDimensions() + position * (exitLength - 1) * 2;
+		Vector2Int worldPosition = position * GetInnerDimensions()
+			+ position * (exitLength - 1) * 2;
+		return new Vector2(worldPosition.x, worldPosition.y);
 	}
 
 	public Vector2Int GetDimensions()
@@ -400,6 +416,12 @@ public class Room
 		Vector2 floatCenter = GetCenter();
 		return new Vector2Int((int)floatCenter.x, (int)floatCenter.y);
 	}
+
+	public Bounds GetRoomSpaceBounds()
+		=> new Bounds(GetCenter(), new Vector3(GetWidth(), GetHeight()));
+
+	public Bounds GetWorldSpaceBounds()
+		=> new Bounds(GetWorldSpacePosition(), new Vector3(GetWidth(), GetHeight()));
 
 	public void SetRoom(Room room, Direction direction)
 	{
@@ -662,4 +684,19 @@ public class Room
 		if (leftExit) count++;
 		return count;
 	}
+
+	public bool HasWallAtPosition(Vector3 roomSpacePosition)
+	{
+		Vector2Int intPosition = new Vector2Int(
+			(int)roomSpacePosition.x, (int)roomSpacePosition.y);
+		for (int i = 0; i < tiles.Count; i++)
+		{
+			if (tiles[i].position == intPosition
+				&& tiles[i].type == RoomTile.TileType.Wall) return true;
+		}
+		return false;
+	}
+
+	public Vector3 WorldToRoomSpace(Vector3 worldPosition)
+		=> worldPosition - GetWorldSpacePosition();
 }

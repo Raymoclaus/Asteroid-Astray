@@ -15,6 +15,7 @@ public class RoomViewer : MonoBehaviour
 	[SerializeField] private PlanetRoomTileLight tileLightPrefab;
 	[SerializeField] private PlanetRoomPushableBlock pushableBlockPrefab;
 	[SerializeField] private PlanetRoomGroundButton greenGroundButtonPrefab, redGroundButtonPrefab;
+	[SerializeField] private PlanetRoomEnemy spooderPrefab;
 
 	[SerializeField] private Camera cam;
 
@@ -116,6 +117,9 @@ public class RoomViewer : MonoBehaviour
 					break;
 				case RoomObject.ObjType.RedGroundButton:
 					roomObj = CreateObject(redGroundButtonPrefab, room, objs[i], dataSet);
+					break;
+				case RoomObject.ObjType.Spooder:
+					roomObj = CreateObject(spooderPrefab, room, objs[i], dataSet);
 					break;
 			}
 

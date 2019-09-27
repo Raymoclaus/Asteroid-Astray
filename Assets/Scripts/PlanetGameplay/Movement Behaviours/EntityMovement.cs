@@ -9,6 +9,7 @@ public class EntityMovement : MonoBehaviour, IPhysicsController
 	public InputHandler.InputCode code;
 	private Rigidbody2D rb;
 	private Rigidbody2D Rb => rb ?? (rb = GetComponent<Rigidbody2D>());
+	[SerializeField] private Collider2D col;
 	private CharacterAnimationController cac;
 	private CharacterAnimationController Cac
 		=> cac ?? (cac = GetComponent<CharacterAnimationController>());
@@ -16,14 +17,11 @@ public class EntityMovement : MonoBehaviour, IPhysicsController
 	[SerializeField] private Transform selfPivot;
 	private Transform SelfPivot => selfPivot != null ? selfPivot : transform;
 	public Vector3 SelfPosition { get { return SelfPivot.position; } }
-
-	[SerializeField] protected float speed = 1f;
 	[SerializeField] private float momentumControl = 1f;
 	[Range(0f, 1f)]
 	[SerializeField] private float stoppingMomentumMultiplier = 0.5f;
 	private bool moving = false;
-	public bool CanMove { get; private set; } = true;
-	private Vector2 direction;
+	private Vector2 direction = Vector2.down;
 	public Direction Facing
 	{
 		get
@@ -53,9 +51,18 @@ public class EntityMovement : MonoBehaviour, IPhysicsController
 		}
 	}
 	public Vector2 DirectionFloatValue => new Vector2(DirectionValue.x, DirectionValue.y);
-	private int directionID;
+	private int directionID = 2;
+	private string blockMovementTimerID, deactivateColliderTimerID;
 
-	protected virtual void Update()
+	private void Awake()
+	{
+		blockMovementTimerID = gameObject.GetInstanceID() + "Block Movement Timer";
+		TimerTracker.AddTimer(blockMovementTimerID, 0f, null, null);
+		deactivateColliderTimerID = gameObject.GetInstanceID() + "Deactivate Collider Timer";
+		TimerTracker.AddTimer(deactivateColliderTimerID, 0f, () => EnableCollider = true, null);
+	}
+
+	protected virtual void FixedUpdate()
 	{
 		if (!moving)
 		{
@@ -75,23 +82,23 @@ public class EntityMovement : MonoBehaviour, IPhysicsController
 			Rb.velocity, direction, momentumControl * delta / Rb.mass));
 	}
 
-	public void MoveAwayFromPosition(Vector3 targetPosition)
+	public void MoveAwayFromPosition(Vector3 targetPosition, float speed)
 	{
 		Vector2 direction = SelfPosition - targetPosition;
-		MoveInDirection(direction);
+		MoveInDirection(direction, speed);
 	}
 
-	public void MoveInDirection(Vector3 direction)
-		=> MoveTowardsPosition(SelfPosition + direction, false);
+	public void MoveInDirection(Vector3 direction, float speed)
+		=> MoveTowardsPosition(SelfPosition + direction, speed);
 
-	public void MoveTowardsPosition(Vector3 targetPosition, bool slowDownBeforeReachingPosition)
+	public void MoveTowardsPosition(Vector3 targetPosition, float speed, float smoothingPower = 0f)
 	{
 		Vector2 direction = targetPosition - SelfPosition;
 		float distanceToPosition = direction.magnitude;
 		direction.Normalize();
-		float adjustedSpeed = slowDownBeforeReachingPosition ?
-			Mathf.Min(speed, distanceToPosition) : speed;
-		Move(direction * adjustedSpeed);
+		float distanceSpeedRatio = distanceToPosition / speed;
+		float smoothingDelta = Mathf.Pow(Mathf.Clamp01(distanceSpeedRatio), smoothingPower);
+		Move(direction * speed * smoothingDelta);
 	}
 
 	private void Move(Vector2 direction)
@@ -141,36 +148,20 @@ public class EntityMovement : MonoBehaviour, IPhysicsController
 		Cac?.SetRunning(false);
 	}
 
-	private void SetVelocity(Vector2 velocity) => Rb.velocity = velocity;
+	public void SetVelocity(Vector3 velocity) => Rb.velocity = velocity;
 
-	public void KnockBack(Vector3 direction)
+	public bool CanMove => TimerTracker.GetTimer(blockMovementTimerID) <= 0f;
+
+	public void PreventMovementInputForDuration(float duration)
 	{
-		SetVelocity(direction);
+		float currentBlockMovementTimer = TimerTracker.GetTimer(blockMovementTimerID);
+		float setDuration = Mathf.Max(currentBlockMovementTimer, duration);
+		TimerTracker.SetTimer(blockMovementTimerID, setDuration);
 	}
 
-	public void PreventMovementInputForDuration(WaitForSeconds wait)
-		=> StartCoroutine(StopMovementForDuration(wait));
+	public Vector3 GetMovementDirection => direction;
 
-	private IEnumerator StopMovementForDuration(WaitForSeconds wait)
-	{
-		CanMove = false;
-		yield return wait;
-		CanMove = true;
-	}
-
-	public void PreventMovementInputUntilConditionIsMet(Func<bool> condition)
-		=> StartCoroutine(StopMovementUntil(condition));
-
-	private IEnumerator StopMovementUntil(Func<bool> condition)
-	{
-		CanMove = false;
-		yield return new WaitUntil(condition);
-		CanMove = true;
-	}
-
-	public Vector3 GetDirection() => direction;
-
-	public Vector3 GetFacingDirection() => DirectionFloatValue;
+	public Vector3 GetFacingDirection => DirectionFloatValue;
 
 	public void FaceDirection(Vector3 direction)
 	{
@@ -178,5 +169,17 @@ public class EntityMovement : MonoBehaviour, IPhysicsController
 		this.direction = direction;
 		directionID = ConvertDirectionToInt(direction);
 		Cac?.SetDirection(directionID);
+	}
+
+	public bool EnableCollider
+	{
+		get { return col.enabled; }
+		set { col.enabled = value; }
+	}
+
+	public void DeactivateColliderForDuration(float duration)
+	{
+		EnableCollider = false;
+		TimerTracker.SetTimer(deactivateColliderTimerID, duration);
 	}
 }

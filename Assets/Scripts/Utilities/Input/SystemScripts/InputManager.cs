@@ -82,16 +82,30 @@ namespace InputHandler
 		}
 
 		//returns the input status of a given command. 0f usually means no input.
-		public static bool GetInput(string key)
+		public static float GetInput(string key)
 		{
 			//make sure we're using the right mode
 			CheckForModeUpdate();
-			return GetHandler()?.GetInput(key, CurrentContext) ?? false;
+			return GetHandler()?.GetInput(key, CurrentContext) ?? 0f;
 		}
 
+		public static bool GetInputDown(string key)
+		{
+			CheckForModeUpdate();
+			return GetHandler()?.GetInputDown(key, CurrentContext) ?? false;
+		}
+
+		public static bool GetInputUp(string key)
+		{
+			CheckForModeUpdate();
+			return GetHandler()?.GetInputUp(key, CurrentContext) ?? false;
+		}
+
+		//returns whether the current context contains the given action
 		private static bool IsValidKey(string key)
 			=> CurrentContext?.IsValidAction(key) ?? false;
 
+		//returns the input combination for a given action to occur
 		public static InputCombination GetBinding(string key)
 			=> GetHandler()?.GetBinding(key, CurrentContext);
 

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class RoomPlayer : RoomObject
+public class RoomPlayer : RoomEntity
 {
 	public override ObjType GetObjectType() => ObjType.Player;
 }

@@ -16,5 +16,5 @@ public class ShuttleTriggerer : Triggerer
 	public override void Interacted(InteractablePromptTrigger trigger) => base.Interacted(trigger);
 
 	public override bool IsInteracting(InteractablePromptTrigger trigger)
-		=> InputManager.GetInput(trigger.Action);
+		=> InputManager.GetInputDown(trigger.Action);
 }

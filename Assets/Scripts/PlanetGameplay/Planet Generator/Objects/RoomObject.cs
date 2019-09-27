@@ -18,7 +18,7 @@ public abstract class RoomObject
 
 	public virtual ObjType GetObjectType() => ObjType.None;
 
-	public void LogPosition(Vector2Int pos) => Debug.Log(pos);
+	public virtual string ObjectName => "Object";
 
 	public enum ObjType
 	{
@@ -32,6 +32,11 @@ public abstract class RoomObject
 		Player,
 		GreenGroundButton,
 		RedGroundButton,
-		Dummy
+		Dummy,
+		Spooder,
+		Charger,
+		Boomee,
+		Smokey,
+		Gargantula
 	}
 }

@@ -25,7 +25,9 @@ public class TY4PlayingUI : MonoBehaviour
 			SetActive(!active);
 		}
 
-		if (active && InputManager.GetInput("ScrollDialogue") && CGroup.alpha == 1f)
+		if (active
+			&& InputManager.GetInput("ScrollDialogue") > 0f
+			&& CGroup.alpha == 1f)
 		{
 			SetActive(false);
 		}

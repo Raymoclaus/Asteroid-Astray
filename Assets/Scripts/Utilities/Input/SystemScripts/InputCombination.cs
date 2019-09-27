@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace InputHandler
 {
@@ -17,15 +18,70 @@ namespace InputHandler
 
 		public InputCode.InputType GetInputTypeAtIndex(int index) => inputs[index].inputType;
 
-		public bool CombinationHeld()
+		public float CombinationInput()
 		{
-			if (inputs == null || inputs.Count == 0) return false;
-
+			if (inputs == null || inputs.Count == 0) return 0f;
+			float inputValue = Mathf.Infinity;
 			for (int i = 0; i < inputs.Count; i++)
 			{
-				if (inputs[i].CodeValue() <= 0f) return false;
+				float codeValue = inputs[i].CodeValue();
+				if (codeValue <= 0f) return 0f;
+				inputValue = Mathf.Min(inputValue, codeValue);
+			}
+			return inputValue;
+		}
+
+		public bool CombinationInputDown()
+		{
+			if (inputs == null || inputs.Count == 0) return false;
+			if (!ContainsButtonInput) return false;
+			for (int i = 0; i < inputs.Count; i++)
+			{
+				switch (inputs[i].inputType)
+				{
+					default: return false;
+					case InputCode.InputType.Button:
+						if (!inputs[i].CodePressed()) return false;
+						break;
+					case InputCode.InputType.Axis:
+						if (inputs[i].CodeValue() == 0f) return false;
+						break;
+				}
 			}
 			return true;
+		}
+
+		public bool CombinationInputUp()
+		{
+			if (inputs == null || inputs.Count == 0) return false;
+			if (!ContainsButtonInput) return false;
+			for (int i = 0; i < inputs.Count; i++)
+			{
+				switch (inputs[i].inputType)
+				{
+					default: return false;
+					case InputCode.InputType.Button:
+						if (!inputs[i].CodeReleased()) return false;
+						break;
+					case InputCode.InputType.Axis:
+						if (inputs[i].CodeValue() == 0f) return false;
+						break;
+				}
+			}
+			return true;
+		}
+
+		public bool ContainsButtonInput
+		{
+			get
+			{
+				if (inputs == null) return false;
+				for (int i = 0; i < inputs.Count; i++)
+				{
+					if (inputs[i].inputType == InputCode.InputType.Button) return true;
+				}
+				return false;
+			}
 		}
 
 		public bool AnyInput()

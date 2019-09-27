@@ -51,7 +51,7 @@ public class Pause : MonoBehaviour
 	{
 		timeSinceOpen += Time.deltaTime;
 
-		if (InputManager.GetInput("Pause") && !isShifting && canPause)
+		if (InputManager.GetInput("Pause") > 0f && !isShifting && canPause)
 		{
 			OnPause?.Invoke(!IsPaused);
 			if (IsPaused)
@@ -86,7 +86,7 @@ public class Pause : MonoBehaviour
 			}
 		}
 
-		Time.fixedDeltaTime = Time.timeScale <= 0.01f ? 1f : 0.01666666f * Time.timeScale;
+		Time.fixedDeltaTime = IsStopped ? 1f : 0.01666666f;
 	}
 
 	public static void InstantPause(bool pause)

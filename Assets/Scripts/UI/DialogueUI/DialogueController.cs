@@ -35,7 +35,7 @@ public class DialogueController : MonoBehaviour
 	{
 		if (Console.DeveloperConsole.IsActive) return;
 
-		if (dialogueIsRunning && InputManager.GetInput("ScrollDialogue"))
+		if (dialogueIsRunning && InputManager.GetInput("ScrollDialogue") > 0f)
 		{
 			if (dialogueUI.IsTyping())
 			{
@@ -64,7 +64,7 @@ public class DialogueController : MonoBehaviour
 
 		if (chatIsRunning)
 		{
-			if (InputManager.GetInput("ScrollDialogue"))
+			if (InputManager.GetInput("ScrollDialogue") > 0f)
 			{
 				if (chatUI.IsTyping())
 				{

@@ -59,8 +59,14 @@ namespace InputHandler
 			return currentCombinations[index];
 		}
 
-		public bool GetInput(string action)
-			=> GetCombination(action)?.CombinationHeld() ?? false;
+		public float GetInput(string action)
+			=> GetCombination(action)?.CombinationInput() ?? 0f;
+
+		public bool GetInputDown(string action)
+			=> GetCombination(action)?.CombinationInputDown() ?? false;
+
+		public bool GetInputUp(string action)
+			=> GetCombination(action)?.CombinationInputUp() ?? false;
 
 		public void ResetToDefaults()
 			=> currentCombinations = new List<InputCombination>(defaultCombinations);

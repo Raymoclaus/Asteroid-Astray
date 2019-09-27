@@ -179,7 +179,7 @@ public class Shuttle : Character, IStunnable, ICombat
 		if (!hasControl) return;
 
 		//Check if the player is attempting to boost
-		if (!autoPilot) Boost(InputManager.GetInput("Boost"));
+		if (!autoPilot) Boost(InputManager.GetInput("Boost") > 0f);
 		//used for artificially adjusting speed, used by the auto pilot only
 		float speedMod = 1f;
 		//update rotation variable with transform's current rotation
@@ -245,14 +245,14 @@ public class Shuttle : Character, IStunnable, ICombat
 		}
 		else
 		{
-			float input = InputManager.GetInput("Go") ? 1f : 0f;
+			float input = InputManager.GetInput("Go");
 			if (input > 0f)
 			{
 				OnGoInput?.Invoke();
 			}
 			if (IsDrilling)
 			{
-				float launchInput = InputManager.GetInput("DrillLaunch") ? 1f : 0f;
+				float launchInput = InputManager.GetInput("DrillLaunch");
 				input = Mathf.Clamp01(input + launchInput);
 				if (!CanDrillLaunch() && launchInput > 0f)
 				{
@@ -434,7 +434,7 @@ public class Shuttle : Character, IStunnable, ICombat
 
 	private void CheckItemUsage(string action, int i)
 	{
-		if (!InputManager.GetInput(action)) return;
+		if (!InputManager.GetInputDown(action)) return;
 
 		List<ItemStack> stacks = storage.stacks;
 		if (stacks[i].GetAmount() > 0)
@@ -457,7 +457,7 @@ public class Shuttle : Character, IStunnable, ICombat
 			return 0f;
 		}
 
-		if (InputManager.GetInput("DrillLaunch") && CanDrillLaunch())
+		if (InputManager.GetInput("DrillLaunch") > 0f && CanDrillLaunch())
 		{
 			GameObject launchCone = drillLaunchArcSprite.gameObject;
 			launchCone.SetActive(true);
@@ -485,13 +485,16 @@ public class Shuttle : Character, IStunnable, ICombat
 		{
 			return calculation * 50f;
 		}
-		else if (InputManager.GetInput("Go"))
+		else if (InputManager.GetInput("Go") > 0f || InputManager.GetInput("DrillLaunch") > 0f)
 		{
-			return (InputManager.GetInput("DrillLaunch") && !CanDrillLaunch()) ? 0f : calculation;
-		}
-		else if (InputManager.GetInput("DrillLaunch"))
-		{
-			return CanDrillLaunch() ? 0.001f : 0f;
+			if (InputManager.GetInput("DrillLaunch") > 0f)
+			{
+				return CanDrillLaunch() ? 0.001f : 0f;
+			}
+			else
+			{
+				return calculation;
+			}
 		}
 		else
 		{
@@ -512,7 +515,7 @@ public class Shuttle : Character, IStunnable, ICombat
 
 	public override bool ShouldLaunch() =>
 		CanDrillLaunch()
-		&& !InputManager.GetInput("DrillLaunch")
+		&& InputManager.GetInputUp("DrillLaunch")
 		&& hasControl
 		&& canLaunch;
 
@@ -652,7 +655,7 @@ public class Shuttle : Character, IStunnable, ICombat
 	public override bool CanFireLaser() =>
 		laserAttached
 		&& !isBoosting
-		&& InputManager.GetInput("Shoot")
+		&& InputManager.GetInput("Shoot") > 0f
 		&& !Pause.IsStopped
 		&& hasControl
 		&& canShoot;
@@ -660,7 +663,7 @@ public class Shuttle : Character, IStunnable, ICombat
 	public override bool CanFireStraightWeapon() =>
 		straightWeaponAttached
 		&& !isBoosting
-		&& InputManager.GetInput("Shoot")
+		&& InputManager.GetInput("Shoot") > 0f
 		&& !Pause.IsStopped
 		&& hasControl
 		&& canShoot;

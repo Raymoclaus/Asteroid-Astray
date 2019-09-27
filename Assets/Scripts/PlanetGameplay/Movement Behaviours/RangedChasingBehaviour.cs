@@ -1,23 +1,23 @@
 ﻿using UnityEngine;
 
-public class RangedChasingBehaviour : ChasingBehaviour
+public class RangedChasingBehaviour : FollowBehaviour
 {
 	[SerializeField] private float stoppingRange = 4f;
 	[SerializeField] private bool alwaysFaceTarget;
 
-	protected override void Update()
+	public override void TriggerUpdate()
 	{
-		base.Update();
+		base.TriggerUpdate();
 
-		if (ShouldTurnToFaceTarget())
+		if (ShouldTurnToFaceTarget)
 		{
-			PhysicsController.FaceDirection(target.position - PhysicsController.SelfPosition);
+			FaceDirection(TargetDirection);
 		}
 	}
 
-	protected override bool ShouldChase() => base.ShouldChase() && !IsWithinStoppingRange();
+	protected override bool ShouldChase => base.ShouldChase && !IsWithinStoppingRange;
 
-	protected virtual bool IsWithinStoppingRange() => DistanceToTarget() <= stoppingRange;
+	protected virtual bool IsWithinStoppingRange => DistanceToTarget <= stoppingRange;
 
-	protected virtual bool ShouldTurnToFaceTarget() => alwaysFaceTarget && TargetIsNearby();
+	protected virtual bool ShouldTurnToFaceTarget => alwaysFaceTarget && TargetIsNearby;
 }
