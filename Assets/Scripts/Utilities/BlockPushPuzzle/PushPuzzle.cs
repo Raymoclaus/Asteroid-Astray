@@ -9,30 +9,30 @@ namespace BlockPushPuzzle
 		public delegate void PuzzleCompletedEventHandler();
 		public event PuzzleCompletedEventHandler OnPuzzleCompleted;
 		public delegate void BlockMovedEventHandler(
-			Vector2Int startPos, Vector2Int direction, float time);
+			IntPair startPos, IntPair direction, float time);
 		public event BlockMovedEventHandler OnBlockMoved;
 
 		public bool[] grid;
 		private bool[] gridInitialState;
-		public Vector2Int GridSize { get; private set; }
+		public IntPair GridSize { get; private set; }
 		public int padding;
-		public Vector2Int finishTile;
-		public Vector2Int[] resetTiles;
+		public IntPair finishTile;
+		public IntPair[] resetTiles;
 		public int solutionCount;
 		private bool completed;
 		private Stack<Change> playerChanges = new Stack<Change>();
 
-		public PushPuzzle(Vector2Int size, int padding)
+		public PushPuzzle(IntPair size, int padding)
 		{
 			GridSize = size;
 			this.padding = padding;
 			grid = new bool[size.x * size.y];
-			resetTiles = new Vector2Int[]
+			resetTiles = new IntPair[]
 			{
-				new Vector2Int(0, 0),
-				new Vector2Int(GridSize.x - 1, 0),
-				new Vector2Int(0, GridSize.y - 1),
-				new Vector2Int(GridSize.x - 1, GridSize.y - 1)
+				new IntPair(0, 0),
+				new IntPair(GridSize.x - 1, 0),
+				new IntPair(0, GridSize.y - 1),
+				new IntPair(GridSize.x - 1, GridSize.y - 1)
 			};
 			Reset();
 		}
@@ -54,7 +54,7 @@ namespace BlockPushPuzzle
 			{
 				for (int y = padding; y < GridSize.y - padding; y++)
 				{
-					Vector2Int pos = new Vector2Int(x, y);
+					IntPair pos = new IntPair(x, y);
 					if (IsNearOuterEdge(pos, 1) && !IsOnOuterEdge(pos))
 					{
 						SetBlock(pos, false);
@@ -73,10 +73,10 @@ namespace BlockPushPuzzle
 			OnPuzzleCompleted?.Invoke();
 		}
 
-		public bool PushBlock(Vector2Int blockPosition, Vector2Int direction)
+		public bool PushBlock(IntPair blockPosition, IntPair direction)
 		{
 			if (!BlockExists(blockPosition)) return false;
-			Vector2Int pushPosition = blockPosition + direction;
+			IntPair pushPosition = blockPosition + direction;
 			if (GetIndexFromPosition(pushPosition) == -1
 				|| BlockExists(pushPosition)) return false;
 			SetBlock(blockPosition, false);
@@ -86,15 +86,15 @@ namespace BlockPushPuzzle
 			return true;
 		}
 
-		public bool BlockExists(Vector2Int position)
+		public bool BlockExists(IntPair position)
 		{
 			int index = GetIndexFromPosition(position);
 			if (index == -1) return false;
 			return grid[index];
 		}
 
-		public bool ListContainsAdjacentPosition(List<Vector2Int> list,
-			Vector2Int pos, int range)
+		public bool ListContainsAdjacentPosition(List<IntPair> list,
+			IntPair pos, int range)
 		{
 			for (int i = 0; i < list.Count; i++)
 			{
@@ -103,8 +103,8 @@ namespace BlockPushPuzzle
 			return false;
 		}
 
-		public bool ListContainsNearPosition(List<Vector2Int> list,
-			Vector2Int pos, int range)
+		public bool ListContainsNearPosition(List<IntPair> list,
+			IntPair pos, int range)
 		{
 			for (int i = 0; i < list.Count; i++)
 			{
@@ -113,14 +113,14 @@ namespace BlockPushPuzzle
 			return false;
 		}
 
-		private bool IsAdjacentTo(Vector2Int posA, Vector2Int posB, int range)
+		private bool IsAdjacentTo(IntPair posA, IntPair posB, int range)
 		{
 			int totalDifference = Mathf.Abs(posA.x - posB.x)
 				+ Mathf.Abs(posA.y - posB.y);
 			return totalDifference <= range;
 		}
 
-		public bool IsNearTo(Vector2Int posA, Vector2Int posB, int range)
+		public bool IsNearTo(IntPair posA, IntPair posB, int range)
 		{
 			return Mathf.Abs(posA.x - posB.x) <= range
 				&& Mathf.Abs(posA.y - posB.y) <= range;
@@ -153,23 +153,23 @@ namespace BlockPushPuzzle
 			if (playerChanges.Count == 0) return;
 
 			Change change = playerChanges.Pop();
-			Vector2Int startPos = change.pos;
-			Vector2Int direction = change.dir;
-			Vector2Int newPos = startPos + direction;
-			Vector2Int oppositeDirection = direction * -1;
+			IntPair startPos = change.pos;
+			IntPair direction = change.dir;
+			IntPair newPos = startPos + direction;
+			IntPair oppositeDirection = direction * -1;
 			SetBlock(newPos, false);
 			SetBlock(startPos, true);
 			OnBlockMoved?.Invoke(newPos, oppositeDirection, 1f / 10f);
 		}
 
-		public void SetBlock(Vector2Int position, bool active)
+		public void SetBlock(IntPair position, bool active)
 		{
 			int index = GetIndexFromPosition(position);
 			if (index == -1) return;
 			grid[index] = active;
 		}
 
-		public int GetIndexFromPosition(Vector2Int position)
+		public int GetIndexFromPosition(IntPair position)
 		{
 			if (IsOnOuterEdge(position)
 				|| PositionOutOfBounds(position)) return -1;
@@ -178,13 +178,13 @@ namespace BlockPushPuzzle
 			return index;
 		}
 
-		public Vector2Int GetPositionFromIndex(int index)
-			=> new Vector2Int(index % GridSize.x, index / GridSize.x);
+		public IntPair GetPositionFromIndex(int index)
+			=> new IntPair(index % GridSize.x, index / GridSize.x);
 
-		private bool IsOnOuterEdge(Vector2Int position)
+		private bool IsOnOuterEdge(IntPair position)
 			=> IsNearOuterEdge(position, 0);
 
-		public bool IsNearOuterEdge(Vector2Int position, int range)
+		public bool IsNearOuterEdge(IntPair position, int range)
 		{
 			int paddingRange = padding + range;
 			return position.x < paddingRange
@@ -193,7 +193,7 @@ namespace BlockPushPuzzle
 				|| position.y >= GridSize.y - paddingRange;
 		}
 
-		private bool PositionOutOfBounds(Vector2Int position)
+		private bool PositionOutOfBounds(IntPair position)
 		{
 			return position.x < 0
 				|| position.y < 0
@@ -211,9 +211,9 @@ namespace BlockPushPuzzle
 
 		private struct Change
 		{
-			public Vector2Int pos, dir;
+			public IntPair pos, dir;
 
-			public Change(Vector2Int pos, Vector2Int dir)
+			public Change(IntPair pos, IntPair dir)
 			{
 				this.pos = pos;
 				this.dir = dir;

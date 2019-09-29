@@ -108,7 +108,7 @@ public class DrillBit : MonoBehaviour
 		//else send the damage to the drill target
 		else
 		{
-			if (drillTarget.TakeDrillDamage(damage, transform.position, parent))
+			if (drillTarget.TakeDrillDamage(damage, transform.position, parent, 1f))
 			{
 				parent.DrillComplete();
 			}

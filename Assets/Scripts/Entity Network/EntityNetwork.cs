@@ -178,12 +178,12 @@ public class EntityNetwork : MonoBehaviour
 		//loop through surrounding chunks
 		for (int i = -range; i <= range; i++)
 		{
-			c.X = center.X + i;
+			c.x = center.x + i;
 			for (int j = -range; j <= range; j++)
 			{
 				if (Math.Abs(i) != range && Math.Abs(j) != range) continue;
 
-				c.Y = center.Y + j;
+				c.y = center.y + j;
 				//validate will adjust for edge cases
 				ChunkCoords validCc = c;
 				validCc.Validate();
@@ -254,11 +254,11 @@ public class EntityNetwork : MonoBehaviour
 			//Check every column
 			for (int x = 0; x < Direction(check).Count; x++)
 			{
-				check.X = x;
+				check.x = x;
 				//Check every row
 				for (int y = 0; y < Column(check).Count; y++)
 				{
-					check.Y = y;
+					check.y = y;
 					//Check every entity in chunk
 					for (int i = Chunk(check).Count; i >= 0; i--)
 					{
@@ -275,9 +275,7 @@ public class EntityNetwork : MonoBehaviour
 	}
 
 	public static void DestroyAllEntities()
-	{
-		AccessAllEntities((Entity e) => e.DestroySelf(null));
-	}
+		=> AccessAllEntities((Entity e) => e.DestroySelf(null, 0f));
 
 	/// Removes an entity from its position in the network and replaces it and the given destination
 	/// This will mostly be used by entities themselves as they are responsible for determining their place in the network
@@ -310,12 +308,12 @@ public class EntityNetwork : MonoBehaviour
 
 	public static List<Entity> Chunk(ChunkCoords cc)
 	{
-		return Column(cc)[cc.Y];
+		return Column(cc)[cc.y];
 	}
 
 	public static List<List<Entity>> Column(ChunkCoords cc)
 	{
-		return Direction(cc)[cc.X];
+		return Direction(cc)[cc.x];
 	}
 
 	public static List<List<List<Entity>>> Direction(ChunkCoords cc)
@@ -350,10 +348,10 @@ public class EntityNetwork : MonoBehaviour
 						}
 					}
 					if (found) break;
-					else search.Y++;
+					else search.y++;
 				}
 				if (found) break;
-				else search.X++;
+				else search.x++;
 			}
 			if (found) break;
 			else search.Direction++;
@@ -371,8 +369,8 @@ public class EntityNetwork : MonoBehaviour
 		//if the quadrant doesn't have x amount of columns or that column doesn't have y amount of cells,
 		//the chunk doesn't exist
 		if ((int) cc.Direction >= instance.grid.Count
-		    || cc.X >= Direction(cc).Count
-		    || cc.Y >= Column(cc).Count) return false;
+		    || cc.x >= Direction(cc).Count
+		    || cc.y >= Column(cc).Count) return false;
 
 		return true;
 	}
@@ -411,7 +409,7 @@ public class EntityNetwork : MonoBehaviour
 		if (saveKey == null || saveKey == string.Empty) return;
 		Coroutines.TimedAction(0.1f, null, () =>
 		{
-			SaveLoad.Save(savedEntities, saveKey);
+			SaveLoad.Save(saveKey, savedEntities);
 		});
 	}
 

@@ -6,9 +6,9 @@ namespace TileLightsPuzzle
 {
 	public class TileGrid
 	{
-		public Vector2Int GridSize { get; private set; }
+		public IntPair GridSize { get; private set; }
 		private bool[] grid;
-		public List<Vector2Int> startingState = new List<Vector2Int>();
+		public List<IntPair> startingState = new List<IntPair>();
 
 		public delegate void PuzzleCompletedEventHandler();
 		public event PuzzleCompletedEventHandler OnPuzzleCompleted;
@@ -16,7 +16,7 @@ namespace TileLightsPuzzle
 		public delegate void TileFlippedEventhandler(int index);
 		public event TileFlippedEventhandler OnTileFlipped;
 
-		public TileGrid(Vector2Int size)
+		public TileGrid(IntPair size)
 		{
 			GridSize = size;
 			grid = new bool[GridSize.x * GridSize.y];
@@ -41,20 +41,20 @@ namespace TileLightsPuzzle
 		}
 
 		public void TileFlipped(int index) => TileFlipped(GetPosition(index));
-		public void TileFlipped(Vector2Int position)
+		public void TileFlipped(IntPair position)
 		{
 			if (GetIndex(position) == -1) return;
 
 			//center
 			FlipTile(position);
 			//up
-			FlipTile(new Vector2Int(position.x, position.y + 1));
+			FlipTile(new IntPair(position.x, position.y + 1));
 			//right
-			FlipTile(new Vector2Int(position.x + 1, position.y));
+			FlipTile(new IntPair(position.x + 1, position.y));
 			//down
-			FlipTile(new Vector2Int(position.x, position.y - 1));
+			FlipTile(new IntPair(position.x, position.y - 1));
 			//left
-			FlipTile(new Vector2Int(position.x - 1, position.y));
+			FlipTile(new IntPair(position.x - 1, position.y));
 
 			if (PuzzleIsCompleted())
 			{
@@ -72,7 +72,7 @@ namespace TileLightsPuzzle
 			return true;
 		}
 
-		private void FlipTile(Vector2Int position)
+		private void FlipTile(IntPair position)
 		{
 			int index = GetIndex(position);
 			if (index == -1) return;
@@ -80,7 +80,7 @@ namespace TileLightsPuzzle
 			OnTileFlipped?.Invoke(index);
 		}
 
-		public bool StartingStateContainsPosition(Vector2Int position)
+		public bool StartingStateContainsPosition(IntPair position)
 		{
 			for (int i = 0; i < startingState.Count; i++)
 			{
@@ -89,7 +89,7 @@ namespace TileLightsPuzzle
 			return false;
 		}
 
-		private int GetIndex(Vector2Int position)
+		private int GetIndex(IntPair position)
 		{
 			if (position.x < 0
 				|| position.y < 0
@@ -98,8 +98,8 @@ namespace TileLightsPuzzle
 			return position.y * GridSize.x + position.x;
 		}
 
-		public Vector2Int GetPosition(int index)
-			=> new Vector2Int(index % GridSize.x, index / GridSize.x);
+		public IntPair GetPosition(int index)
+			=> new IntPair(index % GridSize.x, index / GridSize.x);
 
 		public bool IsFlipped(int index) => grid[index];
 

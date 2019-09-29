@@ -8,6 +8,7 @@ public class Inventory : MonoBehaviour
 	public bool noLimit = false;
 	public List<ItemStack> stacks = new List<ItemStack>();
 	[SerializeField] private string saveKey;
+	public string SaveKey => saveKey;
 
 	protected virtual void Awake()
 	{
@@ -368,7 +369,7 @@ public class Inventory : MonoBehaviour
 	public void Save()
 	{
 		if (saveKey == null || saveKey == string.Empty) return;
-		SaveLoad.Save(GetInventoryData(), saveKey);
+		SaveLoad.Save(saveKey, GetInventoryData());
 	}
 
 	public InventoryData GetInventoryData() => new InventoryData(stacks, size);

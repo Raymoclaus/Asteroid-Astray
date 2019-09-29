@@ -21,7 +21,7 @@ public class HiveInventory : Inventory
 		for (int i = 1; i < rarityCounts.Length; i++)
 		{
 			int count = rarityCounts[i];
-			Vector2Int costReturn = rarityCostReturns(i);
+			IntPair costReturn = rarityCostReturns(i);
 			if (count >= costReturn.x)
 			{
 				int amount = count / costReturn.x;
@@ -31,9 +31,9 @@ public class HiveInventory : Inventory
 		}
 	}
 
-	private Vector2Int rarityCostReturns(int rarity)
+	private IntPair rarityCostReturns(int rarity)
 	{
-		Vector2Int costReturn = Vector2Int.one;
+		IntPair costReturn = IntPair.one;
 		switch (rarity)
 		{
 			case 0:

@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(Collider2D))]
 public class VicinityTrigger : MonoBehaviour
 {
 	[SerializeField] private Collider2D col;
@@ -59,5 +58,5 @@ public class VicinityTrigger : MonoBehaviour
 
 	public void EnableTrigger(bool enable) => col.enabled = enable;
 
-	protected void SetColliderOffset(Vector2 pos) => col.offset = pos;
+	public void SetColliderOffset(Vector2 pos) => col.offset = pos;
 }

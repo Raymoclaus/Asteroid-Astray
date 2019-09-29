@@ -2,6 +2,7 @@
 
 public abstract class PlanetRoomObject : MonoBehaviour
 {
+	protected RoomViewer roomViewer;
 	protected Room room;
 	protected RoomObject roomObject;
 	protected bool hasBeenSetup;
@@ -10,25 +11,26 @@ public abstract class PlanetRoomObject : MonoBehaviour
 		? (attackLayer = LayerMask.NameToLayer("Attack"))
 		: attackLayer;
 
-	public virtual void Setup(Room room, RoomObject roomObject, PlanetVisualData dataSet)
+	public virtual void Setup(RoomViewer roomViewer, Room room, RoomObject roomObject, PlanetVisualData dataSet)
 	{
+		this.roomViewer = roomViewer;
 		this.room = room;
 		this.roomObject = roomObject;
 
 		hasBeenSetup = true;
 	}
 
-	public Vector2Int GetPosition() => roomObject?.GetPosition() ?? Vector2Int.zero;
+	public IntPair GetPosition() => roomObject?.GetPosition() ?? IntPair.zero;
 
-	public void SetRoomObjectWorldSpacePosition(Vector2Int position)
+	public void SetRoomObjectWorldSpacePosition(IntPair position)
 	{
 		if (roomObject == null) return;
 
-		Vector2Int roomSpacePos = position;
+		IntPair roomSpacePos = position;
 		if (room != null)
 		{
 			Vector3 roomWorldSpacePosition = room.GetWorldSpacePosition();
-			Vector2Int roomWorldIntPosition = new Vector2Int(
+			IntPair roomWorldIntPosition = new IntPair(
 				(int)roomWorldSpacePosition.x, (int)roomWorldSpacePosition.y);
 			roomSpacePos -= roomWorldIntPosition;
 		}

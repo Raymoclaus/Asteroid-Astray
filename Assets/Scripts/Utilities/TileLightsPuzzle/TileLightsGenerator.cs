@@ -6,12 +6,12 @@ namespace TileLightsPuzzle
 {
 	public class TileLightsGenerator
 	{
-		public TileGrid GeneratePuzzle(Vector2Int size, int difficultySetting = 4)
+		public TileGrid GeneratePuzzle(IntPair size, int difficultySetting = 4)
 		{
 			TileGrid tg = new TileGrid(size);
 			for (int i = 0; i < difficultySetting; i++)
 			{
-				Vector2Int position = Vector2Int.one * -1;
+				IntPair position = IntPair.one * -1;
 				do
 				{
 					position.x = Random.Range(0, tg.GridSize.x);

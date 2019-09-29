@@ -41,6 +41,8 @@ public class Entity : MonoBehaviour
 	public List<MonoBehaviour> ScriptComponents;
 	public Renderer[] rends;
 
+	[SerializeField] private List<Loot> loot;
+
 	public delegate void HealthUpdateHandler(float oldVal, float newVal);
 	public event HealthUpdateHandler OnHealthUpdate;
 
@@ -122,6 +124,8 @@ public class Entity : MonoBehaviour
 		}
 	}
 
+	protected float DistanceFromCenter => transform.position.magnitude;
+
 	public virtual bool OnExitPhysicsRange() => false;
 
 	public void SetCoordinates(ChunkCoords newCc) => coords = newCc;
@@ -179,11 +183,9 @@ public class Entity : MonoBehaviour
 
 	public virtual ICombat GetICombat() => null;
 
-	public virtual void CollectResources(Item.Type type, int amount) { }
-
 	public virtual EntityType GetEntityType() => EntityType.Entity;
 
-	public virtual void DestroySelf(Entity destroyer)
+	public virtual void DestroySelf(Entity destroyer, float dropModifier)
 	{
 		if (destroyer)
 		{
@@ -193,7 +195,28 @@ public class Entity : MonoBehaviour
 		{
 			EntityNetwork.RemoveEntity(this);
 		}
+		DropLoot(destroyer, dropModifier);
 		Destroy(gameObject);
+	}
+
+	protected virtual bool CheckHealth(Entity destroyer, float dropModifier)
+	{
+		if (currentHP > 0f) return false;
+		DestroySelf(destroyer, dropModifier);
+		return true;
+	}
+
+	protected virtual void DropLoot(Entity destroyer, float dropModifier)
+	{
+		for (int i = 0; i < loot.Count; i++)
+		{
+			ItemStack stack = loot[i].GetStack();
+			for (int j = 0; j < stack.GetAmount(); j++)
+			{
+				particleGenerator.DropResource(destroyer,
+					transform.position, stack.GetItemType());
+			}
+		}
 	}
 
 	public ChunkCoords GetCoords() => coords;
@@ -261,13 +284,13 @@ public class Entity : MonoBehaviour
 		}
 	}
 
-	public virtual bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer,
-		int dropModifier = 0, bool flash = true)
+	public virtual bool TakeDamage(float damage, Vector2 damagePos,
+		Entity destroyer, float dropModifier, bool flash)
 	{
 		if (destroyer == this || isInvulnerable) return false;
 
 		SetHP(currentHP - damage);
-		return GetHpRatio() <= 0f;
+		return CheckHealth(destroyer, dropModifier);
 	}
 
 	protected void SetHP(float value)
@@ -353,8 +376,8 @@ public class Entity : MonoBehaviour
 		{
 			damage *= 2f;
 		}
-		otherDamageable?.TakeDamage(damage, contactPoint, launcher);
-		TakeDamage(damage, contactPoint, launcher);
+		otherDamageable?.TakeDamage(damage, contactPoint, launcher, 1f, true);
+		TakeDamage(damage, contactPoint, launcher, 1f, true);
 		launched = false;
 		if (CameraControl?.GetPanTarget() == transform)
 		{
@@ -368,8 +391,9 @@ public class Entity : MonoBehaviour
 	private List<DrillBit> drillers = new List<DrillBit>();
 	[SerializeField] private bool isDrillable = true;
 
-	public virtual bool TakeDrillDamage(float drillDmg, Vector2 drillPos, Entity destroyer, int dropModifier = 0)
-		=> TakeDamage(drillDmg, drillPos, destroyer, dropModifier);
+	public virtual bool TakeDrillDamage(float drillDmg, Vector2 drillPos,
+		Entity destroyer, float dropModifier)
+		=> TakeDamage(drillDmg, drillPos, destroyer, dropModifier, true);
 
 	public virtual void StartDrilling(DrillBit db)
 	{

@@ -156,16 +156,16 @@ public class Shuttle : Character, IStunnable, ICombat
 		boostLevel = boostCapacity;
 	}
 
-	private void Update()
+	protected override void Update()
 	{
+		base.Update();
+
 		if (!stunned)
 		{
 			//get shuttle movement input
 			GetMovementInput();
 			//calculate position based on input
 			CalculateForces();
-			//get input for item usage
-			GetItemUsageInput();
 		}
 
 		CheckWaypoint();
@@ -358,12 +358,13 @@ public class Shuttle : Character, IStunnable, ICombat
 		return ld;
 	}
 
-	public override void CollectResources(Item.Type type, int amount)
+	public override int CollectItem(ItemStack stack)
 	{
-		int collectedAmount = amount - storage.AddItem(type, num: amount);
+		Item.Type itemType = stack.GetItemType();
+		int collectedAmount = base.CollectItem(stack);
 		if (collectedAmount > 0)
 		{
-			GameEvents.ItemCollected(type, collectedAmount);
+			GameEvents.ItemCollected(itemType, collectedAmount);
 		}
 
 		//increase pitch of sound for successive resource collection, reset after a break
@@ -385,9 +386,9 @@ public class Shuttle : Character, IStunnable, ICombat
 		popupUI = popupUI ?? FindObjectOfType<ItemPopupUI>();
 		if (popupUI)
 		{
-			popupUI.GeneratePopup(type, amount);
+			popupUI.GeneratePopup(itemType, collectedAmount);
 		}
-
+		return collectedAmount;
 	}
 
 	private void SearchForNearestAsteroid()
@@ -420,32 +421,26 @@ public class Shuttle : Character, IStunnable, ICombat
 
 	public override EntityType GetEntityType() => EntityType.Shuttle;
 
-	private void GetItemUsageInput()
+	protected override void CheckItemUsageInput()
 	{
-		CheckItemUsage("Slot1", 0);
-		CheckItemUsage("Slot2", 1);
-		CheckItemUsage("Slot3", 2);
-		CheckItemUsage("Slot4", 3);
-		CheckItemUsage("Slot5", 4);
-		CheckItemUsage("Slot6", 5);
-		CheckItemUsage("Slot7", 6);
-		CheckItemUsage("Slot8", 7);
+		base.CheckItemUsageInput();
+
+		if (InputManager.GetInput("Slot1") > 0f) CheckItemUsage(0);
+		if (InputManager.GetInput("Slot2") > 0f) CheckItemUsage(1);
+		if (InputManager.GetInput("Slot3") > 0f) CheckItemUsage(2);
+		if (InputManager.GetInput("Slot4") > 0f) CheckItemUsage(3);
+		if (InputManager.GetInput("Slot5") > 0f) CheckItemUsage(4);
+		if (InputManager.GetInput("Slot6") > 0f) CheckItemUsage(5);
+		if (InputManager.GetInput("Slot7") > 0f) CheckItemUsage(6);
+		if (InputManager.GetInput("Slot8") > 0f) CheckItemUsage(7);
 	}
 
-	private void CheckItemUsage(string action, int i)
+	protected override bool CheckItemUsage(int itemIndex)
 	{
-		if (!InputManager.GetInputDown(action)) return;
-
-		List<ItemStack> stacks = storage.stacks;
-		if (stacks[i].GetAmount() > 0)
-		{
-			Item.Type type = stacks[i].GetItemType();
-			if (UseItem(type))
-			{
-				stacks[i].RemoveAmount(1);
-				GameEvents.ItemUsed(type);
-			}
-		}
+		if (!base.CheckItemUsage(itemIndex)) return false;
+		Item.Type itemType = storage.stacks[itemIndex].GetItemType();
+		GameEvents.ItemUsed(itemType);
+		return true;
 	}
 
 	public override float DrillDamageQuery(bool firstHit)
@@ -556,8 +551,8 @@ public class Shuttle : Character, IStunnable, ICombat
 		CameraControl.SetLookAheadDistance(false);
 	}
 
-	public override bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer,
-		int dropModifier = 0, bool flash = true)
+	public override bool TakeDamage(float damage, Vector2 damagePos,
+		Entity destroyer, float dropModifier, bool flash)
 	{
 		float oldVal = GetHpRatio();
 		bool dead = base.TakeDamage(damage, damagePos, destroyer, dropModifier, flash);
@@ -729,7 +724,10 @@ public class Shuttle : Character, IStunnable, ICombat
 
 	public override ICombat GetICombat() => this;
 
-	public override void ReceiveItemReward(Item.Type type, int amount) => CollectResources(type, amount);
+	public override void ReceiveItemReward(ItemStack stack)
+	{
+		CollectItem(stack);
+	}
 
 	public override void AcceptQuest(Quest quest)
 	{

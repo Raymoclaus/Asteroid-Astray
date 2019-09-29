@@ -2,6 +2,7 @@
 using TileLightsPuzzle;
 using BlockPushPuzzle;
 
+[System.Serializable]
 public class RoomExitTrigger : RoomObject
 {
 	public Direction direction;
@@ -41,7 +42,7 @@ public class RoomExitTrigger : RoomObject
 
 	private void UnlockExit() => room.Unlock(direction);
 
-	private void AdjustPosition(Direction direction, Vector2Int position)
+	private void AdjustPosition(Direction direction, IntPair position)
 	{
 		if (this.direction != direction) return;
 		SetPosition(position);

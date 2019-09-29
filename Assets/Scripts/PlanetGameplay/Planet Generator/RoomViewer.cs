@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -8,6 +7,7 @@ public class RoomViewer : MonoBehaviour
 	private Transform objectParent = null;
 	[SerializeField] private Tilemap floorMap, floorDetailMap, wallMap;
 	[SerializeField] private List<PlanetVisualData> visualDataSets;
+	[SerializeField] private PlanetPlayer playerPrefab;
 	[SerializeField] private PlanetRoomExitTrigger exitTriggerPrefab;
 	[SerializeField] private PlanetRoomKey keyPrefab;
 	[SerializeField] private PlanetRoomLock lockPrefab;
@@ -16,10 +16,33 @@ public class RoomViewer : MonoBehaviour
 	[SerializeField] private PlanetRoomPushableBlock pushableBlockPrefab;
 	[SerializeField] private PlanetRoomGroundButton greenGroundButtonPrefab, redGroundButtonPrefab;
 	[SerializeField] private PlanetRoomEnemy spooderPrefab;
+	[SerializeField] private PlanetRoomTreasureChest treasureChestPrefab;
 
 	[SerializeField] private Camera cam;
 
-	public void ShowRoom(PlanetData data, Room room, Vector2 offset, bool destroyExisting = true)
+	private PlanetData planetData;
+
+	public delegate void RoomChangedEventHandler(Room newRoom, Direction direction);
+	public event RoomChangedEventHandler OnRoomChanged;
+	public Room ActiveRoom { get; private set; }
+
+	private void Awake()
+	{
+		planetData = FindExistingPlanetData() ?? new PlanetGenerator().Generate(1);
+		ShowAllRooms(planetData);
+		PlanetRoomObject player = CreateObject(playerPrefab, ActiveRoom, null, GetVisualDataSet(planetData.areaType));
+		player.transform.position = (Vector2)ActiveRoom.GetWorldSpacePosition() + ActiveRoom.GetCenter() + Vector2.down * 4f;
+		player.transform.parent = null;
+	}
+
+	private PlanetData FindExistingPlanetData()
+	{
+		string planetName = SaveLoad.Load<string>("Last visited planet");
+		if (planetName == null) return null;
+		return SaveLoad.Load<PlanetData>(planetName);
+	}
+
+	public void ShowRoom(AreaType areaType, Room room, Vector2 offset, bool destroyExisting = true)
 	{
 		if (destroyExisting)
 		{
@@ -29,10 +52,11 @@ public class RoomViewer : MonoBehaviour
 		}
 		objectParent = objectParent ?? new GameObject("Room Object Parent").transform;
 
-		DrawTiles(data.areaType, room, offset);
-		DrawRoomObjects(data.areaType, room, offset);
-
+		DrawTiles(areaType, room, offset);
+		DrawRoomObjects(areaType, room, offset);
 		SetCameraPosition(room.GetCenter() + offset);
+
+		ActiveRoom = room;
 	}
 
 	private void RemoveAllTiles()
@@ -50,13 +74,14 @@ public class RoomViewer : MonoBehaviour
 		List<Room> rooms = data.GetRooms();
 		for (int i = 0; i < rooms.Count; i++)
 		{
-			Vector2Int dimensions = rooms[i].GetDimensions();
-			Vector2Int offset = rooms[i].position;
-			offset.Scale(dimensions);
-			ShowRoom(data, rooms[i], offset, false);
-			//yield return new WaitForSeconds(1f);
+			IntPair dimensions = rooms[i].GetDimensions();
+			IntPair offset = rooms[i].position;
+			offset *= dimensions;
+			ShowRoom(data.areaType, rooms[i], offset.ConvertToVector2, false);
 		}
-		SetCameraPosition(rooms[0].GetCenter());
+		SetCameraPosition(data.startRoom.GetCenter());
+
+		ActiveRoom = data.startRoom;
 	}
 
 	private void DrawTiles(AreaType type, Room room, Vector2 offset)
@@ -121,9 +146,13 @@ public class RoomViewer : MonoBehaviour
 				case RoomObject.ObjType.Spooder:
 					roomObj = CreateObject(spooderPrefab, room, objs[i], dataSet);
 					break;
+				case RoomObject.ObjType.TreasureChest:
+					roomObj = CreateObject(treasureChestPrefab, room, objs[i], dataSet);
+					break;
 			}
 
-			roomObj.transform.position = objs[i].GetPosition() + offset;
+			roomObj.transform.position =
+				objs[i].GetPosition().ConvertToVector2 + offset;
 		}
 	}
 
@@ -157,7 +186,7 @@ public class RoomViewer : MonoBehaviour
 	private PlanetRoomObject CreateObject(PlanetRoomObject obj, Room room, RoomObject roomObj, PlanetVisualData dataSet)
 	{
 		PlanetRoomObject newObj = Instantiate(obj);
-		newObj.Setup(room, roomObj, dataSet);
+		newObj.Setup(this, room, roomObj, dataSet);
 		newObj.transform.parent = objectParent;
 		return newObj;
 	}
@@ -177,5 +206,15 @@ public class RoomViewer : MonoBehaviour
 		{
 			cam.transform.position = new Vector3(pos.x, pos.y, cam.transform.position.z);
 		}
+	}
+
+	public void Go(Direction direction)
+	{
+		Room nextRoom = ActiveRoom.GetRoom(direction);
+		if (nextRoom == null) return;
+		ActiveRoom = nextRoom;
+		IntPair offset = ActiveRoom.position * ActiveRoom.GetDimensions();
+		ShowRoom(planetData.areaType, ActiveRoom, offset.ConvertToVector2, true);
+		OnRoomChanged?.Invoke(ActiveRoom, direction);
 	}
 }

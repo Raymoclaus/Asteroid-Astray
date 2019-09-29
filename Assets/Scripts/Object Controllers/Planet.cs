@@ -1,46 +1,39 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
-[RequireComponent(typeof(PlanetInteractablePrompt))]
 public class Planet : Entity
 {
-	private PlanetInteractablePrompt trigger;
-	private PlanetInteractablePrompt Trigger
-		=> trigger ?? (trigger = GetComponent<PlanetInteractablePrompt>());
+	[SerializeField] private PlanetInteractablePrompt trigger;
 
-	public override void ApplyData(EntityData? data)
+	public override EntityType GetEntityType() => EntityType.Planet;
+
+	public string planetName = "Default Planet Name";
+	private int exploredCount = 0;
+	public float difficultyModifier = 1f;
+
+	protected override void Awake()
 	{
-		base.ApplyData(data);
+		base.Awake();
+
+		Vector2 originalPos = transform.position;
+		float distance = originalPos.magnitude;
+		float modifiedDistance = distance / BgCameraController.SCROLL_SPEED - distance;
+		Vector2 modifiedPos = originalPos.normalized * modifiedDistance;
+		trigger.SetColliderOffset(modifiedPos);
+
+		trigger.OnInteraction += OnInteracted;
 	}
 
-	public override void DestroySelf(Entity destroyer)
+	private void OnInteracted(Triggerer actor)
 	{
-		base.DestroySelf(destroyer);
+		if (!(actor is ShuttleTriggerer)) return;
+		GoToPlanet();
 	}
 
-	public override EntityType GetEntityType()
+	private void GoToPlanet()
 	{
-		return EntityType.Planet;
-	}
-
-	public override void Initialise()
-	{
-		base.Initialise();
-	}
-
-	protected override object CreateDataObject()
-	{
-		return base.CreateDataObject();
-	}
-
-	protected override void OnCollisionEnter2D(Collision2D collision)
-	{
-		base.OnCollisionEnter2D(collision);
-	}
-
-	protected override bool ShouldBeVisible()
-	{
-		return base.ShouldBeVisible();
+		SaveLoad.Save("Last visited planet", planetName);
+		PlanetGenerator generator = new PlanetGenerator();
+		PlanetData data = generator.Generate((exploredCount + 1) * Difficulty.DistanceBasedDifficulty(DistanceFromCenter) * difficultyModifier);
+		SceneLoader.LoadSceneStatic("PlanetScene");
 	}
 }

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 public class Character : Entity
 {
@@ -7,11 +8,23 @@ public class Character : Entity
 	public Inventory storage;
 	public delegate void ItemUsedEventHandler(Item.Type type);
 	public event ItemUsedEventHandler OnItemUsed;
+	[SerializeField] private float itemUseCooldownDuration = 1f;
+	private string itemUseCooldownTimerID;
 
 	protected override void Awake()
 	{
 		base.Awake();
+		itemUseCooldownTimerID = gameObject.GetInstanceID() + "Item Use Cooldown Timer";
+		TimerTracker.AddTimer(itemUseCooldownTimerID, 0f, null, null);
 		SetShieldAmount(maxShield);
+	}
+
+	protected virtual void Update()
+	{
+		if (CanUseItem)
+		{
+			CheckItemUsageInput();
+		}
 	}
 
 	protected override void OnTriggerEnter2D(Collider2D collider)
@@ -30,8 +43,8 @@ public class Character : Entity
 		}
 	}
 
-	public override bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer,
-		int dropModifier = 0, bool flash = true)
+	public override bool TakeDamage(float damage, Vector2 damagePos,
+		Entity destroyer, float dropModifier, bool flash)
 	{
 		if (HasShield)
 		{
@@ -45,7 +58,7 @@ public class Character : Entity
 
 	public override ICombat GetICombat() => null;
 
-	public virtual void ReceiveItemReward(Item.Type type, int amount) => CollectResources(type, amount);
+	public virtual void ReceiveItemReward(ItemStack stack) => CollectItem(stack);
 
 	public virtual void AcceptQuest(Quest quest)
 	{
@@ -53,65 +66,66 @@ public class Character : Entity
 		QuestPopupUI.ShowQuest(quest);
 	}
 
+	protected virtual void CheckItemUsageInput() { }
+
+	protected virtual bool CheckItemUsage(int itemIndex)
+	{
+		List<ItemStack> stacks = storage.stacks;
+		if (stacks[itemIndex].GetAmount() <= 0) return false;
+		Item.Type type = stacks[itemIndex].GetItemType();
+		if (!UseItem(type)) return false;
+		stacks[itemIndex].RemoveAmount(1);
+		return true;
+	}
+
 	protected bool UseItem(Item.Type type)
 	{
 		bool used = false;
 		switch (type)
 		{
-			case Item.Type.Blank:
-				break;
-			case Item.Type.Stone:
-				break;
-			case Item.Type.Iron:
-				break;
-			case Item.Type.Copper:
-				break;
-			case Item.Type.PureCorvorite:
-				break;
-			case Item.Type.CorruptedCorvorite:
-				break;
-			case Item.Type.CoreCrystal:
-				break;
-			case Item.Type.BugFood:
-				break;
-			case Item.Type.ProximityMine:
-				break;
-			case Item.Type.UnstableAcid:
-				break;
-			case Item.Type.EnergyDrink:
-				break;
-			case Item.Type.DataChip:
-				break;
-			case Item.Type.HeatResistantIce:
-				break;
-			case Item.Type.Amber:
-				break;
-			case Item.Type.Probe:
-				break;
-			case Item.Type.Beacon:
-				break;
-			case Item.Type.ShieldGenerator:
-				break;
-			case Item.Type.SpareParts:
-				break;
+			default: break;
 			case Item.Type.RepairKit:
 				used = true;
-				break;
-			case Item.Type.NioleriumCrystals:
-				break;
-			case Item.Type.NiolerDung:
-				break;
-			case Item.Type.StoneAmmo:
 				break;
 		}
 		if (used)
 		{
+			TimerTracker.SetTimer(itemUseCooldownTimerID, itemUseCooldownDuration);
 			OnItemUsed?.Invoke(type);
 		}
 		return used;
 	}
 
+	public virtual int CollectItem(ItemStack stack)
+	{
+		Item.Type itemType = stack.GetItemType();
+		int amount = stack.GetAmount();
+		Inventory inv = GetAppropriateInventory(itemType);
+		return amount - inv.AddItem(itemType, amount);
+	}
+
+	protected virtual Inventory GetAppropriateInventory(Item.Type itemType) => storage;
+
+	private bool CanUseItem => !ItemUsageOnCooldown;
+
+	private bool ItemUsageOnCooldown => TimerTracker.GetTimer(itemUseCooldownTimerID) > 0f;
+
 	public virtual bool TakeItem(Item.Type type, int amount) => false;
+
+	protected override void DropLoot(Entity destroyer, float dropModifier)
+	{
+		base.DropLoot(destroyer, dropModifier);
+
+		for (int i = 0; i < storage.stacks.Count; i++)
+		{
+			ItemStack stack = storage.stacks[i];
+			for (int j = 0; j < stack.GetAmount(); j++)
+			{
+				particleGenerator.DropResource(destroyer,
+					transform.position, stack.GetItemType());
+			}
+		}
+	}
 
 	#region Shield
 	[SerializeField] protected float maxShield = 500;
@@ -134,8 +148,8 @@ public class Character : Entity
 		}
 	}
 
-	public virtual bool TakeShieldDamage(float damage, Vector2 damagePos, Entity destroyer,
-		int dropModifier = 0, bool flash = true)
+	public virtual bool TakeShieldDamage(float damage, Vector2 damagePos,
+		Entity destroyer, float dropModifier, bool flash)
 	{
 		Vector2 damageDirection = damagePos - (Vector2)transform.position;
 		shieldVisualController?.TakeHit(damageDirection);

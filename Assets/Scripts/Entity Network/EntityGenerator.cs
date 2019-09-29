@@ -172,7 +172,7 @@ public class EntityGenerator : MonoBehaviour
 		//don't bother if the coordinates have already been filled
 		if (instance.Chunk(cc)) return;
 		//flag that this chunk coordinates was filled
-		instance.Column(cc)[cc.Y] = true;
+		instance.Column(cc)[cc.y] = true;
 
 		//look through the space priority entities and check if one may spawn
 		List<SpawnableEntity> spawnList = instance.toSpawn;
@@ -186,15 +186,15 @@ public class EntityGenerator : MonoBehaviour
 		{
 			SpawnableEntity e = spawnList[i];
 			//determine how many to spawn
-			int numToSpawn = Random.Range(e.spawnRange.A, e.spawnRange.B + 1);
+			int numToSpawn = Random.Range(e.spawnRange.x, e.spawnRange.y + 1);
 			for (int j = 0; j < numToSpawn; j++)
 			{
 				//pick a position within the chunk coordinates
 				switch (e.posType)
 				{
 					case SpawnableEntity.SpawnPosition.Random:
-						spawnPos.x = Random.Range(range.A.x, range.B.x);
-						spawnPos.y = Random.Range(range.A.y, range.B.y);
+						spawnPos.x = Random.Range(range.a.x, range.b.x);
+						spawnPos.y = Random.Range(range.a.y, range.b.y);
 						break;
 					case SpawnableEntity.SpawnPosition.Center:
 						spawnPos = ChunkCoords.GetCenterCell(cc);
@@ -222,7 +222,7 @@ public class EntityGenerator : MonoBehaviour
 		//don't bother if the coordinates have already been filled
 		if (instance.Chunk(cc)) return null;
 		//flag that this chunk coordinates was filled
-		instance.Column(cc)[cc.Y] = true;
+		instance.Column(cc)[cc.y] = true;
 
 		SpawnableEntity e = se;
 		//determine how many to spawn
@@ -232,8 +232,8 @@ public class EntityGenerator : MonoBehaviour
 		switch (e.posType)
 		{
 			case SpawnableEntity.SpawnPosition.Random:
-				spawnPos.x = Random.Range(range.A.x, range.B.x);
-				spawnPos.y = Random.Range(range.A.y, range.B.y);
+				spawnPos.x = Random.Range(range.a.x, range.b.x);
+				spawnPos.y = Random.Range(range.a.y, range.b.y);
 				break;
 			case SpawnableEntity.SpawnPosition.Center:
 				spawnPos = ChunkCoords.GetCenterCell(cc);
@@ -339,27 +339,27 @@ public class EntityGenerator : MonoBehaviour
 		}
 
 		//add more columns until enough exist to make the given coordinates valid
-		if (Direction(cc).Capacity <= cc.X)
+		if (Direction(cc).Capacity <= cc.x)
 		{
 			Debug.LogWarning("Row capacity breached.");
-			Direction(cc).Capacity = cc.X + 1;
+			Direction(cc).Capacity = cc.x + 1;
 		}
 
-		while (Direction(cc).Count <= cc.X)
+		while (Direction(cc).Count <= cc.x)
 		{
 			Direction(cc).Add(new List<bool>());
 		}
 
 		//add more rows until the column is large enough to make the given coordinates valid
-		if (Column(cc).Capacity <= cc.Y)
+		if (Column(cc).Capacity <= cc.y)
 		{
 			Debug.LogWarning("Column capacity breached.");
-			Column(cc).Capacity = cc.Y + 1;
+			Column(cc).Capacity = cc.y + 1;
 		}
 
-		while (Column(cc).Count <= cc.Y)
+		while (Column(cc).Count <= cc.y)
 		{
-			wasFilled[(int) cc.Direction][cc.X].Add(false);
+			wasFilled[(int) cc.Direction][cc.x].Add(false);
 		}
 	}
 
@@ -421,12 +421,12 @@ public class EntityGenerator : MonoBehaviour
 	#region Convenient short-hand methods for accessing the grid
 	private bool Chunk(ChunkCoords cc)
 	{
-		return Column(cc)[cc.Y];
+		return Column(cc)[cc.y];
 	}
 
 	private List<bool> Column(ChunkCoords cc)
 	{
-		return Direction(cc)[cc.X];
+		return Direction(cc)[cc.x];
 	}
 
 	private List<List<bool>> Direction(ChunkCoords cc)

@@ -33,12 +33,11 @@ public class Asteroid : Entity
 	private float largeChance = 0.01f;
 	private bool isLarge;
 	//keeps track of size type and ID in that size type
-	private Vector2Int id = Vector2Int.zero;
+	private IntPair id = IntPair.zero;
 	//the amount of debris created when destroyed
-	public Vector2Int debrisAmount = new Vector2Int(3, 10);
+	public IntPair debrisAmount = new IntPair(3, 10);
 	[SerializeField] private float drillDebrisChance = 0.05f, drillDustChance = 0.2f;
 	private int collisionDustMultiplier = 3;
-	[SerializeField] private List<Loot> loot;
 	#endregion
 
 	#region Audio
@@ -105,8 +104,9 @@ public class Asteroid : Entity
 			* (Mathf.Pow(Random.Range(0f, 2f), 2f) * VelocityRange - VelocityRange);
 	}
 
-	private void DestroySelf(bool explode, Entity destroyer, int dropModifier = 0)
+	public override void DestroySelf(Entity destroyer, float dropModifier)
 	{
+		bool explode = destroyer != null;
 		if (explode)
 		{
 			//particle effect
@@ -124,23 +124,14 @@ public class Asteroid : Entity
 					pitch: Random.Range(shatterPitchRange.x, shatterPitchRange.y), volume: 0.25f,
 					parent: null);
 			}
-
-			//drop resources
-			DropLoot(destroyer, transform.position, dropModifier);
 		}
 		EjectFromAllDrillers(true);
-		base.DestroySelf(destroyer);
+		base.DestroySelf(destroyer, dropModifier);
 	}
 
-	private void DropLoot(Entity destroyer, Vector2 pos, int dropModifier = 0)
+	protected override void DropLoot(Entity destroyer, float dropModifier)
 	{
-		particleGenerator = particleGenerator ?? FindObjectOfType<ParticleGenerator>();
-
-		int minDrop = isLarge ? 4 : 1;
-		for (int i = 0; i < Random.Range(minDrop, minDrop + dropModifier + 1); i++)
-		{
-			particleGenerator.DropResource(destroyer, pos);
-		}
+		base.DropLoot(destroyer, dropModifier);
 
 		if (FirstQuestScriptedDrops.scriptedDropsActive)
 		{
@@ -150,16 +141,14 @@ public class Asteroid : Entity
 				for (int i = 0; i < stacks.Count; i++)
 				{
 					ItemStack stack = stacks[i];
-					particleGenerator.DropResource(destroyer, pos, stack.GetItemType(), stack.GetAmount());
+					for (int j = 0; j < stack.GetAmount(); j++)
+					{
+						particleGenerator.DropResource(destroyer,
+							transform.position, stack.GetItemType());
+					}
 				}
 				return;
 			}
-		}
-
-		for (int i = 0; i < loot.Count; i++)
-		{
-			ItemStack stack = loot[i].GetStack();
-			particleGenerator.DropResource(destroyer, pos, stack.GetItemType(), stack.GetAmount());
 		}
 	}
 
@@ -233,19 +222,16 @@ public class Asteroid : Entity
 	}
 
 	// If health is below zero, this will destroy itself
-	private bool CheckHealth(Entity destroyer, int dropModifier = 0)
+	protected override bool CheckHealth(Entity destroyer, float dropModifier)
 	{
 		UpdateSprite();
 		if (currentHP > 0f) return false;
-		DestroySelf(true, destroyer, dropModifier);
-		return true;
+		return base.CheckHealth(destroyer, dropModifier);
 	}
 
-	public override bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer,
-		int dropModifier = 0, bool flash = true)
+	public override bool TakeDamage(float damage, Vector2 damagePos,
+		Entity destroyer, float dropModifier, bool flash)
 	{
-		base.TakeDamage(damage, damagePos, destroyer, dropModifier, flash);
-
 		//particle effects
 		if (Random.value < drillDebrisChance)
 		{
@@ -256,11 +242,12 @@ public class Asteroid : Entity
 			CreateDust(damagePos, alpha: Random.value * 0.1f);
 		}
 
-		return CheckHealth(destroyer, dropModifier);
+		return base.TakeDamage(damage, damagePos, destroyer, dropModifier, flash);
 	}
 
 	//take the damage and if health drops to 0 then signal that this asteroid will be destroyed
-	public override bool TakeDrillDamage(float damage, Vector2 drillPos, Entity destroyer, int dropModifier = 0)
+	public override bool TakeDrillDamage(float damage, Vector2 drillPos,
+		Entity destroyer, float dropModifier)
 	{
 		//calculate shake intensity. Gets more intense the less health it has
 		ShakeFX.SetIntensity(damage / maxHP * (3f - (currentHP / maxHP * 2f)));

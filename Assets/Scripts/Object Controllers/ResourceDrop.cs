@@ -4,7 +4,7 @@
 public class ResourceDrop : MonoBehaviour
 {
 	[HideInInspector]
-	public Entity follow;
+	public Character follow;
 	private Vector2 velocity;
 	private Vector2 startVelocity;
 	public float startSpeed = 0.1f, speedDecay = 0.01f;
@@ -14,8 +14,7 @@ public class ResourceDrop : MonoBehaviour
 	private float spawnTime;
 	public ParticleSystem ps;
 	public SpriteRenderer rend;
-	private int amount = 1;
-	private Item.Type type = Item.Type.Stone;
+	private Item.Type type;
 
 	private void Start()
 	{
@@ -64,7 +63,7 @@ public class ResourceDrop : MonoBehaviour
 			ps.transform.parent = transform.parent;
 			ParticleSystem.MainModule main = ps.main;
 			main.loop = false;
-			follow.CollectResources(type, amount);
+			follow.CollectItem(new ItemStack(type, 1));
 			if (follow.GetEntityType() == EntityType.Shuttle)
 			{
 			}
@@ -73,12 +72,11 @@ public class ResourceDrop : MonoBehaviour
 		}
 	}
 
-	public void Create(Entity target, Vector2 pos, Item.Type type = Item.Type.Stone, int amount = 1)
+	public void Create(Entity target, Vector2 pos, Item.Type type = Item.Type.Stone)
 	{
-		follow = target;
+		follow = (target is Character) ? (Character)target : null;
 		transform.position = pos;
 		transform.parent = ParticleGenerator.holder;
-		this.amount = amount;
 		this.type = type;
 	}
 }

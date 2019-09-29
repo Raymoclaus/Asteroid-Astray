@@ -15,7 +15,7 @@ namespace Tests
 			//ARRANGE
 			BlockPushGenerator gen = new BlockPushGenerator();
 			Random.InitState(1);
-			Vector2Int size = new Vector2Int(26, 14);
+			IntPair size = new IntPair(26, 14);
 			int padding = 1;
 
 			//ACT
@@ -31,7 +31,7 @@ namespace Tests
 			//ARRANGE
 			BlockPushGenerator gen = new BlockPushGenerator();
 			Random.InitState(1);
-			Vector2Int size = new Vector2Int(26, 14);
+			IntPair size = new IntPair(26, 14);
 			int padding = 1;
 			int minimumSolutionCount = 2;
 
@@ -48,7 +48,7 @@ namespace Tests
 			//ARRANGE
 			BlockPushGenerator gen = new BlockPushGenerator();
 			Random.InitState(1);
-			Vector2Int size = new Vector2Int(26, 14);
+			IntPair size = new IntPair(26, 14);
 			int padding = 1;
 			int minimumSolutionCount = 2;
 
@@ -65,13 +65,13 @@ namespace Tests
 			//ARRANGE
 			BlockPushGenerator gen = new BlockPushGenerator();
 			Random.InitState(1);
-			Vector2Int size = new Vector2Int(26, 14);
+			IntPair size = new IntPair(26, 14);
 			int padding = 1;
 			int minimumSolutionCount = 2;
 
 			//ACT
 			PushPuzzle puzzle = gen.Generate(size, padding, minimumSolutionCount);
-			Vector2Int finishPos = puzzle.finishTile;
+			IntPair finishPos = puzzle.finishTile;
 			int minimumDimension = Mathf.Min(size.x, size.y);
 			int range = padding + minimumDimension / 2 - 2;
 

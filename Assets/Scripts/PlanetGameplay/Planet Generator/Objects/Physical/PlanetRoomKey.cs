@@ -6,9 +6,9 @@ public class PlanetRoomKey : PlanetNonSolid
 	private RoomKey.KeyColour colour;
 	private RoomKey key;
 
-	public override void Setup(Room room, RoomObject roomObject, PlanetVisualData dataSet)
+	public override void Setup(RoomViewer roomViewer, Room room, RoomObject roomObject, PlanetVisualData dataSet)
 	{
-		base.Setup(room, roomObject, dataSet);
+		base.Setup(roomViewer, room, roomObject, dataSet);
 		
 		key = (RoomKey)roomObject;
 		if (key.hidden)

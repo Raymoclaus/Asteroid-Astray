@@ -80,7 +80,7 @@ public class ChunkFiller : MonoBehaviour
 		{
 			for (int j = -r; j <= r; j++)
 			{
-				coords.Add(new ChunkCoords(center.Direction, center.X + i, center.Y + j, true));
+				coords.Add(new ChunkCoords(center.Direction, center.x + i, center.y + j, true));
 			}
 		}
 

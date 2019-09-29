@@ -6,26 +6,26 @@ namespace MazePuzzle
 {
 	public class MazeGenerator
 	{
-		public Maze GeneratePuzzle(Vector2Int size, Vector2Int[] exits)
+		public Maze GeneratePuzzle(IntPair size, IntPair[] exits)
 		{
 			Maze maze = new Maze(size, exits);
-			Vector2Int currentSpot = exits[0];
-			List<Vector2Int> path = new List<Vector2Int>();
+			IntPair currentSpot = exits[0];
+			List<IntPair> path = new List<IntPair>();
 			path.Add(currentSpot);
 			maze.VisitExit(exits[0]);
 
 			do
 			{
-				Vector2Int nextSpot = maze.GetRandomSurroundingSoftWall(currentSpot);
+				IntPair nextSpot = maze.GetRandomSurroundingSoftWall(currentSpot);
 
-				if (nextSpot != Vector2Int.one * -1)
+				if (nextSpot != IntPair.one * -1)
 				{
 					maze.Set(nextSpot, false);
 					currentSpot = nextSpot;
 					path.Add(currentSpot);
 
-					Vector2Int nearbyExit = maze.NearbyUnvisitedExit(currentSpot);
-					if (nearbyExit != Vector2Int.one * -1)
+					IntPair nearbyExit = maze.NearbyUnvisitedExit(currentSpot);
+					if (nearbyExit != IntPair.one * -1)
 					{
 						currentSpot = nearbyExit;
 						maze.VisitExit(nearbyExit);
@@ -36,7 +36,7 @@ namespace MazePuzzle
 				{
 					if (path.Count > (maze.GetLongestPath()?.Count ?? 0))
 					{
-						maze.SetLongestPath(new List<Vector2Int>(path));
+						maze.SetLongestPath(new List<IntPair>(path));
 					}
 					path.RemoveAt(path.Count - 1);
 					if (path.Count > 0)

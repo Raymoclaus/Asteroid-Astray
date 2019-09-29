@@ -61,15 +61,6 @@ public class NebulaSetup : Entity
 		RepositionInNetwork();
 	}
 
-	private void Update()
-	{
-		//destroy self if a nebula already exists in current coordinates
-		if (EntityNetwork.ContainsType(GetEntityType(), coords, this))
-		{
-			DestroySelf(null);
-		}
-	}
-
 	//This will determine where to set up more particle systems and create them in those positions
 	private void Expansion()
 	{
@@ -88,11 +79,11 @@ public class NebulaSetup : Entity
 			float randomVal = Random.value;
 			if (randomVal >= 0.5f)
 			{
-				c.X += randomVal >= 0.75f ? 1 : -1;
+				c.x += randomVal >= 0.75f ? 1 : -1;
 			}
 			else
 			{
-				c.Y += randomVal >= 0.25f ? 1 : -1;
+				c.y += randomVal >= 0.25f ? 1 : -1;
 			}
 			c = c.Validate();
 

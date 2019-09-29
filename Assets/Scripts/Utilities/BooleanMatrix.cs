@@ -111,7 +111,7 @@ public struct BooleanMatrix
 	}
 
 	public BooleanMatrix GetRange(BooleanMatrix existingMatrix,
-		Vector2Int center, int range)
+		IntPair center, int range)
 	{
 		//range = 0, width = 1
 		//range = 1, width = 3
@@ -124,7 +124,7 @@ public struct BooleanMatrix
 		{
 			for (int y = 0; y < height; y++)
 			{
-				Vector2Int position = new Vector2Int(
+				IntPair position = new IntPair(
 					center.x - range + x, center.y - range + y);
 				if (position.x < 0
 					|| position.y < 0

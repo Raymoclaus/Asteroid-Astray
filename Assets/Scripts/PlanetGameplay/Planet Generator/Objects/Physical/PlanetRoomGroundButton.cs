@@ -2,10 +2,10 @@
 {
 	private RoomGroundButton roomGroundBtn;
 
-	public override void Setup(Room room, RoomObject roomObject,
+	public override void Setup(RoomViewer roomViewer, Room room, RoomObject roomObject,
 		PlanetVisualData dataSet)
 	{
-		base.Setup(room, roomObject, dataSet);
+		base.Setup(roomViewer, room, roomObject, dataSet);
 		roomGroundBtn = (RoomGroundButton)roomObject;
 	}
 

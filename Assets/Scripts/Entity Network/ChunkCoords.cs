@@ -12,32 +12,64 @@ public enum Quadrant
 [Serializable]
 public struct Vector2Pair
 {
-	public Vector2 A, B;
+	public Vector2 a, b;
 
 	public Vector2Pair(Vector2 a, Vector2 b)
 	{
-		A = a;
-		B = b;
+		this.a = a;
+		this.b = b;
 	}
 }
 
 [Serializable]
 public struct IntPair
 {
-	public int A, B;
+	public int x, y;
 
-	public IntPair(int a, int b)
+	public IntPair(int x, int y)
 	{
-		A = a;
-		B = b;
+		this.x = x;
+		this.y = y;
 	}
+
+	public static IntPair up = new IntPair(0, 1);
+
+	public static IntPair down = new IntPair(0, -1);
+
+	public static IntPair left = new IntPair(-1, 0);
+
+	public static IntPair right = new IntPair(1, 0);
+
+	public static IntPair one = new IntPair(1, 1);
+
+	public static IntPair zero = new IntPair(0, 0);
+
+	public Vector2 ConvertToVector2 => new Vector2(x, y);
+
+	public override string ToString() => $"({x}, {y})";
+
+	public static bool operator ==(IntPair a, IntPair b) => a.x == b.x && a.y == b.y;
+
+	public static bool operator !=(IntPair a, IntPair b) => a.x != b.x || a.y != b.y;
+
+	public static IntPair operator +(IntPair a, IntPair b) => new IntPair(a.x + b.x, a.y + b.y);
+
+	public static IntPair operator -(IntPair a, IntPair b) => new IntPair(a.x - b.x, a.y - b.y);
+
+	public static IntPair operator *(IntPair a, IntPair b) => new IntPair(a.x * b.x, a.y * b.y);
+
+	public static IntPair operator /(IntPair a, IntPair b) => new IntPair(a.x / b.x, a.y / b.y);
+
+	public static IntPair operator *(IntPair a, int b) => new IntPair(a.x * b, a.y * b);
+
+	public static IntPair operator /(IntPair a, int b) => new IntPair(a.x / b, a.y / b);
 }
 
 [Serializable]
 public struct ChunkCoords
 {
 	public Quadrant Direction;
-	public int X, Y;
+	public int x, y;
 
 	public static ChunkCoords Invalid
 	{
@@ -57,8 +89,8 @@ public struct ChunkCoords
 	public ChunkCoords(Quadrant direction, int x, int y, bool? shouldValidate = null)
 	{
 		Direction = direction;
-		X = x;
-		Y = y;
+		this.x = x;
+		this.y = y;
 
 		if (shouldValidate != null && (bool) shouldValidate)
 		{
@@ -71,8 +103,8 @@ public struct ChunkCoords
 		ChunkCoords cc;
 		cc.Direction = GetDirection(pos);
 		IntPair coord = ConvertToXy(pos);
-		cc.X = coord.A;
-		cc.Y = coord.B;
+		cc.x = coord.x;
+		cc.y = coord.y;
 		return cc;
 	}
 
@@ -119,8 +151,8 @@ public struct ChunkCoords
 
 	public static Vector2Pair GetCellArea(ChunkCoords chCoord)
 	{
-		Vector2 min = new Vector2(chCoord.X, chCoord.Y);
-		Vector2 max = new Vector2(chCoord.X + 1, chCoord.Y + 1);
+		Vector2 min = new Vector2(chCoord.x, chCoord.y);
+		Vector2 max = new Vector2(chCoord.x + 1, chCoord.y + 1);
 		switch (chCoord.Direction)
 		{
 			case Quadrant.UpperLeft:
@@ -143,7 +175,7 @@ public struct ChunkCoords
 	public static Vector2 GetCenterCell(ChunkCoords c)
 	{
 		Vector2Pair bounds = GetCellArea(c);
-		return new Vector2((bounds.A.x + bounds.B.x) / 2f, (bounds.A.y + bounds.B.y) / 2f);
+		return new Vector2((bounds.a.x + bounds.b.x) / 2f, (bounds.a.y + bounds.b.y) / 2f);
 	}
 
 	public bool IsValid()
@@ -151,8 +183,8 @@ public struct ChunkCoords
 		return this != Invalid
 		       && (int) Direction >= 0
 		       && (int) Direction < EntityNetwork.QUADRANT_COUNT
-		       && X >= 0
-		       && Y >= 0;
+		       && x >= 0
+		       && y >= 0;
 	}
 
 	public ChunkCoords Validate()
@@ -166,7 +198,7 @@ public struct ChunkCoords
 		//fix direction to be within bounds
 		Direction = (Quadrant) (Math.Abs((int) Direction) % EntityNetwork.QUADRANT_COUNT);
 		//adjust direction if x is not valid
-		if (X < 0)
+		if (x < 0)
 		{
 			switch (Direction)
 			{
@@ -184,11 +216,11 @@ public struct ChunkCoords
 					break;
 			}
 
-			X = Math.Abs(X) - 1;
+			x = Math.Abs(x) - 1;
 		}
 
 		//adjust direction if y is not valid
-		if (Y < 0)
+		if (y < 0)
 		{
 			switch (Direction)
 			{
@@ -206,7 +238,7 @@ public struct ChunkCoords
 					break;
 			}
 
-			Y = Math.Abs(Y) - 1;
+			y = Math.Abs(y) - 1;
 		}
 
 		return this;
@@ -225,14 +257,14 @@ public struct ChunkCoords
 		switch (Direction)
 		{
 			case Quadrant.UpperLeft:
-				X = -X - 1;
+				x = -x - 1;
 				break;
 			case Quadrant.LowerLeft:
-				X = -X - 1;
-				Y = -Y - 1;
+				x = -x - 1;
+				y = -y - 1;
 				break;
 			case Quadrant.LowerRight:
-				Y = -Y - 1;
+				y = -y - 1;
 				break;
 		}
 		return this;
@@ -243,9 +275,9 @@ public struct ChunkCoords
 	{
 		cc1 = ConvertToUpRight(cc1);
 		cc2 = ConvertToUpRight(cc2);
-		int x = cc1.X - cc2.X;
+		int x = cc1.x - cc2.x;
 		x = x < 0 ? -x : x;
-		int y = cc1.Y - cc2.Y;
+		int y = cc1.y - cc2.y;
 		y = y < 0 ? -y : y;
 		return Math.Max(x, y);
 	}
@@ -261,13 +293,13 @@ public struct ChunkCoords
 		//check if it is in either of the two left-side quadrants
 		if (cc.Direction == Quadrant.UpperLeft || cc.Direction == Quadrant.LowerLeft)
 		{
-			cc.X = -cc.X - 1;
+			cc.x = -cc.x - 1;
 		}
 
 		//check if it is in either of the two bottom quadrants
 		if (cc.Direction == Quadrant.LowerRight || cc.Direction == Quadrant.LowerLeft)
 		{
-			cc.Y = -cc.Y - 1;
+			cc.y = -cc.y - 1;
 		}
 
 		cc.Direction = Quadrant.UpperRight;
@@ -276,26 +308,16 @@ public struct ChunkCoords
 
 	public override string ToString()
 	{
-		return string.Format("Direction: {0}, Coordinates({1}, {2})", Direction, X, Y);
+		return string.Format("Direction: {0}, Coordinates({1}, {2})", Direction, x, y);
 	}
 
 	public static bool operator ==(ChunkCoords c1, ChunkCoords c2)
 	{
-		return c1.Direction == c2.Direction && c1.X == c2.X && c1.Y == c2.Y;
+		return c1.Direction == c2.Direction && c1.x == c2.x && c1.y == c2.y;
 	}
 
 	public static bool operator !=(ChunkCoords c1, ChunkCoords c2)
 	{
-		return c1.Direction != c2.Direction || c1.X != c2.X || c1.Y != c2.Y;
-	}
-
-	public override bool Equals(object obj)
-	{
-		return base.Equals(obj);
-	}
-
-	public override int GetHashCode()
-	{
-		return base.GetHashCode();
+		return c1.Direction != c2.Direction || c1.x != c2.x || c1.y != c2.y;
 	}
 }

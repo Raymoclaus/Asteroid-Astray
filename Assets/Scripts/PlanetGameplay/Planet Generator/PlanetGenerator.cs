@@ -1,66 +1,42 @@
-﻿using System.Collections;
+﻿using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(RoomViewer))]
-public class PlanetGenerator : MonoBehaviour
+public class PlanetGenerator
 {
-	private PlanetData planetData;
-	private Room startRoom;
-	private RoomViewer viewer;
-	private Room activeRoom;
-
-	public int minBranchLength, maxBranchLength;
-	public int minBranchCount;
-	private const int MAX_BRANCH_COUNT = 4;
-	public int minDeadEndCount, maxDeadEndCount;
-
-	public delegate void GenerationCompleteEventHandler();
-	public event GenerationCompleteEventHandler OnGenerationComplete;
-	public delegate void RoomChangedEventHandler(Room newRoom, Direction direction);
-	public event RoomChangedEventHandler OnRoomChanged;
-
-	public float randomEmptyRoomWeighting,
-		randomPuzzleRoomWeighting,
-		randomEnemiesRoomWeighting,
-		randomTreasureRoomWeighting,
-		randomNpcRoomWeighting;
-
-	public PuzzleTypeWeightings puzzleRoomWeightings;
-
-	private void Start()
+	public PlanetData Generate(float difficultySetting)
 	{
-		viewer = GetComponent<RoomViewer>();
-		Generate();
-		//LoadCurrentRoom();
-		viewer.ShowAllRooms(planetData);
-	}
+		PlanetData data = new PlanetData();
+		PlanetDifficultyModifiers difficultyModifiers
+			= new PlanetDifficultyModifiers(difficultySetting);
+		PlanetRoomTypeWeightings roomTypeWeightings = GetRoomTypeWeightings();
 
-	private void Generate()
-	{
-		planetData = new PlanetData();
-		
 		Room currentRoom = null;
 		int keyLevel = 0;
 
 		//rule 1 -	Create starter room
-		startRoom = planetData.AddRoom(RoomType.Start, new Vector2Int(0, 0), puzzleRoomWeightings, null);
+		data.startRoom = data.AddRoom(RoomType.Start, new IntPair(0, 0), null,
+			difficultyModifiers);
 
 		//rule 2 -	"Current Room" is starter room
-		currentRoom = startRoom;
+		currentRoom = data.startRoom;
 
 		//rule 7 -	Repeat steps 3 - 6 Y amount of times.
-		int branchCount = Mathf.Max(1, Random.Range(minBranchCount, MAX_BRANCH_COUNT));
+		int branchCount = Mathf.Max(1, Random.Range(
+			difficultyModifiers.minBranchCount,
+			PlanetDifficultyModifiers.MAX_BRANCH_COUNT));
 		for (int j = 0; j < branchCount; j++)
 		{
 			//rule 3 -	Create a single branch from the "Current room" until X rooms have been
 			//			created. Branch can't overlap with existing rooms. If branch meets a dead
 			//			end, end the branch.
 			int branchLength = Mathf.Max(1,
-				Random.Range(minBranchLength, maxBranchLength));
+				Random.Range(difficultyModifiers.minBranchLength, difficultyModifiers.maxBranchLength));
 			for (int i = 0; i < branchLength; i++)
 			{
-				Room newRoom = CreateRandomExit(planetData, currentRoom);
+				Room newRoom = CreateRandomExit(data, currentRoom, false,
+					RoomKey.KeyColour.Blue, false, roomTypeWeightings,
+					difficultyModifiers);
 				if (newRoom == currentRoom) break;
 				currentRoom = newRoom;
 			}
@@ -70,15 +46,16 @@ public class PlanetGenerator : MonoBehaviour
 
 			//rule 5 -	Create a locked exit to a new room from any existing room except the end of
 			//			that branch.
-			List<Room> existingRooms = planetData.GetRooms();
+			List<Room> existingRooms = data.GetRooms();
 			Room lockRoom = currentRoom;
 			do
 			{
 				int randomIndex = Random.Range(0, existingRooms.Count);
 				lockRoom = existingRooms[randomIndex];
 			} while (lockRoom == currentRoom || lockRoom.ExitCount() == 4);
-			lockRoom = CreateRandomExit(planetData, lockRoom, true, (RoomKey.KeyColour)keyLevel,
-				j == branchCount - 1);
+			lockRoom = CreateRandomExit(data, lockRoom, true,
+				(RoomKey.KeyColour)keyLevel, j == branchCount - 1, roomTypeWeightings,
+				difficultyModifiers);
 			keyLevel++;
 
 			//rule 6 -	"Current room" is the new room on the other side of the locked exit
@@ -86,48 +63,61 @@ public class PlanetGenerator : MonoBehaviour
 		}
 
 		//rule 8 -	"Current room" is the final room
-		planetData.finalRoom = currentRoom;
+		data.finalRoom = currentRoom;
 
 		//rule 9 -	Create "Dead end" branches Z times of X length from any room except the boss
 		//			room.
-		branchCount = Mathf.Max(0, Random.Range(minDeadEndCount, maxDeadEndCount));
+		branchCount = Mathf.Max(0, Random.Range(difficultyModifiers.minDeadEndCount, difficultyModifiers.maxDeadEndCount));
 		for (int i = 0; i < branchCount; i++)
 		{
-			List<Room> existingRooms = planetData.GetRooms();
+			List<Room> existingRooms = data.GetRooms();
 			Room deadEndStart = null;
 			do
 			{
 				int randomIndex = Random.Range(0, existingRooms.Count);
 				deadEndStart = existingRooms[randomIndex];
-			} while (deadEndStart == planetData.finalRoom || deadEndStart.ExitCount() == 4);
+			} while (deadEndStart == data.finalRoom || deadEndStart.ExitCount() == 4);
 			currentRoom = deadEndStart;
 
 			int branchLength = Mathf.Max(1,
-				Random.Range(minBranchLength, maxBranchLength));
+				Random.Range(difficultyModifiers.minBranchLength, difficultyModifiers.maxBranchLength));
 			for (int j = 0; j < branchLength; j++)
 			{
-				Room newRoom = CreateRandomExit(planetData, currentRoom);
+				Room newRoom = CreateRandomExit(data, currentRoom, false,
+					RoomKey.KeyColour.Blue, false, roomTypeWeightings,
+					difficultyModifiers);
 				if (newRoom == currentRoom) break;
 				currentRoom = newRoom;
+				if (j == branchLength - 1)
+				{
+					newRoom.type = RoomType.Treasure;
+				}
 			}
 		}
 
-		for (int i = 0; i < planetData.GetRoomCount(); i++)
+		for (int i = 0; i < data.GetRoomCount(); i++)
 		{
-			planetData.GetRooms()[i].GenerateContent();
+			data.GetRooms()[i].GenerateContent();
 		}
 
-		for (int i = 0; i < planetData.GetRoomCount(); i++)
+		for (int i = 0; i < data.GetRoomCount(); i++)
 		{
-			planetData.GetRooms()[i].GenerateOuterWalls();
+			data.GetRooms()[i].GenerateOuterWalls();
 		}
 
-		activeRoom = startRoom;
-		OnGenerationComplete?.Invoke();
+		return data;
 	}
 
-	private Room CreateRandomExit(PlanetData data, Room room, bool locked = false,
-		RoomKey.KeyColour colour = RoomKey.KeyColour.Blue, bool bossRoom = false)
+	private PuzzleTypeWeightings GetPuzzleWeightings()
+		=> Resources.LoadAll<PuzzleTypeWeightings>(string.Empty).FirstOrDefault();
+
+	private PlanetRoomTypeWeightings GetRoomTypeWeightings()
+		=> Resources.LoadAll<PlanetRoomTypeWeightings>(string.Empty).FirstOrDefault();
+
+	private Room CreateRandomExit(PlanetData data, Room room, bool locked,
+		RoomKey.KeyColour colour, bool bossRoom,
+		PlanetRoomTypeWeightings roomTypeWeightings,
+		PlanetDifficultyModifiers difficultyModifiers)
 	{
 		if (room.ExitCount() == 4) return room;
 
@@ -138,7 +128,7 @@ public class PlanetGenerator : MonoBehaviour
 		//remove any directions that are not available
 		for (int j = directions.Count - 1; j >= 0; j--)
 		{
-			Vector2Int roomPos = AddDirection(room.position, directions[j]);
+			IntPair roomPos = AddDirection(room.position, directions[j]);
 			if (data.GetRoomAtPosition(roomPos) != null)
 			{
 				directions.RemoveAt(j);
@@ -149,9 +139,10 @@ public class PlanetGenerator : MonoBehaviour
 		if (directions.Count == 0) return room;
 
 		Direction randomDirection = directions[Random.Range(0, directions.Count)];
-		Vector2Int pos = AddDirection(room.position, randomDirection);
-		RoomType type = bossRoom ? RoomType.Boss : PickRandomRoomType();
-		Room newRoom = data.AddRoom(type, pos, puzzleRoomWeightings, room);
+		IntPair pos = AddDirection(room.position, randomDirection);
+		RoomType type = bossRoom ? RoomType.Boss : PickRandomRoomType(roomTypeWeightings);
+		Room newRoom = data.AddRoom(type, pos, room,
+			difficultyModifiers);
 		if (locked)
 		{
 			ConnectWithLock(room, newRoom, randomDirection, colour);
@@ -163,29 +154,29 @@ public class PlanetGenerator : MonoBehaviour
 		return newRoom;
 	}
 
-	private RoomType PickRandomRoomType()
+	private RoomType PickRandomRoomType(PlanetRoomTypeWeightings roomTypeWeightings)
 	{
 		float totalWeighting =
-			randomEmptyRoomWeighting +
-			randomPuzzleRoomWeighting +
-			randomEnemiesRoomWeighting +
-			randomTreasureRoomWeighting +
-			randomNpcRoomWeighting;
+			roomTypeWeightings.emptyRoomWeighting +
+			roomTypeWeightings.puzzleRoomWeighting +
+			roomTypeWeightings.enemiesRoomWeighting +
+			roomTypeWeightings.treasureRoomWeighting +
+			roomTypeWeightings.npcRoomWeighting;
 		float randomValue = Random.Range(0f, totalWeighting);
 
-		if ((randomValue = randomValue - randomEmptyRoomWeighting) < 0f)
+		if ((randomValue = randomValue - roomTypeWeightings.emptyRoomWeighting) < 0f)
 		{
 			return RoomType.Empty;
 		}
-		if ((randomValue = randomValue - randomPuzzleRoomWeighting) < 0f)
+		if ((randomValue = randomValue - roomTypeWeightings.puzzleRoomWeighting) < 0f)
 		{
 			return RoomType.Puzzle;
 		}
-		if ((randomValue = randomValue - randomEnemiesRoomWeighting) < 0f)
+		if ((randomValue = randomValue - roomTypeWeightings.enemiesRoomWeighting) < 0f)
 		{
 			return RoomType.Enemies;
 		}
-		if ((randomValue = randomValue - randomTreasureRoomWeighting) < 0f)
+		if ((randomValue = randomValue - roomTypeWeightings.treasureRoomWeighting) < 0f)
 		{
 			return RoomType.Treasure;
 		}
@@ -262,7 +253,7 @@ public class PlanetGenerator : MonoBehaviour
 		right.Lock(Direction.Left, lockColour);
 	}
 
-	private Vector2Int AddDirection(Vector2Int v, Direction dir)
+	private IntPair AddDirection(IntPair v, Direction dir)
 	{
 		switch (dir)
 		{
@@ -282,25 +273,9 @@ public class PlanetGenerator : MonoBehaviour
 		return v;
 	}
 
-	public bool Go(Direction direction)
-	{
-		activeRoom = activeRoom.GetRoom(direction) ?? activeRoom;
-		LoadCurrentRoom();
-		OnRoomChanged?.Invoke(activeRoom, direction);
-		return true;
-	}
+	private Room GetRoomAtPosition(PlanetData data, int x, int y) => GetRoomAtPosition(data, new IntPair(x, y));
 
-	private void LoadCurrentRoom()
-	{
-		viewer.ShowRoom(planetData, activeRoom,
-			activeRoom.position * activeRoom.GetDimensions());
-	}
+	private Room GetRoomAtPosition(PlanetData data, IntPair position) => data.GetRoomAtPosition(position);
 
-	private Room GetRoomAtPosition(int x, int y) => GetRoomAtPosition(new Vector2Int(x, y));
-
-	private Room GetRoomAtPosition(Vector2Int position) => planetData.GetRoomAtPosition(position);
-
-	private bool RoomExists(Vector2Int position) => GetRoomAtPosition(position) != null;
-
-	public Room GetActiveRoom() => activeRoom;
+	private bool RoomExists(PlanetData data, IntPair position) => GetRoomAtPosition(data, position) != null;
 }

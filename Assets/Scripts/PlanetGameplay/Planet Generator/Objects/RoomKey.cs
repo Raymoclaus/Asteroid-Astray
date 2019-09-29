@@ -3,6 +3,7 @@ using UnityEngine;
 using TileLightsPuzzle;
 using BlockPushPuzzle;
 
+[System.Serializable]
 public class RoomKey : RoomObject
 {
 	public enum KeyColour
@@ -30,24 +31,24 @@ public class RoomKey : RoomObject
 
 	private void FindNewPlaceInMaze(MazePuzzle.Maze maze)
 	{
-		List<Vector2Int> path = maze.GetLongestPath();
+		List<IntPair> path = maze.GetLongestPath();
 		SetPosition(path[path.Count - 1]);
 	}
 
 	private void FindNewPlaceForTileLightsPuzzle(TileGrid tileGrid)
 	{
-		Vector2Int roomCenter = room.GetCenterInt();
+		IntPair roomCenter = room.GetCenterInt();
 		int puzzleHeight = tileGrid.GridSize.y;
-		SetPosition(new Vector2Int(roomCenter.x, roomCenter.y + puzzleHeight / 2 + 1));
+		SetPosition(new IntPair(roomCenter.x, roomCenter.y + puzzleHeight / 2 + 1));
 		hidden = true;
 		tileGrid.OnPuzzleCompleted += RevealKey;
 	}
 
 	private void FindNewPlaceForBlockPushPuzzle(PushPuzzle puzzle)
 	{
-		Vector2Int roomCenter = room.GetCenterInt();
+		IntPair roomCenter = room.GetCenterInt();
 		int puzzleHeight = puzzle.GridSize.y;
-		SetPosition(new Vector2Int(roomCenter.x, roomCenter.y + puzzleHeight / 2 - 1));
+		SetPosition(new IntPair(roomCenter.x, roomCenter.y + puzzleHeight / 2 - 1));
 		hidden = true;
 		puzzle.OnPuzzleCompleted += RevealKey;
 	}

@@ -5,6 +5,13 @@ public abstract class MovementBehaviour : MonoBehaviour
 {
 	public delegate void RollEventHandler(Vector3 direction);
 	public event RollEventHandler OnRoll;
+	protected void TriggerRoll(Vector3 direction) => OnRoll?.Invoke(direction);
+	public delegate void BlockEventHandler(Vector3 direction);
+	public event BlockEventHandler OnBlock;
+	protected void TriggerBlock(Vector3 direction) => OnBlock?.Invoke(direction);
+	public delegate void StopBlockingEventHandler();
+	public event StopBlockingEventHandler OnStopBlocking;
+	protected void TriggerStopBlocking() => OnStopBlocking?.Invoke();
 
 	private IPhysicsController physicsController;
 	private IPhysicsController PhysicsController
@@ -53,7 +60,7 @@ public abstract class MovementBehaviour : MonoBehaviour
 
 	protected virtual float Speed => OriginalSpeed;
 
-	public Vector3 MovementDirection => PhysicsController?.GetMovementDirection ?? Vector3.up;
+	public Vector3 MovementDirection => PhysicsController?.MovementDirection ?? Vector3.up;
 
 	protected virtual float MovementSmoothingPower => 0f;
 
@@ -75,6 +82,4 @@ public abstract class MovementBehaviour : MonoBehaviour
 
 	protected void FaceDirection(Vector3 direction)
 		=> PhysicsController?.FaceDirection(direction);
-
-	protected void TriggerRoll(Vector3 direction) => OnRoll?.Invoke(direction);
 }

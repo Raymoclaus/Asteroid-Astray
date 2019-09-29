@@ -131,7 +131,6 @@ public class GatherBot : Character, IStunnable, ICombat
 	private float stunTimer = 0f;
 	public float drillDamageResistance = 2f;
 	[SerializeField] private ExpandingCircle forcePulseWave;
-	[SerializeField] private List<Loot> loot;
 	private bool straightWeaponAttached = false;
 	private bool readyToFire = false;
 	[SerializeField] private ColorReplacement colorReplacement;
@@ -163,7 +162,11 @@ public class GatherBot : Character, IStunnable, ICombat
 
 	protected virtual void OnSpawn()
 	{
-		if (!hive) DestroySelf(false, null);
+		if (hive == null)
+		{
+			DestroySelf(null, 0f);
+		}
+
 		ActivateRenderers(false);
 	}
 
@@ -318,7 +321,7 @@ public class GatherBot : Character, IStunnable, ICombat
 			if (distLeft <= 1f)
 			{
 				if (targetEntity.TakeDrillDamage(DrillDamageQuery(false),
-					drill.transform.position, this))
+					drill.transform.position, this, 1f))
 				{
 					DrillComplete();
 				}
@@ -586,7 +589,7 @@ public class GatherBot : Character, IStunnable, ICombat
 		}
 		else
 		{
-			DestroySelf(true, destroyer, dropModifier);
+			DestroySelf(destroyer, dropModifier);
 		}
 	}
 
@@ -1220,11 +1223,11 @@ public class GatherBot : Character, IStunnable, ICombat
 		return Vector2.Distance(transform.position, enemyPos) < chaseRange;
 	}
 
-	public override bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer,
-		int dropModifier = 0, bool flash = true)
+	public override bool TakeDamage(float damage, Vector2 damagePos,
+		Entity destroyer, float dropModifier, bool flash)
 	{
 		bool dead = base.TakeDamage(damage, damagePos, destroyer, dropModifier, flash);
-		if (dead) return CheckHealth(destroyer, dropModifier);
+		if (dead) return true;
 		//cannot be hit by projectiles from self or siblings
 		if (!IsSibling(destroyer) && destroyer != hive)
 		{
@@ -1241,7 +1244,7 @@ public class GatherBot : Character, IStunnable, ICombat
 				}
 			}
 		}
-		return CheckHealth(destroyer, dropModifier);
+		return false;
 	}
 
 	public override void DrillComplete()
@@ -1283,8 +1286,9 @@ public class GatherBot : Character, IStunnable, ICombat
 		return currentHP <= 0f;
 	}
 
-	public void DestroySelf(bool explode, Entity destroyer, int dropModifier = 0)
+	public override void DestroySelf(Entity destroyer, float dropModifier)
 	{
+		bool explode = destroyer != null;
 		if (explode)
 		{
 			//particle effects
@@ -1292,48 +1296,31 @@ public class GatherBot : Character, IStunnable, ICombat
 			explosion.transform.position = transform.position;
 
 			//sound effects
-
-			//drop resources
-			DropLoot(destroyer, transform.position, dropModifier);
 		}
 		for (int i = 0; i < enemies.Count; i++)
 		{
 			ICombat enemy = enemies[i];
 			enemy.DisengageInCombat(this);
 		}
-		hive?.BotDestroyed(this);
-		base.DestroySelf(destroyer);
-	}
-
-	private void DropLoot(Entity destroyer, Vector2 pos, int dropModifier = 0)
-	{
-		particleGenerator = particleGenerator ?? FindObjectOfType<ParticleGenerator>();
-
-		for (int i = 0; i < storage.stacks.Count; i++)
+		if (hive != null)
 		{
-			ItemStack stack = storage.stacks[i];
-			if (stack.GetItemType() == Item.Type.Blank) continue;
-			particleGenerator.DropResource(destroyer, pos, stack.GetItemType(), stack.GetAmount());
+			hive.BotDestroyed(this);
 		}
-
-		for (int i = 0; i < loot.Count; i++)
-		{
-			ItemStack stack = loot[i].GetStack();
-			particleGenerator.DropResource(destroyer, pos, stack.GetItemType(), stack.GetAmount());
-		}
+		
+		base.DestroySelf(destroyer, dropModifier);
 	}
 
 	public override float DrillDamageQuery(bool firstHit) => speedLimit;
 
-	public override void CollectResources(Item.Type type, int amount)
+	public override int CollectItem(ItemStack stack)
 	{
-		storage.AddItem(type, num: amount);
-		itemsCollected += amount;
-		if (itemsCollected >= storageCapacity)
+		int collectedAmount = base.CollectItem(stack);
+		if (collectedAmount >= storageCapacity)
 		{
 			SetState(AIState.Storing);
 		}
 		waitingForResources = false;
+		return collectedAmount;
 	}
 
 	public override EntityType GetEntityType() => EntityType.GatherBot;

@@ -5,9 +5,9 @@ public class PlanetRoomTileLight : PlanetNonSolid
 	[SerializeField] private SpriteRenderer sprRend;
 	private RoomTileLight roomTileLight;
 
-	public override void Setup(Room room, RoomObject roomObject, PlanetVisualData dataSet)
+	public override void Setup(RoomViewer roomViewer, Room room, RoomObject roomObject, PlanetVisualData dataSet)
 	{
-		base.Setup(room, roomObject, dataSet);
+		base.Setup(roomViewer, room, roomObject, dataSet);
 
 		roomTileLight = (RoomTileLight)roomObject;
 		if (roomTileLight.puzzleCompleted)

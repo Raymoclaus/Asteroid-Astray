@@ -1,19 +1,20 @@
 ﻿using UnityEngine;
 using BlockPushPuzzle;
 
+[System.Serializable]
 public class RoomPushableBlock : RoomObject
 {
 	private PushPuzzle blockPushPuzzle;
-	private Vector2Int puzzlePos;
+	private IntPair puzzlePos;
 
-	public delegate void PushedEventHandler(Vector2Int direction, float time);
+	public delegate void PushedEventHandler(IntPair direction, float time);
 	public event PushedEventHandler OnPushed;
 	public delegate void DeactivatedEventHandler();
 	public event DeactivatedEventHandler OnDeactivated;
 
 	public bool activated = true;
 
-	public RoomPushableBlock(PushPuzzle blockPushPuzzle, Vector2Int puzzlePos)
+	public RoomPushableBlock(PushPuzzle blockPushPuzzle, IntPair puzzlePos)
 	{
 		this.blockPushPuzzle = blockPushPuzzle;
 		blockPushPuzzle.OnPuzzleCompleted += Deactivate;
@@ -23,10 +24,10 @@ public class RoomPushableBlock : RoomObject
 
 	public override ObjType GetObjectType() => ObjType.PushableBlock;
 
-	public void Push(Vector2Int direction)
+	public void Push(IntPair direction)
 		=> blockPushPuzzle.PushBlock(puzzlePos, direction);
 
-	private void Move(Vector2Int pos, Vector2Int dir, float time)
+	private void Move(IntPair pos, IntPair dir, float time)
 	{
 		if (pos != puzzlePos) return;
 		puzzlePos += dir;

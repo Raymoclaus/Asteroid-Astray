@@ -90,12 +90,12 @@ public class ParticleGenerator : MonoBehaviour
 		}
 	}
 
-	public void DropResource(Entity target, Vector2 pos, Item.Type type = Item.Type.Stone, int amount = 1)
+	public void DropResource(Entity target, Vector2 pos, Item.Type type)
 	{
-		if (type == Item.Type.Blank || amount <= 0) return;
+		if (type == Item.Type.Blank) return;
 
 		ResourceDrop rd = Instantiate(dropPrefab);
-		rd.Create(target, pos, type, amount);
+		rd.Create(target, pos, type);
 	}
 
 	private class ParticlePropertyManager

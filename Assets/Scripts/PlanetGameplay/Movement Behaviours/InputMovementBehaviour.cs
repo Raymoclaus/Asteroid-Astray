@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using InputHandler;
 
-public class InputBehaviour : MovementBehaviour
+public class InputMovementBehaviour : MovementBehaviour
 {
 	protected void Update() => GetMovementInput();
 

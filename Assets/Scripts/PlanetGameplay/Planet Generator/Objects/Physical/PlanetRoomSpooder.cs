@@ -23,37 +23,28 @@ public class PlanetRoomSpooder : PlanetRoomEnemy
 	private CriticalDistanceBehaviour FleeingBehaviour
 		=> fleeingBehaviour ?? (fleeingBehaviour = GetComponent<CriticalDistanceBehaviour>());
 
-	[SerializeField] private float rollIFrameDuration = 0.4f;
-	[SerializeField] private float rollSpeed = 0.3f;
-	[SerializeField] private float rollDuration = 1f;
-	private string rollTimerID;
-	private Vector3 RollDirection { get; set; }
+	[SerializeField] private AttackManager attackPrefab;
 	[SerializeField] private float meleeRange = 1f;
 	[SerializeField] private float meleeAttackRecoveryTime = 1f;
 	[SerializeField] private float meleeAttackCooldownTime = 3f;
-	private string attackRecoveryTimerID, attackCooldownTimerID;
+	private string attackCooldownTimerID;
+	[SerializeField] private float meleeAttackDamage = 10f;
+	[SerializeField] private float meleeAttackStunDuration = 0.2f;
 
 	protected override void Awake()
 	{
 		base.Awake();
 
 		RollingBehaviour.OnRoll += Roll;
-		attackRecoveryTimerID = gameObject.GetInstanceID() + "Attack Recovery Timer";
-		TimerTracker.AddTimer(attackRecoveryTimerID, 0f, null, null);
 		attackCooldownTimerID = gameObject.GetInstanceID() + "Attack Cooldown Timer";
 		TimerTracker.AddTimer(attackCooldownTimerID, 0f, null, null);
-		rollTimerID = gameObject.GetInstanceID() + "Roll Timer";
-		TimerTracker.AddTimer(rollTimerID, 0f, null, null);
-
-		ChasingBehaviour.SetTarget(player.Pivot);
-		FleeingBehaviour.SetTarget(player.Pivot);
 	}
 
 	protected override void Update()
 	{
 		base.Update();
 
-		if (player.Room != room) return;
+		if (!PlayerInRoom) return;
 
 		switch (state)
 		{
@@ -75,62 +66,50 @@ public class PlanetRoomSpooder : PlanetRoomEnemy
 		}
 	}
 
-	protected void FixedUpdate()
+	protected override void FindPlayer()
 	{
-		if (IsRolling)
-		{
-			float delta = RollTimer / rollDuration;
-			PhysicsController.SetVelocity(RollDirection * rollSpeed * delta);
-		}
+		base.FindPlayer();
+		ChasingBehaviour.SetTarget(player?.Pivot);
+		FleeingBehaviour.SetTarget(player?.Pivot);
 	}
 
 	private bool AttackOnCooldown => TimerTracker.GetTimer(attackCooldownTimerID) > 0f;
 
-	private bool RecoveringFromAttack => TimerTracker.GetTimer(attackRecoveryTimerID) > 0f;
-
 	private bool ShouldAttack
 		=> !IsStunned
 		&& !IsRolling
-		&& TimerTracker.GetTimer(attackRecoveryTimerID) <= 0f;
+		&& !RecoveringFromAction;
 
 	private bool ShouldMeleeAttack
 		=> ShouldAttack
 		&& DistanceToPlayer <= meleeRange
 		&& !AttackOnCooldown;
 
-	private float RollTimer => TimerTracker.GetTimer(rollTimerID);
-
-	private bool IsRolling => RollTimer > 0f;
-
 	private void MeleeAttack()
 	{
-		Debug.Log("Attack");
+		AttackManager atkM = Instantiate(attackPrefab);
+
+		Transform tr = atkM.transform;
+		Vector3 movementDirection = PhysicsController.MovementDirection;
+		Vector3 attackPos = GetPivotPosition() + movementDirection;
+		tr.position = attackPos;
+		float angle = Vector2.SignedAngle(Vector2.up, movementDirection);
+		tr.eulerAngles = Vector3.forward * angle;
+
+		atkM.AddAttackComponent<DamageComponent>(meleeAttackDamage);
+		atkM.AddAttackComponent<DestroyAfterTimeComponent>(0.1f);
+		atkM.AddAttackComponent<DirectionComponent>(movementDirection);
+		atkM.AddAttackComponent<OwnerComponent>(this);
+		atkM.AddAttackComponent<KnockbackComponent>(movementDirection * meleeAttackDamage);
+		atkM.AddAttackComponent<StunComponent>(meleeAttackStunDuration);
 
 		state = State.Fleeing;
-		TimerTracker.SetTimer(attackRecoveryTimerID, meleeAttackRecoveryTime);
+		TimerTracker.SetTimer(actionRecoveryTimerID, meleeAttackRecoveryTime);
 		TimerTracker.SetTimer(attackCooldownTimerID, meleeAttackCooldownTime);
-		if (RecoveringFromAttack)
+		if (RecoveringFromAction)
 		{
 			PhysicsController.PreventMovementInputForDuration(meleeAttackRecoveryTime);
 			PhysicsController.SlowDown();
 		}
 	}
-
-	protected override void Roll(Vector3 direction)
-	{
-		if (!CanRoll) return;
-		base.Roll(direction);
-
-		TimerTracker.SetTimer(rollTimerID, rollDuration);
-		if (IsRolling)
-		{
-			RollDirection = direction;
-			DeactivateHitboxForDuration(rollIFrameDuration);
-		}
-	}
-
-	protected bool CanRoll
-		=> !IsStunned
-		&& !RecoveringFromAttack
-		&& !IsRolling;
 }

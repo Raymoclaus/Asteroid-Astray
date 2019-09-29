@@ -6,14 +6,14 @@ namespace BlockPushPuzzle
 {
 	public class BlockPushGenerator
 	{
-		private List<Vector2Int> visitedSpots = new List<Vector2Int>();
-		private List<Vector2Int> trimmedVisitedSpots = new List<Vector2Int>();
+		private List<IntPair> visitedSpots = new List<IntPair>();
+		private List<IntPair> trimmedVisitedSpots = new List<IntPair>();
 		private int trimSize = 4;
-		private Vector2Int currentPos, previousPos;
-		private Vector2Int previousDirection;
-		private List<Vector2Int> startingDirections;
+		private IntPair currentPos, previousPos;
+		private IntPair previousDirection;
+		private List<IntPair> startingDirections;
 
-		public PushPuzzle Generate(Vector2Int size, int padding, int minimumSolutionCount = 2)
+		public PushPuzzle Generate(IntPair size, int padding, int minimumSolutionCount = 2)
 		{
 			PushPuzzle puzzle = new PushPuzzle(size, padding);
 			Reset(puzzle);
@@ -30,22 +30,22 @@ namespace BlockPushPuzzle
 
 				if (!puzzle.IsNearOuterEdge(currentPos, 2))
 				{
-					List<Vector2Int> possibleDirections = new List<Vector2Int>()
+					List<IntPair> possibleDirections = new List<IntPair>()
 					{
-						new Vector2Int(1, 0),
-						new Vector2Int(-1, 0),
-						new Vector2Int(0, 1),
-						new Vector2Int(0, -1)
+						new IntPair(1, 0),
+						new IntPair(-1, 0),
+						new IntPair(0, 1),
+						new IntPair(0, -1)
 					};
-					List<Vector2Int> emergencyDirections = new List<Vector2Int>();
-					Vector2Int randomDirection = Vector2Int.zero;
-					Vector2Int nextPos = currentPos + randomDirection;
+					List<IntPair> emergencyDirections = new List<IntPair>();
+					IntPair randomDirection = IntPair.zero;
+					IntPair nextPos = currentPos + randomDirection;
 
 					bool foundValidDirection = false;
 					while (possibleDirections.Count > 0
 						|| emergencyDirections.Count > 0)
 					{
-						List<Vector2Int> listToUse = possibleDirections.Count > 0 ?
+						List<IntPair> listToUse = possibleDirections.Count > 0 ?
 							possibleDirections : emergencyDirections;
 						int randomIndex = Random.Range(0, listToUse.Count);
 						randomDirection = listToUse[randomIndex];
@@ -89,7 +89,7 @@ namespace BlockPushPuzzle
 					if (!foundValidDirection) continue;
 
 					previousDirection = randomDirection;
-					Vector2Int oppositePos = currentPos - randomDirection;
+					IntPair oppositePos = currentPos - randomDirection;
 
 					if (!puzzle.IsNearOuterEdge(oppositePos, 2)
 						&& puzzle.BlockExists(oppositePos))
@@ -142,7 +142,7 @@ namespace BlockPushPuzzle
 			while (startingDirections.Count > 0)
 			{
 				currentPos = puzzle.finishTile;
-				Vector2Int forwardCheck =
+				IntPair forwardCheck =
 					puzzle.finishTile + startingDirections[0] * 3;
 				if (!puzzle.ListContainsNearPosition(
 					trimmedVisitedSpots, forwardCheck, 2))
@@ -167,12 +167,12 @@ namespace BlockPushPuzzle
 		private void Reset(PushPuzzle puzzle)
 		{
 			puzzle.Reset();
-			startingDirections = new List<Vector2Int>()
+			startingDirections = new List<IntPair>()
 			{
-				new Vector2Int(1, 0),
-				new Vector2Int(-1, 0),
-				new Vector2Int(0, 1),
-				new Vector2Int(0, -1)
+				new IntPair(1, 0),
+				new IntPair(-1, 0),
+				new IntPair(0, 1),
+				new IntPair(0, -1)
 			};
 			visitedSpots.Clear();
 			trimmedVisitedSpots.Clear();
@@ -187,10 +187,10 @@ namespace BlockPushPuzzle
 				VisitSpot(currentPos);
 			}
 			startingDirections.RemoveAt(0);
-			previousDirection = Vector2Int.zero;
+			previousDirection = IntPair.zero;
 		}
 
-		private void VisitSpot(Vector2Int position)
+		private void VisitSpot(IntPair position)
 		{
 			AddToListExcludingDuplicates(visitedSpots, currentPos);
 			if (visitedSpots.Count >= trimSize)

@@ -1,24 +1,22 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(VicinityTrigger))]
 public abstract class PlanetVicinityTrigger : PlanetRoomObject
 {
-	private VicinityTrigger trigger;
-	private VicinityTrigger Trigger => trigger ?? (trigger = GetComponent<VicinityTrigger>());
+	[SerializeField] private VicinityTrigger trigger;
 
 	protected List<PlanetTriggerer> nearbyActors = new List<PlanetTriggerer>();
 
 	private void OnEnable()
 	{
-		Trigger.OnEnterTrigger += Triggered;
-		Trigger.OnExitedTrigger += UnTriggered;
+		trigger.OnEnterTrigger += Triggered;
+		trigger.OnExitedTrigger += UnTriggered;
 	}
 
 	private void OnDisable()
 	{
-		Trigger.OnEnterTrigger -= Triggered;
-		Trigger.OnExitedTrigger -= UnTriggered;
+		trigger.OnEnterTrigger -= Triggered;
+		trigger.OnExitedTrigger -= UnTriggered;
 	}
 
 	protected virtual bool IsTriggered() => nearbyActors.Count > 0;

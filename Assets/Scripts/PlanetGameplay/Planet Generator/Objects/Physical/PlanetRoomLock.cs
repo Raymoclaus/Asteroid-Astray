@@ -8,9 +8,9 @@ public class PlanetRoomLock : PlanetInteractable
 	public RoomKey.KeyColour colour;
 	public Direction direction;
 
-	public override void Setup(Room room, RoomObject roomObject, PlanetVisualData dataSet)
+	public override void Setup(RoomViewer roomViewer, Room room, RoomObject roomObject, PlanetVisualData dataSet)
 	{
-		base.Setup(room, roomObject, dataSet);
+		base.Setup(roomViewer, room, roomObject, dataSet);
 
 		RoomLock lockObj = (RoomLock)roomObject;
 		colour = lockObj.colour;

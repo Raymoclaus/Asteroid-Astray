@@ -1,5 +1,6 @@
 ﻿using TileLightsPuzzle;
 
+[System.Serializable]
 public class RoomTileLight : RoomObject
 {
 	public bool flipped;

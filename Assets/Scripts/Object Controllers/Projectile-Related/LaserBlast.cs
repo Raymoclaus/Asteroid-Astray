@@ -133,7 +133,7 @@ public class LaserBlast : MonoBehaviour, IProjectile
 			pitch: Random.value * 0.2f + 0.9f);
 		}
 		//report damage calculation to the object taking the damage
-		obj.TakeDamage(damageCalc, contactPoint, parent);
+		obj.TakeDamage(damageCalc, contactPoint, parent, 1f, true);
 		//destroy projectile
 		Dissipate();
 	}

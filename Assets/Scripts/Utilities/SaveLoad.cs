@@ -7,7 +7,7 @@ public static class SaveLoad
 	private static readonly string path = Application.persistentDataPath + "/saves/",
 		extension = ".txt";
 
-	public static void Save<T>(T objectToSave, string key)
+	public static void Save(string key, object objectToSave)
 	{
 		Directory.CreateDirectory(path);
 		BinaryFormatter formatter = new BinaryFormatter();

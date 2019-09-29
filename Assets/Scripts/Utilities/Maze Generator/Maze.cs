@@ -6,12 +6,12 @@ namespace MazePuzzle
 	public class Maze
 	{
 		private bool[] walls;
-		private Vector2Int size;
-		private Vector2Int[] exits;
-		private List<Vector2Int> visitedExits = new List<Vector2Int>();
-		private List<Vector2Int> longestPath;
+		private IntPair size;
+		private IntPair[] exits;
+		private List<IntPair> visitedExits = new List<IntPair>();
+		private List<IntPair> longestPath;
 
-		public Maze(Vector2Int size, Vector2Int[] exits, bool startEmpty = false)
+		public Maze(IntPair size, IntPair[] exits, bool startEmpty = false)
 		{
 			this.size = size;
 			walls = new bool[size.x * size.y];
@@ -24,15 +24,15 @@ namespace MazePuzzle
 		}
 
 		//converting x, y position to index that accesses the array
-		public int Index(Vector2Int pos) => Index(pos.x, pos.y);
+		public int Index(IntPair pos) => Index(pos.x, pos.y);
 		public int Index(int x, int y) => y * size.x + x;
 
 		//returns whether that position is a wall or not
-		public bool IsWall(Vector2Int pos) => IsWall(pos.x, pos.y);
+		public bool IsWall(IntPair pos) => IsWall(pos.x, pos.y);
 		public bool IsWall(int x, int y) => walls[Index(x, y)] || IsUnvisitedExit(x, y);
 
 		//returns the amount of walls adjacent to the spot
-		public int SurroundingWallCount(Vector2Int pos) => SurroundingWallCount(pos.x, pos.y);
+		public int SurroundingWallCount(IntPair pos) => SurroundingWallCount(pos.x, pos.y);
 		public int SurroundingWallCount(int x, int y)
 		{
 			int count = 0;
@@ -44,7 +44,7 @@ namespace MazePuzzle
 		}
 
 		//returns the amount of walls diagonal to the spot
-		public int SurroundingDiagonalWallCount(Vector2Int pos)
+		public int SurroundingDiagonalWallCount(IntPair pos)
 			=> SurroundingDiagonalWallCount(pos.x, pos.y);
 		public int SurroundingDiagonalWallCount(int x, int y)
 		{
@@ -57,18 +57,18 @@ namespace MazePuzzle
 		}
 
 		//returns the amount of walls surrounding the spot including diagonals
-		public int SurroundingEightWallCount(Vector2Int pos)
+		public int SurroundingEightWallCount(IntPair pos)
 			=> SurroundingEightWallCount(pos.x, pos.y);
 		public int SurroundingEightWallCount(int x, int y)
 			=> SurroundingWallCount(x, y) + SurroundingDiagonalWallCount(x, y);
 
 		//returns whether the spot is on the edge of the maze
-		public bool IsOuterWall(Vector2Int pos) => IsOuterWall(pos.x, pos.y);
+		public bool IsOuterWall(IntPair pos) => IsOuterWall(pos.x, pos.y);
 		public bool IsOuterWall(int x, int y)
 			=> x == 0 || y == 0 || x == size.x - 1 || y == size.y - 1;
 
 		//returns whether the spot is an exit point
-		public bool IsExit(Vector2Int pos) => IsExit(pos.x, pos.y);
+		public bool IsExit(IntPair pos) => IsExit(pos.x, pos.y);
 		public bool IsExit(int x, int y)
 		{
 			for (int i = 0; i < exits.Length; i++)
@@ -79,7 +79,7 @@ namespace MazePuzzle
 		}
 
 		//returns whether the spot is an unvisited exit point
-		public bool IsUnvisitedExit(Vector2Int pos) => IsUnvisitedExit(pos.x, pos.y);
+		public bool IsUnvisitedExit(IntPair pos) => IsUnvisitedExit(pos.x, pos.y);
 		public bool IsUnvisitedExit(int x, int y)
 		{
 			if (!IsExit(x, y)) return false;
@@ -92,7 +92,7 @@ namespace MazePuzzle
 		}
 
 		//returns whether the spot is a wall that cannot be passed through
-		public bool IsHardWall(Vector2Int pos) => IsHardWall(pos.x, pos.y);
+		public bool IsHardWall(IntPair pos) => IsHardWall(pos.x, pos.y);
 		public bool IsHardWall(int x, int y)
 		{
 			if (IsOuterWall(x, y)) return true;
@@ -137,17 +137,17 @@ namespace MazePuzzle
 		}
 
 		//returns whether the spot is a wall but doesn't meet the requirements of being a hard wall
-		public bool IsSoftWall(Vector2Int pos) => IsSoftWall(pos.x, pos.y);
+		public bool IsSoftWall(IntPair pos) => IsSoftWall(pos.x, pos.y);
 		public bool IsSoftWall(int x, int y) => !IsHardWall(x, y) && IsWall(x, y);
 
 		//returns a random position adjacent to pos that is considered a soft wall
 		//return (-1, -1) if no soft wall is found
-		public Vector2Int GetRandomSurroundingSoftWall(Vector2Int pos)
+		public IntPair GetRandomSurroundingSoftWall(IntPair pos)
 			=> GetRandomSurroundingSoftWall(pos.x, pos.y);
-		public Vector2Int GetRandomSurroundingSoftWall(int x, int y)
+		public IntPair GetRandomSurroundingSoftWall(int x, int y)
 		{
-			List<Vector2Int> arr = new List<Vector2Int>();
-			Vector2Int pos = new Vector2Int(x, y);
+			List<IntPair> arr = new List<IntPair>();
+			IntPair pos = new IntPair(x, y);
 			pos.x++;
 			if (IsSoftWall(pos)) arr.Add(pos);
 			pos.x -= 2;
@@ -158,7 +158,7 @@ namespace MazePuzzle
 			pos.y -= 2;
 			if (IsSoftWall(pos)) arr.Add(pos);
 
-			if (arr.Count == 0) return Vector2Int.one * -1;
+			if (arr.Count == 0) return IntPair.one * -1;
 
 			int randomIndex = Random.Range(0, arr.Count);
 			return arr[randomIndex];
@@ -166,10 +166,10 @@ namespace MazePuzzle
 
 		//returns the position of an adjacent unvisited exit
 		//if no valid target is found, returns (-1, -1)
-		public Vector2Int NearbyUnvisitedExit(Vector2Int pos) => NearbyUnvisitedExit(pos.x, pos.y);
-		public Vector2Int NearbyUnvisitedExit(int x, int y)
+		public IntPair NearbyUnvisitedExit(IntPair pos) => NearbyUnvisitedExit(pos.x, pos.y);
+		public IntPair NearbyUnvisitedExit(int x, int y)
 		{
-			Vector2Int pos = new Vector2Int(x, y);
+			IntPair pos = new IntPair(x, y);
 			pos.x++;
 			if (IsUnvisitedExit(pos)) return pos;
 			pos.x -= 2;
@@ -179,33 +179,33 @@ namespace MazePuzzle
 			if (IsUnvisitedExit(pos)) return pos;
 			pos.y -= 2;
 			if (IsUnvisitedExit(pos)) return pos;
-			return Vector2Int.one * -1;
+			return IntPair.one * -1;
 		}
 
 		//sets an exit to be treated as "visited"
-		public void VisitExit(Vector2Int pos) => VisitExit(pos.x, pos.y);
+		public void VisitExit(IntPair pos) => VisitExit(pos.x, pos.y);
 		public void VisitExit(int x, int y)
 		{
 			if (!IsExit(x, y) || !IsUnvisitedExit(x, y)) return;
-			visitedExits.Add(new Vector2Int(x, y));
+			visitedExits.Add(new IntPair(x, y));
 		}
 
 		//sets the position in the maze to be a wall
-		public void Set(Vector2Int pos, bool wall) => Set(pos.x, pos.y, wall);
+		public void Set(IntPair pos, bool wall) => Set(pos.x, pos.y, wall);
 		public void Set(int x, int y, bool wall) => walls[Index(x, y)] = wall;
 
 		public bool Get(int index) => walls[index];
 
 		public int ArrayLength() => walls.Length;
 
-		public Vector2Int GetSize() => size;
+		public IntPair GetSize() => size;
 
-		public Vector2Int GetPos(int index) => new Vector2Int(index % size.x, index / size.x);
+		public IntPair GetPos(int index) => new IntPair(index % size.x, index / size.x);
 
-		public Vector2Int[] GetExits() => exits;
+		public IntPair[] GetExits() => exits;
 
-		public void SetLongestPath(List<Vector2Int> path) => longestPath = path;
+		public void SetLongestPath(List<IntPair> path) => longestPath = path;
 
-		public List<Vector2Int> GetLongestPath() => longestPath;
+		public List<IntPair> GetLongestPath() => longestPath;
 	}
 }

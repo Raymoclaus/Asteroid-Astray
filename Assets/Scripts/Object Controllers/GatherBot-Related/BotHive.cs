@@ -34,12 +34,11 @@ public class BotHive : Character, ICombat
 	private float emptyCoordWaitTime = 300f;
 	public WaitForSeconds maintenanceTime = new WaitForSeconds(3f);
 	private List<ICombat> enemies = new List<ICombat>();
-	[SerializeField] private List<Loot> lootDrops;
 	[SerializeField] private float burnTime = 3f;
 	private float burnTimer = 0f;
 	private bool burning = false;
 	private Entity destroyerEntity;
-	private int dropModifierOnDeath;
+	private float dropModifierOnDeath;
 
 	//cache
 	private List<ChunkCoords> botOccupiedCoords = new List<ChunkCoords>();
@@ -67,15 +66,15 @@ public class BotHive : Character, ICombat
 		initialised = true;
 	}
 
-	private void Update()
+	protected override void Update()
 	{
+		base.Update();
 		if (burning)
 		{
-
 			burnTimer += Time.deltaTime;
 			if (burnTimer >= burnTime)
 			{
-				DestroySelf(true, destroyerEntity, dropModifierOnDeath);
+				DestroySelf(destroyerEntity, dropModifierOnDeath);
 			}
 			return;
 		}
@@ -298,17 +297,17 @@ public class BotHive : Character, ICombat
 		SpendResources(b);
 	}
 
-	public override bool TakeDamage(float damage, Vector2 damagePos, Entity destroyer,
-		int dropModifier = 0, bool flash = true)
+	public override bool TakeDamage(float damage, Vector2 damagePos,
+		Entity destroyer, float dropModifier, bool flash)
 	{
 		bool dead = base.TakeDamage(damage, damagePos, destroyer, dropModifier, flash);
-		if (dead) return CheckHealth(destroyer, dropModifier);
+		if (dead) return true;
 		ICombat threat = destroyer.GetICombat();
 		if (threat != null && threat.EngageInCombat(this))
 		{
 			EngageInCombat(threat);
 		}
-		return CheckHealth(destroyer, dropModifier);
+		return false;
 	}
 
 	private void AlertBots(ICombat threat)
@@ -329,7 +328,7 @@ public class BotHive : Character, ICombat
 		}
 	}
 
-	private bool CheckHealth(Entity destroyer, int dropModifier = 0)
+	protected override bool CheckHealth(Entity destroyer, float dropModifier)
 	{
 		if (currentHP > 0f) return false;
 		destroyerEntity = destroyer;
@@ -344,11 +343,12 @@ public class BotHive : Character, ICombat
 			enemy.DisengageInCombat(this);
 		}
 		EjectFromAllDrillers(true);
-		return currentHP <= 0f;
+		return base.CheckHealth(destroyer, dropModifier);
 	}
 
-	private void DestroySelf(bool explode, Entity destroyer, int dropModifier = 0)
+	public override void DestroySelf(Entity destroyer, float dropModifier)
 	{
+		bool explode = destroyer != null;
 		if (explode)
 		{
 			//particle effects
@@ -356,9 +356,6 @@ public class BotHive : Character, ICombat
 			explosion.transform.position = transform.position;
 
 			//sound effects
-
-			//drop resources
-			DropLoot(destroyer, transform.position, dropModifier);
 		}
 
 		//self destruct all child bots
@@ -366,28 +363,10 @@ public class BotHive : Character, ICombat
 		{
 			if (childBots[i] != null)
 			{
-				childBots[i].DestroySelf(explode, destroyer, dropModifier);
+				childBots[i].DestroySelf(destroyer, dropModifier);
 			}
 		}
-		base.DestroySelf(destroyer);
-	}
-
-	private void DropLoot(Entity destroyer, Vector2 pos, int dropModifier = 0)
-	{
-		particleGenerator = particleGenerator ?? FindObjectOfType<ParticleGenerator>();
-
-		for (int i = 0; i < inventory.stacks.Count; i++)
-		{
-			ItemStack stack = inventory.stacks[i];
-			if (stack.GetItemType() == Item.Type.Blank) continue;
-			particleGenerator.DropResource(destroyer, pos, stack.GetItemType(), stack.GetAmount());
-		}
-
-		for (int i = 0; i < lootDrops.Count; i++)
-		{
-			ItemStack stack = lootDrops[i].GetStack();
-			particleGenerator.DropResource(destroyer, pos, stack.GetItemType(), stack.GetAmount());
-		}
+		base.DestroySelf(destroyer, dropModifier);
 	}
 
 	public void MarkCoordAsEmpty(ChunkCoords c)

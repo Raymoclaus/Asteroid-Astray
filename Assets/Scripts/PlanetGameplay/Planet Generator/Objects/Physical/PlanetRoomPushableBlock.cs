@@ -5,10 +5,10 @@ public class PlanetRoomPushableBlock : PlanetInteractable
 {
 	private RoomPushableBlock roomBlock;
 
-	public override void Setup(Room room, RoomObject roomObject,
+	public override void Setup(RoomViewer roomViewer, Room room, RoomObject roomObject,
 		PlanetVisualData dataSet)
 	{
-		base.Setup(room, roomObject, dataSet);
+		base.Setup(roomViewer, room, roomObject, dataSet);
 
 		roomBlock = (RoomPushableBlock)roomObject;
 		if (roomBlock.activated)
@@ -24,9 +24,9 @@ public class PlanetRoomPushableBlock : PlanetInteractable
 
 	protected override bool VerifyPlanetActor(PlanetTriggerer actor)
 	{
-		Vector2Int actorPosition = actor.RoomObj.GetPosition();
-		Vector2Int actorFacingPosition = actorPosition + actor.MovementBehaviour.DirectionValue;
-		Vector2Int currentPosition = GetPosition();
+		IntPair actorPosition = actor.RoomObj.GetPosition();
+		IntPair actorFacingPosition = actorPosition + actor.MovementBehaviour.DirectionValue;
+		IntPair currentPosition = GetPosition();
 		//if actor is not facing this object, return false
 		if (actorFacingPosition != currentPosition) return false;
 		return base.VerifyPlanetActor(actor);
@@ -38,12 +38,12 @@ public class PlanetRoomPushableBlock : PlanetInteractable
 		roomBlock.OnDeactivated -= Deactivate;
 	}
 
-	public void Push(Vector2Int direction) => roomBlock.Push(direction);
+	public void Push(IntPair direction) => roomBlock.Push(direction);
 
-	private void Move(Vector2Int direction, float time)
+	private void Move(IntPair direction, float time)
 	{
 		Vector2 position = transform.position;
-		position += direction;
+		position += direction.ConvertToVector2;
 		StartCoroutine(MoveToPosition(time, position));
 	}
 

@@ -12,8 +12,8 @@ public interface IPhysicsController
 	void SetVelocity(Vector3 direction);
 	bool CanMove { get; }
 	void PreventMovementInputForDuration(float duration);
-	Vector3 GetMovementDirection { get; }
-	Vector3 GetFacingDirection { get; }
+	Vector3 MovementDirection { get; }
+	Vector3 FacingDirection { get; }
 	void FaceDirection(Vector3 direction);
 	bool EnableCollider { get; set; }
 	void DeactivateColliderForDuration(float duration);

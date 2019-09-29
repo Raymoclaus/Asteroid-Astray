@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 
+[System.Serializable]
 public class RoomLock : RoomObject
 {
 	public RoomKey.KeyColour colour;
@@ -13,7 +14,7 @@ public class RoomLock : RoomObject
 		this.direction = direction;
 	}
 
-	private void AdjustPosition(Direction direction, Vector2Int position)
+	private void AdjustPosition(Direction direction, IntPair position)
 	{
 		if (this.direction != direction) return;
 		SetPosition(position);

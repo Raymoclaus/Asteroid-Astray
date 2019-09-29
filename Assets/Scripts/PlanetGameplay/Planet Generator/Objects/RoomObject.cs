@@ -1,15 +1,14 @@
-﻿using UnityEngine;
-
+﻿[System.Serializable]
 public abstract class RoomObject
 {
-	private Vector2Int position;
-	protected Room room;
+	private IntPair position;
+	[System.NonSerialized] protected Room room;
 
-	public delegate void PositionUpdatedEventHandler(Vector2Int position);
+	public delegate void PositionUpdatedEventHandler(IntPair position);
 	public event PositionUpdatedEventHandler OnPositionUpdated;
 
-	public Vector2Int GetPosition() => position;
-	public void SetPosition(Vector2Int position)
+	public IntPair GetPosition() => position;
+	public void SetPosition(IntPair position)
 	{
 		if (this.position == position) return;
 		this.position = position;
@@ -37,6 +36,7 @@ public abstract class RoomObject
 		Charger,
 		Boomee,
 		Smokey,
-		Gargantula
+		Gargantula,
+		TreasureChest
 	}
 }

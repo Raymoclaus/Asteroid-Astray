@@ -44,13 +44,10 @@ public class StraightBlast : MonoBehaviour, IProjectile
 	public void Hit(Entity obj, Vector2 contactPoint)
 	{
 		//report damage calculation to the object taking the damage
-		obj.TakeDamage(damage, contactPoint, parent);
+		obj.TakeDamage(damage, contactPoint, parent, 1f, true);
 		//destroy projectile
 		Dissipate();
 	}
 
-	public Entity GetShooter()
-	{
-		return parent;
-	}
+	public Entity GetShooter() => parent;
 }

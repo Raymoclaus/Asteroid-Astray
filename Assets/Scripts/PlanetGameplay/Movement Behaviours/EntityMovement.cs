@@ -36,17 +36,17 @@ public class EntityMovement : MonoBehaviour, IPhysicsController
 			}
 		}
 	}
-	public Vector2Int DirectionValue
+	public IntPair DirectionValue
 	{
 		get
 		{
 			switch (Facing)
 			{
-				default: return Vector2Int.up;
-				case Direction.Up: return Vector2Int.up;
-				case Direction.Right: return Vector2Int.right;
-				case Direction.Down: return Vector2Int.down;
-				case Direction.Left: return Vector2Int.left;
+				default: return IntPair.up;
+				case Direction.Up: return IntPair.up;
+				case Direction.Right: return IntPair.right;
+				case Direction.Down: return IntPair.down;
+				case Direction.Left: return IntPair.left;
 			}
 		}
 	}
@@ -159,9 +159,9 @@ public class EntityMovement : MonoBehaviour, IPhysicsController
 		TimerTracker.SetTimer(blockMovementTimerID, setDuration);
 	}
 
-	public Vector3 GetMovementDirection => direction;
+	public Vector3 MovementDirection => direction;
 
-	public Vector3 GetFacingDirection => DirectionFloatValue;
+	public Vector3 FacingDirection => DirectionFloatValue;
 
 	public void FaceDirection(Vector3 direction)
 	{

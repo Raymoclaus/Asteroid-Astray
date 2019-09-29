@@ -17,7 +17,7 @@ namespace Tests
 			TileLightsGenerator generator = new TileLightsGenerator();
 			int width = Random.Range(1, 10);
 			int height = Random.Range(1, 10);
-			Vector2Int size = new Vector2Int(width, height);
+			IntPair size = new IntPair(width, height);
 
 			//ACT
 			TileGrid grid = generator.GeneratePuzzle(size);

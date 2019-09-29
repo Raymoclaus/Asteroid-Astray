@@ -98,7 +98,7 @@ public class NarrativeManager : MonoBehaviour
 							{
 								LoadingController.AddListener(() =>
 								{
-									MainChar.CollectResources(Item.Type.CorruptedCorvorite, 1);
+									MainChar.CollectItem(new ItemStack(Item.Type.CorruptedCorvorite, 1));
 									CompletedFindEnergySourceQuest(null);
 								});
 								return;
@@ -117,15 +117,15 @@ public class NarrativeManager : MonoBehaviour
 					}
 					LoadingController.AddListener(() =>
 					{
-						MainChar.CollectResources(Item.Type.RepairKit, 1);
+						MainChar.CollectItem(new ItemStack(Item.Type.RepairKit, 1));
 						CompletedCraftYourFirstRepairKitQuest(null);
 					});
 					return;
 				}
 				LoadingController.AddListener(() =>
 				{
-					MainChar.CollectResources(Item.Type.Copper, 2);
-					MainChar.CollectResources(Item.Type.Iron, 1);
+					MainChar.CollectItem(new ItemStack(Item.Type.Copper, 2));
+					MainChar.CollectItem(new ItemStack(Item.Type.Iron, 1));
 					CompletedFirstGatheringQuest(null);
 				});
 				return;

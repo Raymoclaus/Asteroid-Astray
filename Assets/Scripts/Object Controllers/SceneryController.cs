@@ -32,7 +32,7 @@ public class SceneryController : MonoBehaviour
 	private Queue<StarFieldMaterialPropertyManager> transitionActive = new Queue<StarFieldMaterialPropertyManager>(poolSize);
 
 	private ChunkCoords currentCoords = ChunkCoords.Invalid;
-	public Vector2Int cosmicDensity = new Vector2Int(10, 100);
+	public IntPair cosmicDensity = new IntPair(10, 100);
 	public float perlinStretchModifier = 1f;
 	private Vector2 perlinOffset;
 	public float starMinDistance = 400f, starDistanceRange = 200f;
@@ -48,7 +48,7 @@ public class SceneryController : MonoBehaviour
 	private bool found, done, searchCompleted;
 	private int searchAmount;
 	public int variety = 10;
-	public Vector2Int textureSize = new Vector2Int(256, 256);
+	public IntPair textureSize = new IntPair(256, 256);
 	[Tooltip("Size of each individual star.")]
 	public Vector2 starSizeRange = new Vector2(2, 30);
 	[Tooltip("Larger numbers are slower to compute. This adds more stars Eg. 2^Number")]
@@ -240,8 +240,8 @@ public class SceneryController : MonoBehaviour
 	{
 		ChunkCoords signedCoords = c;
 		signedCoords.ConvertToSignedCoords();
-		float amount = Mathf.PerlinNoise(c.X * perlinStretchModifier + perlinOffset.x,
-			c.Y * perlinStretchModifier + perlinOffset.y);
+		float amount = Mathf.PerlinNoise(c.x * perlinStretchModifier + perlinOffset.x,
+			c.y * perlinStretchModifier + perlinOffset.y);
 
 		float min = Mathf.Min(cosmicDensity.x, cosmicDensity.y);
 		float max = Mathf.Max(cosmicDensity.x, cosmicDensity.y);
@@ -249,7 +249,7 @@ public class SceneryController : MonoBehaviour
 		for (int i = 0; i < (int)amount; i++)
 		{
 			Vector2Pair area = ChunkCoords.GetCellArea(c);
-			Vector3 spawnPos = new Vector3(Random.Range(area.A.x, area.B.x), Random.Range(area.A.y, area.B.y),
+			Vector3 spawnPos = new Vector3(Random.Range(area.a.x, area.b.x), Random.Range(area.a.y, area.b.y),
 				(1f - Mathf.Pow(Random.value, 7f * (max / amount))) * starDistanceRange + starMinDistance);
 			bool common = lessFrequentTypes.Count == 0 || Random.value <= commonTypeFrequency;
 			List<Sprite> listToChooseFrom = common ? types : lessFrequentTypes;
@@ -322,7 +322,7 @@ public class SceneryController : MonoBehaviour
 		{
 			Debug.Log("Generating new Star Systems");
 			//determine min/max amount of stars per texture
-			Vector2Int starNumRange = new Vector2Int((int)Mathf.Pow(2f, starPowerRange.x),
+			IntPair starNumRange = new IntPair((int)Mathf.Pow(2f, starPowerRange.x),
 				(int)Mathf.Pow(2f, starPowerRange.y));
 
 			//prepare worker threads
@@ -486,7 +486,7 @@ public class SceneryController : MonoBehaviour
 		public Color color;
 		public float size;
 
-		public Star(Vector2Int textureSize, float padding, Vector2 sizeRange, float power, int colorMin, int colorMax, System.Random rnd, float[] biasDirections)
+		public Star(IntPair textureSize, float padding, Vector2 sizeRange, float power, int colorMin, int colorMax, System.Random rnd, float[] biasDirections)
 		{
 			Vector2 boundsSize = new Vector2(textureSize.x / 2 * padding, textureSize.y / 2 * padding);
 			size = Mathf.Pow((float)rnd.NextDouble(), power) * (sizeRange.y - sizeRange.x) + sizeRange.x;
@@ -637,12 +637,12 @@ public class SceneryController : MonoBehaviour
 	#region Convenient short-hand methods for accessing the grid
 	private List<CosmicItem> Chunk(ChunkCoords cc)
 	{
-		return Column(cc)[cc.Y];
+		return Column(cc)[cc.y];
 	}
 
 	private List<List<CosmicItem>> Column(ChunkCoords cc)
 	{
-		return Direction(cc)[cc.X];
+		return Direction(cc)[cc.x];
 	}
 
 	private List<List<List<CosmicItem>>> Direction(ChunkCoords cc)
@@ -653,8 +653,8 @@ public class SceneryController : MonoBehaviour
 	private bool ChunkExists(ChunkCoords cc)
 	{
 		if (cc.Direction < 0 || (int)cc.Direction >= items.Count) return false;
-		if (cc.X < 0 || cc.X >= Direction(cc).Count) return false;
-		return cc.Y > 0 && cc.Y < Column(cc).Count;
+		if (cc.x < 0 || cc.x >= Direction(cc).Count) return false;
+		return cc.y > 0 && cc.y < Column(cc).Count;
 	}
 
 	private void FillSpace(ChunkCoords cc)
@@ -666,12 +666,12 @@ public class SceneryController : MonoBehaviour
 			items.Add(new List<List<List<CosmicItem>>>());
 		}
 
-		while (Direction(cc).Count <= cc.X)
+		while (Direction(cc).Count <= cc.x)
 		{
 			Direction(cc).Add(new List<List<CosmicItem>>());
 		}
 
-		while (Column(cc).Count <= cc.Y)
+		while (Column(cc).Count <= cc.y)
 		{
 			Column(cc).Add(new List<CosmicItem>());
 		}
