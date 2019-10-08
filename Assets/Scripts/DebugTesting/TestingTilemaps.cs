@@ -10,7 +10,7 @@ public class TestingTilemaps : MonoBehaviour
 
 	private void Start()
 	{
-		MazePuzzle.MazeGenerator gen = new MazePuzzle.MazeGenerator();
+		MazeGenerator gen = new MazePuzzle.MazeGenerator();
 		Maze maze = gen.GeneratePuzzle(new IntPair(28, 16), new IntPair[]
 		{
 			new IntPair(1, 5),

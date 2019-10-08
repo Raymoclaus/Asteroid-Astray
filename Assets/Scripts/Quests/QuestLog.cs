@@ -1,13 +1,17 @@
-﻿using System.Collections.Generic;
+﻿using System.Linq;
+using System.Collections.Generic;
 
 public class QuestLog
 {
 	private List<Quest> activeQuests = new List<Quest>();
 	private List<Quest> completedQuests = new List<Quest>();
 
+	public bool HasActiveQuest
+		=> activeQuests.Exists(t => !t.IsComplete);
+
 	public void AddQuest(Quest quest)
 	{
-		if (quest.IsComplete())
+		if (quest.IsComplete)
 		{
 			completedQuests.Add(quest);
 		}
@@ -20,14 +24,10 @@ public class QuestLog
 
 	private void QuestIsCompleted(Quest quest)
 	{
-		for (int i = 0; i < activeQuests.Count; i++)
-		{
-			if (activeQuests[i] == quest)
-			{
-				activeQuests.RemoveAt(i);
-				completedQuests.Add(quest);
-				return;
-			}
-		}
+		if (!activeQuests.Remove(quest)) return;
+		completedQuests.Add(quest);
 	}
+
+	public Quest GetNextAvailableQuest()
+		=> activeQuests.FirstOrDefault(t => !t.IsComplete);
 }

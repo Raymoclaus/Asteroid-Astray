@@ -3,7 +3,7 @@
 public class PlanetRoomExitTrigger : PlanetNonSolid
 {
 	
-	[HideInInspector] public Direction direction;
+	private Direction direction;
 	[SerializeField] private GameObject invisibleWallTilePrefab;
 	private RoomExitTrigger exitTrigger;
 	

@@ -26,7 +26,7 @@ public class GatheringQRec : QuestRequirement
 
 	private void EvaluateEvent(Item.Type type, int amount)
 	{
-		if (IsComplete() || !active) return;
+		if (Completed || !active) return;
 
 		if (type == typeNeeded && amount != 0)
 		{

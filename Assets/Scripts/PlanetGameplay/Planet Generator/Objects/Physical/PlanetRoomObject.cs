@@ -2,9 +2,9 @@
 
 public abstract class PlanetRoomObject : MonoBehaviour
 {
-	protected RoomViewer roomViewer;
-	protected Room room;
-	protected RoomObject roomObject;
+	[System.NonSerialized] protected RoomViewer roomViewer;
+	[System.NonSerialized] protected Room room;
+	[System.NonSerialized] protected RoomObject roomObject;
 	protected bool hasBeenSetup;
 	protected static int attackLayer = -1;
 	protected static int AttackLayer => attackLayer == -1
@@ -20,7 +20,7 @@ public abstract class PlanetRoomObject : MonoBehaviour
 		hasBeenSetup = true;
 	}
 
-	public IntPair GetPosition() => roomObject?.GetPosition() ?? IntPair.zero;
+	public IntPair GetPosition() => roomObject?.Position ?? IntPair.zero;
 
 	public void SetRoomObjectWorldSpacePosition(IntPair position)
 	{
@@ -29,7 +29,7 @@ public abstract class PlanetRoomObject : MonoBehaviour
 		IntPair roomSpacePos = position;
 		if (room != null)
 		{
-			Vector3 roomWorldSpacePosition = room.GetWorldSpacePosition();
+			Vector3 roomWorldSpacePosition = room.WorldSpacePosition;
 			IntPair roomWorldIntPosition = new IntPair(
 				(int)roomWorldSpacePosition.x, (int)roomWorldSpacePosition.y);
 			roomSpacePos -= roomWorldIntPosition;

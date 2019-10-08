@@ -1,9 +1,7 @@
 ﻿using System.Collections.Generic;
-using UnityEngine;
 using TileLightsPuzzle;
 using BlockPushPuzzle;
 
-[System.Serializable]
 public class RoomKey : RoomObject
 {
 	public enum KeyColour
@@ -20,12 +18,10 @@ public class RoomKey : RoomObject
 	public delegate void RevealedEventHandler();
 	public event RevealedEventHandler OnKeyRevealed;
 
-	public RoomKey(Room room, KeyColour colour)
+	public RoomKey(Room room, string[] lines) : base(room, lines) { }
+
+	public RoomKey(Room room, KeyColour colour) : base(room)
 	{
-		this.room = room;
-		room.OnMazeAdded += FindNewPlaceInMaze;
-		room.OnTileLightsAdded += FindNewPlaceForTileLightsPuzzle;
-		room.OnBlockPushAdded += FindNewPlaceForBlockPushPuzzle;
 		this.colour = colour;
 	}
 
@@ -37,7 +33,7 @@ public class RoomKey : RoomObject
 
 	private void FindNewPlaceForTileLightsPuzzle(TileGrid tileGrid)
 	{
-		IntPair roomCenter = room.GetCenterInt();
+		IntPair roomCenter = CurrentRoom.CenterInt;
 		int puzzleHeight = tileGrid.GridSize.y;
 		SetPosition(new IntPair(roomCenter.x, roomCenter.y + puzzleHeight / 2 + 1));
 		hidden = true;
@@ -46,7 +42,7 @@ public class RoomKey : RoomObject
 
 	private void FindNewPlaceForBlockPushPuzzle(PushPuzzle puzzle)
 	{
-		IntPair roomCenter = room.GetCenterInt();
+		IntPair roomCenter = CurrentRoom.CenterInt;
 		int puzzleHeight = puzzle.GridSize.y;
 		SetPosition(new IntPair(roomCenter.x, roomCenter.y + puzzleHeight / 2 - 1));
 		hidden = true;
@@ -59,7 +55,7 @@ public class RoomKey : RoomObject
 		OnKeyRevealed?.Invoke();
 	}
 
-	public override ObjType GetObjectType() => ObjType.Key;
+	public override ObjType ObjectType => ObjType.Key;
 
 	public static Item.Type ConvertToItemType(KeyColour col)
 	{
@@ -70,6 +66,41 @@ public class RoomKey : RoomObject
 			case KeyColour.Red: return Item.Type.RedKey;
 			case KeyColour.Yellow: return Item.Type.YellowKey;
 			case KeyColour.Green: return Item.Type.GreenKey;
+		}
+	}
+
+	public override string ObjectName => $"{colour} Key";
+
+	public const string SAVE_TAG = "[RoomKey]", SAVE_END_TAG = "[/RoomKey]";
+	public override string Tag => SAVE_TAG;
+	public override string EndTag => SAVE_END_TAG;
+
+	public override string GetSaveText(int indentLevel)
+		=> $"{base.GetSaveText(indentLevel)}" +
+		$"{new string('\t', indentLevel)}{colourProp}:{colour}\n" +
+		$"{new string('\t', indentLevel)}{hiddenProp}:{hidden}\n";
+
+	private static readonly string colourProp = "colour";
+	private static readonly string hiddenProp = "hidden";
+	public override void Load(string[] lines)
+	{
+		base.Load(lines);
+
+		for (int i = 0; i < lines.Length; i++)
+		{
+			string line = lines[i];
+			string[] props = line.Split(':');
+
+			if (props[0] == colourProp)
+			{
+				System.Enum.TryParse(props[1], out colour);
+				continue;
+			}
+			if (props[0] == hiddenProp)
+			{
+				bool.TryParse(props[1], out hidden);
+				continue;
+			}
 		}
 	}
 }

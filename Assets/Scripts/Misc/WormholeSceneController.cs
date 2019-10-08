@@ -94,7 +94,7 @@ public class WormholeSceneController : MonoBehaviour
 			StartCoroutine(TimerAction(fadeOutTime / 2f, (float delta) =>
 			{
 				fadeScreen.alpha = delta;
-			}, () => sceneLoader.LoadScene("GameScene")));
+			}, () => sceneLoader.LoadScene("SpaceScene")));
 		}));
 	}
 

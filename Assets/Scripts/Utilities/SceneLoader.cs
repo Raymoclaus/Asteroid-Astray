@@ -7,19 +7,11 @@ using InputHandler;
 public class SceneLoader : MonoBehaviour
 {
 	private static SceneLoader instance;
-	private static SceneLoader Instance
-	{
-		get { return instance ?? (instance = FindObjectOfType<SceneLoader>()); }
-	}
+	private static SceneLoader Instance => instance ??
+		(instance = FindObjectOfType<SceneLoader>());
 
 	public delegate void SceneLoadEventHandler(string sceneName);
-	public static event SceneLoadEventHandler OnSceneLoad;
-	public static void SceneLoaded(string sceneName)
-	{
-		OnSceneLoad?.Invoke(sceneName);
-		OnSceneLoad = null;
-		Instance.ClearEvents();
-	}
+	public event SceneLoadEventHandler OnSceneLoad;
 
 	private List<string> sceneNames = new List<string>();
 
@@ -49,13 +41,11 @@ public class SceneLoader : MonoBehaviour
 
 	public void LoadScene(string sceneName)
 	{
-		SceneLoaded(sceneName);
 		SceneManager.LoadScene(sceneName);
 	}
 
 	public void LoadPreparedScene(SceneAsync scene)
 	{
-		SceneLoaded(scene.name);
 		scene.ao.allowSceneActivation = true;
 	}
 
@@ -71,14 +61,6 @@ public class SceneLoader : MonoBehaviour
 		{
 			Application.Quit();
 		}
-	}
-
-	private void ClearEvents()
-	{
-		InputManager.ClearEvent();
-		GameEvents.ClearEvent();
-		PromptUI.ClearEvent();
-		Pause.ClearEvent();
 	}
 
 	private bool SceneExists(string sceneName)

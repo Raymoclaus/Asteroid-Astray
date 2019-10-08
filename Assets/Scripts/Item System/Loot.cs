@@ -4,35 +4,22 @@
 public struct Loot
 {
 	public Item.Type type;
-	public int maxAmount;
+	public int minAmount, maxAmount;
 	public float lootChance;
-	public double minAmountPercentage;
-	public bool roundedUp;
 
-	public Loot(Item.Type type = Item.Type.Stone, int maxAmount = 1, float lootChance = 0.5f, double minAmountPercentage = 0.5,
-		bool roundedUp = true)
+	public Loot(Item.Type type, int minAmount, int maxAmount, float lootChance)
 	{
 		this.type = type;
-		this.maxAmount = Mathf.Max(maxAmount, 1);
+		this.minAmount = Mathf.Min(minAmount, maxAmount);
+		this.maxAmount = Mathf.Max(minAmount, maxAmount);
 		this.lootChance = Mathf.Clamp01(lootChance);
-		this.minAmountPercentage = Mathf.Clamp01((float)minAmountPercentage);
-		this.roundedUp = roundedUp;
 	}
 
 	public ItemStack GetStack()
 	{
-		int minAmount;
-		if (roundedUp)
-		{
-			minAmount = (int)System.Math.Ceiling(maxAmount * minAmountPercentage);
-		}
-		else
-		{
-			minAmount = (int)System.Math.Floor(maxAmount * minAmountPercentage);
-		}
-
 		int amount = minAmount;
-		for (int i = minAmount; i < maxAmount; i++)
+		int potentialExtraLoot = maxAmount - minAmount;
+		for (int i = 0; i < potentialExtraLoot; i++)
 		{
 			if (Random.value <= lootChance) amount++;
 		}

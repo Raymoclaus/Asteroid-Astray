@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System.Reflection;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -15,7 +16,7 @@ public class EntityGenerator : MonoBehaviour
 	//chunks to fill in batches
 	private List<ChunkCoords> chunkBatches = new List<ChunkCoords>(100);
 	//maximum amount of chunks to fill per frame
-	private int maxChunkBatchFill = 1;
+	private int maxChunkBatchFill = 5;
 	private List<SpawnableEntity> toSpawn = new List<SpawnableEntity>();
 	private bool batcherRunning = false;
 	private List<bool> systemsReady = new List<bool>();
@@ -49,6 +50,9 @@ public class EntityGenerator : MonoBehaviour
 		{
 			Ready(1);
 		}));
+
+		SteamPunkConsole spc = FindObjectOfType<SteamPunkConsole>();
+		spc?.GetCommandsFromType(GetType());
 	}
 
 	private void Ready(int index)
@@ -86,7 +90,7 @@ public class EntityGenerator : MonoBehaviour
 		}
 	}
 
-	public static Entity SpawnEntity(SpawnableEntity se, EntityData? data = null)
+	public static List<Entity> SpawnEntity(SpawnableEntity se, EntityData? data = null)
 	{
 		if (se == null) return null;
 
@@ -99,10 +103,11 @@ public class EntityGenerator : MonoBehaviour
 		ChunkCoords cc = instance.ClosestValidNonFilledChunk(se);
 		if (cc == ChunkCoords.Invalid) return null;
 
-		return SpawnOneInEmptyChunk(cc, se, data);
+		ChunkCoords emptyChunk = GetNearbyEmptyChunk();
+		return SpawnEntityInChunk(se, data, emptyChunk);
 	}
 
-	public static Entity SpawnEntity(Entity e)
+	public static List<Entity> SpawnEntity(Entity e)
 	{
 		if (e == null) return null;
 
@@ -112,11 +117,11 @@ public class EntityGenerator : MonoBehaviour
 			return null;
 		}
 
-		SpawnableEntity se = instance.GetSpawnableEntity(e);
+		SpawnableEntity se = GetSpawnableEntity(e);
 		return SpawnEntity(se);
 	}
 
-	public static Entity SpawnEntity(EntityData data)
+	public static List<Entity> SpawnEntity(EntityData data)
 	{
 		if (data.type == null) return null;
 		
@@ -126,14 +131,23 @@ public class EntityGenerator : MonoBehaviour
 			return null;
 		}
 
-		SpawnableEntity se = instance.GetSpawnableEntity(data.type);
+		SpawnableEntity se = GetSpawnableEntity(data.type);
 		return SpawnEntity(se, data);
 	}
+	
+	public static List<Entity> SpawnEntity(string entityName)
+	{
+		SpawnableEntity se = GetSpawnableEntity(entityName);
+		return SpawnEntity(se);
+	}
 
-	private SpawnableEntity GetSpawnableEntity(Entity e) => prefabs.GetSpawnableEntity(e);
+	public static SpawnableEntity GetSpawnableEntity(string entityName)
+		=> instance.prefabs.GetSpawnableEntity(entityName);
 
-	private SpawnableEntity GetSpawnableEntity(System.Type type)
-		=> prefabs.GetSpawnableEntity(type);
+	public static SpawnableEntity GetSpawnableEntity(Entity e) => instance.prefabs.GetSpawnableEntity(e);
+
+	public static SpawnableEntity GetSpawnableEntity(System.Type type)
+		=> instance.prefabs.GetSpawnableEntity(type);
 
 	private ChunkCoords ClosestValidNonFilledChunk(SpawnableEntity se)
 	{
@@ -180,70 +194,91 @@ public class EntityGenerator : MonoBehaviour
 		instance.ChooseEntitiesToSpawn(ChunkCoords.GetCenterCell(cc).magnitude, excludePriority, spawnList);
 
 		//determine area to spawn in
-		Vector2Pair range = ChunkCoords.GetCellArea(cc);
-		Vector2 spawnPos = Vector2.zero;
 		for (int i = 0; i < spawnList.Count; i++)
 		{
-			SpawnableEntity e = spawnList[i];
-			//determine how many to spawn
-			int numToSpawn = Random.Range(e.spawnRange.x, e.spawnRange.y + 1);
-			for (int j = 0; j < numToSpawn; j++)
-			{
-				//pick a position within the chunk coordinates
-				switch (e.posType)
-				{
-					case SpawnableEntity.SpawnPosition.Random:
-						spawnPos.x = Random.Range(range.a.x, range.b.x);
-						spawnPos.y = Random.Range(range.a.y, range.b.y);
-						break;
-					case SpawnableEntity.SpawnPosition.Center:
-						spawnPos = ChunkCoords.GetCenterCell(cc);
-						break;
-				}
-				//spawn it
-				Instantiate(e.prefab, spawnPos, Quaternion.identity, instance.holders[e.name].transform);
-			}
+			SpawnableEntity se = spawnList[i];
+			SpawnEntityInChunk(se, null, cc);
 		}
 	}
 
-	public static Entity SpawnOneInEmptyChunk(ChunkCoords cc, SpawnableEntity se,
-		EntityData? data = null)
+	public static List<Entity> SpawnEntityInChunk(SpawnableEntity se, EntityData? data, ChunkCoords cc)
 	{
-		if (!IsReady)
-		{
-			AddListener(() => SpawnOneInEmptyChunk(cc, se));
-			return null;
-		}
-
-		//don't bother if the given coordinates are not valid
-		if (!cc.IsValid()) return null;
-		//if these coordinates have no been generated yet then reserve some space for the new coordinates
-		instance.GenerateVoid(cc);
-		//don't bother if the coordinates have already been filled
-		if (instance.Chunk(cc)) return null;
-		//flag that this chunk coordinates was filled
-		instance.Column(cc)[cc.y] = true;
-
-		SpawnableEntity e = se;
 		//determine how many to spawn
-		Vector2Pair range = ChunkCoords.GetCellArea(cc);
-		Vector2 spawnPos = Vector2.zero;
+		int numToSpawn = Random.Range(se.spawnRange.x, se.spawnRange.y + 1);
+		List<Entity> spawnedEntities = new List<Entity>(numToSpawn);
+		for (int j = 0; j < numToSpawn; j++)
+		{
+			spawnedEntities.Add(SpawnOneEntityInChunk(se, data, cc));
+		}
+		return spawnedEntities;
+	}
+
+	public static Entity SpawnOneEntityInChunk(SpawnableEntity se, EntityData? data, ChunkCoords cc)
+	{
 		//pick a position within the chunk coordinates
-		switch (e.posType)
+		Vector2 spawnPos = Vector2.zero;
+		Vector2Pair range = ChunkCoords.GetCellArea(cc);
+		switch (se.posType)
 		{
 			case SpawnableEntity.SpawnPosition.Random:
 				spawnPos.x = Random.Range(range.a.x, range.b.x);
 				spawnPos.y = Random.Range(range.a.y, range.b.y);
 				break;
 			case SpawnableEntity.SpawnPosition.Center:
-				spawnPos = ChunkCoords.GetCenterCell(cc);
 				break;
 		}
+		spawnPos = ChunkCoords.GetCenterCell(cc);
 		//spawn it
-		Entity newEntity = Instantiate(e.prefab, spawnPos, Quaternion.identity,
-			instance.holders[e.name].transform);
+		Entity newEntity = Instantiate(
+			se.prefab,
+			spawnPos,
+			Quaternion.identity,
+			instance.holders[se.name].transform);
 		newEntity.ApplyData(data);
 		return newEntity;
+	}
+
+	public static ChunkCoords GetNearbyEmptyChunk()
+	{
+		int range = 0;
+		ChunkCoords pos = new ChunkCoords(IntPair.zero);
+		while (range < int.MaxValue)
+		{
+			for (pos.x = -range; pos.x <= range;)
+			{
+				for (pos.y = -range; pos.y <= range;)
+				{
+					ChunkCoords validCC = pos.Validate();
+					if (!instance.Chunk(validCC)) return validCC;
+					pos.y += pos.x <= -range || pos.x >= range ?
+						1 : range * 2;
+				}
+				pos.x += pos.y <= -range || pos.y >= range ?
+					1 : range * 2;
+			}
+			range++;
+		}
+		return ChunkCoords.Invalid;
+	}
+
+	public static List<Entity> SpawnEntityInChunkNorthOfCamera(SpawnableEntity se, EntityData? data = null)
+	{
+		Vector3 cameraPos = Camera.main.transform.position;
+		ChunkCoords cc = new ChunkCoords(cameraPos);
+		cc.y++;
+		cc = cc.Validate();
+		return SpawnEntityInChunk(se, data, cc);
+	}
+
+	[SteamPunkConsoleCommand(command = "Spawn", info = "Spawns named entity in chunk north of the camera.")]
+	public static List<Entity> SpawnEntityInChunkNorthOfCamera(string entityName)
+	{
+		Vector3 cameraPos = Camera.main.transform.position;
+		ChunkCoords cc = new ChunkCoords(cameraPos);
+		cc.y++;
+		cc = cc.Validate();
+		SpawnableEntity se = GetSpawnableEntity(entityName);
+		return SpawnEntityInChunk(se, null, cc);
 	}
 
 	private List<SpawnableEntity> ChooseEntitiesToSpawn(float distance, bool excludePriority = false,

@@ -22,7 +22,7 @@ public class InteractionQReq : QuestRequirement
 
 	private void EvaluateEvent(Triggerer actor)
 	{
-		if (IsComplete() || !active || this.actor != actor) return;
+		if (Completed || !active || this.actor != actor) return;
 
 		QuestRequirementCompleted();
 	}

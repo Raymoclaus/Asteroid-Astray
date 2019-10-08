@@ -10,13 +10,15 @@ public class PlanetGenerator
 		PlanetDifficultyModifiers difficultyModifiers
 			= new PlanetDifficultyModifiers(difficultySetting);
 		PlanetRoomTypeWeightings roomTypeWeightings = GetRoomTypeWeightings();
+		PuzzleTypeWeightings puzzleWeightings = GetPuzzleWeightings();
 
 		Room currentRoom = null;
 		int keyLevel = 0;
 
 		//rule 1 -	Create starter room
-		data.startRoom = data.AddRoom(RoomType.Start, new IntPair(0, 0), null,
-			difficultyModifiers);
+		Room startRoom = new StartRoom(IntPair.zero, null);
+		data.AddRoom(startRoom);
+		data.startRoom = startRoom;
 
 		//rule 2 -	"Current Room" is starter room
 		currentRoom = data.startRoom;
@@ -35,8 +37,8 @@ public class PlanetGenerator
 			for (int i = 0; i < branchLength; i++)
 			{
 				Room newRoom = CreateRandomExit(data, currentRoom, false,
-					RoomKey.KeyColour.Blue, false, roomTypeWeightings,
-					difficultyModifiers);
+					RoomKey.KeyColour.Blue, false, false, roomTypeWeightings,
+					puzzleWeightings, difficultyModifiers);
 				if (newRoom == currentRoom) break;
 				currentRoom = newRoom;
 			}
@@ -52,10 +54,10 @@ public class PlanetGenerator
 			{
 				int randomIndex = Random.Range(0, existingRooms.Count);
 				lockRoom = existingRooms[randomIndex];
-			} while (lockRoom == currentRoom || lockRoom.ExitCount() == 4);
+			} while (lockRoom == currentRoom || lockRoom.ExitCount == 4);
 			lockRoom = CreateRandomExit(data, lockRoom, true,
-				(RoomKey.KeyColour)keyLevel, j == branchCount - 1, roomTypeWeightings,
-				difficultyModifiers);
+				(RoomKey.KeyColour)keyLevel, j == branchCount - 1, false,
+				roomTypeWeightings, puzzleWeightings, difficultyModifiers);
 			keyLevel++;
 
 			//rule 6 -	"Current room" is the new room on the other side of the locked exit
@@ -76,7 +78,7 @@ public class PlanetGenerator
 			{
 				int randomIndex = Random.Range(0, existingRooms.Count);
 				deadEndStart = existingRooms[randomIndex];
-			} while (deadEndStart == data.finalRoom || deadEndStart.ExitCount() == 4);
+			} while (deadEndStart == data.finalRoom || deadEndStart.ExitCount == 4);
 			currentRoom = deadEndStart;
 
 			int branchLength = Mathf.Max(1,
@@ -84,14 +86,10 @@ public class PlanetGenerator
 			for (int j = 0; j < branchLength; j++)
 			{
 				Room newRoom = CreateRandomExit(data, currentRoom, false,
-					RoomKey.KeyColour.Blue, false, roomTypeWeightings,
-					difficultyModifiers);
+					RoomKey.KeyColour.Blue, false, j == branchLength - 1, roomTypeWeightings,
+					puzzleWeightings, difficultyModifiers);
 				if (newRoom == currentRoom) break;
 				currentRoom = newRoom;
-				if (j == branchLength - 1)
-				{
-					newRoom.type = RoomType.Treasure;
-				}
 			}
 		}
 
@@ -115,11 +113,12 @@ public class PlanetGenerator
 		=> Resources.LoadAll<PlanetRoomTypeWeightings>(string.Empty).FirstOrDefault();
 
 	private Room CreateRandomExit(PlanetData data, Room room, bool locked,
-		RoomKey.KeyColour colour, bool bossRoom,
+		RoomKey.KeyColour colour, bool bossRoom, bool treasure,
 		PlanetRoomTypeWeightings roomTypeWeightings,
+		PuzzleTypeWeightings puzzleWeightings,
 		PlanetDifficultyModifiers difficultyModifiers)
 	{
-		if (room.ExitCount() == 4) return room;
+		if (room.ExitCount == 4) return room;
 
 		List<Direction> directions = new List<Direction>
 			{
@@ -140,9 +139,23 @@ public class PlanetGenerator
 
 		Direction randomDirection = directions[Random.Range(0, directions.Count)];
 		IntPair pos = AddDirection(room.position, randomDirection);
-		RoomType type = bossRoom ? RoomType.Boss : PickRandomRoomType(roomTypeWeightings);
-		Room newRoom = data.AddRoom(type, pos, room,
-			difficultyModifiers);
+
+		Room newRoom;
+		if (bossRoom)
+		{
+			newRoom = new BossRoom(pos, room, difficultyModifiers.enemyRoomDifficulty);
+		}
+		else if (treasure)
+		{
+			newRoom = new TreasureRoom(pos, room);
+		}
+		else
+		{
+			newRoom = PickRandomRoom(pos, room, roomTypeWeightings,
+			puzzleWeightings, difficultyModifiers);
+		}
+		data.AddRoom(newRoom);
+
 		if (locked)
 		{
 			ConnectWithLock(room, newRoom, randomDirection, colour);
@@ -151,10 +164,14 @@ public class PlanetGenerator
 		{
 			Connect(room, newRoom, randomDirection);
 		}
+
 		return newRoom;
 	}
 
-	private RoomType PickRandomRoomType(PlanetRoomTypeWeightings roomTypeWeightings)
+	private Room PickRandomRoom(IntPair position, Room previousRoom,
+		PlanetRoomTypeWeightings roomTypeWeightings,
+		PuzzleTypeWeightings puzzleRoomWeightings,
+		PlanetDifficultyModifiers difficultyModifiers)
 	{
 		float totalWeighting =
 			roomTypeWeightings.emptyRoomWeighting +
@@ -166,21 +183,52 @@ public class PlanetGenerator
 
 		if ((randomValue = randomValue - roomTypeWeightings.emptyRoomWeighting) < 0f)
 		{
-			return RoomType.Empty;
+			return new Room(position, previousRoom);
 		}
 		if ((randomValue = randomValue - roomTypeWeightings.puzzleRoomWeighting) < 0f)
 		{
-			return RoomType.Puzzle;
+			return PickRandomPuzzleRoom(position, previousRoom, puzzleRoomWeightings);
 		}
 		if ((randomValue = randomValue - roomTypeWeightings.enemiesRoomWeighting) < 0f)
 		{
-			return RoomType.Enemies;
+			return new EnemyRoom(position, previousRoom,
+				difficultyModifiers.enemyRoomDifficulty);
 		}
 		if ((randomValue = randomValue - roomTypeWeightings.treasureRoomWeighting) < 0f)
 		{
-			return RoomType.Treasure;
+			return new TreasureRoom(position, previousRoom);
 		}
-		return RoomType.NPC;
+		return new NpcRoom(position, previousRoom);
+	}
+
+	private Room PickRandomPuzzleRoom(IntPair position, Room previousRoom,
+		PuzzleTypeWeightings puzzleWeightings)
+	{
+		float totalWeighting =
+			puzzleWeightings.randomMazeRoomWeighting +
+			puzzleWeightings.randomTileLightRoomWeighting +
+			puzzleWeightings.randomBeamRedirectionRoomWeighting +
+			puzzleWeightings.randomBlockPushRoomWeighting +
+			puzzleWeightings.randomPatternMatchRoomWeighting;
+		float randomValue = Random.Range(0f, totalWeighting);
+
+		if ((randomValue = randomValue - puzzleWeightings.randomMazeRoomWeighting) < 0f)
+		{
+			return new MazeRoom(position, previousRoom);
+		}
+		if ((randomValue = randomValue - puzzleWeightings.randomTileLightRoomWeighting) < 0f)
+		{
+			return new TileFlipPuzzleRoom(position, previousRoom);
+		}
+		if ((randomValue = randomValue - puzzleWeightings.randomBeamRedirectionRoomWeighting) < 0f)
+		{
+			return new Room(position, previousRoom);
+		}
+		if ((randomValue = randomValue - puzzleWeightings.randomBlockPushRoomWeighting) < 0f)
+		{
+			return new BlockPushPuzzleRoom(position, previousRoom);
+		}
+		return new Room(position, previousRoom);
 	}
 
 	private void Connect(Room a, Room b, Direction dir)
@@ -223,11 +271,11 @@ public class PlanetGenerator
 
 	private void ConnectVertically(Room lower, Room upper)
 	{
-		int exitXPos = Random.Range(3, lower.GetWidth() - 3);
-		lower.AddUpExit(exitXPos);
-		lower.SetRoom(upper, Direction.Up);
-		upper.AddDownExit(exitXPos);
-		upper.SetRoom(lower, Direction.Down);
+		IntPair exitPos = new IntPair(Random.Range(3, lower.RoomWidth - 3), 0);
+		lower.AddExit(Direction.Up, exitPos);
+		upper.AddExit(Direction.Down, exitPos);
+		lower.SetNeighbourRoom(upper, Direction.Up);
+		upper.SetNeighbourRoom(lower, Direction.Down);
 	}
 
 	private void LockVertically(Room lower, Room upper, RoomKey.KeyColour lockColour)
@@ -239,11 +287,11 @@ public class PlanetGenerator
 
 	private void ConnectHorizontally(Room left, Room right)
 	{
-		int exitYPos = Random.Range(3, left.GetHeight() - 3);
-		left.AddRightExit(exitYPos);
-		left.SetRoom(right, Direction.Right);
-		right.AddLeftExit(exitYPos);
-		right.SetRoom(left, Direction.Left);
+		IntPair exitPos = new IntPair(0, Random.Range(3, left.RoomHeight - 3));
+		left.AddExit(Direction.Right, exitPos);
+		right.AddExit(Direction.Left, exitPos);
+		left.SetNeighbourRoom(right, Direction.Right);
+		right.SetNeighbourRoom(left, Direction.Left);
 	}
 
 	private void LockHorizontally(Room left, Room right, RoomKey.KeyColour lockColour)

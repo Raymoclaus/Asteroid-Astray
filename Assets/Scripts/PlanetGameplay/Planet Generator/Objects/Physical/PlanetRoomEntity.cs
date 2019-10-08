@@ -13,7 +13,6 @@ public abstract class PlanetRoomEntity : PlanetRoomObject, IAttackReceiver
 	[SerializeField] private CharacterAnimationController cac;
 	[SerializeField] protected Transform pivot;
 	private Vector3 currentPosition;
-	protected static RoomViewer roomViewer;
 	[SerializeField] private Collider2D hitbox;
 	[SerializeField] private float maxHealth = 100f;
 	public float Health { get; private set; }
@@ -65,8 +64,6 @@ public abstract class PlanetRoomEntity : PlanetRoomObject, IAttackReceiver
 		TimerTracker.AddTimer(actionRecoveryTimerID, 0f, null, null);
 		rollTimerID = gameObject.GetInstanceID() + "Roll Timer";
 		TimerTracker.AddTimer(rollTimerID, 0f, null, null);
-
-		roomViewer = roomViewer ?? FindObjectOfType<RoomViewer>();
 
 		SetHealth(maxHealth);
 		OnHealthChanged += HealthChanged;
@@ -326,4 +323,7 @@ public abstract class PlanetRoomEntity : PlanetRoomObject, IAttackReceiver
 	private bool CanUseItem => !ItemUsageOnCooldown && !RecoveringFromAction;
 
 	private bool ItemUsageOnCooldown => TimerTracker.GetTimer(itemUseCooldownTimerID) > 0f;
+
+	public virtual bool RemoveFromInventory(ItemStack stack)
+		=> storage.RemoveItem(stack.GetItemType(), stack.GetAmount());
 }

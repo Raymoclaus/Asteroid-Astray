@@ -58,7 +58,7 @@ public class EntityNetwork : MonoBehaviour
 		}
 
 		GameEvents.OnSave += Save;
-		OnGridSetUp += Load;
+		//OnGridSetUp += Load;
 		StartCoroutine(CreateGrid());
 	}
 
@@ -174,24 +174,22 @@ public class EntityNetwork : MonoBehaviour
 	{
 		int r = range * 8;
 		addToList = addToList ?? new List<ChunkCoords>(r);
-		ChunkCoords c = center;
-		//loop through surrounding chunks
-		for (int i = -range; i <= range; i++)
-		{
-			c.x = center.x + i;
-			for (int j = -range; j <= range; j++)
-			{
-				if (Math.Abs(i) != range && Math.Abs(j) != range) continue;
 
-				c.y = center.y + j;
-				//validate will adjust for edge cases
-				ChunkCoords validCc = c;
-				validCc.Validate();
-				if (ignoreLackOfExistenceInGrid || ChunkExists(validCc))
+		ChunkCoords pos = new ChunkCoords(IntPair.zero);
+		for (pos.x = -range; pos.x <= range;)
+		{
+			for (pos.y = -range; pos.y <= range;)
+			{
+				ChunkCoords validCC = center + pos;
+				if (ignoreLackOfExistenceInGrid || ChunkExists(validCC))
 				{
-					addToList.Add(validCc);
+					addToList.Add(validCC);
 				}
+				pos.y += pos.x <= -range || pos.x >= range ?
+					1 : range * 2;
 			}
+			pos.x += pos.y <= -range || pos.y >= range ?
+				1 : range * 2;
 		}
 
 		return addToList;
@@ -409,13 +407,13 @@ public class EntityNetwork : MonoBehaviour
 		if (saveKey == null || saveKey == string.Empty) return;
 		Coroutines.TimedAction(0.1f, null, () =>
 		{
-			SaveLoad.Save(saveKey, savedEntities);
+			SaveLoad.SerializeSave(saveKey, savedEntities);
 		});
 	}
 
 	public void Load()
 	{
-		List<EntityData> loadedEntities = SaveLoad.Load<List<EntityData>>(saveKey);
+		List<EntityData> loadedEntities = SaveLoad.LoadSerialized<List<EntityData>>(saveKey);
 		for (int i = 0; loadedEntities != null && i < loadedEntities.Count; i++)
 		{
 			EntityGenerator.SpawnEntity(loadedEntities[i]);

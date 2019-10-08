@@ -31,7 +31,6 @@ public class Asteroid : Entity
 	//chance that an asteroid will be larger than normal
 	[SerializeField]
 	private float largeChance = 0.01f;
-	private bool isLarge;
 	//keeps track of size type and ID in that size type
 	private IntPair id = IntPair.zero;
 	//the amount of debris created when destroyed
@@ -60,7 +59,6 @@ public class Asteroid : Entity
 		{
 			//set unique collider to match large shape
 			ColliderInfo colInfo = largeInfo[id.y];
-			isLarge = true;
 			switch (colInfo.type)
 			{
 				//circle collider
@@ -117,10 +115,9 @@ public class Asteroid : Entity
 			}
 
 			//sound effect
-			audioManager = audioManager ?? FindObjectOfType<AudioManager>();
-			if (audioManager)
+			if (AudioMngr != null)
 			{
-				audioManager.PlaySFX(shatterSounds[Random.Range(0, shatterSounds.Length)], transform.position,
+				AudioMngr.PlaySFX(shatterSounds[Random.Range(0, shatterSounds.Length)], transform.position,
 					pitch: Random.Range(shatterPitchRange.x, shatterPitchRange.y), volume: 0.25f,
 					parent: null);
 			}
@@ -143,7 +140,7 @@ public class Asteroid : Entity
 					ItemStack stack = stacks[i];
 					for (int j = 0; j < stack.GetAmount(); j++)
 					{
-						particleGenerator.DropResource(destroyer,
+						PartGen.DropResource(destroyer,
 							transform.position, stack.GetItemType());
 					}
 				}
@@ -156,13 +153,12 @@ public class Asteroid : Entity
 	{
 		if (!isActive || Pause.IsStopped) return;
 
-		particleGenerator = particleGenerator ?? FindObjectOfType<ParticleGenerator>();
-		if (!particleGenerator) return;
+		if (!PartGen) return;
 
 		int randomChoose = Random.Range(0, spritesSO.debris.Length);
 		if (randomChoose < spritesSO.debris.Length)
 		{
-			particleGenerator.GenerateParticle(
+			PartGen.GenerateParticle(
 				spritesSO.debris[randomChoose], pos, speed: Random.value * 3f, slowDown: true, lifeTime: 1.5f,
 				rotationDeg: Random.value * 360f, rotationSpeed: Random.value * 3f,
 				sortingLayer: SprRend.sortingLayerID, sortingOrder: -1);
@@ -172,16 +168,15 @@ public class Asteroid : Entity
 	private void CreateDust(Vector2 pos, int amount = 1, float alpha = 0.1f)
 	{
 		if (!isActive || Pause.IsStopped) return;
-
-		//particleGenerator = particleGenerator ?? FindObjectOfType<ParticleGenerator>();
-		if (!particleGenerator) return;
+		
+		if (PartGen == null) return;
 
 		for (int i = 0; i < amount; i++)
 		{
 			int randomChoose = Random.Range(0, spritesSO.dust.Length);
 			if (randomChoose < spritesSO.dust.Length)
 			{
-				particleGenerator.GenerateParticle(
+				PartGen.GenerateParticle(
 					spritesSO.dust[randomChoose], pos, speed: Random.value * 0.5f, slowDown: true,
 					lifeTime: Random.value * 3f + 2f, rotationDeg: Random.value * 360f,
 					rotationSpeed: Random.value * 0.5f, size: 0.3f + Mathf.Pow(Random.value, 2f) * 0.7f, alpha: alpha,
@@ -192,11 +187,9 @@ public class Asteroid : Entity
 
 	private void UpdateSprite()
 	{
-		particleGenerator = particleGenerator ?? FindObjectOfType<ParticleGenerator>();
-
 		if (currentHP <= 0f)
 		{
-			particleGenerator.GenerateParticle(GetCurrentSpriteSettings()[GetCurrentSpriteSettings().Length - 1],
+			PartGen.GenerateParticle(GetCurrentSpriteSettings()[GetCurrentSpriteSettings().Length - 1],
 				transform.position, fadeOut: false, lifeTime: 0.05f,
 				rotationDeg: transform.eulerAngles.z, sortingLayer: SprRend.sortingLayerID);
 			return;

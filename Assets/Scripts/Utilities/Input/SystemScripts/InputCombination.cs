@@ -8,10 +8,34 @@ namespace InputHandler
 	{
 		public List<InputCode> inputs = new List<InputCode>();
 
+		public bool IsValid
+		{
+			get
+			{
+				for (int i = 0; i < inputs.Count; i++)
+				{
+					if (!inputs[i].IsValid) return false;
+				}
+				return inputs.Count > 0;
+			}
+		}
+
+		public void AddCode()
+		{
+			inputs = inputs ?? new List<InputCode>();
+			inputs.Add(new InputCode());
+		}
+
 		public void AddCode(InputCode.InputType codeType)
 		{
 			inputs = inputs ?? new List<InputCode>();
 			inputs.Add(new InputCode(codeType));
+		}
+
+		public void RemoveAtIndex(int index)
+		{
+			if (index < 0 || index >= inputs.Count) return;
+			inputs.RemoveAt(index);
 		}
 
 		public void RemoveLastCode() => inputs.RemoveAt(inputs.Count - 1);
@@ -100,6 +124,16 @@ namespace InputHandler
 				if (inputs[i].Equals(code)) return true;
 			}
 			return false;
+		}
+
+		public override string ToString()
+		{
+			string s = $"Combination Count: {inputs.Count}\n";
+			for (int i = 0; i < inputs.Count; i++)
+			{
+				s += inputs[i];
+			}
+			return s;
 		}
 	}
 }

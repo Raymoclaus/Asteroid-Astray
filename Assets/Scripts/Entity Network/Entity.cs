@@ -14,8 +14,12 @@ public class Entity : MonoBehaviour
 	{
 		get { return mainCamCtrl ?? (mainCamCtrl = MainCam.GetComponent<CameraCtrl>()); }
 	}
-	[SerializeField] protected static ParticleGenerator particleGenerator;
-	protected static AudioManager audioManager;
+	[SerializeField] private static ParticleGenerator partGen;
+	protected static ParticleGenerator PartGen
+		=> partGen ?? (partGen = FindObjectOfType<ParticleGenerator>());
+	protected static AudioManager audioMngr;
+	protected static AudioManager AudioMngr
+		=> audioMngr ?? (audioMngr = FindObjectOfType<AudioManager>());
 	[SerializeField] protected ScreenRippleEffectController screenRippleSO;
 	protected bool entityReady = false;
 	[SerializeField] private bool shouldDisablePhysicsOnDistance = true;
@@ -213,7 +217,7 @@ public class Entity : MonoBehaviour
 			ItemStack stack = loot[i].GetStack();
 			for (int j = 0; j < stack.GetAmount(); j++)
 			{
-				particleGenerator.DropResource(destroyer,
+				partGen.DropResource(destroyer,
 					transform.position, stack.GetItemType());
 			}
 		}

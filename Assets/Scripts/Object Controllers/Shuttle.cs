@@ -78,7 +78,6 @@ public class Shuttle : Character, IStunnable, ICombat
 	private List<ICombat> enemies = new List<ICombat>();
 	[SerializeField] private ItemPopupUI popupUI;
 	private bool isTemporarilyInvincible = false;
-	private QuestLog questLog = new QuestLog();
 	[SerializeField] private ColorReplacementGroup cRGroup;
 	public Waypoint waypoint;
 	[SerializeField] private bool drillIsActive = true;
@@ -154,6 +153,7 @@ public class Shuttle : Character, IStunnable, ICombat
 		canDrill = true;
 		canDrillLaunch = true;
 		boostLevel = boostCapacity;
+		QuestPopupUI.SetQuester(GetComponent<Quester>());
 	}
 
 	protected override void Update()
@@ -252,7 +252,7 @@ public class Shuttle : Character, IStunnable, ICombat
 			}
 			if (IsDrilling)
 			{
-				float launchInput = InputManager.GetInput("DrillLaunch");
+				float launchInput = InputManager.GetInput("Cancel Drill");
 				input = Mathf.Clamp01(input + launchInput);
 				if (!CanDrillLaunch() && launchInput > 0f)
 				{
@@ -378,13 +378,12 @@ public class Shuttle : Character, IStunnable, ICombat
 		}
 		resourceCollectedTime = Pause.timeSinceOpen;
 		//play resource collect sound
-		audioManager = audioManager ?? FindObjectOfType<AudioManager>();
-		if (audioManager)
+		if (AudioMngr)
 		{
-			audioManager.PlaySFX(collectResourceSound, transform.position, transform, pitch: resourceCollectedPitch);
+			AudioMngr.PlaySFX(collectResourceSound, transform.position, transform, pitch: resourceCollectedPitch);
 		}
 		popupUI = popupUI ?? FindObjectOfType<ItemPopupUI>();
-		if (popupUI)
+		if (popupUI != null)
 		{
 			popupUI.GeneratePopup(itemType, collectedAmount);
 		}
@@ -425,20 +424,19 @@ public class Shuttle : Character, IStunnable, ICombat
 	{
 		base.CheckItemUsageInput();
 
-		if (InputManager.GetInput("Slot1") > 0f) CheckItemUsage(0);
-		if (InputManager.GetInput("Slot2") > 0f) CheckItemUsage(1);
-		if (InputManager.GetInput("Slot3") > 0f) CheckItemUsage(2);
-		if (InputManager.GetInput("Slot4") > 0f) CheckItemUsage(3);
-		if (InputManager.GetInput("Slot5") > 0f) CheckItemUsage(4);
-		if (InputManager.GetInput("Slot6") > 0f) CheckItemUsage(5);
-		if (InputManager.GetInput("Slot7") > 0f) CheckItemUsage(6);
-		if (InputManager.GetInput("Slot8") > 0f) CheckItemUsage(7);
+		for (int i = 0; i < 8; i++)
+		{
+			if (InputManager.GetInput($"Slot {i + 1}") > 0f)
+			{
+				CheckItemUsage(i);
+			}
+		}
 	}
 
 	protected override bool CheckItemUsage(int itemIndex)
 	{
-		if (!base.CheckItemUsage(itemIndex)) return false;
 		Item.Type itemType = storage.stacks[itemIndex].GetItemType();
+		if (!base.CheckItemUsage(itemIndex)) return false;
 		GameEvents.ItemUsed(itemType);
 		return true;
 	}
@@ -452,7 +450,7 @@ public class Shuttle : Character, IStunnable, ICombat
 			return 0f;
 		}
 
-		if (InputManager.GetInput("DrillLaunch") > 0f && CanDrillLaunch())
+		if (InputManager.GetInput("Cancel Drill") > 0f && CanDrillLaunch())
 		{
 			GameObject launchCone = drillLaunchArcSprite.gameObject;
 			launchCone.SetActive(true);
@@ -480,9 +478,9 @@ public class Shuttle : Character, IStunnable, ICombat
 		{
 			return calculation * 50f;
 		}
-		else if (InputManager.GetInput("Go") > 0f || InputManager.GetInput("DrillLaunch") > 0f)
+		else if (InputManager.GetInput("Go") > 0f || InputManager.GetInput("Cancel Drill") > 0f)
 		{
-			if (InputManager.GetInput("DrillLaunch") > 0f)
+			if (InputManager.GetInput("Cancel Drill") > 0f)
 			{
 				return CanDrillLaunch() ? 0.001f : 0f;
 			}
@@ -510,7 +508,7 @@ public class Shuttle : Character, IStunnable, ICombat
 
 	public override bool ShouldLaunch() =>
 		CanDrillLaunch()
-		&& InputManager.GetInputUp("DrillLaunch")
+		&& InputManager.GetInputUp("Cancel Drill")
 		&& hasControl
 		&& canLaunch;
 
@@ -729,19 +727,6 @@ public class Shuttle : Character, IStunnable, ICombat
 		CollectItem(stack);
 	}
 
-	public override void AcceptQuest(Quest quest)
-	{
-		base.AcceptQuest(quest);
-
-		Debug.Log($"Accepted Quest: {quest.Name}");
-		for (int i = 0; i < quest.Requirements.Count; i++)
-		{
-			QuestRequirement req = quest.Requirements[i];
-			Debug.Log(req.GetDescription());
-		}
-		questLog.AddQuest(quest);
-	}
-
 	public override bool TakeItem(Item.Type type, int amount) => storage.RemoveItem(type, amount);
 
 	public override Scan ReturnScan() => new Scan(GetEntityType(), 1f, GetLevel(), GetValue());
@@ -766,7 +751,7 @@ public class Shuttle : Character, IStunnable, ICombat
 	public void EnterShip(Transform shipHatch)
 	{
 		EnteringShip?.Invoke();
-		GameEvents.Save();
+		//GameEvents.Save();
 
 		hasControl = false;
 		isKinematic = true;

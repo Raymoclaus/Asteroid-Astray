@@ -1,10 +1,15 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Linq;
+using System.Collections.Generic;
+using UnityEngine;
 
 public class QuestPopupUI : PopupUI
 {
+	private static event Action<Quester> questerSetEvent;
+	private static Quester quester;
 	private static QuestPopupUI instance;
 	[SerializeField] private QuestPopupHolder popupPrefab;
-	private QuestPopupHolder currentPopup;
+	private List<QuestPopupHolder> popups = new List<QuestPopupHolder>();
 
 	private void Awake()
 	{
@@ -17,17 +22,43 @@ public class QuestPopupUI : PopupUI
 			Destroy(gameObject);
 			return;
 		}
+
+		SetUpNewQuester(quester);
+		questerSetEvent += SetUpNewQuester;
 	}
 
-	public static void ShowQuest(Quest quest)
+	private void OnDestroy()
 	{
-		instance.GeneratePopup(quest);
+		questerSetEvent -= SetUpNewQuester;
 	}
 
-	public virtual void GeneratePopup(Quest quest)
+	public static void SetQuester(Quester newQuester)
 	{
-		currentPopup = Instantiate(popupPrefab, transform, false);
-		currentPopup.Setup(quest);
-		quest.OnQuestComplete += currentPopup.Deactivate;
+		if (newQuester == null) return;
+		quester = newQuester;
+		questerSetEvent?.Invoke(newQuester);
 	}
+
+	private void SetUpNewQuester(Quester newQuester)
+	{
+		if (newQuester == null) return;
+		ShowQuest(newQuester.TopPriorityQuest);
+		quester.topPriorityQuestSet += ShowQuest;
+	}
+
+	private void ShowQuest(Quest quest)
+	{
+		if (quest == null) return;
+		GeneratePopup(quest);
+	}
+
+	protected virtual void GeneratePopup(Quest quest)
+	{
+		QuestPopupHolder popup = Instantiate(popupPrefab, transform, false);
+		popups.Add(popup);
+		popup.Setup(quest);
+	}
+
+	private QuestPopupHolder GetPopupForQuest(Quest quest)
+		=> popups.First(t => t.Quest == quest);
 }

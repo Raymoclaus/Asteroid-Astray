@@ -23,6 +23,10 @@ namespace InputHandler
 		{
 			get
 			{
+				if (mostRecentContextController == null)
+				{
+					currentContext = null;
+				}
 				if (currentContext != null) return currentContext;
 				ContextController[] contextCtrls = Object.FindObjectsOfType<ContextController>();
 				if (contextCtrls.Length != 0)
@@ -35,6 +39,7 @@ namespace InputHandler
 							contextCtrl = contextCtrls[i];
 						}
 					}
+					mostRecentContextController = contextCtrl;
 					SetContext(contextCtrl.contextName);
 					return currentContext;
 				}
@@ -46,13 +51,10 @@ namespace InputHandler
 				return currentContext;
 			}
 		}
+		private static ContextController mostRecentContextController;
 
 		public delegate void InputModeChangedEventHandler();
 		public static event InputModeChangedEventHandler InputModeChanged;
-		public static void ClearEvent()
-		{
-			InputModeChanged = null;
-		}
 
 		private static void CheckForModeUpdate()
 		{
@@ -84,7 +86,6 @@ namespace InputHandler
 		//returns the input status of a given command. 0f usually means no input.
 		public static float GetInput(string key)
 		{
-			//make sure we're using the right mode
 			CheckForModeUpdate();
 			return GetHandler()?.GetInput(key, CurrentContext) ?? 0f;
 		}
@@ -106,13 +107,15 @@ namespace InputHandler
 			=> CurrentContext?.IsValidAction(key) ?? false;
 
 		//returns the input combination for a given action to occur
-		public static InputCombination GetBinding(string key)
-			=> GetHandler()?.GetBinding(key, CurrentContext);
+		public static ActionCombination GetBinding(string key)
+		{
+			CheckForModeUpdate();
+			return GetHandler()?.GetBinding(key, CurrentContext);
+		}
 
 		//returns the angle in degrees that the shuttle should turn to
 		public static float GetLookAngle(Vector2 refLocation)
 		{
-			//make sure we're using the right mode
 			CheckForModeUpdate();
 			return GetHandler()?.GetLookAngle(refLocation) ?? 0f;
 		}

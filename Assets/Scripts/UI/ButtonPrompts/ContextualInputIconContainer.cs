@@ -18,6 +18,6 @@ public class ContextualInputIconContainer : ScriptableObject
 		{
 			Debug.LogWarning($"No sprite container for {action} found.");
 		}
-		return search.First();
+		return search.FirstOrDefault();
 	}
 }

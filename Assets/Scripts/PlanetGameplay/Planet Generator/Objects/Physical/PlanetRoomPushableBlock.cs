@@ -43,7 +43,7 @@ public class PlanetRoomPushableBlock : PlanetInteractable
 	private void Move(IntPair direction, float time)
 	{
 		Vector2 position = transform.position;
-		position += direction.ConvertToVector2;
+		position += direction;
 		StartCoroutine(MoveToPosition(time, position));
 	}
 

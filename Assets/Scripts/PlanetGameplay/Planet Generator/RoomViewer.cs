@@ -20,7 +20,7 @@ public class RoomViewer : MonoBehaviour
 
 	[SerializeField] private Camera cam;
 
-	private PlanetData planetData;
+	[System.NonSerialized] private PlanetData planetData;
 
 	public delegate void RoomChangedEventHandler(Room newRoom, Direction direction);
 	public event RoomChangedEventHandler OnRoomChanged;
@@ -28,18 +28,31 @@ public class RoomViewer : MonoBehaviour
 
 	private void Awake()
 	{
-		planetData = FindExistingPlanetData() ?? new PlanetGenerator().Generate(1);
+		PlanetData loadedData = FindExistingPlanetData();
+		loadedData = null;
+		planetData = loadedData != null ? loadedData
+			: new PlanetGenerator().Generate(1);
+		//SavePlanetData();
 		ShowAllRooms(planetData);
-		PlanetRoomObject player = CreateObject(playerPrefab, ActiveRoom, null, GetVisualDataSet(planetData.areaType));
-		player.transform.position = (Vector2)ActiveRoom.GetWorldSpacePosition() + ActiveRoom.GetCenter() + Vector2.down * 4f;
+		PlanetRoomObject player = CreateObject(playerPrefab, ActiveRoom, new RoomPlayer(ActiveRoom), GetVisualDataSet(planetData.areaType));
+		player.transform.position = (Vector2)ActiveRoom.WorldSpacePosition
+			+ ActiveRoom.Center + Vector2.down * 4f;
 		player.transform.parent = null;
+	}
+
+	public void SavePlanetData()
+	{
+		SaveLoad.SaveText(string.Empty, "Last visited planet", planetData.planetName);
+		planetData.Save(string.Empty, string.Empty);
 	}
 
 	private PlanetData FindExistingPlanetData()
 	{
-		string planetName = SaveLoad.Load<string>("Last visited planet");
+		string planetName = SaveLoad.LoadText("Last visited planet");
 		if (planetName == null) return null;
-		return SaveLoad.Load<PlanetData>(planetName);
+		string text = SaveLoad.LoadText($"{planetName}/planetData");
+		if (text == null) return null;
+		return new PlanetData(text.Split('\n'));
 	}
 
 	public void ShowRoom(AreaType areaType, Room room, Vector2 offset, bool destroyExisting = true)
@@ -54,7 +67,7 @@ public class RoomViewer : MonoBehaviour
 
 		DrawTiles(areaType, room, offset);
 		DrawRoomObjects(areaType, room, offset);
-		SetCameraPosition(room.GetCenter() + offset);
+		SetCameraPosition(room.Center + offset);
 
 		ActiveRoom = room;
 	}
@@ -74,12 +87,12 @@ public class RoomViewer : MonoBehaviour
 		List<Room> rooms = data.GetRooms();
 		for (int i = 0; i < rooms.Count; i++)
 		{
-			IntPair dimensions = rooms[i].GetDimensions();
+			IntPair dimensions = rooms[i].Dimensions;
 			IntPair offset = rooms[i].position;
 			offset *= dimensions;
-			ShowRoom(data.areaType, rooms[i], offset.ConvertToVector2, false);
+			ShowRoom(data.areaType, rooms[i], offset, false);
 		}
-		SetCameraPosition(data.startRoom.GetCenter());
+		SetCameraPosition(data.startRoom.Center);
 
 		ActiveRoom = data.startRoom;
 	}
@@ -87,11 +100,11 @@ public class RoomViewer : MonoBehaviour
 	private void DrawTiles(AreaType type, Room room, Vector2 offset)
 	{
 		PlanetVisualData dataSet = GetVisualDataSet(type);
-		List<RoomTile> tiles = room.GetTiles();
+		List<RoomTile> tiles = room.Tiles;
 		for (int i = 0; i < tiles.Count; i++)
 		{
-			CreateTile(tiles[i].position.x + (int)offset.x,
-				tiles[i].position.y + (int)offset.y,
+			CreateTile(tiles[i].Position.x + (int)offset.x,
+				tiles[i].Position.y + (int)offset.y,
 				tiles[i].type, dataSet);
 		}
 	}
@@ -110,7 +123,7 @@ public class RoomViewer : MonoBehaviour
 
 		for (int i = 0; i < objs.Count; i++)
 		{
-			RoomObject.ObjType objType = objs[i].GetObjectType();
+			RoomObject.ObjType objType = objs[i].ObjectType;
 			//Debug.Log(objType);
 
 			PlanetRoomObject roomObj = null;
@@ -151,8 +164,7 @@ public class RoomViewer : MonoBehaviour
 					break;
 			}
 
-			roomObj.transform.position =
-				objs[i].GetPosition().ConvertToVector2 + offset;
+			roomObj.transform.position = (Vector2)objs[i].Position + offset;
 		}
 	}
 
@@ -174,13 +186,6 @@ public class RoomViewer : MonoBehaviour
 				}
 				break;
 		}
-	}
-
-	private void CreateExitTrigger(Direction direction)
-	{
-		PlanetRoomExitTrigger exitTrigger = 
-			(PlanetRoomExitTrigger)CreateObject(exitTriggerPrefab, null, null, null);
-		exitTrigger.direction = direction;
 	}
 
 	private PlanetRoomObject CreateObject(PlanetRoomObject obj, Room room, RoomObject roomObj, PlanetVisualData dataSet)
@@ -213,8 +218,8 @@ public class RoomViewer : MonoBehaviour
 		Room nextRoom = ActiveRoom.GetRoom(direction);
 		if (nextRoom == null) return;
 		ActiveRoom = nextRoom;
-		IntPair offset = ActiveRoom.position * ActiveRoom.GetDimensions();
-		ShowRoom(planetData.areaType, ActiveRoom, offset.ConvertToVector2, true);
+		IntPair offset = ActiveRoom.position * ActiveRoom.Dimensions;
+		ShowRoom(planetData.areaType, ActiveRoom, offset, true);
 		OnRoomChanged?.Invoke(ActiveRoom, direction);
 	}
 }

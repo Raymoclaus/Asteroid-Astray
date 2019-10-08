@@ -34,33 +34,17 @@ public class Quest
 
 	private void EvaluateRequirements()
 	{
-		if (IsComplete())
-		{
-			Debug.Log($"Quest Complete: {Name}");
-			QuestComplete(this);
-			for (int i = 0; i < Rewards.Count; i++)
-			{
-				QuestReward reward = Rewards[i];
-				reward.GiveReward(Quester);
-			}
-		}
+		if (!IsComplete) return;
+
+		Debug.Log($"Quest Complete: {Name}");
+		QuestComplete(this);
+		Rewards.ForEach(t => t.GiveReward(Quester));
 	}
 
-	public bool IsComplete()
-	{
-		for (int i = 0; i < Requirements.Count; i++)
-		{
-			if (!Requirements[i].IsComplete()) return false;
-		}
-		return true;
-	}
+	public bool IsComplete => !Requirements.Exists(t => !t.Completed);
 
-	public void Activate()
-	{
-		for (int i = 0; i < Requirements.Count; i++)
-		{
-			QuestRequirement requirement = Requirements[i];
-			requirement.Activate();
-		}
-	}
+	public void Activate() => Requirements.ForEach(t => t.Activate());
+
+	public void ForceComplete()
+		=> Requirements.ForEach(t => t.QuestRequirementCompleted());
 }

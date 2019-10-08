@@ -5,10 +5,16 @@ public struct Waypoint
 	public Transform target;
 	public Vector2 position;
 
-	public Waypoint(Transform target = null, Vector2? position = null)
+	public Waypoint(Transform target)
 	{
 		this.target = target;
-		this.position = position ?? Vector2.zero;
+		position = Vector2.zero;
+	}
+
+	public Waypoint(Vector2 position)
+	{
+		target = null;
+		this.position = position;
 	}
 
 	public Vector2 GetPosition() => target == null ? position : (Vector2)target.position;

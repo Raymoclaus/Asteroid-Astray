@@ -5,16 +5,11 @@ using InputHandler;
 public class TY4PlayingUI : MonoBehaviour
 {
 	private CanvasGroup cGroup;
-	private CanvasGroup CGroup
-	{
-		get { return cGroup ?? (cGroup = GetComponent<CanvasGroup>()); }
-	}
-	private bool active = false;
+	private CanvasGroup CGroup => cGroup ?? (cGroup = GetComponent<CanvasGroup>());
+	public bool active = false;
+	public bool CanDisable = false;
 	private Shuttle mainChar;
-	private Shuttle MainChar
-	{
-		get { return mainChar ?? (mainChar = FindObjectOfType<Shuttle>()); }
-	}
+	private Shuttle MainChar => mainChar ?? (mainChar = FindObjectOfType<Shuttle>());
 
 	private void Awake() => CGroup.alpha = active ? 1f : 0f;
 
@@ -26,8 +21,9 @@ public class TY4PlayingUI : MonoBehaviour
 		}
 
 		if (active
-			&& InputManager.GetInput("ScrollDialogue") > 0f
-			&& CGroup.alpha == 1f)
+			&& InputManager.GetInputDown("Scroll Dialogue")
+			&& CGroup.alpha == 1f
+			&& CanDisable)
 		{
 			SetActive(false);
 		}

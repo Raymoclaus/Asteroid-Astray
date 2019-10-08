@@ -13,11 +13,16 @@ public class InputIconSO : ScriptableObject
 	public Sprite GetSprite(InputCode key)
 		=> inputIcons.Where(t => t.input.Equals(key)).First().sprite;
 
-	public List<Sprite> GetSprites(InputCombination combo)
+	public List<Sprite> GetSprites(ActionCombination combo)
 	{
 		List<Sprite> sprites = new List<Sprite>();
 		for (int i = 0; i < inputIcons.Count; i++)
 		{
+			if (combo == null)
+			{
+				Debug.Log($"Invalid Action Combination: {combo}");
+				return null;
+			}
 			if (combo.Contains(inputIcons[i].input))
 			{
 				sprites.Add(inputIcons[i].sprite);

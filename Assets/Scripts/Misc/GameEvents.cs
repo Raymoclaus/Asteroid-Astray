@@ -1,35 +1,22 @@
-﻿public static class GameEvents
+﻿using System;
+
+public static class GameEvents
 {
-	public delegate void EntityDestroyedEventHandler(EntityType type);
-	public static event EntityDestroyedEventHandler OnEntityDestroyed;
+	public static Action<EntityType> OnEntityDestroyed;
 	public static void EntityDestroyed(EntityType type) => OnEntityDestroyed?.Invoke(type);
 
-	public delegate void ItemCollectedEventHandler(Item.Type type, int amount);
-	public static event ItemCollectedEventHandler OnItemCollected;
+	public static Action<Item.Type, int> OnItemCollected;
 	public static void ItemCollected(Item.Type type, int amount) => OnItemCollected?.Invoke(type, amount);
-
-	public delegate void ItemCraftedEventHandler(Item.Type type, int amount);
-	public static event ItemCraftedEventHandler OnItemCrafted;
+	
+	public static Action<Item.Type, int> OnItemCrafted;
 	public static void ItemCrafted(Item.Type type, int amount) => OnItemCrafted?.Invoke(type, amount);
-
-	public delegate void ItemUsedEventHandler(Item.Type type);
-	public static event ItemUsedEventHandler OnItemUsed;
+	
+	public static Action<Item.Type> OnItemUsed;
 	public static void ItemUsed(Item.Type type) => OnItemUsed?.Invoke(type);
-
-	public delegate void WaypointReachedEventHandler(Waypoint waypoint);
-	public static event WaypointReachedEventHandler OnWaypointReached;
+	
+	public static Action<Waypoint> OnWaypointReached;
 	public static void WaypointReached(Waypoint waypoint) => OnWaypointReached?.Invoke(waypoint);
-
-	public delegate void SaveEventHandler();
-	public static event SaveEventHandler OnSave;
+	
+	public static Action OnSave;
 	public static void Save() => OnSave?.Invoke();
-
-	public static void ClearEvent()
-	{
-		OnEntityDestroyed = null;
-		OnItemCollected = null;
-		OnItemCrafted = null;
-		OnItemUsed = null;
-		OnWaypointReached = null;
-	}
 }

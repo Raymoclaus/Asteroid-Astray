@@ -11,6 +11,10 @@ public abstract class RoomGroundButton : RoomObject
 
 	private bool triggered = false;
 
+	public RoomGroundButton(Room room) : base(room) { }
+
+	public RoomGroundButton(Room room, string[] lines) : base(room, lines) { }
+
 	public void Trigger(MonoBehaviour mono)
 	{
 		if (triggered) return;

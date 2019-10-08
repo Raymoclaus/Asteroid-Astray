@@ -34,7 +34,6 @@ namespace BlockPushPuzzle
 				new IntPair(0, GridSize.y - 1),
 				new IntPair(GridSize.x - 1, GridSize.y - 1)
 			};
-			Reset();
 		}
 
 		public void Reset()

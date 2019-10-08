@@ -170,7 +170,7 @@ public class GatherBot : Character, IStunnable, ICombat
 		ActivateRenderers(false);
 	}
 
-	private void Update()
+	protected override void Update()
 	{
 		accel = Vector2.zero;
 		if (stunned)

@@ -3,7 +3,7 @@
 public abstract class QuestRequirement
 {
 	private const string NO_DESCRIPTION = "This goal has no description.";
-	private bool completed = false;
+	public bool Completed { get; private set; }
 	protected bool active = false;
 
 	public delegate void QuestRequirementUpdatedEventHandler();
@@ -14,13 +14,11 @@ public abstract class QuestRequirement
 	public event QuestRequirementCompletedEventHandler OnQuestRequirementCompleted;
 	public void QuestRequirementCompleted()
 	{
-		completed = true;
+		Completed = true;
 		OnQuestRequirementCompleted?.Invoke();
 	}
 
 	public virtual string GetDescription() => NO_DESCRIPTION;
-
-	public bool IsComplete() => completed;
 
 	public virtual Vector3? TargetLocation() => null;
 

@@ -83,12 +83,12 @@ public class PlanetPlayer : PlanetRoomEntity
 
 	private bool ShouldMeleeAttack
 		=> ShouldAttack
-		&& InputManager.GetInputDown("MeleeAttack")
+		&& InputManager.GetInputDown("Melee Attack")
 		&& !MeleeAttackOnCooldown;
 
 	private bool ShouldRangedAttack
 		=> ShouldAttack
-		&& InputManager.GetInputDown("RangedAttack")
+		&& InputManager.GetInputDown("Ranged Attack")
 		&& !RangedAttackOnCooldown;
 
 	private bool RangedAttackOnCooldown
@@ -159,10 +159,9 @@ public class PlanetPlayer : PlanetRoomEntity
 	private void ResetPosition(Room newRoom, Direction direction)
 	{
 		room = newRoom;
-		IntPair intOffset = room.position * room.GetDimensions();
+		IntPair intOffset = room.position * room.Dimensions;
 		Vector2 offset = new Vector2(intOffset.x, intOffset.y);
-		Direction opposite = Room.Opposite(direction);
-		Vector2 resetPos = room.GetExitPos(opposite).ConvertToVector2;
+		Vector2 resetPos = room.GetExitPos(direction.Opposite());
 		transform.position = resetPos + offset;
 	}
 
@@ -171,21 +170,17 @@ public class PlanetPlayer : PlanetRoomEntity
 		PopupUI?.GeneratePopup(type, amount);
 	}
 
-	public bool RemoveKeyFromInventory(RoomKey.KeyColour colour)
-		=> keyItems.RemoveItem(RoomKey.ConvertToItemType(colour), 1);
-
 	protected override void CheckItemUsageInput()
 	{
 		base.CheckItemUsageInput();
 
-		if (InputManager.GetInput("Slot1") > 0f) CheckItemUsage(0);
-		if (InputManager.GetInput("Slot2") > 0f) CheckItemUsage(1);
-		if (InputManager.GetInput("Slot3") > 0f) CheckItemUsage(2);
-		if (InputManager.GetInput("Slot4") > 0f) CheckItemUsage(3);
-		if (InputManager.GetInput("Slot5") > 0f) CheckItemUsage(4);
-		if (InputManager.GetInput("Slot6") > 0f) CheckItemUsage(5);
-		if (InputManager.GetInput("Slot7") > 0f) CheckItemUsage(6);
-		if (InputManager.GetInput("Slot8") > 0f) CheckItemUsage(7);
+		for (int i = 0; i < 8; i++)
+		{
+			if (InputManager.GetInput($"Slot {i + 1}") > 0f)
+			{
+				CheckItemUsage(i);
+			}
+		}
 	}
 
 	public override int CollectItem(ItemStack stack)
@@ -203,4 +198,8 @@ public class PlanetPlayer : PlanetRoomEntity
 
 	protected override Inventory GetAppropriateInventory(Item.Type itemType)
 		=> Item.IsKeyItem(itemType) ? keyItems : base.GetAppropriateInventory(itemType);
+
+	public override bool RemoveFromInventory(ItemStack stack)
+		=> base.RemoveFromInventory(stack)
+		|| keyItems.RemoveItem(stack.GetItemType(), stack.GetAmount());
 }

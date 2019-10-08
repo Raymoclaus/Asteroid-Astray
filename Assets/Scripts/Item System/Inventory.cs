@@ -97,7 +97,7 @@ public class Inventory : MonoBehaviour
 
 	private int SetBlank(Item.Type type, int num, List<ItemStack> inv = null)
 	{
-		inv = inv != null ? inv : stacks;
+		inv = inv ?? stacks;
 		for (int i = 0; i < inv.Count; i++)
 		{
 			ItemStack stack = inv[i];
@@ -369,14 +369,14 @@ public class Inventory : MonoBehaviour
 	public void Save()
 	{
 		if (saveKey == null || saveKey == string.Empty) return;
-		SaveLoad.Save(saveKey, GetInventoryData());
+		SaveLoad.SerializeSave(saveKey, GetInventoryData());
 	}
 
 	public InventoryData GetInventoryData() => new InventoryData(stacks, size);
 
 	public void Load()
 	{
-		InventoryData data = SaveLoad.Load<InventoryData>(saveKey);
+		InventoryData data = SaveLoad.LoadSerialized<InventoryData>(saveKey);
 		SetData(data);
 	}
 

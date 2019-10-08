@@ -9,26 +9,29 @@ public class QuestPopupHolder : MonoBehaviour
 	[SerializeField] private CanvasGroup canvasGroup;
 
 	private List<QuestRequirementUI> requirements = new List<QuestRequirementUI>();
-	private Quest quest;
+	public Quest Quest { get; private set; }
 
 	public void Setup(Quest q)
 	{
 		rect = rect ?? GetComponent<RectTransform>();
-		quest = q;
+		Quest = q;
+		Quest.OnQuestComplete += Deactivate;
 		nameUI = nameUI ?? GetComponentInChildren<QuestNameUI>();
-		nameUI.Setup(quest);
-		for (int i = 0; i < quest.Requirements.Count; i++)
+		nameUI.Setup(Quest);
+		for (int i = 0; i < Quest.Requirements.Count; i++)
 		{
 			QuestRequirementUI req = Instantiate(requirementPrefab, transform, false);
-			req.Setup(quest.Requirements[i]);
+			req.Setup(Quest.Requirements[i]);
 			requirements.Add(req);
 		}
 
 		canvasGroup = canvasGroup ?? GetComponent<CanvasGroup>();
 	}
 
-	public void Deactivate(Quest q)
+	public void Deactivate(Quest quest)
 	{
+		if (Quest != quest) return;
+		Quest.OnQuestComplete -= Deactivate;
 		Destroy(gameObject);
 	}
 }

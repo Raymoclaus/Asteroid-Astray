@@ -16,21 +16,12 @@ public class Pause : MonoBehaviour
 	private static bool canPause = true;
 	public static float intendedTimeSpeed = 1f;
 	[SerializeField] private PauseUIController pauseUI;
-	private PauseUIController PauseUI
-	{
-		get
-		{
-			return pauseUI ?? (pauseUI = FindObjectOfType<PauseUIController>());
-		}
-	}
+	private PauseUIController PauseUI => pauseUI ??
+		(pauseUI = FindObjectOfType<PauseUIController>());
 	[SerializeField] private RecordingModeController recordingModeController;
 
 	public delegate void PauseEventHandler(bool pausing);
-	public static event PauseEventHandler OnPause;
-	public static void ClearEvent()
-	{
-		OnPause = null;
-	}
+	public event PauseEventHandler OnPause;
 
 	private void Awake()
 	{
@@ -86,7 +77,12 @@ public class Pause : MonoBehaviour
 			}
 		}
 
-		Time.fixedDeltaTime = IsStopped ? 1f : 0.01666666f;
+		if (Input.GetKeyDown(KeyCode.BackQuote))
+		{
+			InstantPause(!IsStopped);
+		}
+
+		Time.fixedDeltaTime = IsStopped ? 1f : 0.01666666f / Time.timeScale;
 	}
 
 	public static void InstantPause(bool pause)

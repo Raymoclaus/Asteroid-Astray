@@ -1,22 +1,34 @@
 ﻿using UnityEngine;
-using UnityEngine.Events;
 
 public class MainHatchPrompt : InteractablePromptTrigger
 {
+	private static DialogueController dlgCtrl;
+	protected static DialogueController DlgCtrl
+		=> dlgCtrl ?? (dlgCtrl = FindObjectOfType<DialogueController>());
+
 	[SerializeField] private ConversationWithActions
 		interactBeforeRepairedShuttle,
 		interactBeforeRechargedShip,
 		genericCantEnterShipDialogue;
-
-	public UnityEvent lockedActions;
-	private bool isLocked = false;
+	
+	public bool IsLocked { get; set; }
 
 	[SerializeField] private Animator anim;
 
-	protected override void OnInteracted(Triggerer actor)
+	public override void Interact(Triggerer actor)
 	{
-		if (isLocked) return;
-		base.OnInteracted(actor);
+		base.Interact(actor);
+		Shuttle shuttle = actor.GetComponent<Shuttle>();
+		if (shuttle == null) return;
+		if (IsLocked)
+		{
+			PlayDialogueResponse();
+		}
+		else
+		{
+			Open();
+			shuttle.EnterShip(transform);
+		}
 	}
 
 	public void PlayDialogueResponse()
@@ -36,16 +48,6 @@ public class MainHatchPrompt : InteractablePromptTrigger
 			DlgCtrl.StartChat(genericCantEnterShipDialogue);
 		}
 	}
-
-	protected override void ActivateInteractionActions()
-	{
-		if (!isLocked)
-		{
-			base.ActivateInteractionActions();
-		}
-	}
-
-	public void Lock(bool lockDoor) => isLocked = lockDoor;
 
 	public void Open() => anim.SetTrigger("Open");
 }

@@ -17,10 +17,7 @@ public class ItemStack
 		this.amount = num < 0 ? 0 : num;
 	}
 
-	public ItemStack()
-	{
-
-	}
+	public ItemStack() { }
 
 	public Item.Type GetItemType()
 	{
@@ -90,5 +87,38 @@ public class ItemStack
 	public int GetValue()
 	{
 		return Item.TypeRarity(type) * amount;
+	}
+
+	public static bool TryParse(string toParse, out ItemStack result)
+	{
+		try
+		{
+			toParse = toParse.Replace(" ", string.Empty);
+			string[] args = toParse.Split('x');
+			int amount;
+			Item.Type type;
+			int.TryParse(args[0], out amount);
+			Enum.TryParse(args[1], out type);
+			result = new ItemStack(type, amount);
+			return true;
+		}
+		catch (ArgumentException e)
+		{
+			Debug.LogError(e);
+			result = new ItemStack();
+			return false;
+		}
+		catch (IndexOutOfRangeException e)
+		{
+			Debug.LogError(e);
+			result = new ItemStack();
+			return false;
+		}
+		catch (Exception e)
+		{
+			Debug.LogError(e);
+			result = new ItemStack();
+			return false;
+		}
 	}
 }

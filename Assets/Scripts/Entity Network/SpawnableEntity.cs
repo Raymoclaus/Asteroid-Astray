@@ -45,7 +45,15 @@ public class SpawnableEntity
 		float c = Math.Max(0, rarityZoneOffset);
 		float x = distance / Constants.CHUNK_SIZE;
 
-		return a * ((x - c)/(x - c + b));
+		float calculation = a * ((x - c)/(x - c + b));
+		if (name.ToLower() == "bothive")
+		{
+			Debug.Log($"Distance: {distance}");
+			Debug.Log($"Rarity: {rarity}");
+			Debug.Log($"Zone: {zone}");
+			Debug.Log($"Chance Calculation: {calculation}");
+		}
+		return calculation;
 	}
 
 	public float GetMinimumDistanceToBeSpawned()

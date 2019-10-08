@@ -11,7 +11,8 @@ public class NarrativeManager : MonoBehaviour
 	[SerializeField] private bool randomiseStartingLocation;
 	private DialogueController dlgCtrl;
 	private DialogueController DlgCtrl
-		=> dlgCtrl ?? (dlgCtrl = FindObjectOfType<DialogueController>());
+		=> dlgCtrl != null ? dlgCtrl
+		: (dlgCtrl = FindObjectOfType<DialogueController>());
 	[SerializeField] private DebugGameplayManager dgm;
 	[SerializeField] private SpotlightEffectController spotlightEffectController;
 	[SerializeField] private CustomScreenEffect screenEffects;
@@ -69,7 +70,7 @@ public class NarrativeManager : MonoBehaviour
 
 		MainChar.hasControl = false;
 		MainChar.isKinematic = true;
-		MainHatch.Lock(true);
+		MainHatch.IsLocked = true;
 		MainChar.SetNavigationActive(false);
 		LoadingController.AddListener(() =>
 		{
@@ -136,7 +137,11 @@ public class NarrativeManager : MonoBehaviour
 		LoadingController.AddListener(StartRecoveryDialogue);
 	}
 
-	private void StartRecoveryDialogue() => StartDialogue(recoveryDialogue, false);
+	private void StartRecoveryDialogue()
+	{
+		ActivateSpotlight(true);
+		StartDialogue(recoveryDialogue, false);
+	}
 
 	public void StartFirstGatheringQuest()
 	{
@@ -162,8 +167,10 @@ public class NarrativeManager : MonoBehaviour
 
 	private void CompletedFirstGatheringQuest(Quest quest)
 	{
+		ActivateScriptedDrops(false);
+		StartCraftYourFirstRepairKitQuest();
 		StartDialogue(completedFirstGatheringQuestDialogue, true);
-		TutPrompts.drillInputPromptInfo.SetIgnore(true);
+		TutPrompts?.drillInputPromptInfo.SetIgnore(true);
 	}
 
 	public void StartCraftYourFirstRepairKitQuest()
@@ -192,6 +199,7 @@ public class NarrativeManager : MonoBehaviour
 
 	private void CompletedCraftYourFirstRepairKitQuest(Quest quest)
 	{
+		StartRepairTheShuttleQuest();
 		StartDialogue(useRepairKitDialogue, true);
 		TutPrompts?.pauseInputPromptInfo.SetIgnore(true);
 	}
@@ -216,6 +224,8 @@ public class NarrativeManager : MonoBehaviour
 
 	private void CompletedRepairTheShuttleQuest(Quest quest)
 	{
+		SetShuttleRepaired(true);
+		StartReturnToTheShipQuest();
 		StartDialogue(findShipDialogue, true);
 		TutPrompts?.repairKitInputPromptInfo.SetIgnore(true);
 	}
@@ -230,14 +240,17 @@ public class NarrativeManager : MonoBehaviour
 		qReqs.Add(new InteractionQReq(MainHatch, MainChar.GetComponent<Triggerer>(), "Return to the ship."));
 
 		Quest q = new Quest(
-			"Find your way back to the ship",
+			"Find the ship",
 			"Communication and Navigation systems on the shuttle have been restored, but we still can't contact Dendro. Find your way back to the ship and check if Dendro is still alright.",
 			MainChar, claire, qRewards, qReqs, CompletedReturnToTheShipQuest);
 
 		GiveQuest(MainChar, q);
 	}
 
-	private void CompletedReturnToTheShipQuest(Quest quest) => StartDialogue(foundShipDialogue, false);
+	private void CompletedReturnToTheShipQuest(Quest quest)
+	{
+		StartDialogue(foundShipDialogue, false);
+	}
 
 	public void StartFindEnergySourceQuest()
 	{
@@ -255,9 +268,11 @@ public class NarrativeManager : MonoBehaviour
 
 		GiveQuest(MainChar, q);
 		//create a deranged bot
-		Entity newEntity = EntityGenerator.SpawnEntity(derangedSoloBotPrefab);
+		ChunkCoords emptyChunk = EntityGenerator.GetNearbyEmptyChunk();
+		SpawnableEntity se = EntityGenerator.GetSpawnableEntity(derangedSoloBotPrefab);
+		Entity newEntity = EntityGenerator.SpawnOneEntityInChunk(se, null, emptyChunk);
 		//set waypoint to new bot
-		MainChar.waypoint = new Waypoint(newEntity.transform, null);
+		MainChar.waypoint = new Waypoint(newEntity.transform);
 		//attach dialogue prompt when player approaches bot
 		VicinityTrigger entityPrompt = newEntity.GetComponentInChildren<VicinityTrigger>();
 		VicinityTrigger.EnteredTriggerEventHandler triggerEnterAction = null;
@@ -269,7 +284,11 @@ public class NarrativeManager : MonoBehaviour
 		entityPrompt.OnEnterTrigger += triggerEnterAction;
 	}
 
-	private void CompletedFindEnergySourceQuest(Quest quest) => StartDialogue(acquiredEnergySourceDialogue, true);
+	private void CompletedFindEnergySourceQuest(Quest quest)
+	{
+		StartRechargeTheShipQuest();
+		StartDialogue(acquiredEnergySourceDialogue, true);
+	}
 
 	public void StartRechargeTheShipQuest()
 	{
@@ -295,6 +314,7 @@ public class NarrativeManager : MonoBehaviour
 	{
 		StartDialogue(rechargedTheShipDialogue, false);
 		TakeItem(Item.Type.CorruptedCorvorite, 1);
+		MainHatch.IsLocked = false;
 	}
 
 	public void ActivateSpotlight(bool activate) => screenEffects.SetBlit(spotlightEffectController.spotlightMaterial, activate);
@@ -315,7 +335,7 @@ public class NarrativeManager : MonoBehaviour
 
 	public void TakeItem(Item.Type type, int amount) => MainChar.TakeItem(type, amount);
 
-	private void GiveQuest(Character c, Quest q) => c.AcceptQuest(q);
+	private void GiveQuest(Character c, Quest q) => c.GetComponent<Quester>().AcceptQuest(q);
 
 	public void StartDialogue(ConversationWithActions ce, bool chat = false)
 	{
@@ -338,6 +358,9 @@ public class NarrativeManager : MonoBehaviour
 		Vector2 randomPos = new Vector2(Mathf.Sin(randomAngle),	Mathf.Cos(randomAngle));
 		float div = DistanceUI.UNITS_TO_METRES;
 		randomPos *= UnityEngine.Random.value * 100f / div + 300f / div;
-		MainChar?.Teleport(pos + randomPos);
+		if (MainChar != null)
+		{
+			MainChar.Teleport(pos + randomPos);
+		}
 	}
 }

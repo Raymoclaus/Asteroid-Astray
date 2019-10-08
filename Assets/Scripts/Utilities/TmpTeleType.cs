@@ -80,6 +80,7 @@ public static class TmpTeleType
 
 		RevealAllCharacters(textMesh);
 		onFinishTyping?.Invoke();
+		onFinishTyping = null;
 	}
 
 	private static void StopTyping(TextMeshProUGUI textMesh)

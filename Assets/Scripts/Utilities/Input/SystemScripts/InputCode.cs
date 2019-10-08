@@ -17,9 +17,36 @@ namespace InputHandler
 		public string axisName;
 		public bool axisPositiveDirection = true;
 
+		public InputCode() { }
+
 		public InputCode(InputType type)
 		{
 			inputType = type;
+		}
+
+		public bool IsValid
+		{
+			get
+			{
+				switch (inputType)
+				{
+					default: return false;
+					case InputType.Button:
+						return buttonCode != KeyCode.None;
+					case InputType.Axis:
+						if (axisName == string.Empty) return false;
+						try
+						{
+							Input.GetAxisRaw(axisName);
+							return true;
+						}
+						catch (UnityException e)
+						{
+							Debug.Log($"Axis: {axisName} does not exist. {e}");
+							return false;
+						}
+				}
+			}
 		}
 
 		public virtual float CodeValue()
@@ -62,7 +89,20 @@ namespace InputHandler
 			}
 		}
 
-		public override string ToString() => inputType + ": " + GetData();
+		public override string ToString()
+		{
+			string s = inputType.ToString();
+			switch (inputType)
+			{
+				case InputType.Button:
+					s += $": {buttonCode}";
+					break;
+				case InputType.Axis:
+					s += $": {axisName} > Positive Axis: {axisPositiveDirection}";
+					break;
+			}
+			return s;
+		}
 
 		public override bool Equals(object obj)
 		{
@@ -79,6 +119,17 @@ namespace InputHandler
 					return string.Compare(axisName, other.axisName) == 0
 						&& axisPositiveDirection == other.axisPositiveDirection;
 			}
+		}
+
+		public override int GetHashCode()
+		{
+			var hashCode = -1367569829;
+			hashCode = hashCode * -1521134295 + inputType.GetHashCode();
+			hashCode = hashCode * -1521134295 + buttonCode.GetHashCode();
+			hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(axisName);
+			hashCode = hashCode * -1521134295 + axisPositiveDirection.GetHashCode();
+			hashCode = hashCode * -1521134295 + IsValid.GetHashCode();
+			return hashCode;
 		}
 	}
 }

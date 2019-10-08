@@ -26,7 +26,9 @@ public class LaserWeapon : MonoBehaviour
 	[SerializeField]
 	private AudioClip sonicBoomSound;
 	private List<double> projectileIDs = new List<double>();
-	protected static AudioManager audioManager;
+	protected static AudioManager audioMngr;
+	protected static AudioManager AudioMngr
+		=> audioMngr ?? (audioMngr = FindObjectOfType<AudioManager>());
 
 	private void Awake()
 	{
@@ -54,10 +56,9 @@ public class LaserWeapon : MonoBehaviour
 		if (timer <= 0f)
 		{
 			timer = cooldown;
-			audioManager = audioManager ?? FindObjectOfType<AudioManager>();
-			if (audioManager)
+			if (AudioMngr != null)
 			{
-				audioManager.PlaySFX(shootSound, transform.position, transform, 0.7f);
+				AudioMngr.PlaySFX(shootSound, transform.position, transform, 0.7f);
 			}
 		}
 		else return;
@@ -122,10 +123,9 @@ public class LaserWeapon : MonoBehaviour
 		sBoom.transform.position = position;
 		sBoom.transform.eulerAngles = Vector3.forward * angle;
 		//play sonic boom sound
-		audioManager = audioManager ?? FindObjectOfType<AudioManager>();
-		if (audioManager)
+		if (AudioMngr != null)
 		{
-			audioManager.PlaySFX(sonicBoomSound, transform.position);
+			AudioMngr.PlaySFX(sonicBoomSound, transform.position);
 		}
 	}
 }

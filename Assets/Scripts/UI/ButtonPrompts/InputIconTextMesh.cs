@@ -45,6 +45,11 @@ public class InputIconTextMesh : MonoBehaviour
 		textMesh = textMesh ?? GetComponent<TextMeshProUGUI>();
 		string s = ReformatText(text);
 		textMesh.text = s;
+		if (textMesh == null)
+		{
+			Debug.Log("Text mesh is null");
+			return;
+		}
 		textMesh.gameObject.SetActive(false);
 		textMesh.gameObject.SetActive(true);
 	}
@@ -59,6 +64,7 @@ public class InputIconTextMesh : MonoBehaviour
 
 	private string ReformatText(string input)
 	{
+		if (input == string.Empty) return input;
 		string s = input;
 
 		List<string> actions = InputManager.GetCurrentActions();
@@ -66,7 +72,12 @@ public class InputIconTextMesh : MonoBehaviour
 		{
 			string action = actions[i];
 			string check;
-			InputCombination inputCombo = InputManager.GetBinding(action);
+			ActionCombination inputCombo = InputManager.GetBinding(action);
+			if (inputCombo == null)
+			{
+				Debug.Log($"No ActionCombination found for {action}");
+				return input;
+			}
 
 			check = $"[:{action}]";
 			if (s.Contains(check))
@@ -79,7 +90,12 @@ public class InputIconTextMesh : MonoBehaviour
 
 			List<Sprite> sprites = iconSet.GetSprites(inputCombo);
 			TMP_SpriteAssetContainer container = GetCurrentSpriteContainer(action);
-			List<TMP_SpriteAsset> assets = container.spriteAssets;
+			if (container == null)
+			{
+				Debug.Log($"Sprite Container not found for {action}.");
+				return input;
+			}
+			List<TMP_SpriteAsset> assets = container?.spriteAssets;
 
 			check = $"[{action}]";
 			if (s.Contains(check))

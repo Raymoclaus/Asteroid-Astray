@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections.Generic;
 
 [RequireComponent(typeof(PromptUI))]
@@ -6,11 +7,8 @@ public class TutorialPrompts : MonoBehaviour
 {
 	private PromptUI ui;
 	private Shuttle mainChar;
-	private Shuttle MainChar
-	{
-		get { return mainChar ?? (mainChar = FindObjectOfType<Shuttle>()); }
-	}
-	
+	private Shuttle MainChar => mainChar ?? (mainChar = FindObjectOfType<Shuttle>());
+
 	public PromptInfo goInputPromptInfo;
 	public PromptInfo launchInputPromptInfo;
 	public PromptInfo drillInputPromptInfo;
@@ -22,7 +20,6 @@ public class TutorialPrompts : MonoBehaviour
 	private void Awake()
 	{
 		ui = GetComponent<PromptUI>();
-		mainChar = mainChar ?? FindObjectOfType<Shuttle>();
 
 		prompts.Add(goInputPromptInfo);
 		prompts.Add(launchInputPromptInfo);
@@ -30,7 +27,7 @@ public class TutorialPrompts : MonoBehaviour
 		prompts.Add(pauseInputPromptInfo);
 		prompts.Add(repairKitInputPromptInfo);
 
-		IterateAll((PromptInfo pi) => pi.SetUI(ui));
+		prompts.ForEach(t => t.SetUI(ui));
 
 		SetUpGoInputPrompt();
 		SetUpLaunchInputPrompt();
@@ -41,7 +38,7 @@ public class TutorialPrompts : MonoBehaviour
 
 	private void OnDestroy()
 	{
-		IterateAll((PromptInfo pi) => pi.SetIgnore(true));
+		prompts.ForEach(t => t.SetIgnore(true));
 	}
 
 	private void SetUpGoInputPrompt()
@@ -84,11 +81,18 @@ public class TutorialPrompts : MonoBehaviour
 
 	private void SetUpDrillInputPrompt()
 	{
-		MainChar.OnDrillComplete += (bool successful) =>
+		Shuttle.DrillCompleteEventHandler action = (bool successful) =>
 		{
 			if (successful) return;
 			drillInputPromptInfo.Activate();
 		};
+		drillInputPromptInfo.SetListeners(() =>
+		{
+			MainChar.OnDrillComplete += action;
+		}, () =>
+		{
+			MainChar.OnDrillComplete -= action;
+		});
 	}
 
 	private void SetUpPauseInputPrompt()
@@ -98,12 +102,13 @@ public class TutorialPrompts : MonoBehaviour
 			if (!pausing) return;
 			pauseInputPromptInfo.Deactivate();
 		};
+		Pause p = FindObjectOfType<Pause>();
 		pauseInputPromptInfo.SetListeners(() =>
 		{
-			Pause.OnPause += action;
+			p.OnPause += action;
 		}, () =>
 		{
-			Pause.OnPause -= action;
+			p.OnPause -= action;
 		});
 
 		pauseInputPromptInfo.SetCondition(() =>
@@ -114,7 +119,7 @@ public class TutorialPrompts : MonoBehaviour
 
 	private void SetUpRepairKitInputPrompt()
 	{
-		Character.ItemUsedEventHandler action = (Item.Type type) =>
+		Action<Item.Type> action = (Item.Type type) =>
 		{
 			if (type != Item.Type.RepairKit) return;
 			repairKitInputPromptInfo.Deactivate();
@@ -133,7 +138,7 @@ public class TutorialPrompts : MonoBehaviour
 			int id = mainChar.storage.FirstInstanceId(Item.Type.RepairKit);
 			if (id < 0 || Pause.IsStopped) return false;
 			string typeName = Item.TypeName(repairKit);
-			string text = id < 8 ? $"Press [Slot {id + 1}:] to use the {typeName}"
+			string text = id < 8 ? $"Press [Slot{id + 1}:] to use the {typeName}"
 			: $"Place the {typeName} in one of the first 8 inventory slots";
 			if (repairKitInputPromptInfo.text != text)
 			{
@@ -146,20 +151,10 @@ public class TutorialPrompts : MonoBehaviour
 
 	private void Update()
 	{
-		IterateAll((PromptInfo pi) => pi.Check());
+		prompts.ForEach(t => t.Check());
 	}
 
-	private void IterateAll(System.Action<PromptInfo> action)
-	{
-		if (action == null) return;
-
-		for (int i = 0; i < prompts.Count; i++)
-		{
-			action(prompts[i]);
-		}
-	}
-
-	[System.Serializable]
+	[Serializable]
 	public class PromptInfo
 	{
 		private PromptUI ui;
@@ -176,8 +171,8 @@ public class TutorialPrompts : MonoBehaviour
 		[Tooltip("If true, and if the \"Deactivate\" condition is triggered early, then the prompt will never appear.")]
 		public bool ignoreOnDeactivate;
 		public bool ignore;
-		private System.Func<bool> condition;
-		private System.Action startListening, stopListening;
+		private Func<bool> condition;
+		private Action startListening, stopListening;
 		private bool isListening;
 
 		public void Check()
@@ -195,7 +190,7 @@ public class TutorialPrompts : MonoBehaviour
 			}
 		}
 
-		public void SetCondition(System.Func<bool> condition)
+		public void SetCondition(Func<bool> condition)
 		{
 			this.condition = condition;
 		}
@@ -205,7 +200,7 @@ public class TutorialPrompts : MonoBehaviour
 			this.ui = ui;
 		}
 
-		public void SetListeners(System.Action start, System.Action stop)
+		public void SetListeners(Action start, Action stop)
 		{
 			startListening = start;
 			stopListening = stop;
@@ -213,6 +208,7 @@ public class TutorialPrompts : MonoBehaviour
 			if (!ignore)
 			{
 				startListening?.Invoke();
+				isListening = true;
 			}
 		}
 
@@ -261,9 +257,9 @@ public class TutorialPrompts : MonoBehaviour
 					{
 						SetIsActivated(false);
 					}
-					PromptUI.OnPromptUpdated -= action;
+					ui.OnPromptUpdated -= action;
 				};
-				PromptUI.OnPromptUpdated += action;
+				ui.OnPromptUpdated += action;
 			}
 			else
 			{

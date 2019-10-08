@@ -2,7 +2,7 @@
 
 public abstract class PlanetRoomEnemy : PlanetRoomEntity
 {
-	protected static PlanetPlayer player;
+	protected PlanetPlayer player;
 	protected float DistanceToPlayer
 		=> player != null ?
 		Vector3.Distance(GetPivotPosition(), player.GetPivotPosition())

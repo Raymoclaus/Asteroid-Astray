@@ -25,9 +25,6 @@ namespace InputHandler
 		public void ChangeAllKeyBindings(List<InputCombination> keys, InputContext context)
 			=> GetInputMethod(context)?.SetAllBindings(keys);
 
-		public List<InputCombination> GetDefaults(InputContext context)
-			=> GetInputMethod(context)?.defaultCombinations;
-
 		public float GetInput(string key, InputContext context)
 			=> GetInputMethod(context)?.GetInput(key) ?? 0f;
 
@@ -37,12 +34,16 @@ namespace InputHandler
 		public bool GetInputUp(string key, InputContext context)
 			=> GetInputMethod(context)?.GetInputUp(key) ?? false;
 
-		public InputCombination GetBinding(string key, InputContext context)
+		public ActionCombination GetBinding(string key, InputContext context)
 			=> GetInputMethod(context)?.GetCombination(key);
 
 		public InputMethod GetInputMethod(InputContext context)
 		{
-			if (context == null) return null;
+			if (context == null)
+			{
+				Debug.Log("No context given");
+				return null;
+			}
 
 			InputMethod[] inputMethods = Resources.LoadAll<InputMethod>("");
 			if (inputMethods.Length == 0) return null;

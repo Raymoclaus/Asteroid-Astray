@@ -5,24 +5,25 @@ using System.Collections;
 public class PromptUI : MonoBehaviour
 {
 	private RectTransform rect;
-	private RectTransform Rect { get { return rect ?? (rect = GetComponent<RectTransform>()); } }
+	private RectTransform Rect => rect ?? (rect = GetComponent<RectTransform>());
 	[SerializeField] private InputIconTextMesh prompt;
+	private string unformattedText;
 	[SerializeField] private AnimationCurve popupCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 	[SerializeField] private float popupAnimationTime = 0.5f, popupExaggeration = 2f;
 
 	public delegate void PromptUpdatedEventHandler(string text, bool activating);
-	public static event PromptUpdatedEventHandler OnPromptUpdated;
-	public static void ClearEvent() => OnPromptUpdated = null;
+	public event PromptUpdatedEventHandler OnPromptUpdated;
 
 	private void Awake()
 	{
 		prompt = GetComponentInChildren<InputIconTextMesh>();
-		OnPromptUpdated = null;
 		Rect.localScale = Vector3.zero;
 	}
 
 	public void ActivatePrompt(string text)
 	{
+		if (text == unformattedText) return;
+		unformattedText = text;
 		OnPromptUpdated?.Invoke(text, true);
 		SetText(text);
 		StartCoroutine(Popup(true));
@@ -30,13 +31,15 @@ public class PromptUI : MonoBehaviour
 
 	public void ActivatePromptTimer(string text, float totalDuration = 5f)
 	{
+		if (text == unformattedText) return;
+		unformattedText = text;
 		ActivatePrompt(text);
 		StartCoroutine(TimedPrompt(text, totalDuration));
 	}
 
 	public void DeactivatePrompt(string text)
 	{
-		if (text != prompt.GetText()) return;
+		if (text != unformattedText) return;
 		OnPromptUpdated?.Invoke(text, false);
 		StopAllCoroutines();
 		StartCoroutine(Popup(false));

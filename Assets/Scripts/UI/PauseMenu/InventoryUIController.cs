@@ -1,9 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System.Linq;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class InventoryUIController : PauseTab
 {
+	[SerializeField] private string defaultInventoryName = "ShuttleInventory";
 	[SerializeField] private SlotGroup mainGroup, craftingInputGroup, craftingOutputGroup,
 		ghostInputGroup, ghostOutputGroup;
 
@@ -39,19 +41,30 @@ public class InventoryUIController : PauseTab
 
 	private void Update()
 	{
+		Inventory mainInv = mainGroup.inventory;
+		mainGroup.inventory = mainInv ?? FindInventory(defaultInventoryName);
+		if (mainGroup.inventory == null) return;
+
 		UpdateSlots();
 		UpdateGrabUI();
 		UpdatePreview();
 	}
 
+	private Inventory FindInventory(string inventoryName)
+		=> FindObjectsOfType<Inventory>()
+			.Where(t => t.SaveKey == inventoryName).FirstOrDefault();
+
 	public override void OnResume()
 	{
 		Inventory inv = craftingInputGroup.inventory;
-		if (inv.HasItems())
-		{
-			mainGroup.inventory.AddItems(inv.stacks);
-			inv.ClearAll();
-		}
+		if (!inv.HasItems()) return;
+
+		Inventory mainInv = mainGroup.inventory;
+		mainGroup.inventory = mainInv ?? FindInventory(defaultInventoryName);
+		if (mainGroup.inventory == null) return;
+
+		mainGroup.inventory.AddItems(inv.stacks);
+		inv.ClearAll();
 	}
 
 	private void UpdateSlots()
@@ -286,7 +299,7 @@ public class InventoryUIController : PauseTab
 
 		public override int GetHashCode() => base.GetHashCode();
 
-		public override string ToString() => $"Slot {selected} of {context}";
+		public override string ToString() => $"Slot  {selected} of {context}";
 	}
 
 	[System.Serializable]

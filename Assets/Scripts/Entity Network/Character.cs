@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Character : Entity
@@ -6,8 +7,7 @@ public class Character : Entity
 	[Header("Character Fields")]
 
 	public Inventory storage;
-	public delegate void ItemUsedEventHandler(Item.Type type);
-	public event ItemUsedEventHandler OnItemUsed;
+	public Action<Item.Type> OnItemUsed;
 	[SerializeField] private float itemUseCooldownDuration = 1f;
 	private string itemUseCooldownTimerID;
 
@@ -59,12 +59,6 @@ public class Character : Entity
 	public override ICombat GetICombat() => null;
 
 	public virtual void ReceiveItemReward(ItemStack stack) => CollectItem(stack);
-
-	public virtual void AcceptQuest(Quest quest)
-	{
-		quest.Activate();
-		QuestPopupUI.ShowQuest(quest);
-	}
 
 	protected virtual void CheckItemUsageInput() { }
 
@@ -121,7 +115,7 @@ public class Character : Entity
 			ItemStack stack = storage.stacks[i];
 			for (int j = 0; j < stack.GetAmount(); j++)
 			{
-				particleGenerator.DropResource(destroyer,
+				PartGen.DropResource(destroyer,
 					transform.position, stack.GetItemType());
 			}
 		}

@@ -9,7 +9,7 @@ public static class EnemyRoomData
 	private static List<EnemyDifficulty> enemyDifficulties = new List<EnemyDifficulty>();
 	private static float lowestDifficultyLevel = Mathf.Infinity;
 
-	public static List<RoomEnemy> GenerateChallenge(float difficulty)
+	public static List<RoomEnemy> GenerateChallenge(float difficulty, Room room)
 	{
 		List<RoomEnemy> enemies = new List<RoomEnemy>();
 		GetEnemyDifficultiesFromProject();
@@ -22,15 +22,15 @@ public static class EnemyRoomData
 			if (pedm.difficultyLevel <= difficulty)
 			{
 				difficulty -= pedm.difficultyLevel;
-				enemies.Add(CreateEnemy(pedm.enemyType));
+				enemies.Add(CreateEnemy(pedm.enemyType, room));
 			}
 		}
 
 		return enemies;
 	}
 
-	private static RoomEnemy CreateEnemy(Type enemyType)
-		=> (RoomEnemy)Activator.CreateInstance(enemyType);
+	private static RoomEnemy CreateEnemy(Type enemyType, Room room)
+		=> (RoomEnemy)Activator.CreateInstance(enemyType, room);
 
 	private static EnemyDifficulty? PickRandomEnemy()
 	{

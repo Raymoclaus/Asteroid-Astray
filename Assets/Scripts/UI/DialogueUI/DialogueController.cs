@@ -6,13 +6,9 @@ public class DialogueController : MonoBehaviour
 {
 	[SerializeField] private DialoguePopupUI dialogueUI, chatUI;
 	private DialoguePopupUI DialogueUI
-	{
-		get { return dialogueUI ?? (dialogueUI = FindObjectOfType<DialoguePopupUI>()); }
-	}
+		=> dialogueUI ?? (dialogueUI = FindObjectOfType<DialoguePopupUI>());
 	private DialoguePopupUI ChatUI
-	{
-		get { return chatUI ?? (chatUI = FindObjectOfType<DialoguePopupUI>()); }
-	}
+		=> chatUI ?? (chatUI = FindObjectOfType<DialoguePopupUI>());
 	private ConversationWithActions currentConversation;
 	private DialogueLineEvent[] currentLines;
 	private EntityProfile[] speakers;
@@ -25,17 +21,16 @@ public class DialogueController : MonoBehaviour
 	[SerializeField] private float chatContinueWaitDuration = 4f;
 	[SerializeField] private List<MoveTrigger> moveTriggers;
 
-	private void Awake()
-	{
-		dialogueUI = dialogueUI ?? FindObjectOfType<DialoguePopupUI>();
-		chatUI = chatUI ?? FindObjectOfType<CommPopupUI>();
-	}
+	private bool skipDialogue = false;
 
 	private void Update()
 	{
-		if (Console.DeveloperConsole.IsActive) return;
+		if (Input.GetKeyDown(KeyCode.K))
+		{
+			skipDialogue = true;
+		}
 
-		if (dialogueIsRunning && InputManager.GetInput("ScrollDialogue") > 0f)
+		if (dialogueIsRunning && (InputManager.GetInputDown("Scroll Dialogue") || skipDialogue))
 		{
 			if (dialogueUI.IsTyping())
 			{
@@ -64,7 +59,7 @@ public class DialogueController : MonoBehaviour
 
 		if (chatIsRunning)
 		{
-			if (InputManager.GetInput("ScrollDialogue") > 0f)
+			if (InputManager.GetInputDown("Scroll Dialogue") || skipDialogue)
 			{
 				if (chatUI.IsTyping())
 				{
@@ -125,7 +120,11 @@ public class DialogueController : MonoBehaviour
 
 	private void SendPopup()
 	{
-		if (currentPosition < 0) return;
+		if (currentPosition < 0)
+		{
+			skipDialogue = false;
+			return;
+		}
 
 		int speakerID = currentLines[currentPosition].speakerID;
 		string name = speakers[speakerID].entityName;

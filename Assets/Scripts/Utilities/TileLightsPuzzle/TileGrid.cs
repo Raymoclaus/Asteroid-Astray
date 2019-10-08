@@ -25,9 +25,9 @@ namespace TileLightsPuzzle
 
 		private void SetupGrid()
 		{
-			for (int i = 0; i < grid.Length; i++)
+			for (int i = 0; i < GetArrayLength(); i++)
 			{
-				grid[i] = true;
+				SetFlipped(i, true);
 			}
 		}
 
@@ -65,9 +65,9 @@ namespace TileLightsPuzzle
 
 		private bool PuzzleIsCompleted()
 		{
-			for (int i = 0; i < grid.Length; i++)
+			for (int i = 0; i < GetArrayLength(); i++)
 			{
-				if (!grid[i]) return false;
+				if (!IsFlipped(i)) return false;
 			}
 			return true;
 		}
@@ -76,7 +76,7 @@ namespace TileLightsPuzzle
 		{
 			int index = GetIndex(position);
 			if (index == -1) return;
-			grid[index] = !grid[index];
+			SetFlipped(index, !IsFlipped(index));
 			OnTileFlipped?.Invoke(index);
 		}
 
@@ -104,5 +104,7 @@ namespace TileLightsPuzzle
 		public bool IsFlipped(int index) => grid[index];
 
 		public int GetArrayLength() => grid.Length;
+
+		public void SetFlipped(int index, bool flipped) => grid[index] = flipped;
 	}
 }

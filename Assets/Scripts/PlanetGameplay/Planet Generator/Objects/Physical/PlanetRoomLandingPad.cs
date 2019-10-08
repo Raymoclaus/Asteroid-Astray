@@ -1,8 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-public class PlanetRoomLandingPad : PlanetNonSolid
+﻿public class PlanetRoomLandingPad : PlanetNonSolid
 {
 	protected override void Interacted(Triggerer actor)
 	{
@@ -13,5 +9,6 @@ public class PlanetRoomLandingPad : PlanetNonSolid
 	private void OpenPrompt()
 	{
 		ExitPlanetPrompt.ActivatePrompt();
+		roomViewer.SavePlanetData();
 	}
 }

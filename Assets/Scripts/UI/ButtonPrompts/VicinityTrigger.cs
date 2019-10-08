@@ -20,12 +20,12 @@ public class VicinityTrigger : MonoBehaviour
 
 	private void OnTriggerEnter2D(Collider2D collision)
 	{
-		AddActor(collision.attachedRigidbody.GetComponent<Triggerer>());
+		AddActor(collision.GetComponentInParent<Triggerer>());
 	}
 
 	private void OnTriggerExit2D(Collider2D collision)
 	{
-		RemoveActor(collision.attachedRigidbody.GetComponent<Triggerer>());
+		RemoveActor(collision.GetComponentInParent<Triggerer>());
 	}
 
 	private void AddActor(Triggerer actor)

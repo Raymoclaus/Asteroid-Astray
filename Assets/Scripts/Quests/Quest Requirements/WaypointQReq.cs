@@ -19,7 +19,7 @@ public class WaypointQReq : QuestRequirement
 
 	private void EvaluateEvent(Waypoint waypoint)
 	{
-		if (IsComplete() || !active) return;
+		if (Completed || !active) return;
 
 		if (this.waypoint == waypoint)
 		{

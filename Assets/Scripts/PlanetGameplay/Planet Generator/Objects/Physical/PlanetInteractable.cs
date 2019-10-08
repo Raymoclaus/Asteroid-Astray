@@ -16,9 +16,9 @@ public abstract class PlanetInteractable : PlanetRoomObject
 
 	protected virtual bool VerifyPlanetActor(PlanetTriggerer actor) => true;
 
-	public void EnableInteraction(bool enable) => trigger.EnableInteractionActions(enable);
+	public void EnableInteraction(bool enable) => trigger.CanBeInteractedWith = enable;
 
-	public void EnablePrompts(bool enable) => trigger.EnablePrompts(enable);
+	public void EnablePrompts(bool enable) => trigger.PromptsEnabled = enable;
 
 	public void EnableTrigger(bool enable) => trigger.EnableTrigger(enable);
 }

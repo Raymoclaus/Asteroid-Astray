@@ -1,8 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
-using UnityEditorInternal;
 
 namespace InputHandler.InputEditor
 {
@@ -11,105 +9,82 @@ namespace InputHandler.InputEditor
 	{
 		public override void OnInspectorGUI()
 		{
-			base.OnInspectorGUI();
-			return;
+			InputMethod obj = (InputMethod)target;
 
-			InputMethod method = (InputMethod)target;
-			InputContext context = method.context;
-
-			SerializedProperty contextProperty = serializedObject.FindProperty("context");
-			EditorGUILayout.PropertyField(contextProperty);
-
-			float labelWidth = 80f;
-			float enumPopupWidth = 120f;
-
-			GUILayout.BeginHorizontal();
-			GUILayout.Label("Input Mode", GUILayout.Width(labelWidth));
-			InputMode mode = method.inputMode;
-			InputMode newMode = (InputMode)EditorGUILayout.EnumPopup(mode, GUILayout.Width(enumPopupWidth));
-			method.inputMode = newMode;
-			GUILayout.EndHorizontal();
-
-			bool filled = context != null;
-			if (filled)
+			if (!obj.MatchesContextActionPool)
 			{
-
-				List<string> actions = context.actions;
-
-				method.SetCombinationsLength(actions.Count);
-				GUILayout.Label($"Context Actions for {context.contextName}", EditorStyles.boldLabel);
-				DrawContextActions(method, serializedObject, labelWidth, enumPopupWidth, actions, false);
-				GUILayout.Label($"Default Context Actions for {context.contextName}", EditorStyles.boldLabel);
-				DrawContextActions(method, serializedObject, labelWidth, enumPopupWidth, actions, true);
+				if (GUILayout.Button("Update Action List"))
+				{
+					obj.UpdateInputs();
+				}
 			}
-			else
+
+			obj.inputMode = (InputMode)EditorGUILayout.EnumPopup(
+				"Input Mode", obj.inputMode);
+			SerializedProperty contextProp = serializedObject.FindProperty("context");
+			EditorGUILayout.PropertyField(contextProp, new GUIContent("Context"));
+
+			List<ActionCombination> combs = obj.combinations;
+			SerializedProperty combsProp = serializedObject.FindProperty("combinations");
+			int indentLevel0 = EditorGUI.indentLevel;
+			for (int i = 0; i < combs.Count; i++)
 			{
-				GUILayout.Label("Assign an Input Context", EditorStyles.boldLabel);
+				EditorGUI.indentLevel = indentLevel0;
+				ActionCombination comb = combs[i];
+				SerializedProperty combProp = combsProp.GetArrayElementAtIndex(i);
+				DrawAction(comb, combProp);
 			}
-			
 
 			serializedObject.ApplyModifiedProperties();
+
+			//base.OnInspectorGUI();
 		}
 
-		private static void DrawContextActions(InputMethod method, SerializedObject serializedObject, float labelWidth, float enumPopupWidth, List<string> actions, bool drawDefault)
+		private static void DrawAction(ActionCombination comb, SerializedProperty combProp)
 		{
-			SerializedProperty combinationsProperty = serializedObject.FindProperty(drawDefault ? "defaultCombinations" : "currentCombinations");
+			string actionName = comb.actionName;
+			GUIContent actionNameContent = new GUIContent(actionName);
+			float labelWidth = EditorStyles.label.CalcSize(actionNameContent).x;
 
-			for (int i = 0; i < actions.Count; i++)
+			EditorGUILayout.LabelField(actionName);
+
+			int indentLevel1 = ++EditorGUI.indentLevel;
+			DrawBindings(comb.GetDefaultCombination(), combProp,
+				"Default", "defaultCombination");
+
+			EditorGUI.indentLevel = indentLevel1;
+			DrawBindings(comb.GetCurrentCombination(), combProp,
+				"Current", "currentCombination");
+		}
+
+		private static void DrawBindings(InputCombination comb, SerializedProperty combProp, string labelName, string propertyName)
+		{
+			GUILayout.BeginHorizontal();
+			EditorGUILayout.LabelField(labelName);
+			SerializedProperty defaultCombProp = combProp.FindPropertyRelative(propertyName);
+			GUIContent addButtonContent = new GUIContent("+");
+			float addButtonWidth = EditorStyles.miniButton.CalcSize(addButtonContent).x;
+			if (GUILayout.Button(addButtonContent, GUILayout.Width(addButtonWidth)))
 			{
-				GUILayout.Label(actions[i], EditorStyles.miniBoldLabel);
-				InputCombination combination = drawDefault ? method.defaultCombinations[i] : method.currentCombinations[i];
-
-				List<InputCode> inputs = combination.inputs;
-				for (int j = 0; j < inputs.Count; j++)
-				{
-					GUILayout.BeginHorizontal();
-					GUILayout.Label("Input Type", GUILayout.Width(labelWidth));
-					InputCode input = inputs[j];
-					InputCode.InputType type = input.inputType;
-					InputCode.InputType newType = (InputCode.InputType)
-						EditorGUILayout.EnumPopup(type, GUILayout.Width(enumPopupWidth));
-					input.inputType = newType;
-					GUILayout.EndHorizontal();
-
-					GUILayout.BeginHorizontal();
-					switch (newType)
-					{
-						case InputCode.InputType.Button:
-							GUILayout.Label("Button Code", GUILayout.Width(labelWidth));
-							GUIContent keyCodeContent = new GUIContent(
-								input.buttonCode.ToString());
-							float width = EditorStyles.textArea.CalcSize(keyCodeContent).x;
-							KeyCode key = (KeyCode)EditorGUILayout.EnumPopup(
-								input.buttonCode, GUILayout.Width(enumPopupWidth));
-							input.buttonCode = key;
-							break;
-						case InputCode.InputType.Axis:
-							GUILayout.Label("Axis Name", GUILayout.Width(labelWidth));
-							string axisName = GUILayout.TextField(input.axisName);
-							input.axisName = axisName;
-							bool positiveAxis = input.axisPositiveDirection;
-							bool toggle = GUILayout.Toggle(
-								positiveAxis, "Expect Positive Axis");
-							input.axisPositiveDirection = toggle;
-							break;
-					}
-					GUILayout.EndHorizontal();
-				}
-
-				float buttonWidth = 20f;
+				comb.AddCode();
+			}
+			GUILayout.EndHorizontal();
+			EditorGUI.indentLevel++;
+			int indentLevel2 = EditorGUI.indentLevel;
+			List<InputCode> inputs = comb.inputs;
+			SerializedProperty codesProp = defaultCombProp.FindPropertyRelative("inputs");
+			for (int j = 0; j < codesProp.arraySize && j < inputs.Count; j++)
+			{
 				GUILayout.BeginHorizontal();
-				GUIContent addButtonInputButton = new GUIContent("+");
-				if (GUILayout.Button(addButtonInputButton, GUILayout.Width(buttonWidth)))
+				InputCode code = inputs[j];
+				SerializedProperty codeProp = codesProp.GetArrayElementAtIndex(j);
+				EditorGUILayout.PropertyField(codeProp, GUIContent.none);
+				GUIContent removeButtonContent = new GUIContent("-");
+				float removeButtonWidth = EditorStyles.miniButton.CalcSize(removeButtonContent).x;
+				if (GUILayout.Button(removeButtonContent, GUILayout.Width(removeButtonWidth)))
 				{
-					combination.AddCode(InputCode.InputType.Button);
-				}
-
-				GUIStyle style = new GUIStyle();
-				GUIContent removeButtonInputButton = new GUIContent("-");
-				if (GUILayout.Button(removeButtonInputButton, GUILayout.Width(buttonWidth)))
-				{
-					combination.RemoveLastCode();
+					comb.RemoveAtIndex(j);
+					codesProp = defaultCombProp.FindPropertyRelative("inputs");
 				}
 				GUILayout.EndHorizontal();
 			}

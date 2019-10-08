@@ -13,8 +13,6 @@ public class ShuttleTriggerer : Triggerer
 
 	public override void ExitedTrigger(VicinityTrigger vTrigger) => base.ExitedTrigger(vTrigger);
 
-	public override void Interacted(InteractablePromptTrigger trigger) => base.Interacted(trigger);
-
-	public override bool IsInteracting(InteractablePromptTrigger trigger)
-		=> InputManager.GetInputDown(trigger.Action);
+	protected override bool IsPerformingAction(string action)
+		=> InputManager.GetInputDown(action);
 }

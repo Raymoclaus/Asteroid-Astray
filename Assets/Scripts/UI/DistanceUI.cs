@@ -9,11 +9,12 @@ public class DistanceUI : MonoBehaviour
 	public const int maxRange = 10000;
 	private List<string> distStrings = new List<string>(maxRange + 1);
 	private const string unit = "m | zone: ";
-	private int dist = -1;
+	private float dist = -1;
 	[SerializeField] private Text textComponent;
 	[SerializeField] private Image img;
 	[SerializeField] private Shuttle mainChar;
-	private Shuttle MainChar { get { return mainChar ?? (mainChar = FindObjectOfType<Shuttle>()); } }
+	private Shuttle MainChar
+		=> mainChar ?? (mainChar = FindObjectOfType<Shuttle>());
 
 	private void Start()
 	{
@@ -30,14 +31,15 @@ public class DistanceUI : MonoBehaviour
 	private void UpdateText()
 	{
 		if (!textComponent.enabled) return;
-		int currentDist = (int)(DistanceToWaypoint() * UNITS_TO_METRES);
-		if (dist != currentDist)
+		float currentDist = DistanceToWaypoint;
+		if ((int)dist != (int)currentDist)
 		{
 			dist = currentDist;
-			int zone = Difficulty.DistanceBasedDifficulty(dist);
+			int zone = Difficulty.DistanceBasedDifficulty(
+				ChunkCoords.GetCenterCell(CharacterCoordinates).magnitude);
 			if (dist < maxRange && dist < distStrings.Count)
 			{
-				textComponent.text = distStrings[dist] + zone;
+				textComponent.text = distStrings[(int)(dist * UNITS_TO_METRES)] + zone;
 			}
 			else
 			{
@@ -62,9 +64,15 @@ public class DistanceUI : MonoBehaviour
 		distStrings.Add(maxRange.ToString() + "+" + unit);
 	}
 
-	private Vector2 GetCurrentPosition() => MainChar?.transform.position ?? Vector2.zero;
+	private ChunkCoords CharacterCoordinates
+		=> MainChar?.GetCoords() ?? ChunkCoords.Zero;
 
-	private float DistanceToWaypoint() => Vector2.Distance(GetWaypointPosition(), GetCurrentPosition());
+	private Vector2 CurrentPosition
+		=> MainChar?.transform.position ?? Vector3.zero;
 
-	private Vector2 GetWaypointPosition() => MainChar?.waypoint.GetPosition() ?? Vector2.zero;
+	private float DistanceToWaypoint
+		=> Vector2.Distance(WaypointPosition, CurrentPosition);
+
+	private Vector2 WaypointPosition
+		=> MainChar?.waypoint.GetPosition() ?? Vector2.zero;
 }

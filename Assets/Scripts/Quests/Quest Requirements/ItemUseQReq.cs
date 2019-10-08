@@ -24,7 +24,7 @@ public class ItemUseQReq : QuestRequirement
 
 	private void EvaluateEvent(Item.Type type)
 	{
-		if (IsComplete() || !active) return;
+		if (Completed || !active) return;
 
 		if (type == typeNeeded)
 		{

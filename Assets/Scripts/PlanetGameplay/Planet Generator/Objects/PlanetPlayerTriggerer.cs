@@ -6,8 +6,8 @@ public class PlanetPlayerTriggerer : PlanetTriggerer
 {
 	private PlanetPlayer Player => (PlanetPlayer)RoomObj;
 
-	public override bool IsInteracting(InteractablePromptTrigger trigger)
-		=> InputManager.GetInputDown(trigger.Action);
+	protected override bool IsPerformingAction(string action)
+		=> InputManager.GetInputDown(action);
 
 	public override void Interacted(PlanetInteractable trigger)
 	{
@@ -18,21 +18,24 @@ public class PlanetPlayerTriggerer : PlanetTriggerer
 			return;
 		}
 
-		if (trigger is PlanetRoomLock)
-		{
-			PlanetRoomLock planetLock = (PlanetRoomLock)trigger;
-			if (Player.RemoveKeyFromInventory(planetLock.colour))
-			{
-				planetLock.Unlock();
-			}
-			return;
-		}
-
 		if (trigger is PlanetRoomPushableBlock)
 		{
 			PlanetRoomPushableBlock pushableBlock = (PlanetRoomPushableBlock)trigger;
 			pushableBlock.Push(MovementBehaviour.DirectionValue);
 			return;
 		}
+	}
+
+	public override bool RequestObject(object objectToGive)
+	{
+		if (base.RequestObject(objectToGive)) return true;
+
+		if (objectToGive is ItemStack)
+		{
+			ItemStack stack = (ItemStack)objectToGive;
+			return Player.RemoveFromInventory(stack);
+		}
+
+		return false;
 	}
 }
