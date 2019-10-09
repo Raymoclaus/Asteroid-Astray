@@ -271,7 +271,15 @@ public class PlanetGenerator
 
 	private void ConnectVertically(Room lower, Room upper)
 	{
-		IntPair exitPos = new IntPair(Random.Range(3, lower.RoomWidth - 3), 0);
+		IntPair boundaries = lower.HorizontalBoundaries;
+		int exitWidth = lower.ExitWidth;
+		boundaries.y -= exitWidth - 1;
+		int randomPos = Random.Range(boundaries.x, boundaries.y);
+		while (randomPos % exitWidth != 1)
+		{
+			randomPos--;
+		}
+		IntPair exitPos = new IntPair(randomPos, 0);
 		lower.AddExit(Direction.Up, exitPos);
 		upper.AddExit(Direction.Down, exitPos);
 		lower.SetNeighbourRoom(upper, Direction.Up);
@@ -287,7 +295,15 @@ public class PlanetGenerator
 
 	private void ConnectHorizontally(Room left, Room right)
 	{
-		IntPair exitPos = new IntPair(0, Random.Range(3, left.RoomHeight - 3));
+		IntPair boundaries = left.VerticalBoundaries;
+		int exitWidth = left.ExitWidth;
+		boundaries.y -= exitWidth - 1;
+		int randomPos = Random.Range(boundaries.x, boundaries.y);
+		while (randomPos % exitWidth != 1)
+		{
+			randomPos--;
+		}
+		IntPair exitPos = new IntPair(0, randomPos);
 		left.AddExit(Direction.Right, exitPos);
 		right.AddExit(Direction.Left, exitPos);
 		left.SetNeighbourRoom(right, Direction.Right);

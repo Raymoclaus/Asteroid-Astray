@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using UnityEngine;
 
-public class PlanetRoomPushableBlock : PlanetInteractable
+public class PlanetRoomPushableBlock : PlanetDirectionBasedInteractable
 {
 	private RoomPushableBlock roomBlock;
 
@@ -20,16 +20,6 @@ public class PlanetRoomPushableBlock : PlanetInteractable
 		{
 			Deactivate();
 		}
-	}
-
-	protected override bool VerifyPlanetActor(PlanetTriggerer actor)
-	{
-		IntPair actorPosition = actor.RoomObj.GetPosition();
-		IntPair actorFacingPosition = actorPosition + actor.MovementBehaviour.DirectionValue;
-		IntPair currentPosition = GetPosition();
-		//if actor is not facing this object, return false
-		if (actorFacingPosition != currentPosition) return false;
-		return base.VerifyPlanetActor(actor);
 	}
 
 	private void OnDisable()

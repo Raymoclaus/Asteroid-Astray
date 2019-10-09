@@ -19,6 +19,11 @@ public class TutorialPrompts : MonoBehaviour
 
 	private void Awake()
 	{
+		LoadingController.AddListener(SetUp);
+	}
+
+	private void SetUp()
+	{
 		ui = GetComponent<PromptUI>();
 
 		prompts.Add(goInputPromptInfo);

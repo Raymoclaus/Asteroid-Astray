@@ -6,9 +6,9 @@ namespace MazePuzzle
 {
 	public class MazeGenerator
 	{
-		public Maze GeneratePuzzle(IntPair size, IntPair[] exits)
+		public Maze GeneratePuzzle(IntPair size, IntPair[] exits, int pathWidth)
 		{
-			Maze maze = new Maze(size, exits);
+			Maze maze = new Maze(size, exits, pathWidth, false);
 			IntPair currentSpot = exits[0];
 			List<IntPair> path = new List<IntPair>();
 			path.Add(currentSpot);
@@ -16,7 +16,11 @@ namespace MazePuzzle
 
 			do
 			{
-				IntPair nextSpot = maze.GetRandomSurroundingSoftWall(currentSpot);
+				IntPair nextSpot = maze.IsNearTileAdjacentToUnvisitedExit(currentSpot);
+				if (nextSpot == IntPair.one * -1)
+				{
+					nextSpot = maze.GetRandomSurroundingSoftWall(currentSpot);
+				}
 
 				if (nextSpot != IntPair.one * -1)
 				{

@@ -8,18 +8,24 @@ namespace MazePuzzle
 		private bool[] walls;
 		private IntPair size;
 		private IntPair[] exits;
+		private int pathWidth;
 		private List<IntPair> visitedExits = new List<IntPair>();
 		private List<IntPair> longestPath;
 
-		public Maze(IntPair size, IntPair[] exits, bool startEmpty = false)
+		public Maze(IntPair size, IntPair[] exits, int pathWidth, bool startEmpty)
 		{
 			this.size = size;
 			walls = new bool[size.x * size.y];
 			this.exits = exits;
+			this.pathWidth = pathWidth;
 			if (startEmpty) return;
 			for (int i = 0; i < walls.Length; i++)
 			{
-				walls[i] = !IsExit(GetPos(i));
+				walls[i] = true;
+			}
+			for (int i = 0; i < exits.Length; i++)
+			{
+				Set(exits[i], false);
 			}
 		}
 
@@ -29,17 +35,32 @@ namespace MazePuzzle
 
 		//returns whether that position is a wall or not
 		public bool IsWall(IntPair pos) => IsWall(pos.x, pos.y);
-		public bool IsWall(int x, int y) => walls[Index(x, y)] || IsUnvisitedExit(x, y);
+		public bool IsWall(int x, int y)
+		{
+			for (int i = 0; i < pathWidth; i++)
+			{
+				for (int j = 0; j < pathWidth; j++)
+				{
+					IntPair pos = new IntPair(x + i, y + j);
+					int index = Index(pos);
+					if (index < 0
+						|| index >= ArrayLength()
+						|| walls[index]
+						|| IsUnvisitedExit(pos)) return true;
+				}
+			}
+			return false;
+		}
 
 		//returns the amount of walls adjacent to the spot
 		public int SurroundingWallCount(IntPair pos) => SurroundingWallCount(pos.x, pos.y);
 		public int SurroundingWallCount(int x, int y)
 		{
 			int count = 0;
-			if (IsWall(x, y + 1)) count++;
-			if (IsWall(x + 1, y)) count++;
-			if (IsWall(x, y - 1)) count++;
-			if (IsWall(x - 1, y)) count++;
+			if (IsWall(x, y + pathWidth)) count++;
+			if (IsWall(x + pathWidth, y)) count++;
+			if (IsWall(x, y - pathWidth)) count++;
+			if (IsWall(x - pathWidth, y)) count++;
 			return count;
 		}
 
@@ -49,10 +70,10 @@ namespace MazePuzzle
 		public int SurroundingDiagonalWallCount(int x, int y)
 		{
 			int count = 0;
-			if (IsWall(x + 1, y + 1)) count++;
-			if (IsWall(x + 1, y - 1)) count++;
-			if (IsWall(x - 1, y - 1)) count++;
-			if (IsWall(x - 1, y + 1)) count++;
+			if (IsWall(x + pathWidth, y + pathWidth)) count++;
+			if (IsWall(x + pathWidth, y - pathWidth)) count++;
+			if (IsWall(x - pathWidth, y - pathWidth)) count++;
+			if (IsWall(x - pathWidth, y + pathWidth)) count++;
 			return count;
 		}
 
@@ -65,7 +86,19 @@ namespace MazePuzzle
 		//returns whether the spot is on the edge of the maze
 		public bool IsOuterWall(IntPair pos) => IsOuterWall(pos.x, pos.y);
 		public bool IsOuterWall(int x, int y)
-			=> x == 0 || y == 0 || x == size.x - 1 || y == size.y - 1;
+		{
+			for (int i = 0; i < pathWidth; i++)
+			{
+				for (int j = 0; j < pathWidth; j++)
+				{
+					if (x + i <= 0
+					   || y + j <= 0
+					   || x + i >= size.x - 1
+					   || y + j >= size.y - 1) return true;
+				}
+			}
+			return false;
+		}
 
 		//returns whether the spot is an exit point
 		public bool IsExit(IntPair pos) => IsExit(pos.x, pos.y);
@@ -73,7 +106,13 @@ namespace MazePuzzle
 		{
 			for (int i = 0; i < exits.Length; i++)
 			{
-				if (exits[i].x == x && exits[i].y == y) return true;
+				for (int j = 0; j < pathWidth; j++)
+				{
+					for (int k = 0; k < pathWidth; k++)
+					{
+						if (exits[i].x == x + j && exits[i].y == y + k) return true;
+					}
+				}
 			}
 			return false;
 		}
@@ -86,7 +125,14 @@ namespace MazePuzzle
 
 			for (int i = 0; i < visitedExits.Count; i++)
 			{
-				if (visitedExits[i].x == x && visitedExits[i].y == y) return false;
+				for (int j = 0; j < pathWidth; j++)
+				{
+					for (int k = 0; k < pathWidth; k++)
+					{
+						if (visitedExits[i].x == x + j
+							&& visitedExits[i].y == y + k) return false;
+					}
+				}
 			}
 			return true;
 		}
@@ -98,7 +144,8 @@ namespace MazePuzzle
 			if (IsOuterWall(x, y)) return true;
 			if (!IsWall(x, y)) return false;
 
-			if (SurroundingEightWallCount(x, y) < 6 || SurroundingWallCount(x, y) < 3) return true;
+			if (SurroundingEightWallCount(x, y) < 6
+				|| SurroundingWallCount(x, y) < 3) return true;
 
 
 			//additional rule to avoid diagonal hard walls
@@ -106,31 +153,41 @@ namespace MazePuzzle
 			//...AND the two common adjacent spaces ARE walls...
 			//treat it as a hard wall regardless of surrounding wall count
 
+			bool upLeft = IsWall(x - pathWidth, y + pathWidth);
+			bool up = IsWall(x, y + pathWidth);
+			bool upRight = IsWall(x + pathWidth, y + pathWidth);
+			bool right = IsWall(x + pathWidth, y);
+			bool downRight = IsWall(x + pathWidth, y - pathWidth);
+			bool down = IsWall(x, y - pathWidth);
+			bool downLeft = IsWall(x - pathWidth, y - pathWidth);
+			bool left = IsWall(x - pathWidth, y);
+
 			//check top right
-			if (!IsWall(x + 1, y + 1))
+			if (!upRight)
 			{
-				if (IsWall(x, y + 1) && IsWall(x + 1, y)) return true;
+				//top and right
+				if (up && right) return true;
 			}
 
 			//check bottom right
-			if (!IsWall(x + 1, y - 1))
+			if (!downRight)
 			{
 				//bottom and right
-				if (IsWall(x, y - 1) && IsWall(x + 1, y)) return true;
+				if (down && right) return true;
 			}
 
 			//check bottom left
-			if (!IsWall(x - 1, y - 1))
+			if (!downLeft)
 			{
 				//bottom and left
-				if (IsWall(x, y - 1) && IsWall(x - 1, y)) return true;
+				if (down && left) return true;
 			}
 
 			//check top left
-			if (!IsWall(x - 1, y + 1))
+			if (!upLeft)
 			{
 				//top and left
-				if (IsWall(x, y + 1) && IsWall(x - 1, y)) return true;
+				if (up && left) return true;
 			}
 
 			return false;
@@ -147,16 +204,14 @@ namespace MazePuzzle
 		public IntPair GetRandomSurroundingSoftWall(int x, int y)
 		{
 			List<IntPair> arr = new List<IntPair>();
-			IntPair pos = new IntPair(x, y);
-			pos.x++;
-			if (IsSoftWall(pos)) arr.Add(pos);
-			pos.x -= 2;
-			if (IsSoftWall(pos)) arr.Add(pos);
-			pos.x++;
-			pos.y++;
-			if (IsSoftWall(pos)) arr.Add(pos);
-			pos.y -= 2;
-			if (IsSoftWall(pos)) arr.Add(pos);
+			IntPair rightPos = new IntPair(x + pathWidth, y);
+			if (IsSoftWall(rightPos)) arr.Add(rightPos);
+			IntPair leftPos = new IntPair(x - pathWidth, y);
+			if (IsSoftWall(leftPos)) arr.Add(leftPos);
+			IntPair upPos = new IntPair(x, y + pathWidth);
+			if (IsSoftWall(upPos)) arr.Add(upPos);
+			IntPair downPos = new IntPair(x, y - pathWidth);
+			if (IsSoftWall(downPos)) arr.Add(downPos);
 
 			if (arr.Count == 0) return IntPair.one * -1;
 
@@ -164,21 +219,34 @@ namespace MazePuzzle
 			return arr[randomIndex];
 		}
 
+		public IntPair IsNearTileAdjacentToUnvisitedExit(IntPair pos)
+		{
+			IntPair rightPos = new IntPair(pos.x + pathWidth, pos.y);
+			IntPair leftPos = new IntPair(pos.x - pathWidth, pos.y);
+			IntPair upPos = new IntPair(pos.x, pos.y + pathWidth);
+			IntPair downPos = new IntPair(pos.x, pos.y - pathWidth);
+
+			if (NearbyUnvisitedExit(rightPos) != IntPair.one * -1) return rightPos;
+			if (NearbyUnvisitedExit(leftPos) != IntPair.one * -1) return leftPos;
+			if (NearbyUnvisitedExit(upPos) != IntPair.one * -1) return upPos;
+			if (NearbyUnvisitedExit(downPos) != IntPair.one * -1) return downPos;
+
+			return IntPair.one * -1;
+		}
+
 		//returns the position of an adjacent unvisited exit
 		//if no valid target is found, returns (-1, -1)
 		public IntPair NearbyUnvisitedExit(IntPair pos) => NearbyUnvisitedExit(pos.x, pos.y);
 		public IntPair NearbyUnvisitedExit(int x, int y)
 		{
-			IntPair pos = new IntPair(x, y);
-			pos.x++;
-			if (IsUnvisitedExit(pos)) return pos;
-			pos.x -= 2;
-			if (IsUnvisitedExit(pos)) return pos;
-			pos.x++;
-			pos.y++;
-			if (IsUnvisitedExit(pos)) return pos;
-			pos.y -= 2;
-			if (IsUnvisitedExit(pos)) return pos;
+			IntPair rightPos = new IntPair(x + pathWidth, y);
+			if (IsUnvisitedExit(rightPos)) return rightPos;
+			IntPair leftPos = new IntPair(x - pathWidth, y);
+			if (IsUnvisitedExit(leftPos)) return leftPos;
+			IntPair upPos = new IntPair(x, y + pathWidth);
+			if (IsUnvisitedExit(upPos)) return upPos;
+			IntPair downPos = new IntPair(x, y - pathWidth);
+			if (IsUnvisitedExit(downPos)) return downPos;
 			return IntPair.one * -1;
 		}
 
@@ -192,7 +260,16 @@ namespace MazePuzzle
 
 		//sets the position in the maze to be a wall
 		public void Set(IntPair pos, bool wall) => Set(pos.x, pos.y, wall);
-		public void Set(int x, int y, bool wall) => walls[Index(x, y)] = wall;
+		public void Set(int x, int y, bool wall)
+		{
+			for (int i = 0; i < pathWidth; i++)
+			{
+				for (int j = 0; j < pathWidth; j++)
+				{
+					walls[Index(x + i, y + j)] = wall;
+				}
+			}
+		}
 
 		public bool Get(int index) => walls[index];
 

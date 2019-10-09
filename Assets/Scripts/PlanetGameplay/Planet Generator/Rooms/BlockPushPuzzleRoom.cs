@@ -38,15 +38,16 @@ public class BlockPushPuzzleRoom : Room
 		puzzle = gen.Generate(puzzle.GridSize, padding, minimumSolutionCount);
 
 		IntPair offset = IntPair.one;
+		int tileSize = ExitWidth;
 
 		for (int i = 0; i < puzzle.grid.Length; i++)
 		{
-			IntPair position = puzzle.GetPositionFromIndex(i);
+			IntPair position = puzzle.GetPositionFromIndex(i) * tileSize;
 			bool isBlock = puzzle.BlockExists(position);
 			if (!isBlock) continue;
 
 			RoomPushableBlock roomBlock = new RoomPushableBlock(
-				this, position + offset, puzzle, position);
+				this, position * tileSize + offset, puzzle, position);
 			roomBlock.SetPosition(position + offset);
 			roomObjects.Add(roomBlock);
 		}

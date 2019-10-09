@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using UnityEngine;
 using MazePuzzle;
 
 public class MazeRoom : Room
@@ -34,25 +35,25 @@ public class MazeRoom : Room
 			{
 				bool vertical = dir.IsVertical();
 				IntPair exitPos = GetExitPos(dir);
-				IntPair adjustedExitPos;
-				if (vertical)
-				{
-					adjustedExitPos.x = exitPos.x;
-					adjustedExitPos.y = dir == Direction.Up ? roomSize.y - 2 : 1;
-				}
-				else
-				{
-					adjustedExitPos.x = exitPos.y;
-					adjustedExitPos.y = dir == Direction.Right ? roomSize.x - 2 : 1;
-				}
+				IntPair adjustedExitPos = exitPos;
+				//left, right
+				IntPair horizontalBoundaries = HorizontalBoundaries;
+				horizontalBoundaries.y -= (ExitWidth - 1);
+				//down, up
+				IntPair verticalBoundaries = VerticalBoundaries;
+				verticalBoundaries.y -= (ExitWidth - 1);
+				adjustedExitPos.x = Mathf.Clamp(adjustedExitPos.x,
+					horizontalBoundaries.x, horizontalBoundaries.y);
+				adjustedExitPos.y = Mathf.Clamp(adjustedExitPos.y,
+					verticalBoundaries.x, verticalBoundaries.y);
 				exits[count] = adjustedExitPos;
 				count++;
 			}
 		}
 
-		maze = gen.GeneratePuzzle(roomSize, exits);
+		maze = gen.GeneratePuzzle(roomSize, exits, ExitWidth);
 		List<IntPair> path = maze.GetLongestPath();
-		idealLootPosition = path[path.Count - 1];
+		idealLootPosition = path != null ? path[path.Count - 1] : exits[0];
 
 		SetUpLoot();
 

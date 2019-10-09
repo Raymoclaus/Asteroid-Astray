@@ -15,7 +15,7 @@ public class TestingTilemaps : MonoBehaviour
 		{
 			new IntPair(1, 5),
 			new IntPair(10, 9)
-		});
+		}, 1);
 
 		for (int i = 0; i < maze.ArrayLength(); i++)
 		{

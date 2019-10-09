@@ -15,4 +15,6 @@ public abstract class PlanetTriggerer : Triggerer
 	{
 
 	}
+
+	public Vector3 FacingDirection => MovementBehaviour.FacingDirection;
 }

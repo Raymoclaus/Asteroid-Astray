@@ -11,7 +11,7 @@ public class Room : ITextSaveLoader
 	private DirectionalArray<List<RoomLock>> exitLocks = new DirectionalArray<List<RoomLock>>();
 	private DirectionalArray<Room> neighbourRooms = new DirectionalArray<Room>();
 	private DirectionalArray<int> boundaries = new DirectionalArray<int>();
-	private const int ROOM_WIDTH = 28, ROOM_HEIGHT = 16, EXIT_WIDTH = 2, EXIT_LENGTH = 3;
+	private const int ROOM_WIDTH = 38, ROOM_HEIGHT = 20, EXIT_WIDTH = 2, EXIT_LENGTH = 3;
 	protected List<RoomTile> tiles = new List<RoomTile>();
 	public IntPair position;
 	public List<RoomObject> roomObjects = new List<RoomObject>();
@@ -107,6 +107,8 @@ public class Room : ITextSaveLoader
 
 	public IntPair VerticalBoundaries
 		=> new IntPair(boundaries.Down, boundaries.Up);
+
+	public int ExitWidth => EXIT_WIDTH;
 
 	public void AddExit(Direction direction, IntPair exitPos)
 	{
