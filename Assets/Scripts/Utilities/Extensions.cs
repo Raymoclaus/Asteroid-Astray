@@ -3,6 +3,9 @@ using UnityEngine;
 
 public static class Extensions
 {
+	public static bool IsNullOrEmpty(this System.Collections.IList source)
+		=> source == null || source.Count == 0;
+
 	public static T[] SubArray<T>(this T[] source, int start, int end)
 	{
 		if (start >= source.Length || end >= source.Length || start > end)
@@ -118,4 +121,7 @@ public static class Extensions
 
 	public static Vector2 RadiansAngleToVector2(this float source)
 		=> new Vector2(Mathf.Sin(source), Mathf.Cos(source));
+
+	public static bool IsValidIndex<T>(this T source, int index) where T : System.Collections.ICollection
+		=> source != null && source.Count > 0 && index >= 0 && index < source.Count;
 }

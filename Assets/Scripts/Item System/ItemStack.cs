@@ -17,6 +17,12 @@ public class ItemStack
 		this.amount = num < 0 ? 0 : num;
 	}
 
+	public ItemStack(Item.Type type)
+	{
+		this.type = type;
+		amount = 1;
+	}
+
 	public ItemStack() { }
 
 	public Item.Type GetItemType()

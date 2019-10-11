@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class MainHatchPrompt : InteractablePromptTrigger
+public class MainHatchPrompt : MonoBehaviour, IActionMessageReceiver
 {
 	private static DialogueController dlgCtrl;
 	protected static DialogueController DlgCtrl
@@ -14,22 +14,6 @@ public class MainHatchPrompt : InteractablePromptTrigger
 	public bool IsLocked { get; set; }
 
 	[SerializeField] private Animator anim;
-
-	public override void Interact(Triggerer actor)
-	{
-		base.Interact(actor);
-		Shuttle shuttle = actor.GetComponent<Shuttle>();
-		if (shuttle == null) return;
-		if (IsLocked)
-		{
-			PlayDialogueResponse();
-		}
-		else
-		{
-			Open();
-			shuttle.EnterShip(transform);
-		}
-	}
 
 	public void PlayDialogueResponse()
 	{
@@ -50,4 +34,17 @@ public class MainHatchPrompt : InteractablePromptTrigger
 	}
 
 	public void Open() => anim.SetTrigger("Open");
+
+	public void Interacted(IInteractor interactor, string action)
+	{
+		if (IsLocked)
+		{
+			PlayDialogueResponse();
+		}
+		else
+		{
+			Open();
+			interactor.Interact(this);
+		}
+	}
 }

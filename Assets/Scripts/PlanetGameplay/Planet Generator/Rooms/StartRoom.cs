@@ -1,11 +1,6 @@
-﻿public class StartRoom : Room
+﻿public class StartRoom : DungeonRoom
 {
-	public StartRoom(string[] lines, PlanetData data) : base(lines, data)
-	{
-
-	}
-
-	public StartRoom(IntPair position, Room previousRoom)
+	public StartRoom(IntPair position, DungeonRoom previousRoom)
 		: base(position, previousRoom)
 	{
 
@@ -15,8 +10,8 @@
 	{
 		base.GenerateContent();
 
-		RoomLandingPad landingPad = new RoomLandingPad(this);
-		landingPad.SetPosition(CenterInt + IntPair.down * 3);
+		DungeonRoomObject landingPad = new DungeonRoomObject(this,
+			CenterInt + IntPair.down * 3, "LandingPad", null);
 		roomObjects.Add(landingPad);
 	}
 }

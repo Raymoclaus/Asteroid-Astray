@@ -1,32 +1,25 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System;
 using UnityEngine;
 using BlockPushPuzzle;
 
-public class BlockPushPuzzleRoom : Room
+public class BlockPushPuzzleRoom : DungeonRoom
 {
 	private float difficulty;
 	private PushPuzzle puzzle;
 
-	public BlockPushPuzzleRoom(string[] lines, PlanetData data) : base(lines, data)
-	{
-
-	}
-
-	public BlockPushPuzzleRoom(IntPair position, Room previousRoom)
+	public BlockPushPuzzleRoom(IntPair position, DungeonRoom previousRoom)
 		: base(position, previousRoom)
 	{
-		puzzle = CreateNewPushPuzzle();
-		puzzle.OnPuzzleCompleted += UnlockAllExits;
 	}
 
-	public BlockPushPuzzleRoom(IntPair position, Room previousRoom, float difficulty)
+	public BlockPushPuzzleRoom(IntPair position, DungeonRoom previousRoom, float difficulty)
 		: this(position, previousRoom)
 	{
 		this.difficulty = difficulty;
 	}
 
-	private PushPuzzle CreateNewPushPuzzle() => new PushPuzzle(new IntPair(RoomWidth - 2, RoomHeight - 2), 1);
+	private IntPair PuzzleSize
+		=> new IntPair(RoomWidth / ExitWidth - 1, RoomHeight / ExitWidth - 1);
 
 	public override void GenerateContent()
 	{
@@ -35,55 +28,34 @@ public class BlockPushPuzzleRoom : Room
 		BlockPushGenerator gen = new BlockPushGenerator();
 		int padding = 1;
 		int minimumSolutionCount = 1;
-		puzzle = gen.Generate(puzzle.GridSize, padding, minimumSolutionCount);
+		puzzle = gen.Generate(PuzzleSize, padding, minimumSolutionCount);
+		puzzle.OnPuzzleCompleted += UnlockAllExitsOfLockTypeNone;
+		Debug.Log(puzzle.GridSize);
 
 		IntPair offset = IntPair.one;
 		int tileSize = ExitWidth;
 
 		for (int i = 0; i < puzzle.grid.Length; i++)
 		{
-			IntPair position = puzzle.GetPositionFromIndex(i) * tileSize;
-			bool isBlock = puzzle.BlockExists(position);
+			IntPair puzzlePos = puzzle.GetPositionFromIndex(i);
+			bool isBlock = puzzle.BlockExists(puzzlePos);
 			if (!isBlock) continue;
 
-			RoomPushableBlock roomBlock = new RoomPushableBlock(
-				this, position * tileSize + offset, puzzle, position);
-			roomBlock.SetPosition(position + offset);
+			DungeonRoomObject roomBlock = new DungeonRoomObject(
+				this, puzzlePos * tileSize + offset, "PushableBlock", puzzlePos);
 			roomObjects.Add(roomBlock);
 		}
-		RoomGreenGroundButton finishButton = new RoomGreenGroundButton(this);
-		finishButton.SetPosition(puzzle.finishTile + offset);
-		finishButton.OnButtonTriggered += puzzle.CompletePuzzle;
+		DungeonRoomObject finishButton = new DungeonRoomObject(this,
+			puzzle.finishTile * tileSize + offset, "GreenButton", (Action)puzzle.CompletePuzzle);
 		roomObjects.Add(finishButton);
 
 		for (int i = 0; i < puzzle.resetTiles.Length; i++)
 		{
-			RoomRedGroundButton resetButton = new RoomRedGroundButton(this);
-			resetButton.SetPosition(puzzle.resetTiles[i] + offset);
-			resetButton.SubscribeToHeldEvent(puzzle.RevertLastChange, 1f / 10f);
+			DungeonRoomObject resetButton = new DungeonRoomObject(this,
+				puzzle.resetTiles[i] * tileSize + offset, "RedButton", (Action)puzzle.RevertLastChange);
 			roomObjects.Add(resetButton);
 		}
 
 		LockAllExceptPreviousRoom();
-	}
-
-	public override void Load(string[] lines)
-	{
-		base.Load(lines);
-
-		puzzle = CreateNewPushPuzzle();
-
-		for (int i = 0; i < lines.Length; i++)
-		{
-			string line = lines[i];
-
-			if (line == RoomPushableBlock.SAVE_TAG)
-			{
-				int end = lines.IndexOfObjectAfterIndex(i, RoomPushableBlock.SAVE_END_TAG);
-				roomObjects.Add(new RoomPushableBlock(this, lines.SubArray(i, end), puzzle));
-				i = end;
-				continue;
-			}
-		}
 	}
 }

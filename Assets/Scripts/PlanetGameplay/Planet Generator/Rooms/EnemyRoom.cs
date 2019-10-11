@@ -1,16 +1,11 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-public class EnemyRoom : Room
+public class EnemyRoom : DungeonRoom
 {
 	float difficulty;
 
-	public EnemyRoom(string[] lines, PlanetData data) : base(lines, data)
-	{
-
-	}
-
-	public EnemyRoom(IntPair position, Room previousRoom, float difficulty)
+	public EnemyRoom(IntPair position, DungeonRoom previousRoom, float difficulty)
 		: base(position, previousRoom)
 	{
 		this.difficulty = difficulty;
@@ -20,14 +15,7 @@ public class EnemyRoom : Room
 	{
 		base.GenerateContent();
 
-		List<RoomEnemy> enemies = EnemyRoomData.GenerateChallenge(difficulty, this);
+		List<DungeonRoomEnemy> enemies = EnemyRoomData.GenerateChallenge(difficulty, this);
 		roomObjects.AddRange(enemies);
-
-		for (int i = 0; i < enemies.Count; i++)
-		{
-			int xPos = Random.Range(3, RoomWidth - 3);
-			int yPos = Random.Range(3, RoomHeight - 3);
-			enemies[i].SetPosition(new IntPair(xPos, yPos));
-		}
 	}
 }

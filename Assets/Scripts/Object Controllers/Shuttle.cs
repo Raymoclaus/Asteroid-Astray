@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine.Events;
 using InputHandler;
 
-public class Shuttle : Character, IStunnable, ICombat
+public class Shuttle : Character, IStunnable, ICombat, IInteractor
 {
 	[Header("Shuttle Fields")]
 
@@ -95,6 +95,9 @@ public class Shuttle : Character, IStunnable, ICombat
 	#region Boost
 	private bool canBoost = true;
 	public bool CanBoost { get { return canBoost; } }
+
+	public bool CanTriggerPrompts => throw new System.NotImplementedException();
+
 	//how long a boost can last
 	[SerializeField] private float boostCapacity = 1f;
 	//represents how much boost is currently available
@@ -788,5 +791,27 @@ public class Shuttle : Character, IStunnable, ICombat
 		FadeScreen.FadeOut(3f);
 
 		//open hatch
+	}
+
+	public bool IsPerformingAction(string action) => InputManager.GetInput(action) > 0f;
+
+	public object ObjectOrderRequest(object order) => null;
+
+	public void Interact(object interactableObject)
+	{
+		if (interactableObject is MainHatchPrompt mainHatch)
+		{
+			EnterShip(mainHatch.transform);
+		}
+	}
+
+	public void EnteredTrigger(ITrigger vTrigger)
+	{
+
+	}
+
+	public void ExitedTrigger(ITrigger vTrigger)
+	{
+
 	}
 }

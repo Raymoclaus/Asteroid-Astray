@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using PromptSystem;
 
 public class PromptUI : MonoBehaviour
 {
@@ -11,53 +12,54 @@ public class PromptUI : MonoBehaviour
 	[SerializeField] private AnimationCurve popupCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 	[SerializeField] private float popupAnimationTime = 0.5f, popupExaggeration = 2f;
 
-	public delegate void PromptUpdatedEventHandler(string text, bool activating);
-	public event PromptUpdatedEventHandler OnPromptUpdated;
-
 	private void Awake()
 	{
+		PromptRequests.OnLatestPromptSelected += ReceiveLatestPrompt;
+		PromptRequests.OnPromptUpdated += UpdatePrompt;
 		prompt = GetComponentInChildren<InputIconTextMesh>();
 		Rect.localScale = Vector3.zero;
 	}
 
-	public void ActivatePrompt(string text)
+	private void OnDestroy()
+	{
+		PromptRequests.OnLatestPromptSelected -= ReceiveLatestPrompt;
+	}
+
+	private void ReceiveLatestPrompt(PromptRequestData requestData)
+	{
+		if (requestData.IsInvalid)
+		{
+			DeactivatePrompt(unformattedText);
+		}
+		else
+		{
+			string promptText = requestData.promptText;
+			ActivatePrompt(promptText);
+		}
+	}
+
+	private void UpdatePrompt(PromptRequestData requestData, string oldText)
+	{
+		if (oldText != unformattedText || requestData.IsInvalid) return;
+		string promptText = requestData.promptText;
+		ActivatePrompt(promptText);
+	}
+
+	private void ActivatePrompt(string text)
 	{
 		if (text == unformattedText) return;
 		unformattedText = text;
-		OnPromptUpdated?.Invoke(text, true);
 		SetText(text);
+		StopAllCoroutines();
 		StartCoroutine(Popup(true));
 	}
 
-	public void ActivatePromptTimer(string text, float totalDuration = 5f)
-	{
-		if (text == unformattedText) return;
-		unformattedText = text;
-		ActivatePrompt(text);
-		StartCoroutine(TimedPrompt(text, totalDuration));
-	}
-
-	public void DeactivatePrompt(string text)
+	private void DeactivatePrompt(string text)
 	{
 		if (text != unformattedText) return;
-		OnPromptUpdated?.Invoke(text, false);
+		unformattedText = null;
 		StopAllCoroutines();
 		StartCoroutine(Popup(false));
-	}
-
-	private IEnumerator TimedPrompt(string text, float totalDuration)
-	{
-		float timer = 0f;
-		while (timer < totalDuration)
-		{
-			timer += Time.deltaTime;
-			yield return null;
-		}
-
-		if (prompt.GetText() == text)
-		{
-			StartCoroutine(Popup(false));
-		}
 	}
 
 	private IEnumerator Popup(bool popIn)

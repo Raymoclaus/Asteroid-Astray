@@ -1,22 +1,17 @@
 ﻿using TileLightsPuzzle;
 
-public class TileFlipPuzzleRoom : Room
+public class TileFlipPuzzleRoom : DungeonRoom
 {
 	public TileGrid puzzleGrid;
 	private float puzzleDifficulty;
 
-	public TileFlipPuzzleRoom(string[] lines, PlanetData data) : base(lines, data)
-	{
-
-	}
-
-	public TileFlipPuzzleRoom(IntPair position, Room previousRoom)
+	public TileFlipPuzzleRoom(IntPair position, DungeonRoom previousRoom)
 		: base(position, previousRoom)
 	{
 		puzzleGrid = CreateNewTileGrid();
 	}
 
-	public TileFlipPuzzleRoom(IntPair position, Room previousRoom, float difficulty)
+	public TileFlipPuzzleRoom(IntPair position, DungeonRoom previousRoom, float difficulty)
 		: this(position, previousRoom)
 	{
 		puzzleDifficulty = difficulty;
@@ -39,29 +34,9 @@ public class TileFlipPuzzleRoom : Room
 			IntPair pos = puzzleGrid.GetPosition(i);
 
 			bool flipped = puzzleGrid.IsFlipped(i);
-			RoomTileLight tileLight = new RoomTileLight(this, puzzleGrid, i);
-			tileLight.SetPosition(pos + offset);
+			DungeonRoomObject tileLight = new DungeonRoomObject(this,
+				pos + offset, "FlipTile", i);
 			roomObjects.Add(tileLight);
-		}
-	}
-
-	public override void Load(string[] lines)
-	{
-		base.Load(lines);
-
-		puzzleGrid = CreateNewTileGrid();
-
-		for (int i = 0; i < lines.Length; i++)
-		{
-			string line = lines[i];
-
-			if (line == RoomTileLight.SAVE_TAG)
-			{
-				int end = lines.IndexOfObjectAfterIndex(i, RoomTileLight.SAVE_END_TAG);
-				roomObjects.Add(new RoomTileLight(this, puzzleGrid, lines.SubArray(i, end)));
-				i = end;
-				continue;
-			}
 		}
 	}
 }

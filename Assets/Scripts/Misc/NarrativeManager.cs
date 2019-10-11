@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class NarrativeManager : MonoBehaviour
@@ -24,6 +25,8 @@ public class NarrativeManager : MonoBehaviour
 	private MainHatchPrompt mainHatch;
 	private MainHatchPrompt MainHatch
 		=> mainHatch ?? (mainHatch = FindObjectOfType<MainHatchPrompt>());
+	private IActionTrigger MainHatchTrigger
+		=> MainHatch.GetComponentInChildren<IActionTrigger>();
 	[SerializeField] private DerangedSoloBot derangedSoloBotPrefab;
 	private TutorialPrompts tutPrompts;
 	private TutorialPrompts TutPrompts
@@ -237,7 +240,7 @@ public class NarrativeManager : MonoBehaviour
 		List<QuestReward> qRewards = new List<QuestReward>();
 
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-		qReqs.Add(new InteractionQReq(MainHatch, MainChar.GetComponent<Triggerer>(), "Return to the ship."));
+		qReqs.Add(new InteractionQReq(MainHatchTrigger, MainChar.GetComponent<Triggerer>(), "Return to the ship."));
 
 		Quest q = new Quest(
 			"Find the ship",
@@ -275,13 +278,14 @@ public class NarrativeManager : MonoBehaviour
 		MainChar.waypoint = new Waypoint(newEntity.transform);
 		//attach dialogue prompt when player approaches bot
 		VicinityTrigger entityPrompt = newEntity.GetComponentInChildren<VicinityTrigger>();
-		VicinityTrigger.EnteredTriggerEventHandler triggerEnterAction = null;
-		triggerEnterAction = (Triggerer actor) =>
+		Action<IActor> triggerEnterAction = null;
+		triggerEnterAction = (IActor actor) =>
 		{
+			if (!(actor is Shuttle)) return;
 			StartDialogue(foundDerangedBotDialogue, true);
-			entityPrompt.OnEnterTrigger -= triggerEnterAction;
+			entityPrompt.OnEnteredTrigger -= triggerEnterAction;
 		};
-		entityPrompt.OnEnterTrigger += triggerEnterAction;
+		entityPrompt.OnEnteredTrigger += triggerEnterAction;
 	}
 
 	private void CompletedFindEnergySourceQuest(Quest quest)

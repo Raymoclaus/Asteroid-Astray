@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlanetGenerator
+public class DungeonGenerator
 {
 	public PlanetData Generate(float difficultySetting)
 	{
@@ -12,11 +12,11 @@ public class PlanetGenerator
 		PlanetRoomTypeWeightings roomTypeWeightings = GetRoomTypeWeightings();
 		PuzzleTypeWeightings puzzleWeightings = GetPuzzleWeightings();
 
-		Room currentRoom = null;
+		DungeonRoom currentRoom = null;
 		int keyLevel = 0;
 
 		//rule 1 -	Create starter room
-		Room startRoom = new StartRoom(IntPair.zero, null);
+		DungeonRoom startRoom = new StartRoom(IntPair.zero, null);
 		data.AddRoom(startRoom);
 		data.startRoom = startRoom;
 
@@ -36,27 +36,27 @@ public class PlanetGenerator
 				Random.Range(difficultyModifiers.minBranchLength, difficultyModifiers.maxBranchLength));
 			for (int i = 0; i < branchLength; i++)
 			{
-				Room newRoom = CreateRandomExit(data, currentRoom, false,
-					RoomKey.KeyColour.Blue, false, false, roomTypeWeightings,
+				DungeonRoom newRoom = CreateRandomExit(data, currentRoom, false,
+					LockKeyType.Blue, false, false, roomTypeWeightings,
 					puzzleWeightings, difficultyModifiers);
 				if (newRoom == currentRoom) break;
 				currentRoom = newRoom;
 			}
 
 			//rule 4 -	Place a key at the end of that branch
-			currentRoom.AddKey((RoomKey.KeyColour)keyLevel);
+			currentRoom.AddKey((LockKeyType)keyLevel);
 
 			//rule 5 -	Create a locked exit to a new room from any existing room except the end of
 			//			that branch.
-			List<Room> existingRooms = data.GetRooms();
-			Room lockRoom = currentRoom;
+			List<DungeonRoom> existingRooms = data.GetRooms();
+			DungeonRoom lockRoom = currentRoom;
 			do
 			{
 				int randomIndex = Random.Range(0, existingRooms.Count);
 				lockRoom = existingRooms[randomIndex];
 			} while (lockRoom == currentRoom || lockRoom.ExitCount == 4);
 			lockRoom = CreateRandomExit(data, lockRoom, true,
-				(RoomKey.KeyColour)keyLevel, j == branchCount - 1, false,
+				(LockKeyType)keyLevel, j == branchCount - 1, false,
 				roomTypeWeightings, puzzleWeightings, difficultyModifiers);
 			keyLevel++;
 
@@ -72,8 +72,8 @@ public class PlanetGenerator
 		branchCount = Mathf.Max(0, Random.Range(difficultyModifiers.minDeadEndCount, difficultyModifiers.maxDeadEndCount));
 		for (int i = 0; i < branchCount; i++)
 		{
-			List<Room> existingRooms = data.GetRooms();
-			Room deadEndStart = null;
+			List<DungeonRoom> existingRooms = data.GetRooms();
+			DungeonRoom deadEndStart = null;
 			do
 			{
 				int randomIndex = Random.Range(0, existingRooms.Count);
@@ -85,8 +85,8 @@ public class PlanetGenerator
 				Random.Range(difficultyModifiers.minBranchLength, difficultyModifiers.maxBranchLength));
 			for (int j = 0; j < branchLength; j++)
 			{
-				Room newRoom = CreateRandomExit(data, currentRoom, false,
-					RoomKey.KeyColour.Blue, false, j == branchLength - 1, roomTypeWeightings,
+				DungeonRoom newRoom = CreateRandomExit(data, currentRoom, false,
+					LockKeyType.Blue, false, j == branchLength - 1, roomTypeWeightings,
 					puzzleWeightings, difficultyModifiers);
 				if (newRoom == currentRoom) break;
 				currentRoom = newRoom;
@@ -112,8 +112,8 @@ public class PlanetGenerator
 	private PlanetRoomTypeWeightings GetRoomTypeWeightings()
 		=> Resources.LoadAll<PlanetRoomTypeWeightings>(string.Empty).FirstOrDefault();
 
-	private Room CreateRandomExit(PlanetData data, Room room, bool locked,
-		RoomKey.KeyColour colour, bool bossRoom, bool treasure,
+	private DungeonRoom CreateRandomExit(PlanetData data, DungeonRoom room, bool locked,
+		LockKeyType type, bool bossRoom, bool treasure,
 		PlanetRoomTypeWeightings roomTypeWeightings,
 		PuzzleTypeWeightings puzzleWeightings,
 		PlanetDifficultyModifiers difficultyModifiers)
@@ -140,7 +140,7 @@ public class PlanetGenerator
 		Direction randomDirection = directions[Random.Range(0, directions.Count)];
 		IntPair pos = AddDirection(room.position, randomDirection);
 
-		Room newRoom;
+		DungeonRoom newRoom;
 		if (bossRoom)
 		{
 			newRoom = new BossRoom(pos, room, difficultyModifiers.enemyRoomDifficulty);
@@ -158,7 +158,7 @@ public class PlanetGenerator
 
 		if (locked)
 		{
-			ConnectWithLock(room, newRoom, randomDirection, colour);
+			ConnectWithLock(room, newRoom, randomDirection, type);
 		}
 		else
 		{
@@ -168,7 +168,7 @@ public class PlanetGenerator
 		return newRoom;
 	}
 
-	private Room PickRandomRoom(IntPair position, Room previousRoom,
+	private DungeonRoom PickRandomRoom(IntPair position, DungeonRoom previousRoom,
 		PlanetRoomTypeWeightings roomTypeWeightings,
 		PuzzleTypeWeightings puzzleRoomWeightings,
 		PlanetDifficultyModifiers difficultyModifiers)
@@ -183,7 +183,7 @@ public class PlanetGenerator
 
 		if ((randomValue = randomValue - roomTypeWeightings.emptyRoomWeighting) < 0f)
 		{
-			return new Room(position, previousRoom);
+			return new DungeonRoom(position, previousRoom);
 		}
 		if ((randomValue = randomValue - roomTypeWeightings.puzzleRoomWeighting) < 0f)
 		{
@@ -201,7 +201,7 @@ public class PlanetGenerator
 		return new NpcRoom(position, previousRoom);
 	}
 
-	private Room PickRandomPuzzleRoom(IntPair position, Room previousRoom,
+	private DungeonRoom PickRandomPuzzleRoom(IntPair position, DungeonRoom previousRoom,
 		PuzzleTypeWeightings puzzleWeightings)
 	{
 		float totalWeighting =
@@ -222,16 +222,16 @@ public class PlanetGenerator
 		}
 		if ((randomValue = randomValue - puzzleWeightings.randomBeamRedirectionRoomWeighting) < 0f)
 		{
-			return new Room(position, previousRoom);
+			return new DungeonRoom(position, previousRoom);
 		}
 		if ((randomValue = randomValue - puzzleWeightings.randomBlockPushRoomWeighting) < 0f)
 		{
 			return new BlockPushPuzzleRoom(position, previousRoom);
 		}
-		return new Room(position, previousRoom);
+		return new DungeonRoom(position, previousRoom);
 	}
 
-	private void Connect(Room a, Room b, Direction dir)
+	private void Connect(DungeonRoom a, DungeonRoom b, Direction dir)
 	{
 		switch (dir)
 		{
@@ -250,26 +250,26 @@ public class PlanetGenerator
 		}
 	}
 
-	private void ConnectWithLock(Room a, Room b, Direction dir, RoomKey.KeyColour colour)
+	private void ConnectWithLock(DungeonRoom a, DungeonRoom b, Direction dir, LockKeyType type)
 	{
 		switch (dir)
 		{
 			case Direction.Up:
-				LockVertically(a, b, colour);
+				LockVertically(a, b, type);
 				break;
 			case Direction.Right:
-				LockHorizontally(a, b, colour);
+				LockHorizontally(a, b, type);
 				break;
 			case Direction.Down:
-				LockVertically(b, a, colour);
+				LockVertically(b, a, type);
 				break;
 			case Direction.Left:
-				LockHorizontally(b, a, colour);
+				LockHorizontally(b, a, type);
 				break;
 		}
 	}
 
-	private void ConnectVertically(Room lower, Room upper)
+	private void ConnectVertically(DungeonRoom lower, DungeonRoom upper)
 	{
 		IntPair boundaries = lower.HorizontalBoundaries;
 		int exitWidth = lower.ExitWidth;
@@ -286,14 +286,14 @@ public class PlanetGenerator
 		upper.SetNeighbourRoom(lower, Direction.Down);
 	}
 
-	private void LockVertically(Room lower, Room upper, RoomKey.KeyColour lockColour)
+	private void LockVertically(DungeonRoom lower, DungeonRoom upper, LockKeyType type)
 	{
 		ConnectVertically(lower, upper);
-		lower.Lock(Direction.Up, lockColour);
-		upper.Lock(Direction.Down, lockColour);
+		lower.Lock(Direction.Up, type);
+		upper.Lock(Direction.Down, type);
 	}
 
-	private void ConnectHorizontally(Room left, Room right)
+	private void ConnectHorizontally(DungeonRoom left, DungeonRoom right)
 	{
 		IntPair boundaries = left.VerticalBoundaries;
 		int exitWidth = left.ExitWidth;
@@ -310,11 +310,11 @@ public class PlanetGenerator
 		right.SetNeighbourRoom(left, Direction.Left);
 	}
 
-	private void LockHorizontally(Room left, Room right, RoomKey.KeyColour lockColour)
+	private void LockHorizontally(DungeonRoom left, DungeonRoom right, LockKeyType type)
 	{
 		ConnectHorizontally(left, right);
-		left.Lock(Direction.Right, lockColour);
-		right.Lock(Direction.Left, lockColour);
+		left.Lock(Direction.Right, type);
+		right.Lock(Direction.Left, type);
 	}
 
 	private IntPair AddDirection(IntPair v, Direction dir)
@@ -337,9 +337,9 @@ public class PlanetGenerator
 		return v;
 	}
 
-	private Room GetRoomAtPosition(PlanetData data, int x, int y) => GetRoomAtPosition(data, new IntPair(x, y));
+	private DungeonRoom GetRoomAtPosition(PlanetData data, int x, int y) => GetRoomAtPosition(data, new IntPair(x, y));
 
-	private Room GetRoomAtPosition(PlanetData data, IntPair position) => data.GetRoomAtPosition(position);
+	private DungeonRoom GetRoomAtPosition(PlanetData data, IntPair position) => data.GetRoomAtPosition(position);
 
 	private bool RoomExists(PlanetData data, IntPair position) => GetRoomAtPosition(data, position) != null;
 }

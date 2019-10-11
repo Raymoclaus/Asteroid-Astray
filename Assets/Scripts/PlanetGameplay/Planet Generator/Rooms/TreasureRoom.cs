@@ -1,11 +1,7 @@
-﻿public class TreasureRoom : Room
+﻿public class TreasureRoom : DungeonRoom
 {
-	public TreasureRoom(string[] lines, PlanetData data) : base(lines, data)
-	{
-
-	}
-
-	public TreasureRoom(IntPair position, Room previousRoom) : base(position, previousRoom)
+	public TreasureRoom(IntPair position, DungeonRoom previousRoom)
+		: base(position, previousRoom)
 	{
 
 	}
@@ -15,8 +11,8 @@
 		base.GenerateContent();
 
 		IntPair pos = CenterInt + IntPair.up;
-		RoomTreasureChest treasureChest = new RoomTreasureChest(this, false);
-		treasureChest.SetPosition(pos);
+		DungeonRoomObject treasureChest = new DungeonRoomObject(this, pos,
+			"TreasureChest", null);
 		roomObjects.Add(treasureChest);
 	}
 }

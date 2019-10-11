@@ -1,11 +1,10 @@
 ﻿using UnityEngine;
 using System;
 using System.Collections.Generic;
+using PR = PromptSystem.PromptRequests;
 
-[RequireComponent(typeof(PromptUI))]
 public class TutorialPrompts : MonoBehaviour
 {
-	private PromptUI ui;
 	private Shuttle mainChar;
 	private Shuttle MainChar => mainChar ?? (mainChar = FindObjectOfType<Shuttle>());
 
@@ -24,15 +23,11 @@ public class TutorialPrompts : MonoBehaviour
 
 	private void SetUp()
 	{
-		ui = GetComponent<PromptUI>();
-
 		prompts.Add(goInputPromptInfo);
 		prompts.Add(launchInputPromptInfo);
 		prompts.Add(drillInputPromptInfo);
 		prompts.Add(pauseInputPromptInfo);
 		prompts.Add(repairKitInputPromptInfo);
-
-		prompts.ForEach(t => t.SetUI(ui));
 
 		SetUpGoInputPrompt();
 		SetUpLaunchInputPrompt();
@@ -162,7 +157,6 @@ public class TutorialPrompts : MonoBehaviour
 	[Serializable]
 	public class PromptInfo
 	{
-		private PromptUI ui;
 		private const string TO_STRING = "Prompt: \"{0}\", Active: {1}";
 		public float delay;
 		private float delayTimer;
@@ -200,11 +194,6 @@ public class TutorialPrompts : MonoBehaviour
 			this.condition = condition;
 		}
 
-		public void SetUI(PromptUI ui)
-		{
-			this.ui = ui;
-		}
-
 		public void SetListeners(Action start, Action stop)
 		{
 			startListening = start;
@@ -220,10 +209,6 @@ public class TutorialPrompts : MonoBehaviour
 		public void SetText(string s)
 		{
 			text = s;
-			if (isActivated)
-			{
-				ui.ActivatePrompt(text);
-			}
 		}
 
 		private bool AddTimer(float add)
@@ -254,21 +239,13 @@ public class TutorialPrompts : MonoBehaviour
 			
 			if (isTimedPrompt)
 			{
-				ui.ActivatePromptTimer(text, promptDuration);
-				PromptUI.PromptUpdatedEventHandler action = null;
-				action = (string promptText, bool activating) =>
-				{
-					if (promptText != text || (promptText == text && !activating))
-					{
-						SetIsActivated(false);
-					}
-					ui.OnPromptUpdated -= action;
-				};
-				ui.OnPromptUpdated += action;
+				PR.PromptSendRequest(text, text);
+				TimerTracker.SetTimer(text, promptDuration);
+				TimerTracker.SetTimerAction(text, Deactivate);
 			}
 			else
 			{
-				ui.ActivatePrompt(text);
+				PR.PromptSendRequest(text, text);
 			}
 			SetIsActivated(true);
 			activationCount++;
@@ -283,7 +260,7 @@ public class TutorialPrompts : MonoBehaviour
 			
 			if (!isActivated) return;
 
-			ui.DeactivatePrompt(text);
+			PR.PromptRemovalRequest(text);
 			SetIsActivated(false);
 		}
 

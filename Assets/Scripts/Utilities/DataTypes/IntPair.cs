@@ -110,6 +110,10 @@ public struct IntPair
 
 	public static IntPair operator /(IntPair a, int b) => new IntPair(a.x / b, a.y / b);
 
+	public static bool operator ==(Vector2 a, IntPair b) => (int)a.x == b.x && (int)a.y == b.y;
+
+	public static bool operator !=(Vector2 a, IntPair b) => (int)a.x != b.x || (int)a.y != b.y;
+
 	public static Vector2 operator +(Vector2 a, IntPair b) => new Vector2(a.x + b.x, a.y + b.y);
 
 	public static Vector2 operator -(Vector2 a, IntPair b) => new Vector2(a.x - b.x, a.y - b.y);

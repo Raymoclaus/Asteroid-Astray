@@ -2,7 +2,7 @@
 
 public class Planet : Entity
 {
-	[SerializeField] private PlanetInteractablePrompt trigger;
+	[SerializeField] private InteractionTrigger trigger;
 	[SerializeField] private Transform spriteTransform;
 
 	public override EntityType GetEntityType() => EntityType.Planet;
@@ -21,16 +21,15 @@ public class Planet : Entity
 		Vector3 modifiedPos = originalPos.normalized * modifiedDistance;
 		spriteTransform.position = modifiedPos + Vector3.forward * spriteTransform.position.z;
 
-		trigger.OnInteraction += OnInteracted;
+		trigger.OnInteracted += OnInteracted;
 	}
 
-	private void OnInteracted(Triggerer actor)
+	private void OnInteracted(IInteractor actor)
 	{
-		if (!(actor is ShuttleTriggerer)) return;
-		GoToPlanet();
+		actor.Interact(this);
 	}
 
-	private void GoToPlanet()
+	public void GoToPlanet()
 	{
 		//PlanetGenerator generator = new PlanetGenerator();
 		//PlanetData data = generator.Generate((exploredCount + 1) * Difficulty.DistanceBasedDifficulty(DistanceFromCenter) * difficultyModifier);

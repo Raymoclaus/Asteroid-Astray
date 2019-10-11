@@ -2,16 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BossRoom : Room
+public class BossRoom : DungeonRoom
 {
 	float difficulty;
 
-	public BossRoom(string[] lines, PlanetData data) : base(lines, data)
-	{
-
-	}
-
-	public BossRoom(IntPair position, Room previousRoom, float difficulty)
+	public BossRoom(IntPair position, DungeonRoom previousRoom, float difficulty)
 		: base(position, previousRoom)
 	{
 		this.difficulty = difficulty;
@@ -21,19 +16,12 @@ public class BossRoom : Room
 	{
 		base.GenerateContent();
 
-		List<RoomEnemy> enemies = EnemyRoomData.GenerateChallenge(difficulty, this);
+		List<DungeonRoomEnemy> enemies = EnemyRoomData.GenerateChallenge(difficulty, this);
 		roomObjects.AddRange(enemies);
 
-		for (int i = 0; i < enemies.Count; i++)
-		{
-			int xPos = Random.Range(3, RoomWidth - 3);
-			int yPos = Random.Range(3, RoomHeight - 3);
-			enemies[i].SetPosition(new IntPair(xPos, yPos));
-		}
-
 		IntPair pos = CenterInt * IntPair.right + InnerDimensions * IntPair.up;
-		RoomTreasureChest treasureChest = new RoomTreasureChest(this, true);
-		treasureChest.SetPosition(pos);
+		DungeonRoomObject treasureChest = new DungeonRoomObject(this, pos,
+			"LockedTreasureChest", null);
 		roomObjects.Add(treasureChest);
 	}
 }

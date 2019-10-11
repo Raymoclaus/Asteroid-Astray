@@ -1,18 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System.Linq;
+using System.Collections.Generic;
 using UnityEngine;
 using MazePuzzle;
 
-public class MazeRoom : Room
+public class MazeRoom : DungeonRoom
 {
 	Maze maze;
 	private IntPair idealLootPosition;
 
-	public MazeRoom(string[] lines, PlanetData data) : base(lines, data)
-	{
-
-	}
-
-	public MazeRoom(IntPair position, Room previousRoom)
+	public MazeRoom(IntPair position, DungeonRoom previousRoom)
 		: base(position, previousRoom)
 	{
 
@@ -64,13 +60,21 @@ public class MazeRoom : Room
 				IntPair tilePos = new IntPair(x, y);
 				int index = maze.Index(x, y);
 				bool wall = maze.Get(index);
-				AddTile(tilePos, wall ? RoomTile.TileType.Wall : RoomTile.TileType.Floor);
+				AddTile(tilePos,
+					wall ? DungeonRoomTileType.Wall : DungeonRoomTileType.Floor);
 			}
 		}
 	}
 
 	private void SetUpLoot()
 	{
-		GetObjects<RoomKey>().ForEach(t => t.SetPosition(idealLootPosition));
+		for (int i = 0; i < roomObjects.Count; i++)
+		{
+			DungeonRoomObject obj = roomObjects[i];
+			if (obj.ObjectName == "Key")
+			{
+				obj.RoomSpacePosition = idealLootPosition;
+			}
+		}
 	}
 }
