@@ -33,6 +33,6 @@ public class Planet : Entity
 	{
 		//PlanetGenerator generator = new PlanetGenerator();
 		//PlanetData data = generator.Generate((exploredCount + 1) * Difficulty.DistanceBasedDifficulty(DistanceFromCenter) * difficultyModifier);
-		SceneLoader.LoadSceneStatic("PlanetScene");
+		SceneLoader.LoadScene("PlanetScene");
 	}
 }

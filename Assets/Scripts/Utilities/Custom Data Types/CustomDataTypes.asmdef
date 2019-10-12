@@ -1,0 +1,14 @@
+{
+    "name": "Utilities.DataTypes",
+    "references": [
+        "GUID:c6f55214092c5024283fbf284dbb48b0"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}

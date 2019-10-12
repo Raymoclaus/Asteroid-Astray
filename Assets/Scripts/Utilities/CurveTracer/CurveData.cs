@@ -1,10 +1,12 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
-[System.Serializable]
-public struct CurveData
+namespace CurveTracerSystem
 {
-	public Vector3 positionA, positionB;
-	public AnimationCurve curve;
+	[System.Serializable]
+	public struct CurveData
+	{
+		public Vector3 positionA, positionB;
+		public AnimationCurve curve;
+	}
+
 }

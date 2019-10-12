@@ -13,7 +13,6 @@ public class DungeonRoomViewer : MonoBehaviour
 	[SerializeField] private Camera cam;
 	[SerializeField] private List<AssetReference> prefabAssetReferences;
 	private List<AsyncOperationHandle> loaderhandles = new List<AsyncOperationHandle>();
-	private bool finishedLoadingAssets;
 	private List<DungeonRoomObjectComponent> prefabs = new List<DungeonRoomObjectComponent>();
 	private PlanetData planetData;
 
@@ -30,7 +29,6 @@ public class DungeonRoomViewer : MonoBehaviour
 	private void Update()
 	{
 		if (loaderhandles.Exists(t => !t.IsDone)) return;
-		finishedLoadingAssets = true;
 		enabled = false;
 		ShowAllRooms(planetData);
 	}

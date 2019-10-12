@@ -1,0 +1,15 @@
+{
+    "name": "Utilities.PromptSystem.UIScripts",
+    "references": [
+        "GUID:772b4f4864ca75647b1abaa9019bd002",
+        "GUID:ff6c6d187d8fcf8469ff852b988fa2bd"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}

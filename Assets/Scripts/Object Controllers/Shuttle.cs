@@ -763,7 +763,7 @@ public class Shuttle : Character, IStunnable, ICombat, IInteractor
 
 		//load next scene
 		SceneLoader.SceneAsync scene = SceneLoader.PrepareScene("ShipScene");
-		Coroutines.TimedAction(3f, null, () => SceneLoader.LoadPreparedSceneStatic(scene));
+		Coroutines.TimedAction(3f, null, () => SceneLoader.LoadPreparedScene(scene));
 
 		//move shuttle to center
 		velocity = Vector3.zero;

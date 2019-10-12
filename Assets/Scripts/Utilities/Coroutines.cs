@@ -1,51 +1,38 @@
 ﻿using System;
 using System.Collections;
 using UnityEngine;
+using CustomYieldInstructions;
 
-public class Coroutines : MonoBehaviour
+namespace Utilities
 {
-	private static Coroutines instance;
-	public static Coroutines Instance
+	public static class Coroutines
 	{
-		get
+		private static MonoBehaviour go;
+		private static MonoBehaviour MonoObj => go != null ? go
+			: (go = new GameObject("Coroutines Object").AddComponent<MonoBehaviour>());
+
+		public static void TimedAction(float duration, Action<float> timedAction,
+			Action finishedAction)
+			=> Start(ActionTimer(new ActionOverTime(duration, timedAction), finishedAction));
+
+		private static IEnumerator ActionTimer(ActionOverTime timerAction,
+			Action finishedAction)
 		{
-			return instance
-				?? (instance = FindObjectOfType<Coroutines>())
-				?? (instance = new GameObject("Coroutine Manager").AddComponent<Coroutines>());
+			yield return timerAction;
+			finishedAction?.Invoke();
 		}
-	}
 
-	private void Awake()
-	{
-		if (Instance != this)
+		public static void DelayedAction(float time, Action action)
+			=> Start(DelayedAction(new WaitForSeconds(time), action));
+
+		private static IEnumerator DelayedAction(WaitForSeconds wait, Action action)
 		{
-			Destroy(gameObject);
+			yield return wait;
+			action?.Invoke();
 		}
+
+		private static void Start(IEnumerator coroutineMethod)
+			=> MonoObj.StartCoroutine(coroutineMethod);
 	}
-
-	private void OnDestroy() => instance = null;
-
-	public static void TimedAction(float duration, Action<float> timedAction,
-		Action finishedAction)
-		=> Start(Instance.ActionTimer(new ActionOverTime(duration, timedAction), finishedAction));
-
-	private IEnumerator ActionTimer(ActionOverTime timerAction,
-		Action finishedAction)
-	{
-		yield return timerAction;
-		finishedAction?.Invoke();
-	}
-
-	public static void DelayedAction(float time, Action action)
-		=> Start(Instance.DelayedAction(new WaitForSeconds(time), action));
-
-	private IEnumerator DelayedAction(WaitForSeconds wait, Action action)
-	{
-		yield return wait;
-		action?.Invoke();
-	}
-
-	private static void Start(IEnumerator coroutineMethod)
-		=> Instance.StartCoroutine(coroutineMethod);
 
 }

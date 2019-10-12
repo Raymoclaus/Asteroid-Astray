@@ -1,37 +1,41 @@
 ﻿using UnityEngine;
 
-public class Tracer : MonoBehaviour
+namespace CurveTracerSystem
 {
-	[SerializeField] private float delta;
-	public bool useWorldSpace;
-
-	public float GetDelta() => delta;
-
-	public virtual float SetDelta(float value) => delta = value % 1f;
-
-	public float IncrementDelta(float value) => SetDelta(GetDelta() + value);
-
-	protected Vector3 SetInterpolatedPosition(CurveData cd)
-		=> SetPosition(GetInterpolatedPosition(cd, GetDelta()));
-
-	protected virtual Vector3 GetInterpolatedPosition(CurveData cd, float delta)
-		=> Vector3.LerpUnclamped(cd.positionA, cd.positionB, cd.curve?.Evaluate(delta) ?? 0f);
-
-	protected virtual Vector3 SetPosition(Vector3 pos)
+	public class Tracer : MonoBehaviour
 	{
-		if (useWorldSpace)
+		[SerializeField] private float delta;
+		public bool useWorldSpace;
+
+		public float GetDelta() => delta;
+
+		public virtual float SetDelta(float value) => delta = value % 1f;
+
+		public float IncrementDelta(float value) => SetDelta(GetDelta() + value);
+
+		protected Vector3 SetInterpolatedPosition(CurveData cd)
+			=> SetPosition(GetInterpolatedPosition(cd, GetDelta()));
+
+		protected virtual Vector3 GetInterpolatedPosition(CurveData cd, float delta)
+			=> Vector3.LerpUnclamped(cd.positionA, cd.positionB, cd.curve?.Evaluate(delta) ?? 0f);
+
+		protected virtual Vector3 SetPosition(Vector3 pos)
 		{
-			transform.position = pos;
+			if (useWorldSpace)
+			{
+				transform.position = pos;
+			}
+			else
+			{
+				transform.localPosition = pos;
+			}
+			return pos;
 		}
-		else
+
+		protected virtual void OnValidate()
 		{
-			transform.localPosition = pos;
+			SetInterpolatedPosition(new CurveData());
 		}
-		return pos;
 	}
 
-	protected virtual void OnValidate()
-	{
-		SetInterpolatedPosition(new CurveData());
-	}
 }

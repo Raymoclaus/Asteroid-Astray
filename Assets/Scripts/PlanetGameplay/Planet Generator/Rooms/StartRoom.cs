@@ -10,8 +10,15 @@
 	{
 		base.GenerateContent();
 
+
+		IntPair landingPadPos = CenterInt + IntPair.down * 3;
 		DungeonRoomObject landingPad = new DungeonRoomObject(this,
-			CenterInt + IntPair.down * 3, "LandingPad", null);
+			landingPadPos, "LandingPad", null);
 		roomObjects.Add(landingPad);
+
+		IntPair playerPos = landingPadPos + IntPair.down * 2;
+		DungeonRoomObject player = new DungeonRoomObject(this,
+			playerPos, "PlanetPlayer", null);
+		roomObjects.Add(player);
 	}
 }

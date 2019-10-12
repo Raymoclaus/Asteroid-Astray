@@ -1,0 +1,14 @@
+{
+    "name": "Utilities.PromptSystem.SystemScripts",
+    "references": [
+        "GUID:2f49b2e80ab6ac643ace829b069606bf"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}

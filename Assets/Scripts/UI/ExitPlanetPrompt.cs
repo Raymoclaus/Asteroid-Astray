@@ -15,7 +15,7 @@ public class ExitPlanetPrompt : MonoBehaviour
 	public void Yes()
 	{
 		Activate(false);
-		SceneLoader.LoadSceneStatic("SpaceScene");
+		SceneLoader.LoadScene("SpaceScene");
 	}
 
 	public void No() => Activate(false);

@@ -1,7 +1,7 @@
 {
     "name": "InputHandler.Editor",
     "references": [
-        "GUID:c678c86eb9703354f8a74511bd35f4d4"
+        "GUID:b21154195c8351d4d85f7cf03fffa3ee"
     ],
     "includePlatforms": [
         "Editor"

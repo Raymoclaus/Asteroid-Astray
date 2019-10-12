@@ -1,24 +1,28 @@
 ﻿using UnityEngine;
 
-public class AutoCurveTracer : CurveTracer
+namespace CurveTracerSystem
 {
-	public bool useUnscaledTime;
-	public float speedMultiplier = 1f;
-
-	private void Update()
+	public class AutoCurveTracer : CurveTracer
 	{
-		IncrementDelta(GetFrameIncrement());
-		SetInterpolatedPosition(GetCurveData());
+		public bool useUnscaledTime;
+		public float speedMultiplier = 1f;
+
+		private void Update()
+		{
+			IncrementDelta(GetFrameIncrement());
+			SetInterpolatedPosition(GetCurveData());
+		}
+
+		protected virtual float GetFrameIncrement()
+		{
+			float increment = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+			return increment * speedMultiplier;
+		}
+
+		protected override void OnValidate()
+		{
+			Update();
+		}
 	}
 
-	protected virtual float GetFrameIncrement()
-	{
-		float increment = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
-		return increment * speedMultiplier;
-	}
-
-	protected override void OnValidate()
-	{
-		Update();
-	}
 }

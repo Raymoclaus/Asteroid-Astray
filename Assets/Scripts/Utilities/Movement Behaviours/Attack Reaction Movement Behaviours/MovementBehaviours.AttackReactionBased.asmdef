@@ -1,0 +1,15 @@
+{
+    "name": "MovementBehaviours.AttackReactionBased",
+    "references": [
+        "GUID:ff66c445d8a5f6749a9d2187ad07f5cf",
+        "GUID:6810b20c7b1c34a46974c3c27f918b3a"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}

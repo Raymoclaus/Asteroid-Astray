@@ -1,0 +1,15 @@
+{
+    "name": "MovementBehaviours.InputBased",
+    "references": [
+        "GUID:ff66c445d8a5f6749a9d2187ad07f5cf",
+        "GUID:b21154195c8351d4d85f7cf03fffa3ee"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}
