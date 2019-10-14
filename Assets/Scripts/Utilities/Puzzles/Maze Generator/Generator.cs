@@ -1,14 +1,13 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using System.Collections.Generic;
+using CustomDataTypes;
 
-namespace Utilities.Puzzles.Maze
+namespace Puzzles.Maze
 {
 	public class Generator
 	{
-		public Grid GeneratePuzzle(IntPair size, IntPair[] exits, int pathWidth)
+		public GridMatrix GeneratePuzzle(IntPair size, IntPair[] exits, int pathWidth)
 		{
-			Grid maze = new Grid(size, exits, pathWidth, false);
+			GridMatrix maze = new GridMatrix(size, exits, pathWidth, false);
 			IntPair currentSpot = exits[0];
 			List<IntPair> path = new List<IntPair>();
 			path.Add(currentSpot);

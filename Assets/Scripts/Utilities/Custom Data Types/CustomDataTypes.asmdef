@@ -1,8 +1,6 @@
 {
     "name": "Utilities.DataTypes",
-    "references": [
-        "GUID:c6f55214092c5024283fbf284dbb48b0"
-    ],
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

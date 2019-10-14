@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
-using TileLightsPuzzle;
+using Puzzles.TileFlip;
+using CustomDataTypes;
 
 namespace Tests
 {
@@ -14,13 +15,13 @@ namespace Tests
 		public void returns_a_grid_with_the_same_size_as_given_parameters()
 		{
 			//ARRANGE
-			TileLightsGenerator generator = new TileLightsGenerator();
+			Generator generator = new Generator();
 			int width = Random.Range(1, 10);
 			int height = Random.Range(1, 10);
 			IntPair size = new IntPair(width, height);
 
 			//ACT
-			TileGrid grid = generator.GeneratePuzzle(size);
+			GridMatrix grid = generator.GeneratePuzzle(size);
 
 			//ASSERT
 			Assert.AreEqual(size, grid.GridSize);

@@ -1,8 +1,8 @@
-﻿using System.Collections;
+﻿using CustomDataTypes;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Utilities.Puzzles.BlockPush
+namespace Puzzles.BlockPush
 {
 	public class Generator
 	{
@@ -13,9 +13,9 @@ namespace Utilities.Puzzles.BlockPush
 		private IntPair previousDirection;
 		private List<IntPair> startingDirections;
 
-		public PushPuzzle Generate(IntPair size, int padding, int minimumSolutionCount = 2)
+		public GridMatrix Generate(IntPair size, int padding, int minimumSolutionCount = 2)
 		{
-			PushPuzzle puzzle = new PushPuzzle(size, padding);
+			GridMatrix puzzle = new GridMatrix(size, padding);
 			Reset(puzzle);
 
 			int freezeCount = 0;
@@ -137,7 +137,7 @@ namespace Utilities.Puzzles.BlockPush
 			return puzzle;
 		}
 
-		private bool StartFromNewDirection(PushPuzzle puzzle)
+		private bool StartFromNewDirection(GridMatrix puzzle)
 		{
 			while (startingDirections.Count > 0)
 			{
@@ -164,7 +164,7 @@ namespace Utilities.Puzzles.BlockPush
 			return false;
 		}
 
-		private void Reset(PushPuzzle puzzle)
+		private void Reset(GridMatrix puzzle)
 		{
 			puzzle.Reset();
 			startingDirections = new List<IntPair>()

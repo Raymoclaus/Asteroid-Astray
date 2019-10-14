@@ -4,7 +4,8 @@
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
         "Utilities.Puzzles.BlockPush",
-        "Utilities.Puzzles.TileFlip"
+        "Utilities.Puzzles.TileFlip",
+        "Utilities.DataTypes"
     ],
     "includePlatforms": [
         "Editor"

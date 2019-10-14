@@ -12,17 +12,6 @@ namespace InventorySystem
 		[SerializeField] private string saveKey;
 		public string SaveKey => saveKey;
 
-		protected virtual void Awake()
-		{
-			Load();
-			GameEvents.OnSave += Save;
-		}
-
-		private void OnDestroy()
-		{
-			GameEvents.OnSave -= Save;
-		}
-
 		public void SetData(InventoryData data)
 		{
 			if (data.stacks != null)
@@ -368,19 +357,7 @@ namespace InventorySystem
 			return -1;
 		}
 
-		public void Save()
-		{
-			if (saveKey == null || saveKey == string.Empty) return;
-			SaveLoad.SerializeSave(saveKey, GetInventoryData());
-		}
-
 		public InventoryData GetInventoryData() => new InventoryData(stacks, size);
-
-		public void Load()
-		{
-			InventoryData data = SaveLoad.LoadSerialized<InventoryData>(saveKey);
-			SetData(data);
-		}
 
 		[Serializable]
 		public struct InventoryData

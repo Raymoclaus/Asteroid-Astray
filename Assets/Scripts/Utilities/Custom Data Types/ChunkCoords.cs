@@ -9,19 +9,13 @@ namespace CustomDataTypes
 		public Quadrant Direction;
 		public int x, y;
 
-		public static ChunkCoords Invalid
-		{
-			get { return new ChunkCoords((Quadrant)(-1), -1, -1); }
-		}
+		public static ChunkCoords Invalid => new ChunkCoords((Quadrant)(-1), -1, -1);
 
-		public static ChunkCoords Zero
-		{
-			get { return new ChunkCoords(Quadrant.UpperLeft, 0, 0); }
-		}
+		public static ChunkCoords Zero => new ChunkCoords(Quadrant.UpperLeft, 0, 0);
 
-		public ChunkCoords(Vector2 pos)
+		public ChunkCoords(Vector2 pos, float chunkSize)
 		{
-			this = PosToCoords(pos);
+			this = PosToCoords(pos, chunkSize);
 		}
 
 		public ChunkCoords(Quadrant direction, int x, int y, bool? shouldValidate = null)
@@ -36,25 +30,25 @@ namespace CustomDataTypes
 			}
 		}
 
-		public static ChunkCoords PosToCoords(Vector2 pos)
+		public static ChunkCoords PosToCoords(Vector2 pos, float chunkSize)
 		{
 			ChunkCoords cc;
-			cc.Direction = GetDirection(pos);
-			IntPair coord = ConvertToXy(pos);
+			cc.Direction = GetDirection(pos, chunkSize);
+			IntPair coord = ConvertToXy(pos, chunkSize);
 			cc.x = coord.x;
 			cc.y = coord.y;
 			return cc;
 		}
 
-		private static IntPair ConvertToXy(Vector2 pos)
+		private static IntPair ConvertToXy(Vector2 pos, float chunkSize)
 		{
-			pos /= Constants.CHUNK_SIZE;
+			pos /= chunkSize;
 			return new IntPair(Math.Abs((int)pos.x), Math.Abs((int)pos.y));
 		}
 
-		public static Quadrant GetDirection(Vector2 pos)
+		public static Quadrant GetDirection(Vector2 pos, float chunkSize)
 		{
-			pos /= Constants.CHUNK_SIZE;
+			pos /= chunkSize;
 			return GetDirection(pos.x, pos.y);
 		}
 
@@ -87,7 +81,7 @@ namespace CustomDataTypes
 			return dir;
 		}
 
-		public static Vector2Pair GetCellArea(ChunkCoords chCoord)
+		public static Vector2Pair GetCellArea(ChunkCoords chCoord, float chunkSize)
 		{
 			Vector2 min = new Vector2(chCoord.x, chCoord.y);
 			Vector2 max = new Vector2(chCoord.x + 1, chCoord.y + 1);
@@ -107,12 +101,12 @@ namespace CustomDataTypes
 					break;
 			}
 
-			return new Vector2Pair(min * Constants.CHUNK_SIZE, max * Constants.CHUNK_SIZE);
+			return new Vector2Pair(min * chunkSize, max * chunkSize);
 		}
 
-		public static Vector2 GetCenterCell(ChunkCoords c)
+		public static Vector2 GetCenterCell(ChunkCoords c, float chunkSize)
 		{
-			Vector2Pair bounds = GetCellArea(c);
+			Vector2Pair bounds = GetCellArea(c, chunkSize);
 			return new Vector2((bounds.a.x + bounds.b.x) / 2f, (bounds.a.y + bounds.b.y) / 2f);
 		}
 
@@ -120,7 +114,7 @@ namespace CustomDataTypes
 		{
 			return this != Invalid
 				   && (int)Direction >= 0
-				   && (int)Direction < EntityNetwork.QUADRANT_COUNT
+				   && (int)Direction < Enum.GetValues(typeof(Direction)).Length
 				   && x >= 0
 				   && y >= 0;
 		}
@@ -134,7 +128,8 @@ namespace CustomDataTypes
 			}
 
 			//fix direction to be within bounds
-			Direction = (Quadrant)(Math.Abs((int)Direction) % EntityNetwork.QUADRANT_COUNT);
+			Direction = (Quadrant)(Math.Abs((int)Direction)
+				% Enum.GetValues(typeof(Direction)).Length);
 			//adjust direction if x is not valid
 			if (x < 0)
 			{

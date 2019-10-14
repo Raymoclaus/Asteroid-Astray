@@ -1,14 +1,13 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using CustomDataTypes;
 using UnityEngine;
 
-namespace Utilities.Puzzles.TileFlip
+namespace Puzzles.TileFlip
 {
 	public class Generator
 	{
-		public TileGrid GeneratePuzzle(IntPair size, int difficultySetting = 4)
+		public GridMatrix GeneratePuzzle(IntPair size, int difficultySetting = 4)
 		{
-			TileGrid tg = new TileGrid(size);
+			GridMatrix tg = new GridMatrix(size);
 			for (int i = 0; i < difficultySetting; i++)
 			{
 				IntPair position = IntPair.one * -1;

@@ -1,3 +1,18 @@
-﻿{
-	"name": "InventorySystem.Resources"
+{
+    "name": "InventorySystem.Resources",
+    "references": [
+        "GUID:7b22a53d92b84844e9f797c309bcda9b",
+        "GUID:ed0148fbe204e3847914d4d0bd35d4bc",
+        "GUID:7e4b330a8a71411488f2c2e794833c84",
+        "GUID:ff66c445d8a5f6749a9d2187ad07f5cf",
+        "GUID:3b7ad9678f773c844b3537f12f5c0be1"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
 }

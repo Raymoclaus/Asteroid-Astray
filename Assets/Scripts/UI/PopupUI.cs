@@ -10,8 +10,6 @@ public class PopupUI : MonoBehaviour
 	protected int popupViewLimit = 4;
 	[SerializeField]
 	protected float popupEntrySpeed = 2f, popupMoveSpeed = 5f;
-	[SerializeField]
-	protected RecordingModeController recordingModeTrackerSO;
 
 	protected virtual void RemovePopup(int index)
 	{

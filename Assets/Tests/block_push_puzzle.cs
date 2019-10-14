@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
-using BlockPushPuzzle;
+using Puzzles.BlockPush;
+using CustomDataTypes;
 
 namespace Tests
 {
@@ -13,13 +14,13 @@ namespace Tests
 		public void returns_a_grid_with_the_same_size_as_given_parameters()
 		{
 			//ARRANGE
-			BlockPushGenerator gen = new BlockPushGenerator();
+			Generator gen = new Generator();
 			Random.InitState(1);
 			IntPair size = new IntPair(26, 14);
 			int padding = 1;
 
 			//ACT
-			PushPuzzle puzzle = gen.Generate(size, padding);
+			GridMatrix puzzle = gen.Generate(size, padding);
 
 			//ASSERT
 			Assert.AreEqual(size, puzzle.GridSize);
@@ -29,14 +30,14 @@ namespace Tests
 		public void returns_puzzle_that_meets_the_minimum_number_of_solutions()
 		{
 			//ARRANGE
-			BlockPushGenerator gen = new BlockPushGenerator();
+			Generator gen = new Generator();
 			Random.InitState(1);
 			IntPair size = new IntPair(26, 14);
 			int padding = 1;
 			int minimumSolutionCount = 2;
 
 			//ACT
-			PushPuzzle puzzle = gen.Generate(size, padding, minimumSolutionCount);
+			GridMatrix puzzle = gen.Generate(size, padding, minimumSolutionCount);
 
 			//ASSERT
 			Assert.IsTrue(puzzle.solutionCount >= minimumSolutionCount);
@@ -46,14 +47,14 @@ namespace Tests
 		public void returns_a_non_null_output()
 		{
 			//ARRANGE
-			BlockPushGenerator gen = new BlockPushGenerator();
+			Generator gen = new Generator();
 			Random.InitState(1);
 			IntPair size = new IntPair(26, 14);
 			int padding = 1;
 			int minimumSolutionCount = 2;
 
 			//ACT
-			PushPuzzle puzzle = gen.Generate(size, padding, minimumSolutionCount);
+			GridMatrix puzzle = gen.Generate(size, padding, minimumSolutionCount);
 
 			//ASSERT
 			Assert.IsTrue(puzzle != null);
@@ -63,14 +64,14 @@ namespace Tests
 		public void finish_tile_is_located_near_center_of_grid()
 		{
 			//ARRANGE
-			BlockPushGenerator gen = new BlockPushGenerator();
+			Generator gen = new Generator();
 			Random.InitState(1);
 			IntPair size = new IntPair(26, 14);
 			int padding = 1;
 			int minimumSolutionCount = 2;
 
 			//ACT
-			PushPuzzle puzzle = gen.Generate(size, padding, minimumSolutionCount);
+			GridMatrix puzzle = gen.Generate(size, padding, minimumSolutionCount);
 			IntPair finishPos = puzzle.finishTile;
 			int minimumDimension = Mathf.Min(size.x, size.y);
 			int range = padding + minimumDimension / 2 - 2;
