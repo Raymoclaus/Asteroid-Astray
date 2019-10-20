@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using CustomDataTypes;
+using GenericExtensions;
 
 /// Keeps track of all entities in an organised network based on their position.
 /// Allows entities to be placed pseudo-infinitely in any 2D direction, although it can be upgraded to include 3D.
@@ -12,52 +13,34 @@ public class EntityNetwork : MonoBehaviour
 {
 	private static EntityNetwork instance;
 
-	[SerializeField] private string saveKey;
-	private List<EntityData> savedEntities = new List<EntityData>();
-
-	#region Fields
-	//4 directions in the grid
-	public const int QUADRANT_COUNT = 4;
+	private static int QuadrantCount
+		=> Enum.GetValues(typeof(Direction)).Length;
 	//Determines the physical size of cells in the grid
 	public const float CHUNK_SIZE = 10f;
 	//network of entities
-	private List<List<List<List<Entity>>>> grid = new List<List<List<List<Entity>>>>(QUADRANT_COUNT);
+	private List<List<List<List<Entity>>>> grid = new List<List<List<List<Entity>>>>(QuadrantCount);
 	//list of coordinates that contain any entities
-	private List<ChunkCoords> occupiedCoords = new List<ChunkCoords>(RESERVE_SIZE * RESERVE_SIZE * 4);
-	//some large number of reserve to avoid List resizing lag
-	public const int RESERVE_SIZE = 1000;
-	//another large number for each individual cell in the grid
-	public const int CELL_RESERVE_SIZE = 15;
+	private HashSet<ChunkCoords> occupiedCoords = new HashSet<ChunkCoords>();
 	//check if grid has already been created
 	private bool gridIsSetUp = false;
-	public static bool IsReady { get { return instance != null && instance.gridIsSetUp; } }
-	#endregion
+	private static event Action OnLoaded;
 
-	#region Stat Tracking
-	//Used to keep track of the amount of active entities. Debugging tool
-	private int numEntities;
-	#endregion
-
-	#region Caching
 	private List<ChunkCoords> coordsInRangeCache = new List<ChunkCoords>();
-	#endregion
-
-	public delegate void GridSetUpEventHandler();
-	private static event GridSetUpEventHandler OnGridSetUp;
 
 	private void Awake()
 	{
-		if (instance == null)
-		{
-			instance = this;
-		}
-		else
+		if (instance != this && instance != null)
 		{
 			Destroy(gameObject);
 			return;
 		}
-		
-		StartCoroutine(CreateGrid());
+		instance = this;
+
+		Debug.Log("Loading Entity Network");
+		gridIsSetUp = true;
+		Debug.Log("Entity Network Loaded");
+		OnLoaded?.Invoke();
+		OnLoaded = null;
 	}
 
 	public static void AddListener(Action action)
@@ -68,36 +51,11 @@ public class EntityNetwork : MonoBehaviour
 		}
 		else if (action != null)
 		{
-			OnGridSetUp += new GridSetUpEventHandler(action);
+			OnLoaded += action;
 		}
 	}
 
-	/// Constructs and reserves a large amount of space for the grid
-	private IEnumerator CreateGrid()
-	{
-		if (!gridIsSetUp)
-		{
-			//reserve space in each direction
-			//takes ~1.5 seconds for 1000 * 1000 * 10
-			for (int dir = 0; dir < QUADRANT_COUNT; dir++)
-			{
-				grid.Add(new List<List<List<Entity>>>(RESERVE_SIZE));
-				for (int x = 0; x < RESERVE_SIZE; x++)
-				{
-					grid[dir].Add(new List<List<Entity>>(RESERVE_SIZE));
-					for (int y = 0; y < RESERVE_SIZE; y++)
-					{
-						grid[dir][x].Add(new List<Entity>(CELL_RESERVE_SIZE));
-					}
-				}
-				yield return null;
-			}
-
-			gridIsSetUp = true;
-			OnGridSetUp?.Invoke();
-			OnGridSetUp = null;
-		}
-	}
+	public static bool IsReady => instance != null && instance.gridIsSetUp;
 
 	/// Returns a list of all entities located in cells within range of the given coordinates
 	public static List<Entity> GetEntitiesInRange(ChunkCoords center, int range, EntityType? type = null,
@@ -113,7 +71,7 @@ public class EntityNetwork : MonoBehaviour
 	public static List<Entity> GetEntitiesAtCoords(List<ChunkCoords> coordsList, EntityType? type = null,
 		List<Entity> exclusions = null, List<Entity> addToList = null)
 	{
-		List<Entity> entitiesInCoords = addToList ?? new List<Entity>(CELL_RESERVE_SIZE * coordsList.Count);
+		List<Entity> entitiesInCoords = addToList ?? new List<Entity>(coordsList.Count);
 		//loop through coordinates list and grab all entities at each coordinate
 		for (int i = 0; i < coordsList.Count; i++)
 		{
@@ -202,8 +160,9 @@ public class EntityNetwork : MonoBehaviour
 			return false;
 		}
 
+		instance.EnsureChunkExists(cc);
+
 		Chunk(cc).Add(e);
-		instance.numEntities++;
 		//update list of occupied coordinates
 		if (Chunk(cc).Count == 1)
 		{
@@ -226,7 +185,6 @@ public class EntityNetwork : MonoBehaviour
 			if (chunk[i] == e)
 			{
 				chunk.RemoveAt(i);
-				instance.numEntities--;
 				if (chunk.Count == 0)
 				{
 					instance.occupiedCoords.Remove(cc);
@@ -246,9 +204,9 @@ public class EntityNetwork : MonoBehaviour
 		//Check every direction
 		for (int dir = 0; dir < instance.grid.Count; dir++)
 		{
-			check.Direction = (Quadrant) dir;
+			check.quadrant = (Quadrant) dir;
 			//Check every column
-			for (int x = 0; x < Direction(check).Count; x++)
+			for (int x = 0; x < Quad(check).Count; x++)
 			{
 				check.x = x;
 				//Check every row
@@ -284,77 +242,17 @@ public class EntityNetwork : MonoBehaviour
 		}
 
 		if (RemoveEntity(e)) return AddEntity(e, destChunk);
-		
-		//search for entity if removal coordinates are incorrect or if entity was not found at its coordinates
-		ChunkCoords found = StartFullSearch(e);
-		//search will return ChunkCoordinates.Invalid if it was not found anywhere in the network
-		if (found == ChunkCoords.Invalid)
-		{
-			Debug.LogWarning("Entity failed to reposition on grid.");
-			return false;
-		}
 
-		Chunk(found).Remove(e);
-
-		//add entity to the destination chunk
-		return AddEntity(e, destChunk);
-	}
-	
-	#region Convenient Grid Methods
-
-	public static List<Entity> Chunk(ChunkCoords cc)
-	{
-		return Column(cc)[cc.y];
+		Debug.LogWarning("Entity failed to reposition on grid.");
+		return false;
 	}
 
-	public static List<List<Entity>> Column(ChunkCoords cc)
-	{
-		return Direction(cc)[cc.x];
-	}
+	public static List<Entity> Chunk(ChunkCoords cc) => Column(cc)[cc.y];
 
-	public static List<List<List<Entity>>> Direction(ChunkCoords cc)
-	{
-		return instance.grid[(int) cc.Direction];
-	}
+	public static List<List<Entity>> Column(ChunkCoords cc) => Quad(cc)[cc.x];
 
-	#endregion
-
-	/// Begins a search and outputs some debug information
-	private static ChunkCoords StartFullSearch(Entity e)
-	{
-		Debug.LogWarning("Starting full search for: " + e);
-		ChunkCoords search = ChunkCoords.Zero;
-		FunctionTimer timer = new FunctionTimer();
-		bool found = false;
-		for (int i = 0; i < instance.grid.Count; i++)
-		{
-			List<List<List<Entity>>> dir = instance.grid[i];
-			for (int j = 0; j < dir.Count; j++)
-			{
-				List<List<Entity>> col = dir[j];
-				for (int k = 0; k < col.Count; k++)
-				{
-					List<Entity> chunk = col[k];
-					for (int l = 0; l < chunk.Count; l++)
-					{
-						Entity ent = chunk[l];
-						if (ent == e)
-						{
-							found = true;
-						}
-					}
-					if (found) break;
-					else search.y++;
-				}
-				if (found) break;
-				else search.x++;
-			}
-			if (found) break;
-			else search.Direction++;
-		}
-		Debug.LogWarning($"Full search for: {e} completed {(found ? "" : "un")}successfully in {timer.Log()} seconds.");
-		return search;
-	}
+	public static List<List<List<Entity>>> Quad(ChunkCoords cc)
+		=> instance.grid[(int)cc.quadrant];
 
 	/// Returns whether a given chunk is valid and exists in the network
 	public static bool ChunkExists(ChunkCoords cc)
@@ -364,11 +262,31 @@ public class EntityNetwork : MonoBehaviour
 
 		//if the quadrant doesn't have x amount of columns or that column doesn't have y amount of cells,
 		//the chunk doesn't exist
-		if ((int) cc.Direction >= instance.grid.Count
-		    || cc.x >= Direction(cc).Count
+		if ((int) cc.quadrant >= instance.grid.Count
+		    || cc.x >= Quad(cc).Count
 		    || cc.y >= Column(cc).Count) return false;
 
 		return true;
+	}
+
+	private void EnsureChunkExists(ChunkCoords cc)
+	{
+		if (ChunkExists(cc)) return;
+
+		while (grid.Count <= (int)cc.quadrant)
+		{
+			grid.Add(new List<List<List<Entity>>>());
+		}
+
+		while (Quad(cc).Count <= cc.x)
+		{
+			Quad(cc).Add(new List<List<Entity>>());
+		}
+
+		while (Column(cc).Count <= cc.y)
+		{
+			Column(cc).Add(new List<Entity>());
+		}
 	}
 
 	/// Returns whether an entity is at a specific location
@@ -388,34 +306,5 @@ public class EntityNetwork : MonoBehaviour
 			if (e.GetEntityType() == type && e != entToExclude) return true;
 		}
 		return false;
-	}
-
-	public static int GetEntityCount()
-	{
-		return instance.numEntities;
-	}
-
-	public static void AddToSavedEntities(EntityData data)
-	{
-		instance.savedEntities.Add(data);
-	}
-
-	public void Save()
-	{
-		if (saveKey == null || saveKey == string.Empty) return;
-		Coroutines.TimedAction(0.1f, null, () =>
-		{
-			SaveLoad.SerializeSave(saveKey, savedEntities);
-		});
-	}
-
-	public void Load()
-	{
-		List<EntityData> loadedEntities = SaveLoad.LoadSerialized<List<EntityData>>(saveKey);
-		for (int i = 0; loadedEntities != null && i < loadedEntities.Count; i++)
-		{
-			EntityGenerator.SpawnEntity(loadedEntities[i]);
-		}
-		OnGridSetUp -= Load;
 	}
 }

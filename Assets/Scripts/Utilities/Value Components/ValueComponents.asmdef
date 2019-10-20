@@ -1,3 +1,12 @@
-﻿{
-	"name": "Utilities.Components.ValueComponents"
+{
+    "name": "ValueComponents",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
 }

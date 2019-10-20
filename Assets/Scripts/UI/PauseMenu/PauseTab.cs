@@ -7,6 +7,8 @@ public abstract class PauseTab : MonoBehaviour
 
 	public virtual void OnResume() { }
 
+	public virtual void OnOpen() { }
+
 	public CanvasGroup GetCanvasGroup()
 	{
 		return cg ?? (cg = GetComponent<CanvasGroup>());

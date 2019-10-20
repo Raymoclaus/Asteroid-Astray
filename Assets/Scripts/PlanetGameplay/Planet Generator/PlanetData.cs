@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using CustomDataTypes;
+using System.Collections.Generic;
 
 public class PlanetData
 {

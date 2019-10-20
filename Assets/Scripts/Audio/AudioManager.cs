@@ -16,7 +16,6 @@ public class AudioManager : MonoBehaviour
 	private void Awake()
 	{
 		holder = new GameObject("Audio Holder").transform;
-		SetUpPoolReserve();
 	}
 
 	private void Update()
@@ -26,14 +25,11 @@ public class AudioManager : MonoBehaviour
 		for (int i = 0; i < active.Count; i++)
 		{
 			SourceManager srcM = active[i];
+			srcM.SubtractTimer(Time.deltaTime);
 			if (srcM.timer <= 0f)
 			{
 				Recycle(srcM);
 				i--;
-			}
-			else
-			{
-				srcM.SubtractTimer(Time.deltaTime);
 			}
 		}
 	}
@@ -41,19 +37,9 @@ public class AudioManager : MonoBehaviour
 	public void PlaySFX(AudioClip clip, Vector3 position, Transform parent = null, float volume = 1f,
 		float pitch = 1f)
 	{
-		if (!clip) return;
+		if (clip == null) return;
 
-		AudioSource src = null;
-		while (src == null)
-		{
-
-			if (pool.Count == 0)
-			{
-				SetUpPoolReserve();
-			}
-			src = pool.Dequeue();
-		}
-
+		AudioSource src = GetSourceFromPool();
 		active.Add(new SourceManager(src, clip.length));
 		GameObject obj = src.gameObject;
 		obj.SetActive(true);
@@ -65,6 +51,15 @@ public class AudioManager : MonoBehaviour
 		src.Play();
 	}
 
+	private AudioSource GetSourceFromPool()
+	{
+		if (pool.Count == 0)
+		{
+			AddNewSource();
+		}
+		return pool.Dequeue();
+	}
+
 	private void Recycle(SourceManager src)
 	{
 		src.source.gameObject.SetActive(false);
@@ -73,20 +68,17 @@ public class AudioManager : MonoBehaviour
 		pool.Enqueue(src.source);
 	}
 
-	private void SetUpPoolReserve()
+	private void AddNewSource()
 	{
-		for (int i = 0; i < poolReserve; i++)
-		{
-			GameObject go = new GameObject();
-			go.SetActive(false);
-			go.transform.parent = holder;
-			AudioSource src = go.AddComponent<AudioSource>();
-			src.outputAudioMixerGroup = sfxMixer;
-			src.spatialBlend = 1f;
-			src.minDistance = MIN_DISTANCE;
-			src.maxDistance = MAX_DISTANCE;
-			pool.Enqueue(src);
-		}
+		GameObject go = new GameObject();
+		go.SetActive(false);
+		go.transform.parent = holder;
+		AudioSource src = go.AddComponent<AudioSource>();
+		src.outputAudioMixerGroup = sfxMixer;
+		src.spatialBlend = 1f;
+		src.minDistance = MIN_DISTANCE;
+		src.maxDistance = MAX_DISTANCE;
+		pool.Enqueue(src);
 	}
 
 	private class SourceManager

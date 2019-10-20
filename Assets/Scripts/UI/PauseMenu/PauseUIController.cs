@@ -13,7 +13,6 @@ public class PauseUIController : MonoBehaviour
 	[SerializeField] private CustomScreenEffect uiCamEffects;
 	[SerializeField] private CustomScreenEffect mainCamEffects;
 	[SerializeField] private Material uiRenderEffect;
-	[SerializeField] private RecordingModeController recordingModeController;
 	[SerializeField] private List<MoveTrigger> moveTriggers;
 
 	public void Activate(bool active, System.Action a = null, bool instant = false)
@@ -62,7 +61,7 @@ public class PauseUIController : MonoBehaviour
 		float timer = 0f;
 		while (timer < tabShiftDuration)
 		{
-			timer += recordingModeController.UnscaledDeltaTime;
+			timer += Time.unscaledDeltaTime;
 
 			for (int i = 0; i < panels.Length; i++)
 			{
@@ -76,12 +75,16 @@ public class PauseUIController : MonoBehaviour
 	private IEnumerator OpenUI(bool instant = false)
 	{
 		ActivateRender(true);
+		for (int i = 0; i < panels.Length; i++)
+		{
+			panels[i].OnOpen();
+		}
 		if (!instant)
 		{
 			float timer = 0f;
 			while (timer < 1f)
 			{
-				timer += recordingModeController.UnscaledDeltaTime * 2f;
+				timer += Time.unscaledDeltaTime * 2f;
 				pauseUIGroup.alpha = Mathf.Lerp(0f, 1f, timer);
 				yield return null;
 			}
@@ -96,7 +99,7 @@ public class PauseUIController : MonoBehaviour
 			float timer = 0f;
 			while (timer < 1f)
 			{
-				timer += recordingModeController.UnscaledDeltaTime * 2f;
+				timer += Time.unscaledDeltaTime * 2f;
 				pauseUIGroup.alpha = Mathf.Lerp(1f, 0f, timer);
 				yield return null;
 			}

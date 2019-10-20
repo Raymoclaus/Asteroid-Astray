@@ -10,30 +10,35 @@ namespace QuestSystem.Requirements
 		public Item.Type typeNeeded;
 		public int amountNeeded = 1;
 		private int currentAmount = 0;
-		private Action<Item.Type, int> action;
+		private IInventoryHolder inventoryHolder;
 		private const string formattedDescription = "{0}: {1} / {2}";
 
 		public ItemUseQReq(Item.Type typeNeeded, int amountNeeded,
-			Action<Item.Type, int> action)
-			: base($"Use # {typeNeeded}", amountNeeded)
+			IInventoryHolder inventoryHolder, string description = null)
+			: base(description != null ? description : $"Use # {typeNeeded}", amountNeeded)
 		{
 			this.typeNeeded = typeNeeded;
 			this.amountNeeded = amountNeeded;
-			this.action = action;
+			this.inventoryHolder = inventoryHolder;
 		}
 
 		public ItemUseQReq(Item.Type typeNeeded,
-			Action<Item.Type, int> action)
-			: this(typeNeeded, 1, action)
+			IInventoryHolder inventoryHolder, string description = null)
+			: this(typeNeeded, 1, inventoryHolder, description)
 		{
-			this.typeNeeded = typeNeeded;
-			this.action = action;
+
 		}
 
 		public override void Activate()
 		{
 			base.Activate();
-			action += EvaluateEvent;
+			inventoryHolder.OnItemUsed += EvaluateEvent;
+		}
+
+		public override void QuestRequirementCompleted()
+		{
+			base.QuestRequirementCompleted();
+			inventoryHolder.OnItemUsed -= EvaluateEvent;
 		}
 
 		private void EvaluateEvent(Item.Type type, int amount)
@@ -47,20 +52,13 @@ namespace QuestSystem.Requirements
 				if (currentAmount >= amountNeeded)
 				{
 					QuestRequirementCompleted();
-					action -= EvaluateEvent;
 				}
 			}
 		}
 
-		public override string GetDescription()
-		{
-			return string.Format(formattedDescription, description, currentAmount, amountNeeded);
-		}
-
-		public override Vector3? TargetLocation()
-		{
-			return base.TargetLocation();
-		}
+		public override string GetDescription
+			=> string.Format(formattedDescription, description,
+				currentAmount, amountNeeded);
 	}
 
 }

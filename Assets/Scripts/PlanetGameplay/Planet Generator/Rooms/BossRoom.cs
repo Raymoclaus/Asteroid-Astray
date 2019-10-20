@@ -1,6 +1,5 @@
-﻿using System.Collections;
+﻿using CustomDataTypes;
 using System.Collections.Generic;
-using UnityEngine;
 
 public class BossRoom : DungeonRoom
 {

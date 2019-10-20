@@ -1,4 +1,6 @@
-﻿using System;
+﻿using CurveTracerSystem;
+using CustomYieldInstructions;
+using System;
 using System.Collections;
 using UnityEngine;
 
@@ -17,7 +19,6 @@ public class WormholeSceneController : MonoBehaviour
 		enteringWormholeDialogue;
 	[SerializeField] private float cameraSpeedMultiplier = 3f, cameraSpeedUpTime = 3f;
 	[SerializeField] private Material wormhole;
-	[SerializeField] private SceneLoader sceneLoader;
 
 	private void Start()
 	{
@@ -94,7 +95,7 @@ public class WormholeSceneController : MonoBehaviour
 			StartCoroutine(TimerAction(fadeOutTime / 2f, (float delta) =>
 			{
 				fadeScreen.alpha = delta;
-			}, () => sceneLoader.LoadScene("SpaceScene")));
+			}, () => SceneLoader.LoadScene("SpaceScene")));
 		}));
 	}
 

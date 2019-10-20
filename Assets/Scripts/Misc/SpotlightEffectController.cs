@@ -13,13 +13,13 @@ public class SpotlightEffectController : ScriptableObject
 	public void ChangeSpotlight(float hardValue, float softValue, float time, bool ignorePause)
 	{
 		CancelCoroutine();
-		currentCoroutine = Coroutines.Instance.StartCoroutine(Go(hardValue, softValue, time, ignorePause));
+		currentCoroutine = Coroutines.MonoObj.StartCoroutine(Go(hardValue, softValue, time, ignorePause));
 	}
 
 	public void ChangeSpotlight(float time)
 	{
 		CancelCoroutine();
-		currentCoroutine = Coroutines.Instance.StartCoroutine(Go(1.5f, 0.5f, time, true));
+		currentCoroutine = Coroutines.MonoObj.StartCoroutine(Go(1.5f, 0.5f, time, true));
 	}
 
 	public void SetSpotlight(float hardValue, float softValue, bool cancelCoro = false)
@@ -57,7 +57,7 @@ public class SpotlightEffectController : ScriptableObject
 	{
 		if (currentCoroutine != null)
 		{
-			Coroutines.Instance.StopCoroutine(currentCoroutine);
+			Coroutines.MonoObj.StopCoroutine(currentCoroutine);
 		}
 	}
 

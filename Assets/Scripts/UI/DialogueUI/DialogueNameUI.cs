@@ -1,4 +1,6 @@
-﻿public class DialogueNameUI : InputIconTextMesh
+﻿using InputHandler.UI;
+
+public class DialogueNameUI : InputIconTextMesh
 {
 
 }

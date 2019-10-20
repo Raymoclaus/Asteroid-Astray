@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using CustomDataTypes;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -57,7 +58,6 @@ public class NebulaSetup : Entity
 			shouldExpand = false;
 		}
 		
-		initialised = true;
 		RepositionInNetwork();
 	}
 
@@ -112,7 +112,7 @@ public class NebulaSetup : Entity
 			newNebula.cluster = cluster;
 			newNebula.SetColors(col1, col2);
 			newNebula.SetThrusterReference(thrusterRef);
-			newNebula.transform.position = ChunkCoords.GetCenterCell(c);
+			newNebula.transform.position = ChunkCoords.GetCenterCell(c, EntityNetwork.CHUNK_SIZE);
 			newNebula.shouldExpand = false;
 			EntityGenerator.FillChunk(c, true);
 		}

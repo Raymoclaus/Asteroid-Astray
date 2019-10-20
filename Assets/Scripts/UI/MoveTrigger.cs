@@ -31,6 +31,12 @@ public class MoveTrigger : MonoBehaviour
 		StartCoroutine(MoveCurve());
 	}
 
+	public void InstantMove(bool goToA)
+	{
+		startAtA = !goToA;
+		SetPosition(GetInterpolatedPosition(1f));
+	}
+
 	private IEnumerator MoveCurve()
 	{
 		isMoving = true;

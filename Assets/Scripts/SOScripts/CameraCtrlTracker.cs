@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using CustomDataTypes;
+using UnityEngine;
 
 [CreateAssetMenu(menuName = "Scriptable Objects/CameraCtrlTracker")]
 public class CameraCtrlTracker : ScriptableObject

@@ -13,7 +13,7 @@ public class CommPopupUI : DialoguePopupUI
 			DialoguePopupObject po = activePopups[i];
 			float targetHeight = popupHeight * i;
 			float delta = 1f - Mathf.Abs(targetHeight - po.transform.anchoredPosition.y) / popupHeight;
-			delta = Mathf.Lerp(delta, 1f, recordingModeTrackerSO.UnscaledDeltaTime * popupEntrySpeed);
+			delta = Mathf.Lerp(delta, 1f, Time.unscaledDeltaTime * popupEntrySpeed);
 			po.popupGroup.alpha = i == 0 ? delta : 1f / (i + 1);
 			Vector2 targetPos = po.transform.anchoredPosition;
 			targetPos.y = targetHeight;
@@ -30,9 +30,9 @@ public class CommPopupUI : DialoguePopupUI
 			}
 			else
 			{
-				delta = Mathf.Lerp(delta, 0f, recordingModeTrackerSO.UnscaledDeltaTime);
+				delta = Mathf.Lerp(delta, 0f, Time.unscaledDeltaTime);
 				po.popupGroup.alpha = delta;
-				po.transform.anchoredPosition += Vector2.right * popupMoveSpeed * recordingModeTrackerSO.UnscaledDeltaTime;
+				po.transform.anchoredPosition += Vector2.right * popupMoveSpeed * Time.unscaledDeltaTime;
 			}
 		}
 	}

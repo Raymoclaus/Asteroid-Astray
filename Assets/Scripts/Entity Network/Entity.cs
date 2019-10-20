@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using CustomDataTypes;
+using InventorySystem;
+using ValueComponents;
 
 public class Entity : MonoBehaviour
 {
@@ -22,7 +24,6 @@ public class Entity : MonoBehaviour
 	protected static AudioManager AudioMngr
 		=> audioMngr ?? (audioMngr = FindObjectOfType<AudioManager>());
 	[SerializeField] protected ScreenRippleEffectController screenRippleSO;
-	protected bool entityReady = false;
 	[SerializeField] private bool shouldDisablePhysicsOnDistance = true;
 	[SerializeField] private bool shouldDisableObjectOnDistance = true;
 	[SerializeField] private bool shouldDisableGameObjectOnShortDistance = true;
@@ -31,12 +32,10 @@ public class Entity : MonoBehaviour
 	[HideInInspector] public bool isInPhysicsRange = false;
 	private Vector3 vel;
 	private float disableTime;
-	protected bool needsInit = true;
-	protected bool initialised = false;
 	[SerializeField] protected bool isInvulnerable;
 
-	[SerializeField] protected float maxHP = 1000f;
-	protected float currentHP;
+	[SerializeField] protected RangedFloatComponent healthComponent;
+	[SerializeField] private LootComponent loot;
 
 	//layers
 	private static bool layersSet;
@@ -46,33 +45,22 @@ public class Entity : MonoBehaviour
 	public List<MonoBehaviour> ScriptComponents;
 	public Renderer[] rends;
 
-	[SerializeField] private List<Loot> loot;
-
-	public delegate void HealthUpdateHandler(float oldVal, float newVal);
-	public event HealthUpdateHandler OnHealthUpdate;
-
 	private static int entitiesActive;
 
 	protected virtual void Awake()
 	{
-		currentHP = maxHP;
-		gameObject.SetActive(false);
-		EntityNetwork.AddListener(() =>
-		{
-			Initialise();
-			gameObject.SetActive(true);
-		});
-
-		GameEvents.OnSave += Save;
+		enabled = false;
+		LoadingController.AddListener(Initialise);
 	}
 
 	public virtual void Initialise()
 	{
 		entitiesActive++;
-		coords = new ChunkCoords(transform.position);
+		coords = new ChunkCoords(transform.position, EntityNetwork.CHUNK_SIZE);
 		EntityNetwork.AddEntity(this, coords);
 		GetLayers();
-		entityReady = true;
+		healthComponent.SetToUpperLimit();
+		enabled = true;
 	}
 
 	public virtual void LateUpdate() => RepositionInNetwork();
@@ -82,20 +70,17 @@ public class Entity : MonoBehaviour
 		EntityNetwork.RemoveEntity(this);
 		mainCam = null;
 		mainCamCtrl = null;
-		GameEvents.OnSave -= Save;
 	}
 
 	public void RepositionInNetwork()
 	{
-		ChunkCoords newCc = new ChunkCoords(transform.position);
+		ChunkCoords newCc = new ChunkCoords(transform.position, EntityNetwork.CHUNK_SIZE);
 		bool repositioned = false;
 		if (newCc != coords)
 		{ 
 			EntityNetwork.Reposition(this, newCc);
 			repositioned = true;
 		}
-
-		if (needsInit && !initialised) return;
 
 		SetAllActivity(IsInView());
 		isInPhysicsRange = IsInPhysicsRange();
@@ -142,7 +127,6 @@ public class Entity : MonoBehaviour
 	public void SetAllActivity(bool active)
 	{
 		if (active == isActive || !shouldDisableObjectOnDistance) return;
-		if (needsInit && !initialised) return;
 
 		isActive = active;
 
@@ -186,6 +170,8 @@ public class Entity : MonoBehaviour
 
 	protected virtual bool ShouldBeVisible() => true;
 
+	public float HealthRatio => healthComponent.Ratio;
+
 	public virtual ICombat GetICombat() => null;
 
 	public virtual EntityType GetEntityType() => EntityType.Entity;
@@ -200,28 +186,21 @@ public class Entity : MonoBehaviour
 		{
 			EntityNetwork.RemoveEntity(this);
 		}
-		DropLoot(destroyer, dropModifier);
+		IInventoryHolder target = destroyer as IInventoryHolder;
+		DropLoot(target, dropModifier);
 		Destroy(gameObject);
 	}
 
 	protected virtual bool CheckHealth(Entity destroyer, float dropModifier)
 	{
-		if (currentHP > 0f) return false;
+		if (healthComponent.Ratio > 0f) return false;
 		DestroySelf(destroyer, dropModifier);
 		return true;
 	}
 
-	protected virtual void DropLoot(Entity destroyer, float dropModifier)
+	protected virtual void DropLoot(IInventoryHolder target, float dropModifier)
 	{
-		for (int i = 0; i < loot.Count; i++)
-		{
-			ItemStack stack = loot[i].GetStack();
-			for (int j = 0; j < stack.GetAmount(); j++)
-			{
-				partGen.DropResource(destroyer,
-					transform.position, stack.GetItemType());
-			}
-		}
+		loot.DropAllLoot(target);
 	}
 
 	public ChunkCoords GetCoords() => coords;
@@ -241,9 +220,7 @@ public class Entity : MonoBehaviour
 		layersSet = true;
 	}
 
-	public virtual Scan ReturnScan() => new Scan(GetEntityType(), GetHpRatio(), GetLevel(), GetValue()); 
-
-	public float GetHpRatio() => currentHP / maxHP;
+	public virtual Scan ReturnScan() => new Scan(GetEntityType(), healthComponent.Ratio, GetLevel(), GetValue()); 
 
 	protected virtual int GetLevel() => 1;
 
@@ -294,36 +271,16 @@ public class Entity : MonoBehaviour
 	{
 		if (destroyer == this || isInvulnerable) return false;
 
-		SetHP(currentHP - damage);
+		healthComponent.SubtractValue(damage);
 		return CheckHealth(destroyer, dropModifier);
-	}
-
-	protected void SetHP(float value)
-	{
-		float oldVal = GetHpRatio();
-		currentHP = Mathf.Clamp(value, 0f, maxHP);
-		float newVal = GetHpRatio();
-		if (oldVal != newVal)
-		{
-			OnHealthUpdate?.Invoke(oldVal, newVal);
-		}
 	}
 
 	public void Teleport(Vector2 position) => transform.position = position;
 
-	private void Save()
-	{
-		object obj = CreateDataObject();
-		if (obj == null) return;
-		EntityData data = new EntityData(GetType(), obj);
-		EntityNetwork.AddToSavedEntities(data);
-	}
-
 	protected virtual object CreateDataObject() => null;
 
 	public virtual void ApplyData(EntityData? data) { }
-
-	#region Launch-related
+	
 	[Header("Launch related variables")]
 	private Character launcher;
 	protected bool launched;
@@ -377,7 +334,7 @@ public class Entity : MonoBehaviour
 		}
 		Entity otherDamageable = other.attachedRigidbody.gameObject.GetComponent<Entity>();
 		float damage = launcher.GetLaunchDamage();
-		if (currentHP / maxHP < 0.5f)
+		if (healthComponent.Ratio < 0.5)
 		{
 			damage *= 2f;
 		}
@@ -389,9 +346,7 @@ public class Entity : MonoBehaviour
 			CameraControl.Pan(null);
 		}
 	}
-	#endregion
-
-	#region Drill-related
+	
 	[Header("Drill related variables")]
 	private List<DrillBit> drillers = new List<DrillBit>();
 	[SerializeField] private bool isDrillable = true;
@@ -471,7 +426,6 @@ public class Entity : MonoBehaviour
 			drills[i].StopDrilling(successful);
 		}
 	}
-	#endregion Drill-related
 }
 
 public enum EntityType

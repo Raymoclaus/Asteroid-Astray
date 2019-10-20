@@ -1,14 +1,15 @@
-﻿using TileLightsPuzzle;
+﻿using CustomDataTypes;
+using Puzzles.TileFlip;
 
 public class TileFlipPuzzleRoom : DungeonRoom
 {
-	public TileGrid puzzleGrid;
+	public GridMatrix puzzleGrid;
 	private float puzzleDifficulty;
 
 	public TileFlipPuzzleRoom(IntPair position, DungeonRoom previousRoom)
 		: base(position, previousRoom)
 	{
-		puzzleGrid = CreateNewTileGrid();
+		puzzleGrid = CreateNewGridMatrix();
 	}
 
 	public TileFlipPuzzleRoom(IntPair position, DungeonRoom previousRoom, float difficulty)
@@ -17,14 +18,14 @@ public class TileFlipPuzzleRoom : DungeonRoom
 		puzzleDifficulty = difficulty;
 	}
 
-	private TileGrid CreateNewTileGrid()
-		=> new TileGrid(new IntPair(RoomWidth / 2, RoomHeight / 2));
+	private GridMatrix CreateNewGridMatrix()
+		=> new GridMatrix(new IntPair(RoomWidth / 2, RoomHeight / 2));
 
 	public override void GenerateContent()
 	{
 		base.GenerateContent();
 
-		TileLightsGenerator gen = new TileLightsGenerator();
+		Generator gen = new Generator();
 		puzzleGrid = gen.GeneratePuzzle(puzzleGrid.GridSize, (int)puzzleDifficulty);
 
 		IntPair offset = new IntPair(RoomWidth / 2 - puzzleGrid.GridSize.x / 2,

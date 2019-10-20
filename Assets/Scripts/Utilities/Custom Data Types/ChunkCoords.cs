@@ -6,7 +6,7 @@ namespace CustomDataTypes
 	[Serializable]
 	public struct ChunkCoords
 	{
-		public Quadrant Direction;
+		public Quadrant quadrant;
 		public int x, y;
 
 		public static ChunkCoords Invalid => new ChunkCoords((Quadrant)(-1), -1, -1);
@@ -20,7 +20,7 @@ namespace CustomDataTypes
 
 		public ChunkCoords(Quadrant direction, int x, int y, bool? shouldValidate = null)
 		{
-			Direction = direction;
+			quadrant = direction;
 			this.x = x;
 			this.y = y;
 
@@ -33,7 +33,7 @@ namespace CustomDataTypes
 		public static ChunkCoords PosToCoords(Vector2 pos, float chunkSize)
 		{
 			ChunkCoords cc;
-			cc.Direction = GetDirection(pos, chunkSize);
+			cc.quadrant = GetDirection(pos, chunkSize);
 			IntPair coord = ConvertToXy(pos, chunkSize);
 			cc.x = coord.x;
 			cc.y = coord.y;
@@ -85,7 +85,7 @@ namespace CustomDataTypes
 		{
 			Vector2 min = new Vector2(chCoord.x, chCoord.y);
 			Vector2 max = new Vector2(chCoord.x + 1, chCoord.y + 1);
-			switch (chCoord.Direction)
+			switch (chCoord.quadrant)
 			{
 				case Quadrant.UpperLeft:
 					min.x *= -1f;
@@ -113,8 +113,8 @@ namespace CustomDataTypes
 		public bool IsValid()
 		{
 			return this != Invalid
-				   && (int)Direction >= 0
-				   && (int)Direction < Enum.GetValues(typeof(Direction)).Length
+				   && (int)quadrant >= 0
+				   && (int)quadrant < Enum.GetValues(typeof(Direction)).Length
 				   && x >= 0
 				   && y >= 0;
 		}
@@ -128,24 +128,24 @@ namespace CustomDataTypes
 			}
 
 			//fix direction to be within bounds
-			Direction = (Quadrant)(Math.Abs((int)Direction)
+			quadrant = (Quadrant)(Math.Abs((int)quadrant)
 				% Enum.GetValues(typeof(Direction)).Length);
 			//adjust direction if x is not valid
 			if (x < 0)
 			{
-				switch (Direction)
+				switch (quadrant)
 				{
 					case Quadrant.UpperLeft:
-						Direction = Quadrant.UpperRight;
+						quadrant = Quadrant.UpperRight;
 						break;
 					case Quadrant.UpperRight:
-						Direction = Quadrant.UpperLeft;
+						quadrant = Quadrant.UpperLeft;
 						break;
 					case Quadrant.LowerLeft:
-						Direction = Quadrant.LowerRight;
+						quadrant = Quadrant.LowerRight;
 						break;
 					case Quadrant.LowerRight:
-						Direction = Quadrant.LowerLeft;
+						quadrant = Quadrant.LowerLeft;
 						break;
 				}
 
@@ -155,19 +155,19 @@ namespace CustomDataTypes
 			//adjust direction if y is not valid
 			if (y < 0)
 			{
-				switch (Direction)
+				switch (quadrant)
 				{
 					case Quadrant.UpperLeft:
-						Direction = Quadrant.LowerLeft;
+						quadrant = Quadrant.LowerLeft;
 						break;
 					case Quadrant.UpperRight:
-						Direction = Quadrant.LowerRight;
+						quadrant = Quadrant.LowerRight;
 						break;
 					case Quadrant.LowerLeft:
-						Direction = Quadrant.UpperLeft;
+						quadrant = Quadrant.UpperLeft;
 						break;
 					case Quadrant.LowerRight:
-						Direction = Quadrant.UpperRight;
+						quadrant = Quadrant.UpperRight;
 						break;
 				}
 
@@ -187,7 +187,7 @@ namespace CustomDataTypes
 				Validate();
 			}
 			//convert coordinates into signed X, Y values
-			switch (Direction)
+			switch (quadrant)
 			{
 				case Quadrant.UpperLeft:
 					x = -x - 1;
@@ -218,30 +218,30 @@ namespace CustomDataTypes
 		/// Converts the x and y components of a coordinate set so that they are easier to compare
 		private static ChunkCoords ConvertToUpRight(ChunkCoords cc)
 		{
-			if (cc.Direction == Quadrant.UpperRight)
+			if (cc.quadrant == Quadrant.UpperRight)
 			{
 				return cc;
 			}
 
 			//check if it is in either of the two left-side quadrants
-			if (cc.Direction == Quadrant.UpperLeft || cc.Direction == Quadrant.LowerLeft)
+			if (cc.quadrant == Quadrant.UpperLeft || cc.quadrant == Quadrant.LowerLeft)
 			{
 				cc.x = -cc.x - 1;
 			}
 
 			//check if it is in either of the two bottom quadrants
-			if (cc.Direction == Quadrant.LowerRight || cc.Direction == Quadrant.LowerLeft)
+			if (cc.quadrant == Quadrant.LowerRight || cc.quadrant == Quadrant.LowerLeft)
 			{
 				cc.y = -cc.y - 1;
 			}
 
-			cc.Direction = Quadrant.UpperRight;
+			cc.quadrant = Quadrant.UpperRight;
 			return cc;
 		}
 
 		public override string ToString()
 		{
-			return string.Format("Direction: {0}, Coordinates({1}, {2})", Direction, x, y);
+			return string.Format("Direction: {0}, Coordinates({1}, {2})", quadrant, x, y);
 		}
 
 		public override bool Equals(object obj)
@@ -252,7 +252,7 @@ namespace CustomDataTypes
 			}
 
 			var coords = (ChunkCoords)obj;
-			return Direction == coords.Direction &&
+			return quadrant == coords.quadrant &&
 				   x == coords.x &&
 				   y == coords.y;
 		}
@@ -260,28 +260,28 @@ namespace CustomDataTypes
 		public override int GetHashCode()
 		{
 			var hashCode = -2054141635;
-			hashCode = hashCode * -1521134295 + Direction.GetHashCode();
+			hashCode = hashCode * -1521134295 + quadrant.GetHashCode();
 			hashCode = hashCode * -1521134295 + x.GetHashCode();
 			hashCode = hashCode * -1521134295 + y.GetHashCode();
 			return hashCode;
 		}
 
 		public static bool operator ==(ChunkCoords c1, ChunkCoords c2)
-			=> c1.Direction == c2.Direction && c1.x == c2.x && c1.y == c2.y;
+			=> c1.quadrant == c2.quadrant && c1.x == c2.x && c1.y == c2.y;
 
 		public static bool operator !=(ChunkCoords c1, ChunkCoords c2)
-			=> c1.Direction != c2.Direction || c1.x != c2.x || c1.y != c2.y;
+			=> c1.quadrant != c2.quadrant || c1.x != c2.x || c1.y != c2.y;
 
 		public static ChunkCoords operator +(ChunkCoords c1, ChunkCoords c2)
-			=> new ChunkCoords(c1.Direction, c1.x + c2.x, c1.y + c2.y, true);
+			=> new ChunkCoords(c1.quadrant, c1.x + c2.x, c1.y + c2.y, true);
 
 		public static ChunkCoords operator -(ChunkCoords c1, ChunkCoords c2)
-			=> new ChunkCoords(c1.Direction, c1.x - c2.x, c1.y - c2.y, true);
+			=> new ChunkCoords(c1.quadrant, c1.x - c2.x, c1.y - c2.y, true);
 
 		public static ChunkCoords operator *(ChunkCoords c1, ChunkCoords c2)
-			=> new ChunkCoords(c1.Direction, c1.x * c2.x, c1.y * c2.y, true);
+			=> new ChunkCoords(c1.quadrant, c1.x * c2.x, c1.y * c2.y, true);
 
 		public static ChunkCoords operator /(ChunkCoords c1, ChunkCoords c2)
-			=> new ChunkCoords(c1.Direction, c1.x / c2.x, c1.y / c2.y, true);
+			=> new ChunkCoords(c1.quadrant, c1.x / c2.x, c1.y / c2.y, true);
 	}
 }

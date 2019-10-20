@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System;
+using CustomDataTypes;
 
 [System.Serializable]
 public class SpawnableEntity

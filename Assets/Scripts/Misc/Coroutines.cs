@@ -3,36 +3,35 @@ using System.Collections;
 using UnityEngine;
 using CustomYieldInstructions;
 
-namespace Utilities
+public static class Coroutines
 {
-	public static class Coroutines
+	private static MonoEventHolder meh;
+	public static MonoEventHolder MonoObj => meh != null ? meh
+		: (meh = new GameObject("Coroutines Object").AddComponent<MonoEventHolder>());
+
+	public static Coroutine TimedAction(float duration, Action<float> timedAction,
+		Action finishedAction)
+		=> Start(PActionTimer(new ActionOverTime(duration, timedAction), finishedAction));
+
+	private static IEnumerator PActionTimer(ActionOverTime timerAction,
+		Action finishedAction)
 	{
-		private static MonoBehaviour go;
-		private static MonoBehaviour MonoObj => go != null ? go
-			: (go = new GameObject("Coroutines Object").AddComponent<MonoBehaviour>());
-
-		public static void TimedAction(float duration, Action<float> timedAction,
-			Action finishedAction)
-			=> Start(ActionTimer(new ActionOverTime(duration, timedAction), finishedAction));
-
-		private static IEnumerator ActionTimer(ActionOverTime timerAction,
-			Action finishedAction)
-		{
-			yield return timerAction;
-			finishedAction?.Invoke();
-		}
-
-		public static void DelayedAction(float time, Action action)
-			=> Start(DelayedAction(new WaitForSeconds(time), action));
-
-		private static IEnumerator DelayedAction(WaitForSeconds wait, Action action)
-		{
-			yield return wait;
-			action?.Invoke();
-		}
-
-		private static void Start(IEnumerator coroutineMethod)
-			=> MonoObj.StartCoroutine(coroutineMethod);
+		yield return timerAction;
+		finishedAction?.Invoke();
 	}
 
+	public static Coroutine DelayedAction(float time, Action action)
+		=> Start(PDelayedAction(new WaitForSeconds(time), action));
+
+	public static Coroutine DelayedAction(WaitForSeconds time, Action action)
+		=> Start(PDelayedAction(time, action));
+
+	private static IEnumerator PDelayedAction(WaitForSeconds wait, Action action)
+	{
+		yield return wait;
+		action?.Invoke();
+	}
+
+	private static Coroutine Start(IEnumerator coroutineMethod)
+		=> MonoObj.StartCoroutine(coroutineMethod);
 }

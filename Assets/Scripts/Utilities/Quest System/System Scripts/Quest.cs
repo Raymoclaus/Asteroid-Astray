@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace QuestSystem
@@ -10,20 +11,18 @@ namespace QuestSystem
 		public Quester QuestTaker { get; private set; }
 		public List<QuestReward> Rewards { get; private set; }
 		public List<QuestRequirement> Requirements { get; private set; }
-
-		public delegate void QuestCompleteEventHandler(Quest quest);
-		public event QuestCompleteEventHandler OnQuestComplete;
+		
+		public event Action<Quest> OnQuestComplete;
 		public void QuestComplete(Quest quest) => OnQuestComplete?.Invoke(quest);
 
 		public Quest(string name, string description, Quester quester,
-			List<QuestReward> rewards, List<QuestRequirement> requirements, QuestCompleteEventHandler action = null)
+			List<QuestReward> rewards, List<QuestRequirement> requirements)
 		{
 			Name = name;
 			Description = description;
 			QuestTaker = quester;
 			Rewards = rewards;
 			Requirements = requirements;
-			OnQuestComplete += action;
 
 			for (int i = 0; i < Requirements.Count; i++)
 			{

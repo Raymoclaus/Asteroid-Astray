@@ -1,86 +1,44 @@
 ﻿using UnityEngine;
+using ValueComponents;
 
 public class HUDMeterController : MonoBehaviour
 {
-	[SerializeField] private MeterValues health, shield, boost;
-
-	private Shuttle mainChar;
-	private Shuttle MainChar
-	{
-		get
-		{
-			return mainChar ?? (mainChar = FindObjectOfType<Shuttle>());
-		}
-	}
-	[SerializeField] private ShakeEffect shakeEffect;
-	[SerializeField] private float shakeMultiplier = 1f;
+	[SerializeField] private RangedFloatComponent floatComponent;
+	[SerializeField] private Material mat;
+	[SerializeField] private float secondaryBarWaitDuration;
+	[SerializeField] private string fillAmountString = "_FillAmount",
+		damageFillAmountString = "_DamageFillAmount";
+	private float secondaryBarAmount;
+	private float secondaryBarWaitTimer;
 
 	private void Awake()
 	{
-		LoadingController.AddListener(Setup);
+		floatComponent.OnValueChanged += UpdateValues;
 	}
 
-	private void Setup()
+	public void UpdateMeter()
 	{
-		MainChar.OnHealthUpdate += health.UpdateValues;
-		MainChar.OnShieldUpdated += shield.UpdateValues;
-		MainChar.OnBoostAmountChanged += boost.UpdateValues;
-
-		health.SetValue(MeterValues.fillAmountString, MainChar.GetHpRatio());
-		shield.SetValue(MeterValues.fillAmountString, MainChar.ShieldRatio);
-		boost.SetValue(MeterValues.fillAmountString, MainChar.GetBoostRemaining());
-
-		MainChar.OnHealthUpdate += CheckShake;
-	}
-
-	public void CheckShake(float oldHP, float newHP)
-	{
-		if (newHP < oldHP)
+		secondaryBarWaitTimer += Time.deltaTime;
+		if (secondaryBarWaitTimer > secondaryBarWaitDuration)
 		{
-			shakeEffect?.Begin((oldHP - newHP) * shakeMultiplier, 0f, shakeMultiplier * 0.01f);
+			float damageVal = mat.GetFloat(damageFillAmountString);
+			damageVal = Mathf.MoveTowards(damageVal, 0f, Time.deltaTime);
+			SetValue(damageFillAmountString, damageVal);
 		}
 	}
 
-	private void Update()
+	public void UpdateValues(float oldVal, float newVal)
 	{
-		health.UpdateMeter();
-		shield.UpdateMeter();
-		boost.UpdateMeter();
+		SetValue(fillAmountString, newVal);
+		if (secondaryBarWaitTimer > secondaryBarWaitDuration)
+		{
+			SetValue(damageFillAmountString, oldVal);
+		}
+		secondaryBarWaitTimer = 0f;
 	}
 
-	[System.Serializable]
-	private class MeterValues
+	public void SetValue(string propertyName, float value)
 	{
-		public Material mat;
-		public float damageWaitDuration;
-		public const string fillAmountString = "_FillAmount", damageFillAmountString = "_DamageFillAmount";
-		private float damageAmount;
-		private float damageWaitTimer;
-
-		public void UpdateMeter()
-		{
-			damageWaitTimer += Time.deltaTime;
-			if (damageWaitTimer > damageWaitDuration)
-			{
-				float damageVal = mat.GetFloat(damageFillAmountString);
-				damageVal = Mathf.MoveTowards(damageVal, 0f, Time.deltaTime);
-				SetValue(damageFillAmountString, damageVal);
-			}
-		}
-
-		public void UpdateValues(float oldVal, float newVal)
-		{
-			SetValue(fillAmountString, newVal);
-			if (damageWaitTimer > damageWaitDuration)
-			{
-				SetValue(damageFillAmountString, oldVal);
-			}
-			damageWaitTimer = 0f;
-		}
-
-		public void SetValue(string propertyName, float value)
-		{
-			mat.SetFloat(propertyName, value);
-		}
+		mat.SetFloat(propertyName, value);
 	}
 }

@@ -1,10 +1,11 @@
 ﻿using UnityEngine;
+using InventorySystem;
 
 [RequireComponent(typeof(SpriteRenderer))]
 public class ResourceDrop : MonoBehaviour
 {
 	[HideInInspector]
-	public Character follow;
+	public IInventoryHolder follow;
 	private Vector2 velocity;
 	private Vector2 startVelocity;
 	public float startSpeed = 0.1f, speedDecay = 0.01f;
@@ -31,7 +32,7 @@ public class ResourceDrop : MonoBehaviour
 
 	private void Update()
 	{
-		if (!follow) return;
+		if (follow == null) return;
 
 		float aliveTime = Pause.timeSinceOpen - spawnTime;
 
@@ -42,7 +43,7 @@ public class ResourceDrop : MonoBehaviour
 		else
 		{
 			//gain speed towards the follow target
-			Vector2 direction = follow.transform.position - transform.position;
+			Vector2 direction = follow.DefaultInventory.transform.position - transform.position;
 			direction.Normalize();
 			speedIncrement += speedGain * Time.deltaTime * 60f;
 			direction *= speedIncrement * Time.deltaTime * 60f;
@@ -54,7 +55,7 @@ public class ResourceDrop : MonoBehaviour
 		transform.position += (Vector3)velocity * Time.deltaTime * 60f;
 
 		//check if close enough to collect
-		if (Vector2.Distance(transform.position, follow.transform.position) < magnitude
+		if (Vector2.Distance(transform.position, follow.DefaultInventory.transform.position) < magnitude
 			&& aliveTime > delay)
 		{
 			//send messsage to follow target to collect resource
@@ -63,18 +64,15 @@ public class ResourceDrop : MonoBehaviour
 			ps.transform.parent = transform.parent;
 			ParticleSystem.MainModule main = ps.main;
 			main.loop = false;
-			follow.CollectItem(new ItemStack(type, 1));
-			if (follow.GetEntityType() == EntityType.Shuttle)
-			{
-			}
+			follow.GiveItem(type);
 			Destroy(gameObject);
 			return;
 		}
 	}
 
-	public void Create(Entity target, Vector2 pos, Item.Type type = Item.Type.Stone)
+	public void Create(IInventoryHolder target, Vector2 pos, Item.Type type)
 	{
-		follow = (target is Character) ? (Character)target : null;
+		follow = target;
 		transform.position = pos;
 		transform.parent = ParticleGenerator.holder;
 		this.type = type;

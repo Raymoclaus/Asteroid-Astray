@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using PR = PromptSystem.PromptRequests;
+using InventorySystem;
 
 public class TutorialPrompts : MonoBehaviour
 {
@@ -119,7 +120,7 @@ public class TutorialPrompts : MonoBehaviour
 
 	private void SetUpRepairKitInputPrompt()
 	{
-		Action<Item.Type> action = (Item.Type type) =>
+		Action<Item.Type, int> action = (Item.Type type, int amount) =>
 		{
 			if (type != Item.Type.RepairKit) return;
 			repairKitInputPromptInfo.Deactivate();
@@ -135,7 +136,7 @@ public class TutorialPrompts : MonoBehaviour
 		repairKitInputPromptInfo.SetCondition(() =>
 		{
 			Item.Type repairKit = Item.Type.RepairKit;
-			int id = mainChar.storage.FirstInstanceId(Item.Type.RepairKit);
+			int id = mainChar.DefaultInventory.FirstInstanceId(Item.Type.RepairKit);
 			if (id < 0 || Pause.IsStopped) return false;
 			string typeName = Item.TypeName(repairKit);
 			string text = id < 8 ? $"Press [Slot{id + 1}:] to use the {typeName}"
@@ -241,7 +242,7 @@ public class TutorialPrompts : MonoBehaviour
 			{
 				PR.PromptSendRequest(text, text);
 				TimerTracker.SetTimer(text, promptDuration);
-				TimerTracker.SetTimerAction(text, Deactivate);
+				TimerTracker.SetFinishAction(text, Deactivate);
 			}
 			else
 			{

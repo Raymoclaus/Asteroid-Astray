@@ -1,10 +1,11 @@
 ﻿using System.Collections;
 using UnityEngine;
+using ValueComponents;
 
 [RequireComponent(typeof(SpriteRenderer))]
 public class EnergyShieldMaterialManager : MonoBehaviour
 {
-	[SerializeField] private Character character;
+	[SerializeField] private RangedFloatComponent shieldComponent;
 	private Material mat;
 	private SpriteRenderer sprRend;
 	[SerializeField] private Animator anim;
@@ -20,8 +21,8 @@ public class EnergyShieldMaterialManager : MonoBehaviour
 	{
 		sprRend = GetComponent<SpriteRenderer>();
 		mat = sprRend.material;
-		UpdateShield(character.ShieldRatio, 1f);
-		character.OnShieldUpdated += UpdateShield;
+		UpdateShield(shieldComponent.Ratio, 1f);
+		shieldComponent.OnValueChanged += UpdateShield;
 		SetDefaultScale();
 	}
 

@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-namespace QuestSystem
+﻿namespace QuestSystem
 {
 	public abstract class QuestRequirement
 	{
@@ -26,17 +24,16 @@ namespace QuestSystem
 
 		public delegate void QuestRequirementCompletedEventHandler();
 		public event QuestRequirementCompletedEventHandler OnQuestRequirementCompleted;
-		public void QuestRequirementCompleted()
+		public virtual void QuestRequirementCompleted()
 		{
 			Completed = true;
 			OnQuestRequirementCompleted?.Invoke();
 		}
 
-		public virtual string GetDescription() => description;
+		public virtual string GetDescription => description;
 
-		public virtual Vector3? TargetLocation() => null;
+		public virtual IWaypoint GetWaypoint => null;
 
 		public virtual void Activate() => active = true;
 	}
-
 }

@@ -1,92 +1,36 @@
-﻿using System.Collections.Generic;
+﻿using CustomDataTypes;
+using InventorySystem;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Asteroid : Entity
 {
-	[System.Serializable]
-	private struct ColliderInfo
-	{
-		public int type;
-		public Vector2 size;
-		public Vector2 offset;
-		public float rotation;
-	}
-
 	[Header("Asteroid Fields")]
-
-	#region Fields
-	[Tooltip("Reference to the sprite renderer of the asteroid.")]
-	public SpriteRenderer SprRend;
 	[Tooltip("Reference to the shake effect script on the sprite.")]
 	public ShakeEffect ShakeFX;
-	[SerializeField]
-	private AsteroidSprites spritesSO;
 	[Tooltip("Picks a random value between given value and negative given value to determine its rotation speed")]
 	public float SpinSpeedRange;
 	[Tooltip("Picks a random value between given value and negative given value to determine starting velocity")]
 	public float VelocityRange;
-	//collection of info about the colliders the large asteroids should use
-	[SerializeField]
-	private ColliderInfo[] largeInfo;
-	//chance that an asteroid will be larger than normal
-	[SerializeField]
-	private float largeChance = 0.01f;
-	//keeps track of size type and ID in that size type
-	private IntPair id = IntPair.zero;
+	[SerializeField] private SpriteRenderer sprRend;
+	[SerializeField] private List<Sprite> debrisSprites;
+	[SerializeField] private int debrisSortingOrder;
 	//the amount of debris created when destroyed
 	public IntPair debrisAmount = new IntPair(3, 10);
-	[SerializeField] private float drillDebrisChance = 0.05f, drillDustChance = 0.2f;
-	private int collisionDustMultiplier = 3;
-	#endregion
+	[SerializeField] private float drillDebrisChance = 0.05f;
+	[SerializeField] private List<Sprite> dustSprites;
+	[SerializeField] private int dustSortingOrder;
+	[SerializeField] private float drillDustChance = 0.2f;
 
-	#region Audio
 	public AudioClip[] shatterSounds;
 	public Vector2 shatterPitchRange;
 	[SerializeField]
 	private AudioSO collisionSounds;
-	#endregion
 
 	protected override void Awake()
 	{
 		base.Awake();
-		
-		id.x = Random.value <= largeChance ? 0 : 1;
-		id.y = Random.Range(0, spritesSO.asteroidSprites[id.x].collection.Length);
-		SprRend.sprite = spritesSO.asteroidSprites[id.x].collection[id.y].sprites[0];
-
-		//if a large asteroid is chosen then adjust collider to fit the shape
-		if (id.x == 0)
-		{
-			//set unique collider to match large shape
-			ColliderInfo colInfo = largeInfo[id.y];
-			switch (colInfo.type)
-			{
-				//circle collider
-				default:
-				case 0:
-					((CircleCollider2D)col[0]).radius = colInfo.size.x;
-					break;
-				//capsule collider
-				case 1:
-					GameObject obj = col[0].gameObject;
-					Destroy(col[0]);
-					CapsuleCollider2D newCol = obj.AddComponent<CapsuleCollider2D>();
-					newCol.size = colInfo.size;
-					newCol.offset = colInfo.offset;
-					obj.transform.localEulerAngles = Vector3.forward * colInfo.rotation;
-					col[0] = newCol;
-					break;
-			}
-			rb.mass *= 4f;
-			maxHP *= 4f;
-		}
-
 		RandomMovement();
-
-		//start health at max value
-		currentHP = maxHP;
-
-		initialised = true;
 	}
 
 	public void OnEnable() => RandomMovement();
@@ -126,13 +70,13 @@ public class Asteroid : Entity
 		base.DestroySelf(destroyer, dropModifier);
 	}
 
-	protected override void DropLoot(Entity destroyer, float dropModifier)
+	protected override void DropLoot(IInventoryHolder target, float dropModifier)
 	{
-		base.DropLoot(destroyer, dropModifier);
+		base.DropLoot(target, dropModifier);
 
 		if (FirstQuestScriptedDrops.scriptedDropsActive)
 		{
-			List<ItemStack> stacks = FirstQuestScriptedDrops.GetScriptedDrop(destroyer);
+			List<ItemStack> stacks = FirstQuestScriptedDrops.GetScriptedDrop(target);
 			if (stacks != null)
 			{
 				for (int i = 0; i < stacks.Count; i++)
@@ -140,7 +84,7 @@ public class Asteroid : Entity
 					ItemStack stack = stacks[i];
 					for (int j = 0; j < stack.GetAmount(); j++)
 					{
-						PartGen.DropResource(destroyer,
+						PartGen.DropResource(target,
 							transform.position, stack.GetItemType());
 					}
 				}
@@ -155,56 +99,34 @@ public class Asteroid : Entity
 
 		if (!PartGen) return;
 
-		int randomChoose = Random.Range(0, spritesSO.debris.Length);
-		if (randomChoose < spritesSO.debris.Length)
-		{
-			PartGen.GenerateParticle(
-				spritesSO.debris[randomChoose], pos, speed: Random.value * 3f, slowDown: true, lifeTime: 1.5f,
-				rotationDeg: Random.value * 360f, rotationSpeed: Random.value * 3f,
-				sortingLayer: SprRend.sortingLayerID, sortingOrder: -1);
-		}
+		int randomChoose = Random.Range(0, debrisSprites.Count);
+		PartGen.GenerateParticle(
+			debrisSprites[randomChoose], pos, speed: Random.value * 3f, slowDown: true, lifeTime: 1.5f,
+			rotationDeg: Random.value * 360f, rotationSpeed: Random.value * 3f,
+			sortingLayer: sprRend.sortingLayerID, sortingOrder: debrisSortingOrder);
 	}
 
-	private void CreateDust(Vector2 pos, int amount = 1, float alpha = 0.1f)
+	private void CreateDust(Vector2 pos, float alpha = 0.1f)
 	{
 		if (!isActive || Pause.IsStopped) return;
 		
 		if (PartGen == null) return;
 
-		for (int i = 0; i < amount; i++)
-		{
-			int randomChoose = Random.Range(0, spritesSO.dust.Length);
-			if (randomChoose < spritesSO.dust.Length)
-			{
-				PartGen.GenerateParticle(
-					spritesSO.dust[randomChoose], pos, speed: Random.value * 0.5f, slowDown: true,
-					lifeTime: Random.value * 3f + 2f, rotationDeg: Random.value * 360f,
-					rotationSpeed: Random.value * 0.5f, size: 0.3f + Mathf.Pow(Random.value, 2f) * 0.7f, alpha: alpha,
-					fadeIn: Random.value + 0.5f, sortingLayer: SprRend.sortingLayerID, growthOverLifetime: 2f);
-			}
-		}
+		int randomChoose = Random.Range(0, dustSprites.Count);
+		PartGen.GenerateParticle(
+			dustSprites[randomChoose], pos, speed: Random.value * 0.5f, slowDown: true,
+			lifeTime: Random.value * 3f + 2f, rotationDeg: Random.value * 360f,
+			rotationSpeed: Random.value * 0.5f,
+			size: 0.3f + Mathf.Pow(Random.value, 2f) * 0.7f, alpha: alpha,
+			fadeIn: Random.value + 0.5f, sortingLayer: sprRend.sortingLayerID,
+			growthOverLifetime: 2f, sortingOrder: dustSortingOrder);
 	}
 
 	private void UpdateSprite()
 	{
-		if (currentHP <= 0f)
-		{
-			PartGen.GenerateParticle(GetCurrentSpriteSettings()[GetCurrentSpriteSettings().Length - 1],
-				transform.position, fadeOut: false, lifeTime: 0.05f,
-				rotationDeg: transform.eulerAngles.z, sortingLayer: SprRend.sortingLayerID);
-			return;
-		}
+		float hpRatio = healthComponent.Ratio;
 
-		int delta = (int)((1f - (currentHP / maxHP)) * GetCurrentSpriteSettings().Length - 1);
-		delta = Mathf.Clamp(delta, 0, GetCurrentSpriteSettings().Length - 1);
-		SprRend.sprite = GetCurrentSpriteSettings()[delta];
 	}
-
-	private NestedSpriteArray[] GetAllSprites() => spritesSO.asteroidSprites;
-
-	private SpriteArray[] GetSpriteCategory() => GetAllSprites()[id.x].collection;
-
-	private Sprite[] GetCurrentSpriteSettings() => GetSpriteCategory()[id.y].sprites;
 
 	public override bool OnExitPhysicsRange()
 	{
@@ -218,7 +140,7 @@ public class Asteroid : Entity
 	protected override bool CheckHealth(Entity destroyer, float dropModifier)
 	{
 		UpdateSprite();
-		if (currentHP > 0f) return false;
+		if (healthComponent.Ratio > 0f) return false;
 		return base.CheckHealth(destroyer, dropModifier);
 	}
 
@@ -243,7 +165,7 @@ public class Asteroid : Entity
 		Entity destroyer, float dropModifier)
 	{
 		//calculate shake intensity. Gets more intense the less health it has
-		ShakeFX.SetIntensity(damage / maxHP * (3f - (currentHP / maxHP * 2f)));
+		ShakeFX.SetIntensity(damage / healthComponent.upperLimit * (3f - (healthComponent.Ratio * 2f)));
 		return base.TakeDrillDamage(damage, drillPos, destroyer, dropModifier);
 	}
 
@@ -274,7 +196,7 @@ public class Asteroid : Entity
 			- collision.otherCollider.bounds.center) / 2f
 			+ collision.otherCollider.bounds.center;
 
-		CreateDust(contactPoint, (int)collisionStrength * collisionDustMultiplier, 0.1f + Random.value * 0.2f);
+		CreateDust(contactPoint, 0.1f + Random.value * 0.2f);
 	}
 
 	public override void Launch(Vector2 launchDirection, Character launcher)

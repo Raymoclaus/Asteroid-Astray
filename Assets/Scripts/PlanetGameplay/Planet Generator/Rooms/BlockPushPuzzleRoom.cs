@@ -1,11 +1,12 @@
 ﻿using System;
 using UnityEngine;
-using BlockPushPuzzle;
+using Puzzles.BlockPush;
+using CustomDataTypes;
 
 public class BlockPushPuzzleRoom : DungeonRoom
 {
 	private float difficulty;
-	private PushPuzzle puzzle;
+	private GridMatrix puzzle;
 
 	public BlockPushPuzzleRoom(IntPair position, DungeonRoom previousRoom)
 		: base(position, previousRoom)
@@ -25,7 +26,7 @@ public class BlockPushPuzzleRoom : DungeonRoom
 	{
 		base.GenerateContent();
 
-		BlockPushGenerator gen = new BlockPushGenerator();
+		Generator gen = new Generator();
 		int padding = 1;
 		int minimumSolutionCount = 1;
 		puzzle = gen.Generate(PuzzleSize, padding, minimumSolutionCount);

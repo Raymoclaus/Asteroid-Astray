@@ -1,10 +1,11 @@
 ﻿using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+using InventorySystem;
+using InventorySystem.UI;
 
 public class HotBarUI : MonoBehaviour
 {
-	[SerializeField] private string defaultInventoryName = "ShuttleInventory";
 	[SerializeField] private Inventory inventory;
 	[SerializeField] private ItemSprites sprites;
 	[SerializeField] private Transform[] slots;
@@ -30,20 +31,15 @@ public class HotBarUI : MonoBehaviour
 
 	private void UpdateSlots()
 	{
-		inventory = inventory ?? FindInventory(defaultInventoryName);
 		if (inventory == null) return;
 
-		for (int i = 0; i < slots.Length && i < inventory.stacks.Count; i++)
+		for (int i = 0; i < slots.Length && i < inventory.ItemStacks.Count; i++)
 		{
-			ItemStack currentStack = inventory.stacks[i];
+			ItemStack currentStack = inventory.ItemStacks[i];
 			images[i].sprite = sprites.GetItemSprite(currentStack.GetItemType());
 			int amount = currentStack.GetAmount();
 			texts[i].text = amount > 0 ? amount.ToString() : string.Empty;
 			images[i].color = amount > 0 ? Color.white : Color.clear;
 		}
 	}
-
-	private Inventory FindInventory(string inventoryName)
-		=> FindObjectsOfType<Inventory>()
-			.Where(t => t.SaveKey == inventoryName).FirstOrDefault();
 }

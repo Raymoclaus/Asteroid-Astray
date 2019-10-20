@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using CustomDataTypes;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,7 +7,7 @@ using UnityEngine;
 public class CameraCtrl : MonoBehaviour
 {
 	[HideInInspector] private Camera cam = null;
-	public Camera Cam { get { return cam ?? (cam = GetComponent<Camera>()); } }
+	public Camera Cam => cam ?? (cam = GetComponent<Camera>());
 	[SerializeField] private Transform targetToFollow;
 	private Transform panView;
 	public float panRange = 5f;
@@ -32,9 +33,7 @@ public class CameraCtrl : MonoBehaviour
 	private float moveAheadSpeedModifier = 2f;
 	private float constantSize = 2f;
 
-	public int TotalViewRange {
-		get { return ENTITY_VIEW_RANGE + RangeModifier; }
-	}
+	public int TotalViewRange => ENTITY_VIEW_RANGE + RangeModifier;
 
 	public ChunkFiller chunkFiller;
 
@@ -48,16 +47,24 @@ public class CameraCtrl : MonoBehaviour
 
 	private void Start()
 	{
+		enabled = false;
+		LoadingController.AddListener(Initialise);
+	}
+
+	private void Initialise()
+	{
+
 		//get ref to ChunkFiller component
 		chunkFiller = chunkFiller ?? GetComponent<ChunkFiller>();
 		//get camera's coordinates on the grid
-		coords = new ChunkCoords(transform.position);
+		coords = new ChunkCoords(transform.position, EntityNetwork.CHUNK_SIZE);
 		//get list of entities that are within the camera's view range
 		GetEntitiesInView(coords);
 		//start camera size at minimum size
 		CamSize = minCamSize;
 		//default follow target to shuttle if no target is set
 		followTarget = followTarget ?? FindObjectOfType<Shuttle>();
+		enabled = true;
 	}
 
 	private void Update()
@@ -90,7 +97,7 @@ public class CameraCtrl : MonoBehaviour
 	/// Only called if position of the camera changes
 	private void Moved(Vector2 newPos)
 	{
-		ChunkCoords newCc = new ChunkCoords(newPos);
+		ChunkCoords newCc = new ChunkCoords(newPos, EntityNetwork.CHUNK_SIZE);
 		if (newCc == coords) return;
 		CoordsChanged(newCc);
 		coords = newCc;

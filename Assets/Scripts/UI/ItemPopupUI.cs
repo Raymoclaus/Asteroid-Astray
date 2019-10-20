@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using InventorySystem;
+using InventorySystem.UI;
 
 public class ItemPopupUI : PopupUI
 {
@@ -40,7 +42,7 @@ public class ItemPopupUI : PopupUI
 		{
 			if (activePopups.Count == popupViewLimit)
 			{
-				scrollDelayTimer += recordingModeTrackerSO.UnscaledDeltaTime;
+				scrollDelayTimer += Time.unscaledDeltaTime;
 				if (scrollDelayTimer >= scrollDelay)
 				{
 					RemovePopup(activePopups.Count - 1);
@@ -80,11 +82,11 @@ public class ItemPopupUI : PopupUI
 			float yPos = -popupHeight / 2f - popupHeight * (popupViewLimit - i - 1);
 			if (!Mathf.Approximately(delta, 1f) || !Mathf.Approximately(po.transform.anchoredPosition.y, yPos))
 			{
-				delta = Mathf.MoveTowards(delta, 1f, recordingModeTrackerSO.UnscaledDeltaTime * popupEntrySpeed);
+				delta = Mathf.MoveTowards(delta, 1f, Time.unscaledDeltaTime * popupEntrySpeed);
 				po.UIimg.material.SetFloat("_Radius", delta);
 				po.transform.anchoredPosition = Vector2.Lerp(po.transform.anchoredPosition,
 					new Vector2(xPos, yPos),
-					recordingModeTrackerSO.UnscaledDeltaTime * popupMoveSpeed);
+					Time.unscaledDeltaTime * popupMoveSpeed);
 				if (delta >= 0.833f)
 				{
 					ActivateUIDetails(po, true);
@@ -93,7 +95,7 @@ public class ItemPopupUI : PopupUI
 				}
 			}
 
-			po.AddTimer(recordingModeTrackerSO.UnscaledDeltaTime);
+			po.AddTimer(Time.unscaledDeltaTime);
 			if (po.timer >= fullDelay)
 			{
 				RemovePopup(i);
@@ -108,10 +110,10 @@ public class ItemPopupUI : PopupUI
 			if (!Mathf.Approximately(delta, 0f))
 			{
 				po.UIimg.material.SetFloat("_Radius",
-					Mathf.MoveTowards(delta, 0f, recordingModeTrackerSO.UnscaledDeltaTime));
+					Mathf.MoveTowards(delta, 0f, Time.unscaledDeltaTime));
 				po.transform.anchoredPosition = Vector2.Lerp(po.transform.anchoredPosition,
 					new Vector2(xPos, po.transform.anchoredPosition.y),
-					recordingModeTrackerSO.UnscaledDeltaTime * popupMoveSpeed);
+					Time.unscaledDeltaTime * popupMoveSpeed);
 				if (delta <= 0f)
 				{
 					po.transform.gameObject.SetActive(false);
@@ -159,6 +161,9 @@ public class ItemPopupUI : PopupUI
 		}
 		popupsToShow.Add(data);
 	}
+
+	public void GeneratePopup(ItemStack stack)
+		=> GeneratePopup(stack.GetItemType(), stack.GetAmount());
 
 	private class ItemPopupObject : PopupObject
 	{

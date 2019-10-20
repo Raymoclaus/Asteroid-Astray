@@ -6,14 +6,13 @@ public class DirectionMarker : MonoBehaviour
 	[SerializeField] private float radius = 0.5f;
 	private Shuttle mainChar;
 	private Shuttle MainChar { get { return mainChar ?? (mainChar = FindObjectOfType<Shuttle>()); } }
-	private Vector2 LocationTarget { get { return MainChar?.waypoint.GetPosition() ?? Vector2.zero; } }
+	private Vector2 LocationTarget { get { return Vector2.zero; } }
 	private Transform parent { get { return MainChar?.transform ?? transform.parent; } }
 	private SpriteRenderer sprRend;
 
 	private void Awake()
 	{
 		sprRend = GetComponent<SpriteRenderer>();
-		MainChar.OnNavigationUpdated += Activate;
 	}
 
 	public void Activate(bool active) => sprRend.enabled = active;

@@ -1,36 +1,30 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using CustomDataTypes;
 
 public class ChunkFiller : MonoBehaviour
 {
-	private ChunkCoords _coords;
+	private ChunkCoords coords;
 	private Vector2 _prevPos = Vector2.positiveInfinity;
 	public int FillRange = 2;
 	[HideInInspector] public int RangeIncrease;
-	private bool ready = false;
 
 	private void Start()
 	{
 		enabled = false;
-		EntityNetwork.AddListener(() =>
-		{
-			Initialise();
-			enabled = true;
-		});
+		LoadingController.AddListener(Initialise);
 	}
 
 	private void Initialise()
 	{
-		_coords = new ChunkCoords(transform.position);
+		coords = new ChunkCoords(transform.position, EntityNetwork.CHUNK_SIZE);
 		//load up some asteroids around the current position
-		FillChunks(_coords, false);
-		ready = true;
+		FillChunks(coords, false);
+		enabled = true;
 	}
 
 	private void Update()
 	{
-		if (!ready) return;
-
 		CheckForMovement();
 	}
 
@@ -44,10 +38,10 @@ public class ChunkFiller : MonoBehaviour
 
 	private void Moved(Vector2 newPos)
 	{
-		ChunkCoords newCc = new ChunkCoords(newPos);
-		if (newCc == _coords) return;
+		ChunkCoords newCc = new ChunkCoords(newPos, EntityNetwork.CHUNK_SIZE);
+		if (newCc == coords) return;
 		CoordsChanged(newCc);
-		_coords = newCc;
+		coords = newCc;
 	}
 
 	private void CoordsChanged(ChunkCoords newCc)
@@ -80,7 +74,7 @@ public class ChunkFiller : MonoBehaviour
 		{
 			for (int j = -r; j <= r; j++)
 			{
-				coords.Add(new ChunkCoords(center.Direction, center.x + i, center.y + j, true));
+				coords.Add(new ChunkCoords(center.quadrant, center.x + i, center.y + j, true));
 			}
 		}
 

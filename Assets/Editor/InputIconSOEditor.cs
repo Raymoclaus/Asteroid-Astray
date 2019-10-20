@@ -1,7 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEditor;
+using InputHandler.UI;
 
 [CustomEditor(typeof(InputIconSO), true)]
 public class InputIconSOEditor : Editor

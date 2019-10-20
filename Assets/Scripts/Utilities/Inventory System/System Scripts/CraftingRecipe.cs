@@ -1,12 +1,27 @@
-﻿using System.Collections.Generic;
+﻿using System.Linq;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace InventorySystem
 {
-	[System.Serializable]
-	public struct CraftingRecipe
+	[CreateAssetMenu(menuName = "Scriptable Objects/Crafting Recipe")]
+	public class CraftingRecipe : ScriptableObject
 	{
-		public List<CraftingRecipeIngredient> recipeList;
-		public List<CraftingRecipeIngredient> result;
+		[SerializeField] private List<ItemStack> recipeList, result;
+
+		public List<ItemStack> Ingredients => Copy(recipeList);
+		public List<ItemStack> Results => Copy(result);
+
+		private List<ItemStack> Copy(List<ItemStack> stacks)
+		{
+			List<ItemStack> newList = new List<ItemStack>(stacks);
+
+			for (int i = 0; i < newList.Count; i++)
+			{
+				newList[i] = new ItemStack(stacks[i]);
+			}
+			return newList;
+		}
 
 		public int GetPriority()
 		{
@@ -14,7 +29,7 @@ namespace InventorySystem
 
 			for (int i = 0; i < recipeList.Count; i++)
 			{
-				priority += recipeList[i].GetPriority();
+				priority += GetPriority(recipeList[i]);
 			}
 
 			return priority;
@@ -24,29 +39,21 @@ namespace InventorySystem
 		{
 			for (int i = 0; i < recipeList.Count; i++)
 			{
-				if (!recipeList[i].IsMatch(stacks)) return false;
+				ItemStack recipeStack = recipeList[i];
+				bool foundMatch = false;
+				for (int j = 0; j < stacks.Count; j++)
+				{
+					ItemStack stack = stacks[j];
+					if (recipeStack.GetItemType() == stack.GetItemType()
+						&& recipeStack.GetAmount() <= stack.GetAmount())
+					{
+						foundMatch = true;
+						break;
+					}
+				}
+				if (!foundMatch) return false;
 			}
 			return true;
-		}
-
-		public List<ItemStack> GetRecipeStacks()
-		{
-			List<ItemStack> stacks = new List<ItemStack>(recipeList.Count);
-			for (int i = 0; i < recipeList.Count; i++)
-			{
-				stacks.Add(recipeList[i].GetStack());
-			}
-			return stacks;
-		}
-
-		public List<ItemStack> GetResultStacks()
-		{
-			List<ItemStack> stacks = new List<ItemStack>(result.Count);
-			for (int i = 0; i < result.Count; i++)
-			{
-				stacks.Add(result[i].GetStack());
-			}
-			return stacks;
 		}
 
 		public override string ToString()
@@ -63,36 +70,8 @@ namespace InventorySystem
 			}
 			return s;
 		}
-	}
 
-	[System.Serializable]
-	public struct CraftingRecipeIngredient
-	{
-		public Item.Type itemType;
-		public int amount;
-
-		public int GetPriority()
-		{
-			return Item.TypeRarity(itemType) * amount;
-		}
-
-		public bool IsMatch(List<ItemStack> stacks)
-		{
-			for (int i = 0; i < stacks.Count; i++)
-			{
-				if (stacks[i].GetItemType() == itemType && stacks[i].GetAmount() >= amount) return true;
-			}
-			return false;
-		}
-
-		public ItemStack GetStack()
-		{
-			return new ItemStack(itemType, amount);
-		}
-
-		public override string ToString()
-		{
-			return $"{amount}x {Item.TypeName(itemType)}";
-		}
+		public int GetPriority(ItemStack stack)
+			=> Item.TypeRarity(stack.GetItemType()) * stack.GetAmount();
 	}
 }

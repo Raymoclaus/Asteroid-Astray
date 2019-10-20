@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
+using CustomDataTypes;
 
 public class DungeonRoom
 {

@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System;
 using UnityEngine;
+using InventorySystem;
+using CustomDataTypes;
 
 [RequireComponent(typeof(HiveInventory))]
 public class BotHive : Character, ICombat
@@ -62,8 +64,6 @@ public class BotHive : Character, ICombat
 			minLeftoverResources + (botCreationCost + botUpgradeCost * maxInitialUpgrades) * maxBotCount + 1);
 		inventory.AddItem(Item.Type.PureCorvorite, resourceCount);
 		SpendResources();
-
-		initialised = true;
 	}
 
 	protected override void Update()
@@ -250,7 +250,7 @@ public class BotHive : Character, ICombat
 			}
 		}
 
-		Vector2 pos = ChunkCoords.GetCenterCell(location);
+		Vector2 pos = ChunkCoords.GetCenterCell(location, EntityNetwork.CHUNK_SIZE);
 		if (b == null) return;
 		b.HiveOrders(pos);
 	}
@@ -330,7 +330,7 @@ public class BotHive : Character, ICombat
 
 	protected override bool CheckHealth(Entity destroyer, float dropModifier)
 	{
-		if (currentHP > 0f) return false;
+		if (HealthRatio > 0f) return false;
 		destroyerEntity = destroyer;
 		dropModifierOnDeath = dropModifier;
 		burning = true;
@@ -442,7 +442,7 @@ public class BotHive : Character, ICombat
 		{
 			botData.Add(childBots[i].GetData());
 		}
-		return new HiveSaveData(transform.position, storage.GetInventoryData(), botData);
+		return new HiveSaveData(transform.position, DefaultInventory.GetInventoryData(), botData);
 	}
 
 	public override void ApplyData(EntityData? data)
@@ -450,7 +450,7 @@ public class BotHive : Character, ICombat
 		if (data == null) return;
 		HiveSaveData d = (HiveSaveData)((EntityData)data).data;
 		transform.position = d.position;
-		storage.SetData(d.inventory);
+		DefaultInventory.SetData(d.inventory);
 		for (int i = 0; i < d.botData.Count; i++)
 		{
 			CreateBot(GetAvailableDockID(), true).ApplyData(d.botData[i]);

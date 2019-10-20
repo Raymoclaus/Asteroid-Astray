@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using InventorySystem;
+using CustomDataTypes;
 
 public class HiveInventory : Inventory
 {

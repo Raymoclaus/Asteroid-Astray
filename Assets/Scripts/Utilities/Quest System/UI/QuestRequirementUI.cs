@@ -14,12 +14,12 @@ namespace QuestSystem.UI
 			requirement = req;
 			requirement.OnQuestRequirementUpdated += UpdateRequirementDescription;
 			requirement.OnQuestRequirementCompleted += Complete;
-			SetText(requirement.GetDescription());
+			SetText(requirement.GetDescription);
 		}
 
 		private void UpdateRequirementDescription()
 		{
-			SetText(requirement.GetDescription());
+			SetText(requirement.GetDescription);
 		}
 
 		private void SetText(string s)

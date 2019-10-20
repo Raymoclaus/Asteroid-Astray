@@ -9,21 +9,25 @@ namespace ValueComponents
 		public event Action OnValueReachedUpperLimit;
 		public event Action OnValueReachedLowerLimit;
 
-		public override void SetValue(float amount)
+		public float Ratio
+			=> (currentValue - lowerLimit) / (upperLimit - lowerLimit);
+
+		public override float SetValue(float amount)
 		{
 			if (amount <= lowerLimit)
 			{
 				base.SetValue(lowerLimit);
 				OnValueReachedLowerLimit?.Invoke();
-				return;
+				return currentValue;
 			}
 			if (amount >= upperLimit)
 			{
 				base.SetValue(upperLimit);
 				OnValueReachedUpperLimit?.Invoke();
-				return;
+				return currentValue;
 			}
 			base.SetValue(amount);
+			return currentValue;
 		}
 
 		public void SetToUpperLimit() => SetValue(upperLimit);

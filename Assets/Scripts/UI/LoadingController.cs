@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class LoadingController : MonoBehaviour
@@ -19,9 +20,8 @@ public class LoadingController : MonoBehaviour
 			return !instance?.finishedLoading ?? false;
 		}
 	}
-
-	public delegate void LoadingCompleteEventHandler();
-	private static event LoadingCompleteEventHandler OnLoadingComplete;
+	
+	private static event Action OnLoadingComplete;
 
 	private void Awake()
 	{
@@ -43,7 +43,6 @@ public class LoadingController : MonoBehaviour
 
 		if (FindObjectOfType<SceneryController>())
 		{
-			Debug.Log("Loading Scenery Controller");
 			int ID = loadingReady.Count;
 			loadingReady.Add(false);
 			SceneryController.AddListener(() =>
@@ -52,20 +51,8 @@ public class LoadingController : MonoBehaviour
 			});
 		}
 
-		if (FindObjectOfType<EntityNetwork>())
-		{
-			Debug.Log("Loading Entity Network");
-			int ID = loadingReady.Count;
-			loadingReady.Add(false);
-			EntityNetwork.AddListener(() =>
-			{
-				Ready(ID);
-			});
-		}
-		
 		if (FindObjectOfType<EntityGenerator>())
 		{
-			Debug.Log("Loading Entity Generator");
 			int ID = loadingReady.Count;
 			loadingReady.Add(false);
 			EntityGenerator.AddListener(() =>
@@ -73,9 +60,19 @@ public class LoadingController : MonoBehaviour
 				Ready(ID);
 			});
 		}
+
+		if (FindObjectOfType<EntityNetwork>())
+		{
+			int ID = loadingReady.Count;
+			loadingReady.Add(false);
+			EntityNetwork.AddListener(() =>
+			{
+				Ready(ID);
+			});
+		}
 	}
 
-	public static void AddListener(System.Action action)
+	public static void AddListener(Action action)
 	{
 		if (!IsLoading)
 		{
@@ -83,7 +80,7 @@ public class LoadingController : MonoBehaviour
 		}
 		else if (action != null)
 		{
-			OnLoadingComplete += new LoadingCompleteEventHandler(action);
+			OnLoadingComplete += action;
 		}
 	}
 

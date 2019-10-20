@@ -1,11 +1,11 @@
-﻿using System.Linq;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using MazePuzzle;
+using Puzzles.Maze;
+using CustomDataTypes;
 
 public class MazeRoom : DungeonRoom
 {
-	Maze maze;
+	GridMatrix maze;
 	private IntPair idealLootPosition;
 
 	public MazeRoom(IntPair position, DungeonRoom previousRoom)
@@ -18,7 +18,7 @@ public class MazeRoom : DungeonRoom
 	{
 		base.GenerateContent();
 
-		MazeGenerator gen = new MazeGenerator();
+		Generator gen = new Generator();
 		IntPair roomSize = InnerDimensions;
 		IntPair[] exits = new IntPair[ExitCount];
 

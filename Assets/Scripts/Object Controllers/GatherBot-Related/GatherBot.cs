@@ -1,4 +1,7 @@
-﻿using System;
+﻿using CustomDataTypes;
+using InventorySystem;
+using LineRendererControllers;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
@@ -156,7 +159,6 @@ public class GatherBot : Character, IStunnable, ICombat
 	private void Start()
 	{
 		rot = transform.eulerAngles.z;
-		initialised = true;
 		OnSpawn();
 	}
 
@@ -533,8 +535,8 @@ public class GatherBot : Character, IStunnable, ICombat
 		//run away if hp drops below 50% while also having lower health than the target
 		if (!IsSwarmInCombat)
 		{
-			float hpRatio = GetHpRatio();
-			if (hpRatio < 0.5f && hpRatio < targetEntity.GetHpRatio())
+			float hpRatio = healthComponent.Ratio;
+			if (hpRatio < 0.5f && hpRatio < targetEntity.HealthRatio)
 			{
 				scaryEntities.Add(targetEntity);
 				SetState(AIState.Signalling);
@@ -616,7 +618,7 @@ public class GatherBot : Character, IStunnable, ICombat
 				break;
 			case AIState.Spawning:
 				transform.position = hive.GetDock(this).position;
-				hive.Store(storage.stacks, this);
+				hive.Store(DefaultInventory.ItemStacks, this);
 				itemsCollected = 0;
 				disassembling = false;
 				unsuspiciousEntities.Clear();
@@ -717,7 +719,7 @@ public class GatherBot : Character, IStunnable, ICombat
 	{
 		if (state == AIState.Exploring || state == AIState.Spawning)
 		{
-			return new ChunkCoords(targetLocation);
+			return new ChunkCoords(targetLocation, EntityNetwork.CHUNK_SIZE);
 		}
 		return coords;
 	}
@@ -1049,12 +1051,12 @@ public class GatherBot : Character, IStunnable, ICombat
 
 	private float CheckSpeed() => velocity.magnitude / speedLimit;
 
-	public void Create(BotHive botHive, float MaxHP, int dockingID)
+	public void Create(BotHive botHive, float maxHp, int dockingID)
 	{
 		hive = botHive;
 		SetState(AIState.Spawning);
-		maxHP = MaxHP;
-		currentHP = maxHP;
+		healthComponent.upperLimit = maxHp;
+		healthComponent.SetToUpperLimit();
 		dockID = dockingID;
 	}
 
@@ -1275,7 +1277,7 @@ public class GatherBot : Character, IStunnable, ICombat
 
 	private bool CheckHealth(Entity destroyer, int dropModifier)
 	{
-		if (currentHP > 0f) return false;
+		if (healthComponent.Ratio > 0f) return false;
 		if (IsDrilling)
 		{
 			drill.drillTarget.StopDrilling(drill);
@@ -1283,7 +1285,7 @@ public class GatherBot : Character, IStunnable, ICombat
 		SetState(AIState.Dying);
 		this.destroyer = destroyer;
 		this.dropModifier = dropModifier;
-		return currentHP <= 0f;
+		return healthComponent.Ratio <= 0f;
 	}
 
 	public override void DestroySelf(Entity destroyer, float dropModifier)
@@ -1312,9 +1314,9 @@ public class GatherBot : Character, IStunnable, ICombat
 
 	public override float DrillDamageQuery(bool firstHit) => speedLimit;
 
-	public override int CollectItem(ItemStack stack)
+	public override int GiveItem(ItemStack stack)
 	{
-		int collectedAmount = base.CollectItem(stack);
+		int collectedAmount = stack.GetAmount() - base.GiveItem(stack);
 		itemsCollected += collectedAmount;
 		if (itemsCollected >= storageCapacity)
 		{
@@ -1353,7 +1355,7 @@ public class GatherBot : Character, IStunnable, ICombat
 
 		float targetThreatValue = baseThreatMultiplier * sc.level * sc.hpRatio * 1.5f;
 		float gatherBotBackupModifier = hive?.childBots.Count ?? 1f;
-		float selfThreatValue = GetLevel() * GetHpRatio();
+		float selfThreatValue = GetLevel() * healthComponent.Ratio;
 		float swarmThreatValue = selfThreatValue * gatherBotBackupModifier;
 		bool isValuable = sc.value >= valuableLootThreshold;
 

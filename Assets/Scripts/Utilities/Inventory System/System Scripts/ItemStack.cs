@@ -13,19 +13,21 @@ namespace InventorySystem
 
 		public bool IsMaxed { get { return amount == Item.StackLimit(type); } }
 
-		public ItemStack(Item.Type type, int num)
+		public ItemStack(Item.Type type, int amount)
 		{
-			this.type = num <= 0 ? Item.Type.Blank : type;
-			this.amount = num < 0 ? 0 : num;
+			this.type = amount <= 0 ? Item.Type.Blank : type;
+			this.amount = type == Item.Type.Blank ? 0
+				: Mathf.Min(Mathf.Max(1, amount), Item.StackLimit(type));
 		}
 
 		public ItemStack(Item.Type type)
-		{
-			this.type = type;
-			amount = 1;
-		}
+			: this(type, 1) { }
 
-		public ItemStack() { }
+		public ItemStack(ItemStack stack)
+			: this(stack.GetItemType(), stack.GetAmount()) { }
+
+		public ItemStack()
+			: this(Item.Type.Blank) { }
 
 		public Item.Type GetItemType()
 		{
@@ -35,6 +37,8 @@ namespace InventorySystem
 		public void SetItemType(Item.Type newType)
 		{
 			type = newType;
+			if (type != Item.Type.Blank) return;
+			amount = 0;
 		}
 
 		public int GetAmount()

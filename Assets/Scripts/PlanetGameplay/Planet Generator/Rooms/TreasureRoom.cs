@@ -1,4 +1,6 @@
-﻿public class TreasureRoom : DungeonRoom
+﻿using CustomDataTypes;
+
+public class TreasureRoom : DungeonRoom
 {
 	public TreasureRoom(IntPair position, DungeonRoom previousRoom)
 		: base(position, previousRoom)

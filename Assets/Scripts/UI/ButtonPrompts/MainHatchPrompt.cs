@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using TriggerSystem;
+using UnityEngine;
 
 public class MainHatchPrompt : MonoBehaviour, IActionMessageReceiver
 {

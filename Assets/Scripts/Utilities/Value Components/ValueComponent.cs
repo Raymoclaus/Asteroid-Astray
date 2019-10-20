@@ -10,11 +10,14 @@ namespace ValueComponents
 
 		public event Action<T, T> OnValueChanged;
 
-		public virtual void SetValue(T val)
+		public virtual T SetValue(T val)
 		{
+			if (currentValue.Equals(val)) return currentValue;
+
 			T oldValue = currentValue;
 			currentValue = val;
 			OnValueChanged?.Invoke(oldValue, currentValue);
+			return currentValue;
 		}
 	}
 }

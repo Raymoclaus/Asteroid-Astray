@@ -2,25 +2,18 @@
 using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Collections;
+using CustomDataTypes;
+using QuestSystem;
 
 public class DistanceUI : MonoBehaviour
 {
-	public const float UNITS_TO_METRES = 3f;
-	public const int maxRange = 10000;
-	private List<string> distStrings = new List<string>(maxRange + 1);
-	private const string unit = "m | zone: ";
-	private float dist = -1;
+	private const string unit = "Zone: ";
 	[SerializeField] private Text textComponent;
-	[SerializeField] private Image img;
-	[SerializeField] private Shuttle mainChar;
-	private Shuttle MainChar
-		=> mainChar ?? (mainChar = FindObjectOfType<Shuttle>());
+	[SerializeField] private Quester mainQuester;
 
 	private void Start()
 	{
 		textComponent = textComponent ?? GetComponent<Text>();
-		StartCoroutine(FillStrings());
-		MainChar.OnNavigationUpdated += Activate;
 	}
 
 	private void Update()
@@ -31,48 +24,20 @@ public class DistanceUI : MonoBehaviour
 	private void UpdateText()
 	{
 		if (!textComponent.enabled) return;
-		float currentDist = DistanceToWaypoint;
-		if ((int)dist != (int)currentDist)
-		{
-			dist = currentDist;
-			int zone = Difficulty.DistanceBasedDifficulty(
-				ChunkCoords.GetCenterCell(CharacterCoordinates).magnitude);
-			if (dist < maxRange && dist < distStrings.Count)
-			{
-				textComponent.text = distStrings[(int)(dist * UNITS_TO_METRES)] + zone;
-			}
-			else
-			{
-				textComponent.text = distStrings[distStrings.Count - 1] + zone;
-			}
-		}
+
+		int zone = Difficulty.DistanceBasedDifficulty(
+			ChunkCoords.GetCenterCell(CharacterCoordinates, EntityNetwork.CHUNK_SIZE).magnitude);
+		textComponent.text = unit + zone;
 	}
 
 	public void Activate(bool active)
 	{
 		textComponent.enabled = active;
-		img.enabled = active;
-	}
-
-	private IEnumerator FillStrings()
-	{
-		for (int i = 0; i < maxRange; i++)
-		{
-			distStrings.Add(i.ToString() + unit);
-			if (i % 1000 == 999) yield return null;
-		}
-		distStrings.Add(maxRange.ToString() + "+" + unit);
 	}
 
 	private ChunkCoords CharacterCoordinates
-		=> MainChar?.GetCoords() ?? ChunkCoords.Zero;
+		=> new ChunkCoords(CurrentPosition, EntityNetwork.CHUNK_SIZE);
 
 	private Vector2 CurrentPosition
-		=> MainChar?.transform.position ?? Vector3.zero;
-
-	private float DistanceToWaypoint
-		=> Vector2.Distance(WaypointPosition, CurrentPosition);
-
-	private Vector2 WaypointPosition
-		=> MainChar?.waypoint.GetPosition() ?? Vector2.zero;
+		=> mainQuester.transform.position;
 }

@@ -3,113 +3,110 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 
-namespace Utilities
+public static class TmpTeleType
 {
-	public static class TmpTeleType
+	private static List<TextMeshCoroutine> coroutines = new List<TextMeshCoroutine>();
+
+	public static void Type(MonoBehaviour mono, TextMeshProUGUI textMesh,
+		WaitForSeconds timeBetweenStrokes = null, System.Action onFinishTyping = null)
 	{
-		private static List<TextMeshCoroutine> coroutines = new List<TextMeshCoroutine>();
+		if (IsTyping(textMesh)) return;
+		Coroutine coro = mono.StartCoroutine(Typing(textMesh, timeBetweenStrokes, onFinishTyping));
+		coroutines.Add(new TextMeshCoroutine(textMesh, coro, mono));
+	}
 
-		public static void Type(MonoBehaviour mono, TextMeshProUGUI textMesh,
-			WaitForSeconds timeBetweenStrokes = null, System.Action onFinishTyping = null)
+	public static void Type(MonoBehaviour mono, TextMeshProUGUI textMesh,
+		WaitForSecondsRealtime timeBetweenStrokes = null, System.Action onFinishTyping = null)
+	{
+		if (IsTyping(textMesh)) return;
+		Coroutine coro = mono.StartCoroutine(Typing(textMesh, timeBetweenStrokes, onFinishTyping));
+		coroutines.Add(new TextMeshCoroutine(textMesh, coro, mono));
+	}
+
+	public static void RevealAllCharacters(TextMeshProUGUI textMesh)
+	{
+		textMesh.maxVisibleCharacters = textMesh.textInfo.characterCount;
+		StopTyping(textMesh);
+	}
+
+	public static bool IsTyping(TextMeshProUGUI textMesh)
+	{
+		for (int i = 0; i < coroutines.Count; i++)
 		{
-			if (IsTyping(textMesh)) return;
-			Coroutine coro = mono.StartCoroutine(Typing(textMesh, timeBetweenStrokes, onFinishTyping));
-			coroutines.Add(new TextMeshCoroutine(textMesh, coro, mono));
+			if (coroutines[i].textMesh == textMesh) return true;
+		}
+		return false;
+	}
+
+	private static IEnumerator Typing(TextMeshProUGUI textMesh,
+		WaitForSeconds timeBetweenStrokes = null, System.Action onFinishTyping = null)
+	{
+		textMesh.ForceMeshUpdate();
+		textMesh.enableWordWrapping = true;
+
+		int totalVisibleCharacters = textMesh.textInfo.characterCount;
+		int counter = 0;
+		int visibleCount = 0;
+
+		while (visibleCount < totalVisibleCharacters)
+		{
+			visibleCount = counter % (totalVisibleCharacters + 1);
+			textMesh.maxVisibleCharacters = visibleCount;
+			counter += 1;
+			yield return timeBetweenStrokes;
 		}
 
-		public static void Type(MonoBehaviour mono, TextMeshProUGUI textMesh,
-			WaitForSecondsRealtime timeBetweenStrokes = null, System.Action onFinishTyping = null)
+		RevealAllCharacters(textMesh);
+		onFinishTyping?.Invoke();
+	}
+
+	private static IEnumerator Typing(TextMeshProUGUI textMesh,
+		WaitForSecondsRealtime timeBetweenStrokes = null, System.Action onFinishTyping = null)
+	{
+		textMesh.ForceMeshUpdate();
+		textMesh.enableWordWrapping = true;
+
+		int totalVisibleCharacters = textMesh.textInfo.characterCount;
+		int counter = 0;
+		int visibleCount = 0;
+
+		while (visibleCount < totalVisibleCharacters)
 		{
-			if (IsTyping(textMesh)) return;
-			Coroutine coro = mono.StartCoroutine(Typing(textMesh, timeBetweenStrokes, onFinishTyping));
-			coroutines.Add(new TextMeshCoroutine(textMesh, coro, mono));
+			visibleCount = counter % (totalVisibleCharacters + 1);
+			textMesh.maxVisibleCharacters = visibleCount;
+			counter += 1;
+			yield return timeBetweenStrokes;
 		}
 
-		public static void RevealAllCharacters(TextMeshProUGUI textMesh)
-		{
-			textMesh.maxVisibleCharacters = textMesh.textInfo.characterCount;
-			StopTyping(textMesh);
-		}
+		RevealAllCharacters(textMesh);
+		onFinishTyping?.Invoke();
+		onFinishTyping = null;
+	}
 
-		public static bool IsTyping(TextMeshProUGUI textMesh)
+	private static void StopTyping(TextMeshProUGUI textMesh)
+	{
+		for (int i = 0; i < coroutines.Count; i++)
 		{
-			for (int i = 0; i < coroutines.Count; i++)
+			if (coroutines[i].textMesh == textMesh)
 			{
-				if (coroutines[i].textMesh == textMesh) return true;
-			}
-			return false;
-		}
-
-		private static IEnumerator Typing(TextMeshProUGUI textMesh,
-			WaitForSeconds timeBetweenStrokes = null, System.Action onFinishTyping = null)
-		{
-			textMesh.ForceMeshUpdate();
-			textMesh.enableWordWrapping = true;
-
-			int totalVisibleCharacters = textMesh.textInfo.characterCount;
-			int counter = 0;
-			int visibleCount = 0;
-
-			while (visibleCount < totalVisibleCharacters)
-			{
-				visibleCount = counter % (totalVisibleCharacters + 1);
-				textMesh.maxVisibleCharacters = visibleCount;
-				counter += 1;
-				yield return timeBetweenStrokes;
-			}
-
-			RevealAllCharacters(textMesh);
-			onFinishTyping?.Invoke();
-		}
-
-		private static IEnumerator Typing(TextMeshProUGUI textMesh,
-			WaitForSecondsRealtime timeBetweenStrokes = null, System.Action onFinishTyping = null)
-		{
-			textMesh.ForceMeshUpdate();
-			textMesh.enableWordWrapping = true;
-
-			int totalVisibleCharacters = textMesh.textInfo.characterCount;
-			int counter = 0;
-			int visibleCount = 0;
-
-			while (visibleCount < totalVisibleCharacters)
-			{
-				visibleCount = counter % (totalVisibleCharacters + 1);
-				textMesh.maxVisibleCharacters = visibleCount;
-				counter += 1;
-				yield return timeBetweenStrokes;
-			}
-
-			RevealAllCharacters(textMesh);
-			onFinishTyping?.Invoke();
-			onFinishTyping = null;
-		}
-
-		private static void StopTyping(TextMeshProUGUI textMesh)
-		{
-			for (int i = 0; i < coroutines.Count; i++)
-			{
-				if (coroutines[i].textMesh == textMesh)
-				{
-					coroutines[i].mono.StopCoroutine(coroutines[i].coroutine);
-					coroutines.RemoveAt(i);
-					return;
-				}
+				coroutines[i].mono.StopCoroutine(coroutines[i].coroutine);
+				coroutines.RemoveAt(i);
+				return;
 			}
 		}
+	}
 
-		private struct TextMeshCoroutine
+	private struct TextMeshCoroutine
+	{
+		public TextMeshProUGUI textMesh;
+		public Coroutine coroutine;
+		public MonoBehaviour mono;
+
+		public TextMeshCoroutine(TextMeshProUGUI textMesh, Coroutine coroutine, MonoBehaviour mono)
 		{
-			public TextMeshProUGUI textMesh;
-			public Coroutine coroutine;
-			public MonoBehaviour mono;
-
-			public TextMeshCoroutine(TextMeshProUGUI textMesh, Coroutine coroutine, MonoBehaviour mono)
-			{
-				this.textMesh = textMesh;
-				this.coroutine = coroutine;
-				this.mono = mono;
-			}
+			this.textMesh = textMesh;
+			this.coroutine = coroutine;
+			this.mono = mono;
 		}
 	}
 }

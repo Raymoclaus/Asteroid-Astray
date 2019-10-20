@@ -2,17 +2,21 @@
 using System.Collections.Generic;
 using UnityEngine.Events;
 using InputHandler;
+using TriggerSystem;
+using QuestSystem;
+using QuestSystem.UI;
+using InventorySystem;
+using ValueComponents;
 
-public class Shuttle : Character, IStunnable, ICombat, IInteractor
+public class Shuttle : Character, IStunnable, ICombat
 {
 	[Header("Shuttle Fields")]
-
-	#region Fields
+	
 	[Tooltip("Requires reference to the SpriteRenderer of the shuttle.")]
 	public SpriteRenderer SprRend;
 	[Tooltip("Requires reference to the Animator of the shuttle's transform.")]
 	public Animator shuttleAnimator;
-	[Header("Movement related")]
+
 	[Tooltip("Rate of speed accumulation when moving forward.")]
 	public float EngineStrength = 3f;
 	[Tooltip("Rate of speed decay.")]
@@ -79,7 +83,6 @@ public class Shuttle : Character, IStunnable, ICombat, IInteractor
 	[SerializeField] private ItemPopupUI popupUI;
 	private bool isTemporarilyInvincible = false;
 	[SerializeField] private ColorReplacementGroup cRGroup;
-	public Waypoint waypoint;
 	[SerializeField] private bool drillIsActive = true;
 	[SerializeField] private bool canShoot;
 	public bool CanShoot { get { return canShoot; } set { canShoot = value; } }
@@ -91,62 +94,44 @@ public class Shuttle : Character, IStunnable, ICombat, IInteractor
 	public bool isKinematic;
 	[SerializeField] private TY4PlayingUI ty4pUI;
 	public UnityEvent EnteringShip;
-
-	#region Boost
+	
 	private bool canBoost = true;
-	public bool CanBoost { get { return canBoost; } }
-
-	public bool CanTriggerPrompts => throw new System.NotImplementedException();
+	public bool CanBoost { get; private set; }
 
 	//how long a boost can last
-	[SerializeField] private float boostCapacity = 1f;
-	//represents how much boost is currently available
-	private float boostLevel;
+	[SerializeField] private RangedFloatComponent boostComponent;
 	//how much a boost affects speed
-	[SerializeField] private float boostMultiplier = 2f;
+	[SerializeField] private float boostSpeedMultiplier = 2f;
 	//how long it takes before boost fuel begins recharging
 	[SerializeField] private float boostRechargeTime = 2f;
-	private float rechargeTimer;
+	private string boostRechargeTimerID;
 	//how quickly the boost fuel recharges
 	[SerializeField] private float rechargeSpeed = 1f;
 	//how much boosting ignores existing momentum
 	[SerializeField] private float boostCounterVelocity = 0.1f;
 	//whether the shuttle is boosting or not
-	private bool isBoosting = false;
+	private bool IsBoosting { get; set; }
 	//reference to sonic boom animation
 	[SerializeField] private GameObject sonicBoomBoostEffect;
 	public float boostInvulnerabilityTime = 0.2f;
 	[SerializeField] private AnimationCurve cameraZoomOnEnterShip;
-	#endregion Boost
-
-	#endregion Fields
-
-	#region Attachments
+	
 	private bool laserAttached = false;
 	private bool straightWeaponAttached = false;
-	#endregion
-
-	#region Sound Stuff
+	
 	[SerializeField] private AudioClip collectResourceSound;
 	private float resourceCollectedTime;
 	private float resourceCollectedPitch = 1f;
 	private float resourceCollectedPitchIncreaseAmount = 0.2f;
 	[SerializeField] public AudioSO collisionSounds;
 	private ContactPoint2D[] contacts = new ContactPoint2D[1];
-	#endregion
-
-	#region Events
-	public delegate void NavigationEventHandler(bool activate);
-	public event NavigationEventHandler OnNavigationUpdated;
+	
 	public delegate void GoInputEventHandler();
 	public event GoInputEventHandler OnGoInput;
 	public delegate void LaunchInputEventHandler();
 	public event LaunchInputEventHandler OnLaunchInput;
 	public delegate void DrillCompleteEventHandler(bool successful);
 	public event DrillCompleteEventHandler OnDrillComplete;
-	public delegate void BoostAmountEventHandler(float oldVal, float newVal);
-	public event BoostAmountEventHandler OnBoostAmountChanged;
-	#endregion Events
 
 	protected override void Awake()
 	{
@@ -155,8 +140,13 @@ public class Shuttle : Character, IStunnable, ICombat, IInteractor
 
 		canDrill = true;
 		canDrillLaunch = true;
-		boostLevel = boostCapacity;
+		boostComponent.SetToUpperLimit();
+		boostRechargeTimerID = "Boost Recharge Timer" + gameObject.GetInstanceID();
+		TimerTracker.AddTimer(boostRechargeTimerID, 0f, null, null);
 		QuestPopupUI.SetQuester(GetComponent<Quester>());
+		AttachToInventoryUI();
+
+		OnItemCollected += ReceiveItem;
 	}
 
 	protected override void Update()
@@ -170,8 +160,6 @@ public class Shuttle : Character, IStunnable, ICombat, IInteractor
 			//calculate position based on input
 			CalculateForces();
 		}
-
-		CheckWaypoint();
 	}
 
 	private void FixedUpdate() => rb.AddForce(accel);
@@ -206,9 +194,9 @@ public class Shuttle : Character, IStunnable, ICombat, IInteractor
 			if (!IsDrilling)
 			{
 				speedMod *= 1f - Mathf.Abs(lookDirection - (360f - rot.z)) / 180f;
-				if (!isBoosting)
+				if (!IsBoosting)
 				{
-					Boost(speedMod > 0.9f && GetBoostRemaining() > 0.5f);
+					Boost(speedMod > 0.9f && boostComponent.Ratio >= 0.5f);
 				}
 				else
 				{
@@ -220,7 +208,7 @@ public class Shuttle : Character, IStunnable, ICombat, IInteractor
 			}
 			else
 			{
-				Boost(isBoosting);
+				Boost(IsBoosting);
 			}
 		}
 
@@ -361,14 +349,9 @@ public class Shuttle : Character, IStunnable, ICombat, IInteractor
 		return ld;
 	}
 
-	public override int CollectItem(ItemStack stack)
+	public void ReceiveItem(Item.Type type, int amount)
 	{
-		Item.Type itemType = stack.GetItemType();
-		int collectedAmount = base.CollectItem(stack);
-		if (collectedAmount > 0)
-		{
-			GameEvents.ItemCollected(itemType, collectedAmount);
-		}
+		if (type == Item.Type.Blank || amount == 0) return;
 
 		//increase pitch of sound for successive resource collection, reset after a break
 		if (Pause.timeSinceOpen - resourceCollectedTime < 1f)
@@ -388,9 +371,8 @@ public class Shuttle : Character, IStunnable, ICombat, IInteractor
 		popupUI = popupUI ?? FindObjectOfType<ItemPopupUI>();
 		if (popupUI != null)
 		{
-			popupUI.GeneratePopup(itemType, collectedAmount);
+			popupUI.GeneratePopup(type, amount);
 		}
-		return collectedAmount;
 	}
 
 	private void SearchForNearestAsteroid()
@@ -438,9 +420,8 @@ public class Shuttle : Character, IStunnable, ICombat, IInteractor
 
 	protected override bool CheckItemUsage(int itemIndex)
 	{
-		Item.Type itemType = storage.stacks[itemIndex].GetItemType();
+		Item.Type itemType = DefaultInventory.ItemStacks[itemIndex].GetItemType();
 		if (!base.CheckItemUsage(itemIndex)) return false;
-		GameEvents.ItemUsed(itemType);
 		return true;
 	}
 
@@ -555,17 +536,17 @@ public class Shuttle : Character, IStunnable, ICombat, IInteractor
 	public override bool TakeDamage(float damage, Vector2 damagePos,
 		Entity destroyer, float dropModifier, bool flash)
 	{
-		float oldVal = GetHpRatio();
+		float oldVal = healthComponent.Ratio;
 		bool dead = base.TakeDamage(damage, damagePos, destroyer, dropModifier, flash);
-		float newVal = GetHpRatio();
+		float newVal = healthComponent.Ratio;
 
 		if (oldVal == newVal) return false;
 
 		if (dead)
 		{
 			ty4pUI?.SetActive(true);
-			SetHP(maxHP);
-			SetShieldAmount(maxShield);
+			healthComponent.SetToUpperLimit();
+			shieldComponent.SetToUpperLimit();
 		}
 		else
 		{
@@ -576,11 +557,11 @@ public class Shuttle : Character, IStunnable, ICombat, IInteractor
 
 	private void Boost(bool input)
 	{
-		if (canBoost && input && boostLevel > 0f && !Pause.IsStopped)
+		if (canBoost && input && boostComponent.Ratio > 0f && !Pause.IsStopped)
 		{
-			if (!isBoosting)
+			if (!IsBoosting)
 			{
-				speedMultiplier *= boostMultiplier;
+				speedMultiplier *= boostSpeedMultiplier;
 				if (sonicBoomBoostEffect != null && !IsDrilling)
 				{
 					rb.velocity = transform.up;
@@ -596,11 +577,9 @@ public class Shuttle : Character, IStunnable, ICombat, IInteractor
 					Pause.DelayedAction(() => isTemporarilyInvincible = false, boostInvulnerabilityTime, true);
 				}
 			}
-			isBoosting = true;
-			rechargeTimer = 0f;
-			float oldVal = GetBoostRemaining();
-			boostLevel = Mathf.Max(boostLevel - Time.deltaTime, 0f);
-			OnBoostAmountChanged?.Invoke(oldVal, GetBoostRemaining());
+			IsBoosting = true;
+			TimerTracker.SetTimer(boostRechargeTimerID, boostRechargeTime);
+			boostComponent.SubtractValue(Time.deltaTime);
 			if (IsDrilling)
 			{
 				velocity.Normalize();
@@ -617,25 +596,25 @@ public class Shuttle : Character, IStunnable, ICombat, IInteractor
 		}
 		else
 		{
-			if (isBoosting)
+			if (IsBoosting)
 			{
-				speedMultiplier /= boostMultiplier;
+				speedMultiplier /= boostSpeedMultiplier;
 				shuttleAnimator.SetBool("IsBoosting", false);
 			}
-			isBoosting = false;
-			rechargeTimer += Time.deltaTime;
-			if (rechargeTimer >= boostRechargeTime)
+			IsBoosting = false;
+			if (!BoostIsWaitingToRecharge)
 			{
-				float oldVal = boostLevel / boostCapacity;
-				boostLevel = Mathf.Min(boostLevel + Time.deltaTime * rechargeSpeed, boostCapacity);
-				OnBoostAmountChanged?.Invoke(oldVal, GetBoostRemaining());
+				boostComponent.AddValue(Time.deltaTime * rechargeSpeed);
 			}
 		}
 	}
 
+	private bool BoostIsWaitingToRecharge
+		=> TimerTracker.GetTimer(boostRechargeTimerID) > 0f;
+
 	public override void DestroyedAnEntity(Entity target)
 	{
-		GameEvents.EntityDestroyed(target.GetEntityType());
+		NotifyOfDestroyedEntity(target);
 
 		switch (target.GetEntityType())
 		{
@@ -646,11 +625,9 @@ public class Shuttle : Character, IStunnable, ICombat, IInteractor
 		}
 	}
 
-	public float GetBoostRemaining() => boostLevel / boostCapacity;
-
 	public override bool CanFireLaser() =>
 		laserAttached
-		&& !isBoosting
+		&& !IsBoosting
 		&& InputManager.GetInput("Shoot") > 0f
 		&& !Pause.IsStopped
 		&& hasControl
@@ -658,7 +635,7 @@ public class Shuttle : Character, IStunnable, ICombat, IInteractor
 
 	public override bool CanFireStraightWeapon() =>
 		straightWeaponAttached
-		&& !isBoosting
+		&& !IsBoosting
 		&& InputManager.GetInput("Shoot") > 0f
 		&& !Pause.IsStopped
 		&& hasControl
@@ -725,31 +702,15 @@ public class Shuttle : Character, IStunnable, ICombat, IInteractor
 
 	public override ICombat GetICombat() => this;
 
-	public override void ReceiveItemReward(ItemStack stack)
-	{
-		CollectItem(stack);
-	}
-
-	public override bool TakeItem(Item.Type type, int amount) => storage.RemoveItem(type, amount);
+	public override bool TakeItem(Item.Type type, int amount) => DefaultInventory.RemoveItem(type, amount);
 
 	public override Scan ReturnScan() => new Scan(GetEntityType(), 1f, GetLevel(), GetValue());
 
 	protected override int GetLevel() => base.GetLevel();
 
-	protected override int GetValue() => storage.GetValue();
+	protected override int GetValue() => DefaultInventory.GetValue();
 
 	public override bool CanDrill() => base.CanDrill() && drillIsActive;
-
-	public void SetNavigationActive(bool activate) => OnNavigationUpdated?.Invoke(activate);
-
-	private void CheckWaypoint()
-	{
-		float distance = Vector2.Distance(transform.position, waypoint.GetPosition());
-		if (distance <= 2f)
-		{
-			GameEvents.WaypointReached(waypoint);
-		}
-	}
 
 	public void EnterShip(Transform shipHatch)
 	{
@@ -793,25 +754,14 @@ public class Shuttle : Character, IStunnable, ICombat, IInteractor
 		//open hatch
 	}
 
-	public bool IsPerformingAction(string action) => InputManager.GetInput(action) > 0f;
+	public override bool IsPerformingAction(string action)
+		=> InputManager.GetInput(action) > 0f;
 
-	public object ObjectOrderRequest(object order) => null;
-
-	public void Interact(object interactableObject)
+	public override void Interact(object interactableObject)
 	{
 		if (interactableObject is MainHatchPrompt mainHatch)
 		{
 			EnterShip(mainHatch.transform);
 		}
-	}
-
-	public void EnteredTrigger(ITrigger vTrigger)
-	{
-
-	}
-
-	public void ExitedTrigger(ITrigger vTrigger)
-	{
-
 	}
 }

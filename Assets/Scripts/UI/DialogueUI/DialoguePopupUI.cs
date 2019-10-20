@@ -39,7 +39,7 @@ public class DialoguePopupUI : PopupUI
 			DialoguePopupObject po = activePopups[i];
 			float targetHeight = popupHeight * i;
 			float delta = 1f - Mathf.Abs(targetHeight - po.transform.anchoredPosition.y) / popupHeight;
-			delta = Mathf.Lerp(delta, 1f, recordingModeTrackerSO.UnscaledDeltaTime * popupEntrySpeed);
+			delta = Mathf.Lerp(delta, 1f, Time.unscaledDeltaTime * popupEntrySpeed);
 			po.popupGroup.alpha = i == 0 ? delta : 1f / (i + 1);
 			po.inputPrompt.gameObject.SetActive(i == 0);
 			Vector2 targetPos = po.transform.anchoredPosition;
@@ -57,10 +57,10 @@ public class DialoguePopupUI : PopupUI
 			}
 			else
 			{
-				delta = Mathf.Lerp(delta, 0f, recordingModeTrackerSO.UnscaledDeltaTime);
+				delta = Mathf.Lerp(delta, 0f, Time.unscaledDeltaTime);
 				po.popupGroup.alpha = delta;
 				Vector2 dir = po.isLeft ? Vector2.left : Vector2.right;
-				po.transform.anchoredPosition += dir * popupMoveSpeed * recordingModeTrackerSO.UnscaledDeltaTime;
+				po.transform.anchoredPosition += dir * popupMoveSpeed * Time.unscaledDeltaTime;
 			}
 		}
 	}

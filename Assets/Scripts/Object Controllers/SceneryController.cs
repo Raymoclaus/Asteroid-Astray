@@ -1,9 +1,11 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Collections;
 using CielaSpike;
 using System.IO;
+using CustomDataTypes;
 
 public class SceneryController : MonoBehaviour
 {
@@ -12,9 +14,9 @@ public class SceneryController : MonoBehaviour
 	[SerializeField] private string typesPath;
 	private string folderPath, lessFrequentImageFolderPath;
 	private bool ready;
-	public static bool IsDone { get { return instance != null && instance.texturesGenerated; } }
+	public static bool IsDone => instance != null && instance.texturesGenerated;
 
-	private List<List<List<List<CosmicItem>>>> items;
+	private List<List<List<List<CosmicItem>>>> items = new List<List<List<List<CosmicItem>>>>();
 	private const int RESERVE_SIZE = 100;
 	private const int LARGE_DISTANCE = 500;
 	public List<Sprite> types, lessFrequentTypes;
@@ -25,11 +27,10 @@ public class SceneryController : MonoBehaviour
 	[SerializeField] private Camera cam;
 	private Camera Cam { get { return cam ?? (cam = FindObjectOfType<Camera>()); } }
 	private int ViewDistance { get { return Mathf.CeilToInt(Cam?.fieldOfView ?? 1f); } }
-
-	private const int poolSize = 10000;
-	private Queue<StarFieldMaterialPropertyManager> pool = new Queue<StarFieldMaterialPropertyManager>(poolSize);
-	private Queue<StarFieldMaterialPropertyManager> active = new Queue<StarFieldMaterialPropertyManager>(poolSize);
-	private Queue<StarFieldMaterialPropertyManager> transitionActive = new Queue<StarFieldMaterialPropertyManager>(poolSize);
+	
+	private Queue<StarFieldMaterialPropertyManager> pool = new Queue<StarFieldMaterialPropertyManager>();
+	private Queue<StarFieldMaterialPropertyManager> active = new Queue<StarFieldMaterialPropertyManager>();
+	private Queue<StarFieldMaterialPropertyManager> transitionActive = new Queue<StarFieldMaterialPropertyManager>();
 
 	private ChunkCoords currentCoords = ChunkCoords.Invalid;
 	public IntPair cosmicDensity = new IntPair(10, 100);
@@ -41,7 +42,6 @@ public class SceneryController : MonoBehaviour
 	private int backgroundLayer;
 	public Color nebulaFadeBackground;
 	[SerializeField] private Material customSpriteMaterial;
-	[SerializeField] private bool loadStarPositions = true, adjustVisibility = true, adjustRotation = true;
 
 	[Header("Texture Variables")]
 	private bool texturesGenerated;
@@ -64,27 +64,22 @@ public class SceneryController : MonoBehaviour
 	public float hazeOpacity = 3f;
 
 	private int freeWorkers;
-
-	public delegate void StarFieldCreatedEventHandler();
-	private static event StarFieldCreatedEventHandler OnStarFieldCreated;
+	
+	private static event Action OnStarFieldCreated;
 
 	private void Awake()
 	{
-		if (instance == null)
-		{
-			instance = this;
-		}
-		else
+		if (instance != this && instance != null)
 		{
 			Destroy(gameObject);
 			return;
 		}
-
-		InitialSetup();
-		StartCoroutine(CreateStarSystems(null));
+		instance = this;
+		
+		EntityNetwork.AddListener(InitialSetup);
 	}
 
-	public static void AddListener(System.Action action)
+	public static void AddListener(Action action)
 	{
 		if (IsDone)
 		{
@@ -92,7 +87,7 @@ public class SceneryController : MonoBehaviour
 		}
 		else if (action != null)
 		{
-			OnStarFieldCreated += new StarFieldCreatedEventHandler(action);
+			OnStarFieldCreated += action;
 		}
 	}
 
@@ -100,15 +95,16 @@ public class SceneryController : MonoBehaviour
 	{
 		if (ready) return;
 
+		Debug.Log("Loading Scenery Controller");
 		backgroundLayer = LayerMask.NameToLayer("BackgroundImage");
 		sceneryHolder = new GameObject("Scenery Holder").transform;
 		sceneryHolder.gameObject.layer = backgroundLayer;
-		FillPool();
-		ReserveListCapacity();
-		perlinOffset = new Vector2(Random.value, Random.value);
+		perlinOffset = new Vector2(UnityEngine.Random.value, UnityEngine.Random.value);
 		folderPath = Application.dataPath + typesPath;
 		lessFrequentImageFolderPath = folderPath + "/LessFrequentImages";
 		ready = true;
+
+		StartCoroutine(CreateStarSystems(null));
 	}
 
 	private void Update()
@@ -129,7 +125,7 @@ public class SceneryController : MonoBehaviour
 
 		if (types.Count >= variety)
 		{
-			ChunkCoords newCoords = new ChunkCoords(transform.position);
+			ChunkCoords newCoords = new ChunkCoords(transform.position, EntityNetwork.CHUNK_SIZE);
 			if (newCoords != currentCoords)
 			{
 				CoordsChanged(newCoords);
@@ -182,11 +178,8 @@ public class SceneryController : MonoBehaviour
 			}
 			else
 			{
-				if (pool.Count == 0)
-				{
-					FillPool();
-				}
-				sfmpm = pool.Dequeue();
+
+				sfmpm = GetFromPool();
 				rend = sfmpm.rend;
 				tr = sfmpm.transform;
 				obj = sfmpm.obj;
@@ -205,27 +198,21 @@ public class SceneryController : MonoBehaviour
 			}
 			//Color col = transparent ? nebulaFadeBackground : Color.white;
 			Color col = Color.white;
-			if (adjustVisibility)
+			float delta = (1f - (item.pos.z - starMinDistance) / starDistanceRange) * 0.9f + 0.1f;
+			if (item.common)
 			{
-				float delta = (1f - (item.pos.z - starMinDistance) / starDistanceRange) * 0.9f + 0.1f;
-				if (item.common)
-				{
-					col.a *= delta;
-				}
-				else
-				{
+				col.a *= delta;
+			}
+			else
+			{
 
-					col = Color.Lerp(Color.black, Color.white,
-						Mathf.Clamp(delta, imageBrightnessRange.x, imageBrightnessRange.y));
-				}
+				col = Color.Lerp(Color.black, Color.white,
+					Mathf.Clamp(delta, imageBrightnessRange.x, imageBrightnessRange.y));
 			}
 			sfmpm.SetColor(col);
 			active.Enqueue(sfmpm);
 			tr.localScale = Vector2.one * item.size;
-			if (adjustRotation)
-			{
-				tr.eulerAngles = Vector3.forward * item.rotation * 45f;
-			}
+			tr.eulerAngles = Vector3.forward * item.rotation * 45f;
 		}
 
 		while (transitionActive.Count > 0)
@@ -248,59 +235,39 @@ public class SceneryController : MonoBehaviour
 		amount = amount * (max - min) + min;
 		for (int i = 0; i < (int)amount; i++)
 		{
-			Vector2Pair area = ChunkCoords.GetCellArea(c);
-			Vector3 spawnPos = new Vector3(Random.Range(area.a.x, area.b.x), Random.Range(area.a.y, area.b.y),
-				(1f - Mathf.Pow(Random.value, 7f * (max / amount))) * starDistanceRange + starMinDistance);
-			bool common = lessFrequentTypes.Count == 0 || Random.value <= commonTypeFrequency;
+			Vector2Pair area = ChunkCoords.GetCellArea(c, EntityNetwork.CHUNK_SIZE);
+			Vector3 spawnPos = new Vector3(UnityEngine.Random.Range(area.a.x, area.b.x),
+				UnityEngine.Random.Range(area.a.y, area.b.y),
+				(1f - Mathf.Pow(UnityEngine.Random.value, 7f * (max / amount))) * starDistanceRange + starMinDistance);
+			bool common = lessFrequentTypes.Count == 0 || UnityEngine.Random.value <= commonTypeFrequency;
 			List<Sprite> listToChooseFrom = common ? types : lessFrequentTypes;
-			CosmicItem newItem = new CosmicItem((byte)Random.Range(0, listToChooseFrom.Count), spawnPos,
-				Random.Range(scaleRange.x, scaleRange.y), (byte)Random.Range(0, 8), common);
+			CosmicItem newItem = new CosmicItem((byte)UnityEngine.Random.Range(0, listToChooseFrom.Count), spawnPos,
+				UnityEngine.Random.Range(scaleRange.x, scaleRange.y), (byte)UnityEngine.Random.Range(0, 8), common);
 			Chunk(c).Add(newItem);
 		}
 	}
 
-	private void ReserveListCapacity()
+	private StarFieldMaterialPropertyManager GetFromPool()
 	{
-		items = new List<List<List<List<CosmicItem>>>>(EntityNetwork.QUADRANT_COUNT);
-		for (int dir = 0; dir < EntityNetwork.QUADRANT_COUNT; dir++)
+		if (pool.Count == 0)
 		{
-			items.Add(new List<List<List<CosmicItem>>>(LARGE_DISTANCE));
-			for (int x = 0; x < LARGE_DISTANCE; x++)
-			{
-				items[dir].Add(new List<List<CosmicItem>>(LARGE_DISTANCE));
-				for (int y = 0; y < LARGE_DISTANCE; y++)
-				{
-					items[dir][x].Add(new List<CosmicItem>(RESERVE_SIZE));
-				}
-			}
+			AddOneToPool();
 		}
-
-		if (loadStarPositions)
-		{
-			items = CosmicItemFileReader.Load(items, LARGE_DISTANCE, RESERVE_SIZE);
-		}
+		return pool.Dequeue();
 	}
 
-	public void Save()
+	private void AddOneToPool()
 	{
-		CosmicItemFileReader.Save(items);
-	}
+		GameObject obj = new GameObject();
+		obj.transform.parent = sceneryHolder;
+		obj.layer = backgroundLayer;
+		obj.SetActive(false);
 
-	private void FillPool()
-	{
-		for (int i = 0; i < poolSize; i++)
-		{
-			GameObject obj = new GameObject();
-			obj.transform.parent = sceneryHolder;
-			obj.layer = backgroundLayer;
-			obj.SetActive(false);
+		SpriteRenderer rend = obj.AddComponent<SpriteRenderer>();
+		rend.material = customSpriteMaterial;
 
-			SpriteRenderer rend = obj.AddComponent<SpriteRenderer>();
-			rend.material = customSpriteMaterial;
-
-			StarFieldMaterialPropertyManager sfmpm = new StarFieldMaterialPropertyManager(rend, obj.transform, obj);
-			pool.Enqueue(sfmpm);
-		}
+		StarFieldMaterialPropertyManager sfmpm = new StarFieldMaterialPropertyManager(rend, obj.transform, obj);
+		pool.Enqueue(sfmpm);
 	}
 
 	public IEnumerator CreateStarSystems(System.Action a)
@@ -326,8 +293,7 @@ public class SceneryController : MonoBehaviour
 				(int)Mathf.Pow(2f, starPowerRange.y));
 
 			//prepare worker threads
-			int expected;
-			ThreadPool.GetMinThreads(out freeWorkers, out expected);
+			ThreadPool.GetMinThreads(out freeWorkers, out int expected);
 			expected = 0;
 			freeWorkers = Mathf.Max(1, freeWorkers - 2);
 			int maxFreeWorkers = freeWorkers;
@@ -424,6 +390,7 @@ public class SceneryController : MonoBehaviour
 		{
 			Debug.Log("Adding existing Star Systems");
 		}
+		Debug.Log("Scenery Controller Loaded");
 		texturesGenerated = true;
 		OnStarFieldCreated?.Invoke();
 		OnStarFieldCreated = null;
@@ -634,41 +601,31 @@ public class SceneryController : MonoBehaviour
 		}
 	}
 
-	#region Convenient short-hand methods for accessing the grid
-	private List<CosmicItem> Chunk(ChunkCoords cc)
-	{
-		return Column(cc)[cc.y];
-	}
+	private List<CosmicItem> Chunk(ChunkCoords cc) => Column(cc)[cc.y];
 
-	private List<List<CosmicItem>> Column(ChunkCoords cc)
-	{
-		return Direction(cc)[cc.x];
-	}
+	private List<List<CosmicItem>> Column(ChunkCoords cc) => Quad(cc)[cc.x];
 
-	private List<List<List<CosmicItem>>> Direction(ChunkCoords cc)
-	{
-		return items[(int)cc.Direction];
-	}
+	private List<List<List<CosmicItem>>> Quad(ChunkCoords cc) => items[(int)cc.quadrant];
 
 	private bool ChunkExists(ChunkCoords cc)
 	{
-		if (cc.Direction < 0 || (int)cc.Direction >= items.Count) return false;
-		if (cc.x < 0 || cc.x >= Direction(cc).Count) return false;
+		if (cc.quadrant < 0 || (int)cc.quadrant >= items.Count) return false;
+		if (cc.x < 0 || cc.x >= Quad(cc).Count) return false;
 		return cc.y > 0 && cc.y < Column(cc).Count;
 	}
 
 	private void FillSpace(ChunkCoords cc)
 	{
-		if (ChunkExists(cc) && cc.IsValid()) return;
+		if (!cc.IsValid()) return;
 
-		while (items.Count <= (int)cc.Direction)
+		while (items.Count <= (int)cc.quadrant)
 		{
 			items.Add(new List<List<List<CosmicItem>>>());
 		}
 
-		while (Direction(cc).Count <= cc.x)
+		while (Quad(cc).Count <= cc.x)
 		{
-			Direction(cc).Add(new List<List<CosmicItem>>());
+			Quad(cc).Add(new List<List<CosmicItem>>());
 		}
 
 		while (Column(cc).Count <= cc.y)
@@ -676,5 +633,4 @@ public class SceneryController : MonoBehaviour
 			Column(cc).Add(new List<CosmicItem>());
 		}
 	}
-	#endregion
 }

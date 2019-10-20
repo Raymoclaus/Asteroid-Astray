@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using InventorySystem;
+using System.Collections.Generic;
 using UnityEngine;
 
 public static class FirstQuestScriptedDrops
@@ -23,9 +24,9 @@ public static class FirstQuestScriptedDrops
 		new List<ItemStack>()
 	};
 
-	public static List<ItemStack> GetScriptedDrop(Entity e)
+	public static List<ItemStack> GetScriptedDrop(IInventoryHolder target)
 	{
-		if (e.GetEntityType() != EntityType.Shuttle) return null;
+		if (target is Shuttle) return null;
 		if (items.Count == 0) scriptedDropsActive = false;
 		if (!scriptedDropsActive) return null;
 

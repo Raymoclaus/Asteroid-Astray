@@ -6,18 +6,37 @@ namespace InventorySystem
 {
 	public class Inventory : MonoBehaviour
 	{
-		public int size = 10;
-		public bool noLimit = false;
-		public List<ItemStack> stacks = new List<ItemStack>();
-		[SerializeField] private string saveKey;
-		public string SaveKey => saveKey;
+		//index, type, new amount
+		public event Action<int, Item.Type, int> OnStackUpdated;
+		//old size, new size
+		public event Action<int, int> OnSizeChanged;
+
+		[SerializeField] private string inventoryName;
+		[SerializeField] private int size = 10;
+		[SerializeField] private bool noLimit = false;
+		[SerializeField] private List<ItemStack> itemStacks = new List<ItemStack>();
+
+		private void Awake()
+		{
+			TrimPadStacks();
+		}
+
+		public string InventoryName => inventoryName;
+
+		public int Size => size;
+
+		public List<ItemStack> ItemStacks
+		{
+			get => itemStacks;
+			private set => itemStacks = value;
+		}
 
 		public void SetData(InventoryData data)
 		{
 			if (data.stacks != null)
 			{
 				size = data.size;
-				stacks = data.stacks;
+				ItemStacks = data.stacks;
 			}
 			TrimPadStacks();
 		}
@@ -25,9 +44,9 @@ namespace InventorySystem
 		public int AmountOfItem(Item.Type type)
 		{
 			int amount = 0;
-			for (int i = 0; i < stacks.Count; i++)
+			for (int i = 0; i < ItemStacks.Count; i++)
 			{
-				ItemStack stack = stacks[i];
+				ItemStack stack = ItemStacks[i];
 				if (stack.GetItemType() == type)
 				{
 					amount += stack.GetAmount();
@@ -39,9 +58,9 @@ namespace InventorySystem
 		private int EmptySlotCount()
 		{
 			int count = 0;
-			for (int i = 0; i < stacks.Count; i++)
+			for (int i = 0; i < ItemStacks.Count; i++)
 			{
-				if (stacks[i].GetItemType() == Item.Type.Blank)
+				if (ItemStacks[i].GetItemType() == Item.Type.Blank)
 				{
 					count++;
 				}
@@ -51,59 +70,81 @@ namespace InventorySystem
 
 		public bool HasItems() => EmptySlotCount() < size;
 
-		public int AddItem(Item.Type type, int num = 1, List<ItemStack> inv = null)
+		public int AddToStack(Item.Type itemType, int amount, int index)
+		{
+			if (index < 0 || index >= Size) return amount;
+			ItemStack stack = ItemStacks[index];
+			if (itemType != stack.GetItemType()) return amount;
+			int leftOver = stack.AddAmount(amount);
+			OnStackUpdated?.Invoke(index, itemType, stack.GetAmount());
+			return leftOver;
+		}
+
+		public int AddItem(Item.Type type, int num = 1)
 		{
 			if (num <= 0) return 0;
 			if (type == Item.Type.Blank) return 0;
-
-			inv = inv ?? stacks;
-			for (int i = 0; i < inv.Count; i++)
+			
+			for (int i = 0; i < ItemStacks.Count; i++)
 			{
-				ItemStack stack = inv[i];
-				if (stack.GetItemType() == type)
+				if (ItemStacks[i].GetItemType() == type)
 				{
-					int difference = Item.StackLimit(type) - stack.GetAmount();
+					int difference = Item.StackLimit(type) - ItemStacks[i].GetAmount();
 					if (difference > 0)
 					{
 						int add = Math.Min(num, difference);
 						num -= add;
-						stack.AddAmount(add);
+						ItemStacks[i].AddAmount(add);
+						OnStackUpdated?.Invoke(i, type, ItemStacks[i].GetAmount());
 					}
 				}
 				if (num <= 0) return 0;
 			}
-			num = SetBlank(type, num, inv);
+			num = SetBlank(type, num);
+			if (num > 0)
+			{
+				Debug.Log("Inventory too full to add all items");
+			}
 			return num;
 		}
+
+		public int AddItem(ItemStack stack)
+			=> AddItem(stack.GetItemType(), stack.GetAmount());
 
 		public List<ItemStack> AddItems(List<ItemStack> items)
 		{
 			for (int i = 0; i < items.Count; i++)
 			{
 				if (items[i].GetItemType() == Item.Type.Blank) continue;
-				items[i].SetAmount(AddItem(items[i].GetItemType(), items[i].GetAmount()));
+				int leftOver = AddItem(items[i]);
+				items[i].SetAmount(leftOver);
 			}
 			return items;
 		}
 
-		private int SetBlank(Item.Type type, int num, List<ItemStack> inv = null)
+		/// <summary>
+		/// Fills blank slots with items.
+		/// </summary>
+		/// <returns>Number of items not able to be added</returns>
+		private int SetBlank(Item.Type type, int num)
 		{
-			inv = inv ?? stacks;
-			for (int i = 0; i < inv.Count; i++)
+			for (int i = 0; i < ItemStacks.Count; i++)
 			{
-				ItemStack stack = inv[i];
-				if (stack.GetItemType() == Item.Type.Blank)
+				if (ItemStacks[i].GetItemType() == Item.Type.Blank)
 				{
 					int add = Math.Min(num, Item.StackLimit(type));
 					num -= add;
-					stack.SetItemType(type);
-					stack.AddAmount(add);
+					ItemStacks[i].SetItemType(type);
+					ItemStacks[i].AddAmount(add);
+					OnStackUpdated?.Invoke(i, type, ItemStacks[i].GetAmount());
 				}
 				if (num <= 0) return 0;
-				if (i == inv.Count - 1 && noLimit)
+				if (i == ItemStacks.Count - 1 && noLimit)
 				{
-					inv.Add(new ItemStack());
+					ItemStacks.Add(new ItemStack());
+					int oldSize = size;
 					size++;
+					OnSizeChanged?.Invoke(oldSize, size);
 				}
 			}
 
@@ -114,12 +155,13 @@ namespace InventorySystem
 		{
 			if (num <= 0) return true;
 
-			for (int i = stacks.Count - 1; i >= 0; i--)
+			for (int i = ItemStacks.Count - 1; i >= 0; i--)
 			{
-				if (stacks[i].GetItemType() == type)
+				if (ItemStacks[i].GetItemType() == type)
 				{
-					int amount = stacks[i].GetAmount();
-					int leftover = stacks[i].RemoveAmount(num);
+					int amount = ItemStacks[i].GetAmount();
+					int leftover = ItemStacks[i].RemoveAmount(num);
+					OnStackUpdated?.Invoke(i, ItemStacks[i].GetItemType(), ItemStacks[i].GetAmount());
 					num -= amount - leftover;
 				}
 				if (num <= 0) return true;
@@ -127,6 +169,9 @@ namespace InventorySystem
 
 			return false;
 		}
+
+		public bool RemoveItem(ItemStack stack)
+			=> RemoveItem(stack.GetItemType(), stack.GetAmount());
 
 		public void RemoveItems(List<ItemStack> items)
 		{
@@ -136,27 +181,114 @@ namespace InventorySystem
 			}
 		}
 
-		public bool CanFit(List<ItemStack> items)
+		public int SpaceLeftForItemType(Item.Type type, bool includeEmptyStacks)
 		{
-			if (EmptySlotCount() >= items.Count) return true;
-
-			List<ItemStack> tempItems = new List<ItemStack>(items);
-			List<ItemStack> tempInventory = new List<ItemStack>(stacks);
-
-			for (int i = 0; i < tempItems.Count; i++)
+			int count = 0;
+			for (int i = 0; i < Size; i++)
 			{
-				if (AddItem(tempItems[i].GetItemType(), tempItems[i].GetAmount(), tempInventory) != 0)
-				{
-					return false;
-				}
+				if (!includeEmptyStacks && ItemStacks[i].GetItemType() == Item.Type.Blank) continue;
+				int maxAmount = Item.StackLimit(type);
+				int leftOver = maxAmount - ItemStacks[i].GetAmount();
+				count += leftOver;
 			}
-			return true;
+			return count;
 		}
 
-		public bool CanFit(ItemStack items)
+		public bool CanFit(List<ItemStack> items)
 		{
-			List<ItemStack> tempInventory = new List<ItemStack>(stacks);
-			return AddItem(items.GetItemType(), items.GetAmount(), tempInventory) <= 0;
+			if (noLimit) return true;
+			int emptySlotCount = EmptySlotCount();
+			if (emptySlotCount >= NonBlankCount(items)) return true;
+			if (NonBlankCount(items) == 1) return CanFit(items[0]);
+
+			//check space for each item (excluding blank spaces)
+			//if any items need to spill into blank spaces to fit, store the spill amount
+			//if the total spill amount is less than the amount that can fit in blank spaces
+			//then return true
+
+			List<ItemStack> spillingItems = new List<ItemStack>();
+			for (int i = 0; i < items.Count; i++)
+			{
+				ItemStack stack = items[i];
+				Item.Type stackType = stack.GetItemType();
+				if (stackType == Item.Type.Blank) continue;
+				int spaceForItem = SpaceLeftForItemType(stackType, false);
+				int stackAmount = stack.GetAmount();
+				int spillAmount = Mathf.Max(0, spaceForItem - stackAmount);
+				if (spillAmount == 0) continue;
+
+				for (int j = 0; j < spillingItems.Count; j++)
+				{
+					ItemStack spillStack = spillingItems[j];
+					Item.Type spillType = spillStack.GetItemType();
+					if (spillType != stackType) continue;
+					spillAmount = spillStack.AddAmount(spillAmount);
+					if (spillAmount == 0) break;
+				}
+
+				while (spillAmount > 0)
+				{
+					ItemStack newSpillStack = new ItemStack(stackType, spillAmount);
+					spillAmount -= newSpillStack.GetAmount();
+					spillingItems.Add(newSpillStack);
+				}
+			}
+
+			return emptySlotCount >= NonBlankCount(spillingItems);
+		}
+
+		public bool CanFit(ItemStack stack)
+		{
+			if (noLimit) return true;
+			if (stack.GetItemType() == Item.Type.Blank) return true;
+			int spaceForItem = SpaceLeftForItemType(stack.GetItemType(), true);
+			return spaceForItem <= stack.GetAmount();
+		}
+
+		public int NonBlankCount(List<ItemStack> stacks)
+		{
+			int count = 0;
+			for (int i = 0; i < stacks.Count; i++)
+			{
+				if (stacks[i].GetItemType() == Item.Type.Blank) continue;
+				count++;
+			}
+			return count;
+		}
+
+		public void Simplify(List<ItemStack> stacks)
+		{
+			for (int i = 1; i < stacks.Count; i++)
+			{
+				ItemStack currentStack = stacks[i];
+				if (currentStack.GetItemType() == Item.Type.Blank) continue;
+
+				for (int j = 0; j < i; j++)
+				{
+					ItemStack priorStack = stacks[j];
+					if (priorStack.GetItemType() == Item.Type.Blank) continue;
+
+					if (currentStack.GetItemType() == priorStack.GetItemType())
+					{
+						int currentAmount = currentStack.GetAmount();
+						int leftOver = priorStack.AddAmount(currentAmount);
+						currentStack.SetAmount(currentAmount);
+
+						if (currentStack.GetAmount() == 0) break;
+					}
+				}
+			}
+		}
+
+		private void RemoveBlanks(List<ItemStack> stacks)
+		{
+			for (int i = stacks.Count - 1; i >= 0; i--)
+			{
+				if (stacks[i].GetItemType() == Item.Type.Blank)
+				{
+					stacks.RemoveAt(i);
+				}
+			}
 		}
 
 		public int Count(Item.Type? include = null, int minRarity = 0, int maxRarity = Item.MAX_RARITY)
@@ -166,9 +298,9 @@ namespace InventorySystem
 
 			if (include == Item.Type.Blank) return 0;
 
-			for (int i = 0; i < stacks.Count; i++)
+			for (int i = 0; i < ItemStacks.Count; i++)
 			{
-				ItemStack stack = stacks[i];
+				ItemStack stack = ItemStacks[i];
 				if (fltr && stack.GetItemType() != include) continue;
 				int rarity = Item.TypeRarity(stack.GetItemType());
 				if (rarity < minRarity && rarity > maxRarity) continue;
@@ -181,34 +313,34 @@ namespace InventorySystem
 		public bool SetStacks(List<ItemStack> newStacks)
 		{
 			if (newStacks.Count > size) return false;
-			stacks = newStacks;
+			ItemStacks = newStacks;
 			TrimPadStacks();
 			return true;
 		}
 
 		private void TrimPadStacks()
 		{
-			if (stacks == null)
+			if (ItemStacks == null)
 			{
-				stacks = new List<ItemStack>();
+				ItemStacks = new List<ItemStack>();
 			}
 
-			while (stacks.Count < size)
+			while (ItemStacks.Count < size)
 			{
-				stacks.Add(new ItemStack());
+				ItemStacks.Add(new ItemStack());
 			}
 
-			if (stacks.Count > size)
+			if (ItemStacks.Count > size)
 			{
-				stacks.RemoveRange(size, stacks.Count - size);
+				ItemStacks.RemoveRange(size, ItemStacks.Count - size);
 			}
 		}
 
 		public void ClearAll()
 		{
-			for (int i = 0; i < stacks.Count; i++)
+			for (int i = 0; i < ItemStacks.Count; i++)
 			{
-				stacks[i].SetBlank();
+				ItemStacks[i].SetBlank();
 			}
 			TrimPadStacks();
 		}
@@ -218,9 +350,9 @@ namespace InventorySystem
 			int[] counts = new int[Item.MAX_RARITY + 1];
 			bool fltr = exclude != null;
 
-			for (int i = 0; i < stacks.Count; i++)
+			for (int i = 0; i < ItemStacks.Count; i++)
 			{
-				ItemStack stack = stacks[i];
+				ItemStack stack = ItemStacks[i];
 				if (fltr && stack.GetItemType() == exclude) continue;
 				int rarity = Item.TypeRarity(stack.GetItemType());
 				counts[rarity] += stack.GetAmount();
@@ -231,18 +363,18 @@ namespace InventorySystem
 
 		public void RemoveByRarity(int rarity, int amount, Item.Type? exclude = null)
 		{
-			for (int i = stacks.Count - 1; i >= 0; i--)
+			for (int i = ItemStacks.Count - 1; i >= 0; i--)
 			{
-				Item.Type type = stacks[i].GetItemType();
+				Item.Type type = ItemStacks[i].GetItemType();
 				if (type == exclude) continue;
 
 				if (Item.TypeRarity(type) == rarity)
 				{
-					int stackAmount = stacks[i].GetAmount();
+					int stackAmount = ItemStacks[i].GetAmount();
 					if (stackAmount > 0)
 					{
-						stacks[i].SetAmount(stackAmount - amount);
-						amount -= stackAmount - stacks[i].GetAmount();
+						ItemStacks[i].SetAmount(stackAmount - amount);
+						amount -= stackAmount - ItemStacks[i].GetAmount();
 					}
 				}
 
@@ -257,7 +389,7 @@ namespace InventorySystem
 
 		public void Swap(int a, int b)
 		{
-			if (a < 0 || b < 0 || a >= stacks.Count || b >= stacks.Count || a == b) return;
+			if (a < 0 || b < 0 || a >= ItemStacks.Count || b >= ItemStacks.Count || a == b) return;
 
 			//Item.Type typeA = inventory[a].GetItemType();
 			//int amountA = inventory[a].GetAmount();
@@ -268,28 +400,28 @@ namespace InventorySystem
 			//inventory[a].SetAmount(amountB);
 			//inventory[b].SetItemType(typeA);
 			//inventory[b].SetAmount(amountA);
-			ItemStack temp = stacks[a];
-			stacks[a] = stacks[b];
-			stacks[b] = temp;
+			ItemStack temp = ItemStacks[a];
+			ItemStacks[a] = ItemStacks[b];
+			ItemStacks[b] = temp;
 		}
 
 		public bool Insert(Item.Type type, int amount, int place)
 		{
-			if (place < 0 || place >= stacks.Count) return false;
+			if (place < 0 || place >= ItemStacks.Count) return false;
 
-			if (stacks[place].GetItemType() == Item.Type.Blank)
+			if (ItemStacks[place].GetItemType() == Item.Type.Blank)
 			{
-				stacks[place].SetItemType(type);
-				stacks[place].SetAmount(amount);
+				ItemStacks[place].SetItemType(type);
+				ItemStacks[place].SetAmount(amount);
 				return true;
 			}
 			else
 			{
 				bool forward = false;
 				int i = place + 1;
-				for (; i < stacks.Count; i++)
+				for (; i < ItemStacks.Count; i++)
 				{
-					if (stacks[i].GetItemType() == Item.Type.Blank)
+					if (ItemStacks[i].GetItemType() == Item.Type.Blank)
 					{
 						forward = true;
 						break;
@@ -302,7 +434,7 @@ namespace InventorySystem
 					i = place - 1;
 					for (; i >= 0; i--)
 					{
-						if (stacks[i].GetItemType() == Item.Type.Blank)
+						if (ItemStacks[i].GetItemType() == Item.Type.Blank)
 						{
 							backward = true;
 							break;
@@ -320,8 +452,8 @@ namespace InventorySystem
 					{
 						if (i == place)
 						{
-							stacks[place].SetItemType(type);
-							stacks[place].SetAmount(amount);
+							ItemStacks[place].SetItemType(type);
+							ItemStacks[place].SetAmount(amount);
 							break;
 						}
 						Swap(i, i + (forward ? -1 : 1));
@@ -333,31 +465,31 @@ namespace InventorySystem
 
 		public ItemStack Replace(ItemStack stack, int place)
 		{
-			ItemStack temp = stacks[place];
-			stacks[place] = stack;
+			ItemStack temp = ItemStacks[place];
+			ItemStacks[place] = stack;
 			return temp;
 		}
 
 		public int GetValue()
 		{
 			int value = 0;
-			for (int i = 0; i < stacks.Count; i++)
+			for (int i = 0; i < ItemStacks.Count; i++)
 			{
-				value += stacks[i].GetValue();
+				value += ItemStacks[i].GetValue();
 			}
 			return value;
 		}
 
 		public int FirstInstanceId(Item.Type type)
 		{
-			for (int i = 0; i < stacks.Count; i++)
+			for (int i = 0; i < ItemStacks.Count; i++)
 			{
-				if (stacks[i].GetItemType() == type) return i;
+				if (ItemStacks[i].GetItemType() == type) return i;
 			}
 			return -1;
 		}
 
-		public InventoryData GetInventoryData() => new InventoryData(stacks, size);
+		public InventoryData GetInventoryData() => new InventoryData(ItemStacks, size);
 
 		[Serializable]
 		public struct InventoryData

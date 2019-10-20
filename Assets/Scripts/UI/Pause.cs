@@ -18,7 +18,6 @@ public class Pause : MonoBehaviour
 	[SerializeField] private PauseUIController pauseUI;
 	private PauseUIController PauseUI => pauseUI ??
 		(pauseUI = FindObjectOfType<PauseUIController>());
-	[SerializeField] private RecordingModeController recordingModeController;
 
 	public delegate void PauseEventHandler(bool pausing);
 	public event PauseEventHandler OnPause;
@@ -64,7 +63,7 @@ public class Pause : MonoBehaviour
 		if (isShifting)
 		{
 			float scl = Time.timeScale;
-			scl += recordingModeController.UnscaledDeltaTime * (shiftingUp ? 2f : -2f);
+			scl += Time.unscaledDeltaTime * (shiftingUp ? 2f : -2f);
 			if (scl <= 0f || scl >= intendedTimeSpeed)
 			{
 				Time.timeScale = Mathf.Clamp(scl, 0f, intendedTimeSpeed);
@@ -104,7 +103,7 @@ public class Pause : MonoBehaviour
 		Time.timeScale = 0f;
 		while (time > 0f)
 		{
-			time -= instance.recordingModeController.UnscaledDeltaTime;
+			time -= Time.unscaledDeltaTime;
 			yield return null;
 		}
 		Time.timeScale = intendedTimeSpeed;
@@ -157,7 +156,7 @@ public class Pause : MonoBehaviour
 	{
 		while (wait > 0f)
 		{
-			wait -= useDeltaTime ? Time.deltaTime : instance.recordingModeController.UnscaledDeltaTime;
+			wait -= useDeltaTime ? Time.deltaTime : Time.unscaledDeltaTime;
 			yield return null;
 		}
 		a();

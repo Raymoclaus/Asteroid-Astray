@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System;
+using System.Collections.Generic;
 
 namespace QuestSystem.Requirements
 {
@@ -11,19 +12,22 @@ namespace QuestSystem.Requirements
 		public int amountNeeded = 1;
 		private int currentAmount = 0;
 		private const string formattedDescription = "{0}: {1} / {2}";
-		private Action<Item.Type, int> action;
+		private bool shouldFormatDescription;
+		private ICrafter crafter;
 
 		public CraftingQReq(Item.Type typeNeeded, int amountNeeded,
-			Action<Item.Type, int> action)
-			: base($"Craft # {typeNeeded}", amountNeeded)
+			ICrafter crafter, string description = null)
+			: base(string.IsNullOrWhiteSpace(description)
+				  ? $"Craft # {typeNeeded}" : description, amountNeeded)
 		{
 			this.typeNeeded = typeNeeded;
 			this.amountNeeded = amountNeeded;
-			this.action = action;
+			this.crafter = crafter;
 		}
 
-		public CraftingQReq(Item.Type typeNeeded, Action<Item.Type, int> action)
-			: this(typeNeeded, 1, action)
+		public CraftingQReq(Item.Type typeNeeded, ICrafter crafter,
+			string description = null)
+			: this(typeNeeded, 1, crafter, description)
 		{
 
 		}
@@ -31,34 +35,44 @@ namespace QuestSystem.Requirements
 		public override void Activate()
 		{
 			base.Activate();
-			action += EvaluateEvent;
+			crafter.OnItemsCrafted += EvaluateEvent;
 		}
 
-		private void EvaluateEvent(Item.Type type, int amount)
+		public override void QuestRequirementCompleted()
+		{
+			base.QuestRequirementCompleted();
+			crafter.OnItemsCrafted -= EvaluateEvent;
+		}
+
+		private void EvaluateEvent(List<ItemStack> stacks)
 		{
 			if (Completed || !active) return;
 
-			if (type == typeNeeded && amount != 0)
+			bool updateRequirement = false;
+			for (int i = 0; i < stacks.Count; i++)
 			{
-				currentAmount += amount;
-				QuestRequirementUpdated();
-				if (currentAmount >= amountNeeded)
+				if (stacks[i].GetItemType() == typeNeeded)
 				{
-					QuestRequirementCompleted();
-					action -= EvaluateEvent;
+					currentAmount += stacks[i].GetAmount();
+					updateRequirement = true;
 				}
+			}
+
+			if (updateRequirement)
+			{
+				QuestRequirementUpdated();
+			}
+
+			if (currentAmount >= amountNeeded)
+			{
+				QuestRequirementCompleted();
 			}
 		}
 
-		public override string GetDescription()
-		{
-			return string.Format(formattedDescription, description, currentAmount, amountNeeded);
-		}
+		public override string GetDescription
+			=> string.Format(formattedDescription, description, currentAmount, amountNeeded);
 
-		public override Vector3? TargetLocation()
-		{
-			return null;
-		}
+		public override IWaypoint GetWaypoint => null;
 	}
 
 }

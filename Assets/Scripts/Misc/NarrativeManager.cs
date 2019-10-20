@@ -1,27 +1,32 @@
-﻿using System;
+﻿using CustomDataTypes;
+using InventorySystem;
+using InventorySystem.UI;
+using QuestSystem;
+using QuestSystem.Requirements;
+using System;
 using System.Collections.Generic;
+using TriggerSystem;
+using TriggerSystem.Triggers;
 using UnityEngine;
 
 public class NarrativeManager : MonoBehaviour
 {
-	#region Narrative booleans
 	public static bool ShuttleRepaired { get; private set; }
 	public static bool ShipRecharged { get; private set; }
-	#endregion
-
-	[SerializeField] private bool randomiseStartingLocation;
+	
 	private DialogueController dlgCtrl;
 	private DialogueController DlgCtrl
 		=> dlgCtrl != null ? dlgCtrl
 		: (dlgCtrl = FindObjectOfType<DialogueController>());
-	[SerializeField] private DebugGameplayManager dgm;
 	[SerializeField] private SpotlightEffectController spotlightEffectController;
 	[SerializeField] private CustomScreenEffect screenEffects;
-	[SerializeField] private Shuttle mainChar;
-	private Shuttle MainChar => mainChar ?? (mainChar = FindObjectOfType<Shuttle>());
-	[SerializeField] private Triggerer playerTriggerer;
-	private Triggerer PlayerTriggerer
-		=> playerTriggerer ?? (playerTriggerer = MainChar.GetComponent<Triggerer>());
+	[SerializeField] private Character mainChar;
+	private Character MainChar => mainChar != null ? mainChar
+		: (mainChar = FindObjectOfType<Character>());
+	private Quester MainQuester => MainChar?.GetComponent<Quester>();
+	[SerializeField] private IInteractor playerTriggerer;
+	private IInteractor PlayerTriggerer
+		=> playerTriggerer ?? (playerTriggerer = MainChar.GetComponent<IInteractor>());
 	private MainHatchPrompt mainHatch;
 	private MainHatchPrompt MainHatch
 		=> mainHatch ?? (mainHatch = FindObjectOfType<MainHatchPrompt>());
@@ -66,77 +71,8 @@ public class NarrativeManager : MonoBehaviour
 
 	private void Start()
 	{
-		if (randomiseStartingLocation)
-		{
-			ChooseStartingLocation();
-		}
-
-		MainChar.hasControl = false;
-		MainChar.isKinematic = true;
+		ChooseStartingLocation();
 		MainHatch.IsLocked = true;
-		MainChar.SetNavigationActive(false);
-		LoadingController.AddListener(() =>
-		{
-			MainChar.hasControl = true;
-			MainChar.isKinematic = false;
-		});
-
-		if (dgm.skipRecoveryDialogue)
-		{
-			ActivateSpotlight(false);
-			spotlightEffectController.SetSpotlight();
-			if (dgm.skipFirstGatheringQuest)
-			{
-				if (dgm.skipMakeARepairKitQuest)
-				{
-					if (dgm.skipRepairTheShuttleQuest)
-					{
-						ShuttleRepaired = true;
-						LoadingController.AddListener(() =>
-						{
-							MainChar.SetNavigationActive(true);
-						});
-						if (dgm.skipReturnToTheShipQuest)
-						{
-							if (dgm.skipAquireAnEnergySourceQuest)
-							{
-								LoadingController.AddListener(() =>
-								{
-									MainChar.CollectItem(new ItemStack(Item.Type.CorruptedCorvorite, 1));
-									CompletedFindEnergySourceQuest(null);
-								});
-								return;
-							}
-							LoadingController.AddListener(() =>
-							{
-								CompletedReturnToTheShipQuest(null);
-							});
-							return;
-						}
-						LoadingController.AddListener(() =>
-						{
-							CompletedRepairTheShuttleQuest(null);
-						});
-						return;
-					}
-					LoadingController.AddListener(() =>
-					{
-						MainChar.CollectItem(new ItemStack(Item.Type.RepairKit, 1));
-						CompletedCraftYourFirstRepairKitQuest(null);
-					});
-					return;
-				}
-				LoadingController.AddListener(() =>
-				{
-					MainChar.CollectItem(new ItemStack(Item.Type.Copper, 2));
-					MainChar.CollectItem(new ItemStack(Item.Type.Iron, 1));
-					CompletedFirstGatheringQuest(null);
-				});
-				return;
-			}
-			LoadingController.AddListener(StartFirstGatheringQuest);
-			return;
-		}
 		LoadingController.AddListener(StartRecoveryDialogue);
 	}
 
@@ -148,21 +84,28 @@ public class NarrativeManager : MonoBehaviour
 
 	public void StartFirstGatheringQuest()
 	{
-		if (MainChar == null) return;
+		if (MainQuester == null) return;
 
 		List<QuestReward> qRewards = new List<QuestReward>();
 
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-		qReqs.Add(new GatheringQRec(Item.Type.Copper, 2, "Obtain # ? from asteroids"));
-		qReqs.Add(new GatheringQRec(Item.Type.Iron, 1, "Obtain # ? from asteroids"));
+
+		const Item.Type copper = Item.Type.Copper;
+		qReqs.Add(new GatheringQReq(copper, 2,
+			MainChar, $"Obtain # {copper} from asteroids"));
+
+		const Item.Type iron = Item.Type.Iron;
+		qReqs.Add(new GatheringQReq(iron,
+			MainChar, $"Obtain # {iron} from asteroids"));
 
 		Quest q = new Quest(
 			"Gather materials",
 			"We need some materials so that we can repair our communications system. Once that" +
 			" is done, we should be able to find our way back to Dendro and the ship.",
-			MainChar, claire, qRewards, qReqs, CompletedFirstGatheringQuest);
+			MainQuester, qRewards, qReqs);
+		q.OnQuestComplete += CompletedFirstGatheringQuest;
 
-		GiveQuest(MainChar, q);
+		GiveQuest(MainQuester, q);
 		FirstQuestScriptedDrops.scriptedDropsActive = true;
 		StartDialogue(UseThrustersDialogue, true);
 		TutPrompts?.drillInputPromptInfo.SetIgnore(false);
@@ -183,21 +126,18 @@ public class NarrativeManager : MonoBehaviour
 		List<QuestReward> qRewards = new List<QuestReward>();
 
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-		qReqs.Add(new CraftingQReq(Item.Type.RepairKit, 1, "Construct # ? using 2 copper and 1 iron"));
+		const Item.Type repairKit = Item.Type.RepairKit;
+		qReqs.Add(new CraftingQReq(repairKit,
+			MainChar, $"Construct # {repairKit} using 2 copper and 1 iron"));
 
 		Quest q = new Quest(
 			"Construct a Repair Kit",
 			"Now that we have the necessary materials, we should try constructing a repair kit.",
-			MainChar, claire, qRewards, qReqs, CompletedCraftYourFirstRepairKitQuest);
+			MainQuester, qRewards, qReqs);
+		q.OnQuestComplete += CompletedCraftYourFirstRepairKitQuest;
 
-		GiveQuest(MainChar, q);
+		GiveQuest(MainQuester, q);
 		TutPrompts?.pauseInputPromptInfo.SetIgnore(false);
-
-		CraftingRecipe? recipe = Crafting.GetRecipeByName("Repair Kit Recipe");
-		if (recipe != null)
-		{
-			InventoryUI.SetGhostRecipe((CraftingRecipe)recipe);
-		}
 	}
 
 	private void CompletedCraftYourFirstRepairKitQuest(Quest quest)
@@ -214,14 +154,16 @@ public class NarrativeManager : MonoBehaviour
 		List<QuestReward> qRewards = new List<QuestReward>();
 
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-		qReqs.Add(new ItemUseQReq(Item.Type.RepairKit, 1, "Use # ?"));
+		Item.Type repairKit = Item.Type.RepairKit;
+		qReqs.Add(new ItemUseQReq(repairKit, MainChar));
 
 		Quest q = new Quest(
 			"Repair the Shuttle",
 			"Using this repair kit should be enough to fix the communications system. Then we can finally get back to the ship.",
-			MainChar, claire, qRewards, qReqs, CompletedRepairTheShuttleQuest);
+			MainQuester, qRewards, qReqs);
+		q.OnQuestComplete += CompletedRepairTheShuttleQuest;
 
-		GiveQuest(MainChar, q);
+		GiveQuest(MainQuester, q);
 		TutPrompts?.repairKitInputPromptInfo.SetIgnore(false);
 	}
 
@@ -240,14 +182,16 @@ public class NarrativeManager : MonoBehaviour
 		List<QuestReward> qRewards = new List<QuestReward>();
 
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-		qReqs.Add(new InteractionQReq(MainHatchTrigger, MainChar.GetComponent<Triggerer>(), "Return to the ship."));
+		InteractionWaypoint wp = InteractionWaypoint.CreateWaypoint(MainChar, MainHatchTrigger);
+		qReqs.Add(new InteractionQReq(wp, "Return to the ship."));
 
 		Quest q = new Quest(
 			"Find the ship",
 			"Communication and Navigation systems on the shuttle have been restored, but we still can't contact Dendro. Find your way back to the ship and check if Dendro is still alright.",
-			MainChar, claire, qRewards, qReqs, CompletedReturnToTheShipQuest);
+			MainQuester, qRewards, qReqs);
+		q.OnQuestComplete += CompletedReturnToTheShipQuest;
 
-		GiveQuest(MainChar, q);
+		GiveQuest(MainQuester, q);
 	}
 
 	private void CompletedReturnToTheShipQuest(Quest quest)
@@ -262,20 +206,21 @@ public class NarrativeManager : MonoBehaviour
 		List<QuestReward> qRewards = new List<QuestReward>();
 
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-		qReqs.Add(new GatheringQRec(Item.Type.CorruptedCorvorite, 1, "Find the nearby energy source.", false));
+		qReqs.Add(new GatheringQReq(Item.Type.CorruptedCorvorite,
+			MainChar, "Find the nearby energy source."));
 
 		Quest q = new Quest(
 			"Acquire an Energy Source",
 			"The ship appears intact, however it is in a powered-down state. We need to find an energy source.",
-			MainChar, claire, qRewards, qReqs, CompletedFindEnergySourceQuest);
+			MainQuester, qRewards, qReqs);
+		q.OnQuestComplete += CompletedFindEnergySourceQuest;
 
-		GiveQuest(MainChar, q);
+		GiveQuest(MainQuester, q);
 		//create a deranged bot
 		ChunkCoords emptyChunk = EntityGenerator.GetNearbyEmptyChunk();
 		SpawnableEntity se = EntityGenerator.GetSpawnableEntity(derangedSoloBotPrefab);
 		Entity newEntity = EntityGenerator.SpawnOneEntityInChunk(se, null, emptyChunk);
 		//set waypoint to new bot
-		MainChar.waypoint = new Waypoint(newEntity.transform);
 		//attach dialogue prompt when player approaches bot
 		VicinityTrigger entityPrompt = newEntity.GetComponentInChildren<VicinityTrigger>();
 		Action<IActor> triggerEnterAction = null;
@@ -302,16 +247,16 @@ public class NarrativeManager : MonoBehaviour
 
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
 
-		Waypoint wp = new Waypoint(MainHatch.transform);
-		MainChar.waypoint = wp;
+		Waypoint wp = Waypoint.CreateWaypoint(MainChar, MainHatchTrigger);
 		qReqs.Add(new WaypointQReq(wp, "Return to the ship."));
 
 		Quest q = new Quest(
 			"Recharge the Ship",
 			"Now that we have an energy source, we should take it back to the ship and restore power so that we can finally get back inside.",
-			MainChar, claire, qRewards, qReqs, CompletedRechargeTheShipQuest);
+			MainQuester, qRewards, qReqs);
+		q.OnQuestComplete += CompletedRechargeTheShipQuest;
 
-		GiveQuest(MainChar, q);
+		GiveQuest(MainQuester, q);
 	}
 
 	private void CompletedRechargeTheShipQuest(Quest quest)
@@ -339,7 +284,7 @@ public class NarrativeManager : MonoBehaviour
 
 	public void TakeItem(Item.Type type, int amount) => MainChar.TakeItem(type, amount);
 
-	private void GiveQuest(Character c, Quest q) => c.GetComponent<Quester>().AcceptQuest(q);
+	private void GiveQuest(Quester quester, Quest q) => quester.AcceptQuest(q);
 
 	public void StartDialogue(ConversationWithActions ce, bool chat = false)
 	{
@@ -360,8 +305,7 @@ public class NarrativeManager : MonoBehaviour
 		Vector2 pos = MainHatch.transform.position;
 		float randomAngle = UnityEngine.Random.value * Mathf.PI * 2f;
 		Vector2 randomPos = new Vector2(Mathf.Sin(randomAngle),	Mathf.Cos(randomAngle));
-		float div = DistanceUI.UNITS_TO_METRES;
-		randomPos *= UnityEngine.Random.value * 100f / div + 300f / div;
+		randomPos *= UnityEngine.Random.value * 50f + 100f;
 		if (MainChar != null)
 		{
 			MainChar.Teleport(pos + randomPos);

@@ -1,52 +1,40 @@
 ﻿using UnityEngine;
-using System;
 
 namespace QuestSystem.Requirements
 {
-	using TriggerSystem;
-
 	public class InteractionQReq : QuestRequirement
 	{
-		private IActionTrigger trigger;
-		private Action<IInteractor> action;
-		private IInteractor actor;
 		private Vector3? location;
+		private IInteractionWaypoint waypoint;
 
-		public InteractionQReq(IActionTrigger trigger, IInteractor actor,
-			Action<IInteractor> action, string description)
+		public InteractionQReq(IInteractionWaypoint waypoint,
+			string description)
 			: base(description)
 		{
-			this.trigger = trigger;
-			this.actor = actor;
-			this.action = action;
-		}
-
-		public InteractionQReq(IInteractor actor,
-			Action<IInteractor> action, string description)
-			: base(description)
-		{
-			this.actor = actor;
-			this.action = action;
+			this.waypoint = waypoint;
 		}
 
 		public override void Activate()
 		{
 			base.Activate();
-			action += EvaluateEvent;
+			waypoint.OnWaypointReached += EvaluateEvent;
 		}
 
-		private void EvaluateEvent(IInteractor actor)
+		public override void QuestRequirementCompleted()
 		{
-			if (Completed || !active || this.actor != actor) return;
-
-			QuestRequirementCompleted();
-			action -= EvaluateEvent;
+			base.QuestRequirementCompleted();
+			waypoint.OnWaypointReached -= EvaluateEvent;
 		}
 
-		public override string GetDescription() => description;
+		private void EvaluateEvent()
+		{
+			QuestRequirementCompleted();
+		}
 
-		public override Vector3? TargetLocation()
-			=> trigger?.PivotPosition;
+		public override string GetDescription => description;
+
+		public override IWaypoint GetWaypoint
+			=> waypoint;
 	}
 
 }

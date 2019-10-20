@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using TriggerSystem;
+using TriggerSystem.Triggers;
+using UnityEngine;
 
 public class Planet : Entity
 {
@@ -8,7 +10,7 @@ public class Planet : Entity
 	public override EntityType GetEntityType() => EntityType.Planet;
 
 	public string planetName = "Default Planet Name";
-	private int exploredCount = 0;
+	//private int exploredCount = 0;
 	public float difficultyModifier = 1f;
 
 	protected override void Awake()

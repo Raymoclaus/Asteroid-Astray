@@ -1,4 +1,4 @@
-﻿using System.Collections;
+﻿using InventorySystem;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -90,7 +90,7 @@ public class ParticleGenerator : MonoBehaviour
 		}
 	}
 
-	public void DropResource(Entity target, Vector2 pos, Item.Type type)
+	public void DropResource(IInventoryHolder target, Vector2 pos, Item.Type type)
 	{
 		if (type == Item.Type.Blank) return;
 

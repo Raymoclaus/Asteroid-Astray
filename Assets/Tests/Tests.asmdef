@@ -5,7 +5,7 @@
         "UnityEditor.TestRunner",
         "Utilities.Puzzles.BlockPush",
         "Utilities.Puzzles.TileFlip",
-        "Utilities.DataTypes"
+        "CustomDataTypes"
     ],
     "includePlatforms": [
         "Editor"
