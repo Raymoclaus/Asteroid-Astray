@@ -324,6 +324,6 @@ public class Character : Entity, IInteractor, ICrafter
 
 	public void AttachToInventoryUI()
 	{
-		InventoryUIController.SetInventoryHolder(this);
+		InventoryTab.SetInventoryHolder(this);
 	}
 }

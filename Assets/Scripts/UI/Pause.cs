@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using UnityEngine;
 using InputHandler;
 
@@ -15,12 +16,7 @@ public class Pause : MonoBehaviour
 	private static bool slowDownEffect = false;
 	private static bool canPause = true;
 	public static float intendedTimeSpeed = 1f;
-	[SerializeField] private PauseUIController pauseUI;
-	private PauseUIController PauseUI => pauseUI ??
-		(pauseUI = FindObjectOfType<PauseUIController>());
-
-	public delegate void PauseEventHandler(bool pausing);
-	public event PauseEventHandler OnPause;
+	public static event Action OnPause, OnResume;
 
 	private void Awake()
 	{
@@ -33,8 +29,6 @@ public class Pause : MonoBehaviour
 			Destroy(gameObject);
 			return;
 		}
-
-		PauseUI.Activate(false, instant: true);
 	}
 
 	private void Update()
@@ -43,20 +37,19 @@ public class Pause : MonoBehaviour
 
 		if (InputManager.GetInput("Pause") > 0f && !isShifting && canPause)
 		{
-			OnPause?.Invoke(!IsPaused);
 			if (IsPaused)
 			{
-				PauseUI.Activate(false, () =>
-				{
-					isShifting = true;
-					shiftingUp = IsPaused;
-				});
+				OnResume?.Invoke();
 			}
 			else
 			{
+				OnPause?.Invoke();
+			}
+
+			if (!IsPaused)
+			{
 				isShifting = true;
 				shiftingUp = IsPaused;
-				PauseUI.Activate(true);
 			}
 		}
 

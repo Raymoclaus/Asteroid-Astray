@@ -36,9 +36,9 @@ public class NarrativeManager : MonoBehaviour
 	private TutorialPrompts tutPrompts;
 	private TutorialPrompts TutPrompts
 		=> tutPrompts ?? (tutPrompts = FindObjectOfType<TutorialPrompts>());
-	[SerializeField] private InventoryUIController inventoryUI;
-	private InventoryUIController InventoryUI
-		=> inventoryUI ?? (inventoryUI = FindObjectOfType<InventoryUIController>());
+	[SerializeField] private InventoryTab inventoryUI;
+	private InventoryTab InventoryUI
+		=> inventoryUI ?? (inventoryUI = FindObjectOfType<InventoryTab>());
 	[SerializeField] private TY4PlayingUI ty4pUI;
 
 	[SerializeField] private ConversationWithActions

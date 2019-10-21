@@ -1,0 +1,16 @@
+{
+    "name": "InventorySystem.UI",
+    "references": [
+        "GUID:ed0148fbe204e3847914d4d0bd35d4bc",
+        "GUID:6055be8ebefd69e48b49212b09b47b2f",
+        "GUID:e8402dff3f053a14e933eb9468ddba77"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}

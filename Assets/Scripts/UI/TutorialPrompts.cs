@@ -98,18 +98,17 @@ public class TutorialPrompts : MonoBehaviour
 
 	private void SetUpPauseInputPrompt()
 	{
-		Pause.PauseEventHandler action = (bool pausing) =>
+		Action action = () =>
 		{
-			if (!pausing) return;
 			pauseInputPromptInfo.Deactivate();
 		};
-		Pause p = FindObjectOfType<Pause>();
+
 		pauseInputPromptInfo.SetListeners(() =>
 		{
-			p.OnPause += action;
+			Pause.OnPause += action;
 		}, () =>
 		{
-			p.OnPause -= action;
+			Pause.OnPause -= action;
 		});
 
 		pauseInputPromptInfo.SetCondition(() =>
