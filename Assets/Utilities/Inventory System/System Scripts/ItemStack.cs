@@ -11,7 +11,7 @@ namespace InventorySystem
 		[SerializeField]
 		private int amount;
 
-		public bool IsMaxed { get { return amount == Item.StackLimit(type); } }
+		public bool IsMaxed => amount == Item.StackLimit(type);
 
 		public ItemStack(Item.Type type, int amount)
 		{
@@ -24,38 +24,36 @@ namespace InventorySystem
 			: this(type, 1) { }
 
 		public ItemStack(ItemStack stack)
-			: this(stack.GetItemType(), stack.GetAmount()) { }
+			: this(stack.ItemType, stack.Amount) { }
 
 		public ItemStack()
 			: this(Item.Type.Blank) { }
 
-		public Item.Type GetItemType()
+		public Item.Type ItemType
 		{
-			return type;
-		}
-
-		public void SetItemType(Item.Type newType)
-		{
-			type = newType;
-			if (type != Item.Type.Blank) return;
-			amount = 0;
-		}
-
-		public int GetAmount()
-		{
-			return amount;
-		}
-
-		public void SetAmount(int value)
-		{
-			if (value > 0)
+			get => type;
+			set
 			{
-				amount = Mathf.Min(value, Item.StackLimit(type));
-			}
-			else
-			{
+				type = value;
+				if (type != Item.Type.Blank) return;
 				amount = 0;
-				type = Item.Type.Blank;
+			}
+		}
+
+		public int Amount
+		{
+			get => amount;
+			set
+			{
+				if (value > 0)
+				{
+					amount = Mathf.Min(value, Item.StackLimit(type));
+				}
+				else
+				{
+					amount = 0;
+					type = Item.Type.Blank;
+				}
 			}
 		}
 
@@ -86,9 +84,7 @@ namespace InventorySystem
 		}
 
 		public override string ToString()
-		{
-			return string.Format("{0}x {1}", amount, type.ToString());
-		}
+			=> string.Format("{0}x {1}", amount, type.ToString());
 
 		public void SetBlank()
 		{
@@ -96,10 +92,7 @@ namespace InventorySystem
 			amount = 0;
 		}
 
-		public int GetValue()
-		{
-			return Item.TypeRarity(type) * amount;
-		}
+		public int Value => Item.TypeRarity(type) * amount;
 
 		public static bool TryParse(string toParse, out ItemStack result)
 		{

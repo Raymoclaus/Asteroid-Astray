@@ -8,8 +8,8 @@ public class Pause : MonoBehaviour
 	private static Pause instance;
 
 	private static bool isPaused = false;
-	public static bool IsPaused { get { return isPaused && IsStopped; } }
-	public static bool IsStopped { get { return Mathf.Approximately(Time.timeScale, 0f); } }
+	public static bool IsPaused => isPaused && IsStopped;
+	public static bool IsStopped => Mathf.Approximately(Time.timeScale, 0f);
 	public static float timeSinceOpen = 0f;
 	public static bool isShifting = false;
 	private static bool shiftingUp = false;
@@ -17,6 +17,7 @@ public class Pause : MonoBehaviour
 	private static bool canPause = true;
 	public static float intendedTimeSpeed = 1f;
 	public static event Action OnPause, OnResume;
+	public const float SHIFT_DURATION = 0.5f;
 
 	private void Awake()
 	{
@@ -46,17 +47,14 @@ public class Pause : MonoBehaviour
 				OnPause?.Invoke();
 			}
 
-			if (!IsPaused)
-			{
-				isShifting = true;
-				shiftingUp = IsPaused;
-			}
+			isShifting = true;
+			shiftingUp = IsPaused;
 		}
 
 		if (isShifting)
 		{
 			float scl = Time.timeScale;
-			scl += Time.unscaledDeltaTime * (shiftingUp ? 2f : -2f);
+			scl += Time.unscaledDeltaTime / (shiftingUp ? SHIFT_DURATION : -SHIFT_DURATION);
 			if (scl <= 0f || scl >= intendedTimeSpeed)
 			{
 				Time.timeScale = Mathf.Clamp(scl, 0f, intendedTimeSpeed);

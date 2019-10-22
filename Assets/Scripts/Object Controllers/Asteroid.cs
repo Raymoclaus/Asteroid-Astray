@@ -82,10 +82,10 @@ public class Asteroid : Entity
 				for (int i = 0; i < stacks.Count; i++)
 				{
 					ItemStack stack = stacks[i];
-					for (int j = 0; j < stack.GetAmount(); j++)
+					for (int j = 0; j < stack.Amount; j++)
 					{
 						PartGen.DropResource(target,
-							transform.position, stack.GetItemType());
+							transform.position, stack.ItemType);
 					}
 				}
 				return;

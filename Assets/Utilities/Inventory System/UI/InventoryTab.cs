@@ -15,7 +15,6 @@ namespace InventorySystem.UI
 		private HashSet<SlotGroup> slotGroups = new HashSet<SlotGroup>();
 		[SerializeField] Transform slotGroupsHolder;
 		private Inventory currentInventory;
-		private bool grabbing = false;
 		[SerializeField] private ItemStackUI grabStack;
 		[SerializeField] private CraftingUIController craftingUI;
 
@@ -81,13 +80,13 @@ namespace InventorySystem.UI
 			if (inv == null) return;
 
 			SlotGroup newGroup = Instantiate(slotGroupPrefab, slotGroupsHolder);
-			newGroup.SetInventory(inv);
+			newGroup.Initialise(this, inv);
 			slotGroups.Add(newGroup);
 		}
 
 		private void UpdateGrabUI()
 		{
-			if (!grabbing) return;
+			if (!IsGrabbing) return;
 			Vector3 pos = Input.mousePosition;
 			pos.z = grabStack.transform.parent.position.z;
 			grabStack.transform.position = pos;
@@ -130,7 +129,8 @@ namespace InventorySystem.UI
 				ItemStack swap = slot.Inventory.Replace(grabStack.StackCopy, slot.ID);
 				grabStack.SetStack(swap);
 			}
-			grabbing = grabStack.ItemType != Item.Type.Blank;
 		}
+
+		private bool IsGrabbing => grabStack.ItemType != Item.Type.Blank;
 	}
 }

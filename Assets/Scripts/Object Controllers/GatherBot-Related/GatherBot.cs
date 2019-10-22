@@ -1316,7 +1316,7 @@ public class GatherBot : Character, IStunnable, ICombat
 
 	public override int GiveItem(ItemStack stack)
 	{
-		int collectedAmount = stack.GetAmount() - base.GiveItem(stack);
+		int collectedAmount = stack.Amount- base.GiveItem(stack);
 		itemsCollected += collectedAmount;
 		if (itemsCollected >= storageCapacity)
 		{

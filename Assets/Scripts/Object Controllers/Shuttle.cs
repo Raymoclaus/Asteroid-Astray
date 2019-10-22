@@ -420,7 +420,7 @@ public class Shuttle : Character, IStunnable, ICombat
 
 	protected override bool CheckItemUsage(int itemIndex)
 	{
-		Item.Type itemType = DefaultInventory.ItemStacks[itemIndex].GetItemType();
+		Item.Type itemType = DefaultInventory.ItemStacks[itemIndex].ItemType;
 		if (!base.CheckItemUsage(itemIndex)) return false;
 		return true;
 	}

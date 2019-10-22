@@ -90,8 +90,8 @@ public class Character : Entity, IInteractor, ICrafter
 	protected virtual bool CheckItemUsage(int itemIndex)
 	{
 		List<ItemStack> stacks = DefaultInventory.ItemStacks;
-		if (stacks[itemIndex].GetAmount() <= 0) return false;
-		Item.Type type = stacks[itemIndex].GetItemType();
+		if (stacks[itemIndex].Amount<= 0) return false;
+		Item.Type type = stacks[itemIndex].ItemType;
 		if (!UseItem(type)) return false;
 		stacks[itemIndex].RemoveAmount(1);
 		return true;
@@ -134,10 +134,10 @@ public class Character : Entity, IInteractor, ICrafter
 		for (int i = 0; i < DefaultInventory.Size; i++)
 		{
 			ItemStack stack = DefaultInventory.ItemStacks[i];
-			for (int j = 0; j < stack.GetAmount(); j++)
+			for (int j = 0; j < stack.Amount; j++)
 			{
 				PartGen.DropResource(target,
-					transform.position, stack.GetItemType());
+					transform.position, stack.ItemType);
 			}
 		}
 	}
@@ -226,8 +226,8 @@ public class Character : Entity, IInteractor, ICrafter
 
 	public virtual int GiveItem(ItemStack stack)
 	{
-		Item.Type itemType = stack.GetItemType();
-		int amount = stack.GetAmount();
+		Item.Type itemType = stack.ItemType;
+		int amount = stack.Amount;
 		Inventory inv = GetAppropriateInventory(itemType);
 		int remainingItems = inv.AddItem(itemType, amount);
 		int difference = amount - remainingItems;
@@ -277,7 +277,7 @@ public class Character : Entity, IInteractor, ICrafter
 		}
 		if (order is ItemStack stack)
 		{
-			Inventory inv = GetAppropriateInventory(stack.GetItemType());
+			Inventory inv = GetAppropriateInventory(stack.ItemType);
 			bool removed = inv.RemoveItem(stack);
 			return removed;
 		}
@@ -303,7 +303,7 @@ public class Character : Entity, IInteractor, ICrafter
 		for (int i = 0; i < ingredients.Count; i++)
 		{
 			ItemStack stack = ingredients[i];
-			if (defaultInventory.Count(stack.GetItemType()) < stack.GetAmount()) return false;
+			if (defaultInventory.Count(stack.ItemType) < stack.Amount) return false;
 		}
 
 		defaultInventory.RemoveItems(ingredients);

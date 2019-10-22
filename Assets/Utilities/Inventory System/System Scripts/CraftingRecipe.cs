@@ -44,8 +44,7 @@ namespace InventorySystem
 				for (int j = 0; j < stacks.Count; j++)
 				{
 					ItemStack stack = stacks[j];
-					if (recipeStack.GetItemType() == stack.GetItemType()
-						&& recipeStack.GetAmount() <= stack.GetAmount())
+					if (recipeStack.ItemType== stack.ItemType						&& recipeStack.Amount<= stack.Amount)
 					{
 						foundMatch = true;
 						break;
@@ -72,6 +71,6 @@ namespace InventorySystem
 		}
 
 		public int GetPriority(ItemStack stack)
-			=> Item.TypeRarity(stack.GetItemType()) * stack.GetAmount();
+			=> Item.TypeRarity(stack.ItemType) * stack.Amount;
 	}
 }

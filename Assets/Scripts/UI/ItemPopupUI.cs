@@ -163,7 +163,7 @@ public class ItemPopupUI : PopupUI
 	}
 
 	public void GeneratePopup(ItemStack stack)
-		=> GeneratePopup(stack.GetItemType(), stack.GetAmount());
+		=> GeneratePopup(stack.ItemType, stack.Amount);
 
 	private class ItemPopupObject : PopupObject
 	{

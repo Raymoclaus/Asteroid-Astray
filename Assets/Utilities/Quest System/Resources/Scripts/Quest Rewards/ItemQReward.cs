@@ -10,7 +10,7 @@ namespace QuestSystem
 		public ItemQReward(ItemStack stack) => this.stack = stack;
 
 		public override string GetRewardName()
-			=> string.Format(formattedString, Item.TypeName(stack.GetItemType()), stack.GetAmount());
+			=> string.Format(formattedString, Item.TypeName(stack.ItemType), stack.Amount);
 
 		public override void GiveReward(Quester quester) => quester.ReceiveReward(stack);
 	}

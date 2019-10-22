@@ -51,9 +51,9 @@ namespace QuestSystem.Requirements
 			bool updateRequirement = false;
 			for (int i = 0; i < stacks.Count; i++)
 			{
-				if (stacks[i].GetItemType() == typeNeeded)
+				if (stacks[i].ItemType== typeNeeded)
 				{
-					currentAmount += stacks[i].GetAmount();
+					currentAmount += stacks[i].Amount;
 					updateRequirement = true;
 				}
 			}

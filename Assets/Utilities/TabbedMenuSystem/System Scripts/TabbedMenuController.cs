@@ -20,10 +20,12 @@ namespace TabbedMenuSystem
 		private SortedList<int, IMenuContent> menuContents = new SortedList<int, IMenuContent>();
 		[SerializeField] private int tabMinSortingOrder;
 		private IMenuContent currentContent;
-		[SerializeField] private float fadeDuration = 0.5f;
+		[SerializeField] private float tabFadeDuration = 0.5f;
 
-		private void Awake()
+		protected virtual void Open()
 		{
+			gameObject.SetActive(true);
+
 			ClearTabsHolder();
 			AddPreExistingMenuContentsToList();
 			InstantiateTabContentPrefabs();
@@ -34,6 +36,11 @@ namespace TabbedMenuSystem
 			KeyValuePair<int, IMenuContent> firstContent = menuContents.FirstOrDefault();
 			currentContent = firstContent.Value;
 			ContentToShow(currentContent, 0f);
+		}
+
+		protected virtual void Close()
+		{
+			gameObject.SetActive(false);
 		}
 
 		/// <summary>
@@ -52,6 +59,9 @@ namespace TabbedMenuSystem
 		/// </summary>
 		private void AddPreExistingMenuContentsToList()
 		{
+			menuContents.Clear();
+			currentContent = null;
+
 			foreach (Transform child in menuContentHolder)
 			{
 				IMenuContent menuContent = child.GetComponent<IMenuContent>();
@@ -92,6 +102,8 @@ namespace TabbedMenuSystem
 		/// </summary>
 		private void CreateTabs()
 		{
+			tabs.Clear();
+
 			IMenuTab prefab = tabPrefab as IMenuTab;
 			if (prefab == null)
 			{
@@ -152,7 +164,7 @@ namespace TabbedMenuSystem
 
 		private void TabClicked(IMenuTab tab)
 		{
-			TabToShow(tab, fadeDuration);
+			TabToShow(tab, tabFadeDuration);
 		}
 
 		/// <summary>
@@ -188,34 +200,42 @@ namespace TabbedMenuSystem
 			if (tab == null || content == null) return;
 
 			CanvasGroup previousCGroup = currentContent?.CGroup;
+			IMenuContent previousContent = currentContent;
 			currentContent = content;
 			UpdateTabDrawOrder();
 			if (previousCGroup != null)
 			{
+				void finishAction()
+				{
+					previousCGroup.gameObject.SetActive(false);
+					previousContent.OnClose();
+				}
 				StartCoroutine(TimedAction(fadeTime,
 					(float delta) => previousCGroup.alpha = 1f - delta,
-					() => previousCGroup.gameObject.SetActive(false)));
+					finishAction));
 			}
 			CanvasGroup currentCGroup = currentContent.CGroup;
 			currentCGroup.gameObject.SetActive(true);
+			currentContent.OnOpen();
 			StartCoroutine(TimedAction(fadeTime,
 				(float delta) => currentCGroup.alpha = delta,
 				null));
 		}
 
-		private IEnumerator TimedAction(float duration, Action<float> action, Action finishAction)
+		protected IEnumerator TimedAction(float duration, Action<float> action, Action finishAction)
 		{
 			if (duration <= 0f) action?.Invoke(1f);
 
 			float timer = 0f;
 			while (timer < duration)
 			{
-				timer += Time.deltaTime;
+				timer += Time.unscaledDeltaTime;
 				float delta = timer / duration;
 				action?.Invoke(delta);
 				yield return null;
 			}
 
+			action?.Invoke(1f);
 			finishAction?.Invoke();
 		}
 

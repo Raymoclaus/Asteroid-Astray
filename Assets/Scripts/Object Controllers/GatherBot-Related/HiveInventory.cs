@@ -81,7 +81,7 @@ public class HiveInventory : Inventory
 		for (int i = 0; i < leftovers.Count; i++)
 		{
 			ItemStack stack = leftovers[i];
-			if (stack.GetAmount() > 0) return true;
+			if (stack.Amount> 0) return true;
 		}
 		return false;
 	}

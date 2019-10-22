@@ -36,8 +36,8 @@ public class HotBarUI : MonoBehaviour
 		for (int i = 0; i < slots.Length && i < inventory.ItemStacks.Count; i++)
 		{
 			ItemStack currentStack = inventory.ItemStacks[i];
-			images[i].sprite = sprites.GetItemSprite(currentStack.GetItemType());
-			int amount = currentStack.GetAmount();
+			images[i].sprite = sprites.GetItemSprite(currentStack.ItemType);
+			int amount = currentStack.Amount;
 			texts[i].text = amount > 0 ? amount.ToString() : string.Empty;
 			images[i].color = amount > 0 ? Color.white : Color.clear;
 		}

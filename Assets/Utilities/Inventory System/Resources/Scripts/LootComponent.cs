@@ -10,6 +10,8 @@ namespace InventorySystem
 
 		private void DropItem(Item.Type itemType, IInventoryHolder inventoryHolder)
 		{
+			if (itemType == Item.Type.Blank) return;
+
 			if (pickupPrefab == null)
 			{
 				Debug.Log("Pickup prefab is null", gameObject);
@@ -24,8 +26,8 @@ namespace InventorySystem
 		private void DropLoot(Loot loot, IInventoryHolder inventoryHolder)
 		{
 			ItemStack stack = loot.GetStack();
-			int amount = stack.GetAmount();
-			Item.Type itemType = stack.GetItemType();
+			int amount = stack.Amount;
+			Item.Type itemType = stack.ItemType;
 			for (int i = 0; i < amount; i++)
 			{
 				DropItem(itemType, inventoryHolder);

@@ -9,26 +9,26 @@ namespace InventorySystem.UI
 		[SerializeField] private Image img;
 		[SerializeField] private TextMeshProUGUI text;
 		[SerializeField] private ItemSprites sprites;
-		private ItemStack stack = new ItemStack();
+		[SerializeField] private ItemStack stack = new ItemStack();
 
 		public ItemStack StackCopy => new ItemStack(stack);
 
 		public Item.Type ItemType
 		{
-			get => stack.GetItemType();
+			get => stack.ItemType;
 			set
 			{
-				stack.SetItemType(value);
+				stack.ItemType = value;
 				UpdateImage();
 			}
 		}
 
 		public int Amount
 		{
-			get => stack.GetAmount();
+			get => stack.Amount;
 			set
 			{
-				stack.SetAmount(value);
+				stack.Amount = value;
 				UpdateText();
 			}
 		}
@@ -37,18 +37,19 @@ namespace InventorySystem.UI
 
 		public void SetStack(ItemStack newStack)
 		{
-			stack = newStack;
-			UpdateImage();
-			UpdateText();
+			SetStack(newStack.ItemType, newStack.Amount);
+		}
+
+		public void SetStack(Item.Type type, int amount)
+		{
+			ItemType = type;
+			Amount = amount;
 		}
 
 		private void UpdateImage()
 		{
-			if (ItemType == Item.Type.Blank)
-			{
-				img.enabled = false;
-			}
-			else
+			img.enabled = ItemType != Item.Type.Blank;
+			if (ItemType != Item.Type.Blank)
 			{
 				img.sprite = sprites.GetItemSprite(ItemType);
 			}
