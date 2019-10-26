@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,18 +9,18 @@ public static class TmpTeleType
 	private static List<TextMeshCoroutine> coroutines = new List<TextMeshCoroutine>();
 
 	public static void Type(MonoBehaviour mono, TextMeshProUGUI textMesh,
-		WaitForSeconds timeBetweenStrokes = null, System.Action onFinishTyping = null)
+		WaitForSeconds timeBetweenStrokes, Action onType, Action onFinishTyping)
 	{
 		if (IsTyping(textMesh)) return;
-		Coroutine coro = mono.StartCoroutine(Typing(textMesh, timeBetweenStrokes, onFinishTyping));
+		Coroutine coro = mono.StartCoroutine(Typing(textMesh, timeBetweenStrokes, onType, onFinishTyping));
 		coroutines.Add(new TextMeshCoroutine(textMesh, coro, mono));
 	}
 
 	public static void Type(MonoBehaviour mono, TextMeshProUGUI textMesh,
-		WaitForSecondsRealtime timeBetweenStrokes = null, System.Action onFinishTyping = null)
+		WaitForSecondsRealtime timeBetweenStrokes, Action onType, Action onFinishTyping)
 	{
 		if (IsTyping(textMesh)) return;
-		Coroutine coro = mono.StartCoroutine(Typing(textMesh, timeBetweenStrokes, onFinishTyping));
+		Coroutine coro = mono.StartCoroutine(Typing(textMesh, timeBetweenStrokes, onType, onFinishTyping));
 		coroutines.Add(new TextMeshCoroutine(textMesh, coro, mono));
 	}
 
@@ -39,7 +40,7 @@ public static class TmpTeleType
 	}
 
 	private static IEnumerator Typing(TextMeshProUGUI textMesh,
-		WaitForSeconds timeBetweenStrokes = null, System.Action onFinishTyping = null)
+		WaitForSeconds timeBetweenStrokes, Action onType, Action onFinishTyping)
 	{
 		textMesh.ForceMeshUpdate();
 		textMesh.enableWordWrapping = true;
@@ -53,6 +54,7 @@ public static class TmpTeleType
 			visibleCount = counter % (totalVisibleCharacters + 1);
 			textMesh.maxVisibleCharacters = visibleCount;
 			counter += 1;
+			onType?.Invoke();
 			yield return timeBetweenStrokes;
 		}
 
@@ -61,7 +63,7 @@ public static class TmpTeleType
 	}
 
 	private static IEnumerator Typing(TextMeshProUGUI textMesh,
-		WaitForSecondsRealtime timeBetweenStrokes = null, System.Action onFinishTyping = null)
+		WaitForSecondsRealtime timeBetweenStrokes, Action onType, Action onFinishTyping)
 	{
 		textMesh.ForceMeshUpdate();
 		textMesh.enableWordWrapping = true;
@@ -75,6 +77,7 @@ public static class TmpTeleType
 			visibleCount = counter % (totalVisibleCharacters + 1);
 			textMesh.maxVisibleCharacters = visibleCount;
 			counter += 1;
+			onType?.Invoke();
 			yield return timeBetweenStrokes;
 		}
 

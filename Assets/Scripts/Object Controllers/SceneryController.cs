@@ -38,6 +38,7 @@ public class SceneryController : MonoBehaviour
 	private Vector2 perlinOffset;
 	public float starMinDistance = 400f, starDistanceRange = 200f;
 	public Vector2 scaleRange = new Vector2(1f, 4f);
+	public bool fadeBasedOnDistance = true;
 	private Transform sceneryHolder;
 	private int backgroundLayer;
 	public Color nebulaFadeBackground;
@@ -75,8 +76,8 @@ public class SceneryController : MonoBehaviour
 			return;
 		}
 		instance = this;
-		
-		EntityNetwork.AddListener(InitialSetup);
+
+		InitialSetup();
 	}
 
 	public static void AddListener(Action action)
@@ -198,16 +199,18 @@ public class SceneryController : MonoBehaviour
 			}
 			//Color col = transparent ? nebulaFadeBackground : Color.white;
 			Color col = Color.white;
-			float delta = (1f - (item.pos.z - starMinDistance) / starDistanceRange) * 0.9f + 0.1f;
-			if (item.common)
+			if (fadeBasedOnDistance)
 			{
-				col.a *= delta;
-			}
-			else
-			{
-
-				col = Color.Lerp(Color.black, Color.white,
-					Mathf.Clamp(delta, imageBrightnessRange.x, imageBrightnessRange.y));
+				float delta = (1f - (item.pos.z - starMinDistance) / starDistanceRange) * 0.9f + 0.1f;
+				if (item.common)
+				{
+					col.a *= delta;
+				}
+				else
+				{
+					col = Color.Lerp(Color.black, Color.white,
+						Mathf.Clamp(delta, imageBrightnessRange.x, imageBrightnessRange.y));
+				}
 			}
 			sfmpm.SetColor(col);
 			active.Enqueue(sfmpm);

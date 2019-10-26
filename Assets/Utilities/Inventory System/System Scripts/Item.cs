@@ -35,6 +35,8 @@
 
 		public const int MAX_RARITY = 10;
 
+		public const int MIN_RARITY = 0;
+
 		public static string TypeName(Type type)
 		{
 			switch (type)
@@ -153,7 +155,7 @@
 		}
 
 		//limit to ~80 characters
-		public static string ItemDescription(Type type)
+		public static string Description(Type type)
 		{
 			switch (type)
 			{
@@ -209,7 +211,7 @@
 			}
 		}
 
-		public static string ItemFlavourText(Type type)
+		public static string FlavourText(Type type)
 		{
 			switch (type)
 			{
@@ -217,7 +219,7 @@
 				case Type.Blank: return string.Empty;
 				case Type.Stone:
 					return "\"Charged with two counts of murder by the Avian Court" +
-						" of Caw Law.\"";
+						" of Law.\"";
 				case Type.Iron:
 					return "\"Not quite as effective at removing creases from" +
 						" clothing as you might think\"";

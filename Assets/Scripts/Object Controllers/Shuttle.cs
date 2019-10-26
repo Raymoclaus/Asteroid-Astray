@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine.Events;
 using InputHandler;
-using TriggerSystem;
 using QuestSystem;
 using QuestSystem.UI;
 using InventorySystem;
 using ValueComponents;
+using SceneControllers;
 
 public class Shuttle : Character, IStunnable, ICombat
 {
@@ -708,7 +708,7 @@ public class Shuttle : Character, IStunnable, ICombat
 
 	protected override int GetLevel() => base.GetLevel();
 
-	protected override int GetValue() => DefaultInventory.GetValue();
+	protected override int GetValue() => DefaultInventory.Value;
 
 	public override bool CanDrill() => base.CanDrill() && drillIsActive;
 

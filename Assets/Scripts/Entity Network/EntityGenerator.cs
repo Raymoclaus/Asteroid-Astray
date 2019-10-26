@@ -1,16 +1,12 @@
-﻿using UnityEngine.AddressableAssets;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using CustomDataTypes;
-using UnityEngine.ResourceManagement.AsyncOperations;
 
 public class EntityGenerator : MonoBehaviour
 {
 	private static EntityGenerator instance;
-
-	//references to all kinds of spawnable entities
-	private EntityPrefabDB prefabs;
+	
 	//keeps track of whether chunks have been filled already. Prevents chunk from refilling if emptied by player
 	private List<List<List<bool>>> wasFilled = new List<List<List<bool>>>();
 	//List of empty game objects to store entities in and keep the hierarchy organised
@@ -19,7 +15,6 @@ public class EntityGenerator : MonoBehaviour
 	private List<ChunkCoords> chunkBatches = new List<ChunkCoords>();
 	//maximum amount of chunks to fill per frame
 	private int maxChunkBatchFill = 5;
-	private List<SpawnableEntity> toSpawn = new List<SpawnableEntity>();
 	private bool batcherRunning = false;
 	private static event System.Action OnPrefabsLoaded;
 
@@ -40,7 +35,7 @@ public class EntityGenerator : MonoBehaviour
 
 	public static bool IsReady
 		=> instance != null
-		&& instance.prefabs != null;
+		&& EntityPrefabLoader.IsReady;
 
 	public static void AddListener(System.Action action)
 	{
@@ -88,12 +83,13 @@ public class EntityGenerator : MonoBehaviour
 	}
 
 	public static SpawnableEntity GetSpawnableEntity(string entityName)
-		=> instance.prefabs.GetSpawnableEntity(entityName);
+		=> EntityPrefabLoader.GetSpawnableEntity(entityName);
 
-	public static SpawnableEntity GetSpawnableEntity(Entity e) => instance.prefabs.GetSpawnableEntity(e);
+	public static SpawnableEntity GetSpawnableEntity(Entity e)
+		=> EntityPrefabLoader.GetSpawnableEntity(e);
 
 	public static SpawnableEntity GetSpawnableEntity(System.Type type)
-		=> instance.prefabs.GetSpawnableEntity(type);
+		=> EntityPrefabLoader.GetSpawnableEntity(type);
 
 	private ChunkCoords ClosestValidNonFilledChunk(SpawnableEntity se)
 	{
@@ -129,28 +125,31 @@ public class EntityGenerator : MonoBehaviour
 		instance.Column(cc)[cc.y] = true;
 
 		//look through the space priority entities and check if one may spawn
-		List<SpawnableEntity> spawnList = instance.toSpawn;
-		spawnList.Clear();
-		instance.ChooseEntitiesToSpawn(ChunkCoords.GetCenterCell(cc, EntityNetwork.CHUNK_SIZE).magnitude, excludePriority, spawnList);
-
-		//determine area to spawn in
-		for (int i = 0; i < spawnList.Count; i++)
-		{
-			SpawnableEntity se = spawnList[i];
-			SpawnEntityInChunk(se, null, cc);
-		}
+		SpawnableEntity se = instance.ChooseEntityToSpawn(
+			ChunkCoords.GetCenterCell(cc, EntityNetwork.CHUNK_SIZE).magnitude);
+		SpawnEntityInChunkNonAlloc(se, null, cc);
 	}
 
 	public static List<Entity> SpawnEntityInChunk(SpawnableEntity se, EntityData? data, ChunkCoords cc)
 	{
 		//determine how many to spawn
-		int numToSpawn = Random.Range(se.spawnRange.x, se.spawnRange.y + 1);
+		int numToSpawn = Random.Range(se.minSpawnCountInChunk, se.maxSpawnCountInChunk + 1);
 		List<Entity> spawnedEntities = new List<Entity>(numToSpawn);
 		for (int j = 0; j < numToSpawn; j++)
 		{
 			spawnedEntities.Add(SpawnOneEntityInChunk(se, data, cc));
 		}
 		return spawnedEntities;
+	}
+
+	public static void SpawnEntityInChunkNonAlloc(SpawnableEntity se, EntityData? data, ChunkCoords cc)
+	{
+		//determine how many to spawn
+		int numToSpawn = Random.Range(se.minSpawnCountInChunk, se.maxSpawnCountInChunk + 1);
+		for (int j = 0; j < numToSpawn; j++)
+		{
+			SpawnOneEntityInChunkNonAlloc(se, data, cc);
+		}
 	}
 
 	public static Entity SpawnOneEntityInChunk(SpawnableEntity se, EntityData? data, ChunkCoords cc)
@@ -173,9 +172,33 @@ public class EntityGenerator : MonoBehaviour
 			se.prefab,
 			spawnPos,
 			Quaternion.identity,
-			instance.holders[se.name].transform);
+			instance.holders[se.entityName].transform);
 		newEntity.ApplyData(data);
 		return newEntity;
+	}
+
+	public static void SpawnOneEntityInChunkNonAlloc(SpawnableEntity se, EntityData? data, ChunkCoords cc)
+	{
+		//pick a position within the chunk coordinates
+		Vector2 spawnPos = Vector2.zero;
+		Vector2Pair range = ChunkCoords.GetCellArea(cc, EntityNetwork.CHUNK_SIZE);
+		switch (se.posType)
+		{
+			case SpawnableEntity.SpawnPosition.Random:
+				spawnPos.x = Random.Range(range.a.x, range.b.x);
+				spawnPos.y = Random.Range(range.a.y, range.b.y);
+				break;
+			case SpawnableEntity.SpawnPosition.Center:
+				spawnPos = ChunkCoords.GetCenterCell(cc, EntityNetwork.CHUNK_SIZE);
+				break;
+		}
+		//spawn it
+		Entity newEntity = Instantiate(
+			se.prefab,
+			spawnPos,
+			Quaternion.identity,
+			instance.holders[se.entityName].transform);
+		newEntity.ApplyData(data);
 	}
 
 	public static ChunkCoords GetNearbyEmptyChunk()
@@ -189,7 +212,7 @@ public class EntityGenerator : MonoBehaviour
 				for (pos.y = -range; pos.y <= range;)
 				{
 					ChunkCoords validCC = pos.Validate();
-					if (!instance.Chunk(validCC)) return validCC;
+					if (!instance.ChunkExists(validCC) || !instance.Chunk(validCC)) return validCC;
 					pos.y += pos.x <= -range || pos.x >= range ?
 						1 : range * 2;
 				}
@@ -221,38 +244,40 @@ public class EntityGenerator : MonoBehaviour
 		return SpawnEntityInChunk(se, null, cc);
 	}
 
-	private List<SpawnableEntity> ChooseEntitiesToSpawn(float distance, bool excludePriority = false,
-		List<SpawnableEntity> addToList = null)
+	private SpawnableEntity ChooseEntityToSpawn(float distance)
 	{
-		addToList = addToList ?? new List<SpawnableEntity>();
-		bool usingSpacePriority = false;
+		List<SpawnableEntityChance> validPrefabs = GetPrefabs(distance);
+		float totalRarity = SpawnableEntityChance.GetTotalChance(validPrefabs);
+		float randomChoose = Random.Range(0f, totalRarity);
+
 		//choose which non priority entities to spawn
-		for (int i = 0; i < prefabs.spawnableEntities.Count; i++)
+		for (int i = 0; i < validPrefabs.Count; i++)
 		{
-			SpawnableEntity e = prefabs.spawnableEntities[i];
-			if (e.ignore || (excludePriority && e.spacePriority)
-				|| (usingSpacePriority && !e.spacePriority)) continue;
-
-			float chance = Random.value;
-			if (e.GetChance(distance) >= chance)
-			{
-				if (e.spacePriority && !usingSpacePriority)
-				{
-					addToList.Clear();
-					usingSpacePriority = true;
-				}
-				addToList.Add(e);
-			}
+			SpawnableEntityChance sec = validPrefabs[i];
+			SpawnableEntity se = sec.entity;
+			float chance = sec.chance;
+			randomChoose -= chance;
+			if (randomChoose <= 0f) return se;
 		}
+		Debug.Log("No Spawnable Entity Chosen");
+		return null;
+	}
 
-		if (usingSpacePriority && addToList.Count > 0)
+	private List<SpawnableEntity> Prefabs => EntityPrefabLoader.spawnableEntities;
+
+	private List<SpawnableEntityChance> cachedChances = new List<SpawnableEntityChance>();
+	private List<SpawnableEntityChance> GetPrefabs(float distance)
+	{
+		cachedChances.Clear();
+		for (int i = 0; i < Prefabs.Count; i++)
 		{
-			SpawnableEntity e = addToList[Random.Range(0, addToList.Count)];
-			addToList.Clear();
-			addToList.Add(e);
-
+			SpawnableEntity se = Prefabs[i];
+			if (se.ignore) continue;
+			float chance = se.GetChance(distance);
+			if (chance == 0f) continue;
+			cachedChances.Add(new SpawnableEntityChance(se, chance));
 		}
-		return addToList;
+		return cachedChances;
 	}
 
 	public static void InstantFillChunks(List<ChunkCoords> coords)
@@ -320,35 +345,17 @@ public class EntityGenerator : MonoBehaviour
 	private void LoadPrefabs()
 	{
 		Debug.Log("Loading Entity Generator");
-		AsyncOperationHandle<EntityPrefabDB> handle
-			= Addressables.LoadAssetAsync<EntityPrefabDB>("EntityPrefabDB");
-		handle.Completed += SetPrefabs;
+		EntityPrefabLoader.OnPrefabsLoaded += CreateHolders;
+		EntityPrefabLoader.LoadPrefabs();
 	}
 
-	private void SetPrefabs(AsyncOperationHandle<EntityPrefabDB> handle)
+	private void CreateHolders()
 	{
-		prefabs = handle.Result;
-		//sort the space priority entities by lowest rarity to highest
-		List<SpawnableEntity> list = prefabs.spawnableEntities;
-		for (int i = 1; i < list.Count; i += 0)
+		for (int i = 0; i < Prefabs.Count; i++)
 		{
-			SpawnableEntity e = list[i];
-			if (e.rarity < list[i - 1].rarity)
-			{
-				list.RemoveAt(i);
-				list.Insert(i - 1, e);
-				i -= i > 1 ? 1 : 0;
-			}
-			else
-			{
-				i++;
-			}
-		}
-
-		for (int i = 0; i < list.Count; i++)
-		{
-			SpawnableEntity e = list[i];
-			holders.Add(e.name, new GameObject(e.name));
+			SpawnableEntity e = Prefabs[i];
+			if (holders.ContainsKey(e.entityName)) continue;
+			holders.Add(e.entityName, new GameObject(e.entityName));
 		}
 
 		Debug.Log("Entity Generator Loaded");
@@ -356,9 +363,39 @@ public class EntityGenerator : MonoBehaviour
 		OnPrefabsLoaded = null;
 	}
 
+	private bool ChunkExists(ChunkCoords cc)
+	{
+		if (cc.quadrant < 0 || (int)cc.quadrant >= wasFilled.Count) return false;
+		if (cc.x < 0 || cc.x >= Quad(cc).Count) return false;
+		if (cc.y < 0 || cc.y >= Column(cc).Count) return false;
+		return true;
+	}
+
 	private bool Chunk(ChunkCoords cc) => Column(cc)[cc.y];
 
 	private List<bool> Column(ChunkCoords cc) => Quad(cc)[cc.x];
 
 	private List<List<bool>> Quad(ChunkCoords cc) => wasFilled[(int)cc.quadrant];
+
+	private struct SpawnableEntityChance
+	{
+		public SpawnableEntity entity;
+		public float chance;
+
+		public SpawnableEntityChance(SpawnableEntity se, float chance)
+		{
+			this.entity = se;
+			this.chance = chance;
+		}
+
+		public static float GetTotalChance(List<SpawnableEntityChance> seC)
+		{
+			float chance = 0f;
+			for (int i = 0; i < seC.Count; i++)
+			{
+				chance += seC[i].chance;
+			}
+			return chance;
+		}
+	}
 }

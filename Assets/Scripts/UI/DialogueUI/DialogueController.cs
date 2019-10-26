@@ -136,7 +136,7 @@ public class DialogueController : MonoBehaviour
 
 		DialoguePopupUI popupUI = dialogueIsRunning ? dialogueUI : chatUI;
 		popupUI.GeneratePopup(name, line, face, speakerID, tone);
-		popupUI.Type(new WaitForSecondsRealtime(0.03f));
+		popupUI.Type(new WaitForSecondsRealtime(0.03f), null, null);
 	}
 
 	public void SkipEntireDialogue()

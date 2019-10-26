@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
-using GenericExtensions;
 
 namespace PromptSystem
 {
@@ -17,7 +16,7 @@ namespace PromptSystem
 		public static void PromptSendRequest(string key, string promptText)
 		{
 			int index = FindMatchingRequestIndex(key);
-			if (promptRequests.IsValidIndex(index))
+			if (index >= 0 && index < promptRequests.Count)
 			{
 				PromptRequestData matchingRequest = FindMatchingRequest(index);
 				string matchingKey = matchingRequest.key;
@@ -72,7 +71,7 @@ namespace PromptSystem
 
 		private static PromptRequestData FindMatchingRequest(int index)
 		{
-			if (!promptRequests.IsValidIndex(index)) return PromptRequestData.Invalid;
+			if (index < 0 || index >= promptRequests.Count) return PromptRequestData.Invalid;
 			return promptRequests[index];
 		}
 	}

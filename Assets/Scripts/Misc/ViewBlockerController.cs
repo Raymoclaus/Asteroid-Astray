@@ -10,10 +10,7 @@ public class ViewBlockerController : MonoBehaviour
 	private void Awake()
 	{
 		cGroup.alpha = 1f;
-		SceneryController.AddListener(() =>
-		{
-			StartCoroutine(Reveal());
-		});
+		SceneryController.AddListener(() => StartCoroutine(Reveal()));
 	}
 
 	private IEnumerator Reveal()

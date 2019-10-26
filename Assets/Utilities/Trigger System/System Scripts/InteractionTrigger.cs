@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,8 +12,44 @@ namespace TriggerSystem.Triggers
 		[SerializeField] protected bool enabledInteractionActions = true;
 		[SerializeField] protected string action = "Interact";
 		private List<IReceiver> receivers = new List<IReceiver>();
+		private List<IInteractor> nearbyInteractors = new List<IInteractor>();
 
 		public event Action<IInteractor> OnInteracted;
+
+		private void Update()
+		{
+			RemoveNullInteractors();
+
+			for (int i = 0; i < nearbyInteractors.Count; i++)
+			{
+				IInteractor interactor = nearbyInteractors[i];
+				if (interactor.IsPerformingAction(ActionRequired))
+				{
+					OnInteracted?.Invoke(interactor);
+				}
+			}
+		}
+
+		private void RemoveNullInteractors()
+		{
+			nearbyInteractors.RemoveAll(t => t == null);
+		}
+
+		protected override void AddActor(IActor actor)
+		{
+			base.AddActor(actor);
+			IInteractor interactor = actor as IInteractor;
+			if (interactor == null) return;
+			nearbyInteractors.Add(interactor);
+		}
+
+		protected override void RemoveActor(IActor actor)
+		{
+			base.RemoveActor(actor);
+			IInteractor interactor = actor as IInteractor;
+			if (interactor == null || !nearbyInteractors.Contains(interactor)) return;
+			nearbyInteractors.Remove(interactor);
+		}
 
 		private void GetReceivers()
 		{

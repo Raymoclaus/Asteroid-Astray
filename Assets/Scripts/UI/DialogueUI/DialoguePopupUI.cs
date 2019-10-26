@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class DialoguePopupUI : PopupUI
@@ -90,19 +91,17 @@ public class DialoguePopupUI : PopupUI
 		TmpTeleType.RevealAllCharacters(activePopups[0].line.textMesh);
 	}
 
-	public void Type(WaitForSeconds timeBetweenStrokes = null, System.Action onFinishTyping = null)
+	public void Type(WaitForSeconds timeBetweenStrokes, Action onType, Action onFinishTyping)
 	{
-		onFinishTyping += () => SetAudioLoop(false);
-		TmpTeleType.Type(this, activePopups[0].line.textMesh, timeBetweenStrokes, onFinishTyping);
+		onType += audioSource.Play;
+		TmpTeleType.Type(this, activePopups[0].line.textMesh, timeBetweenStrokes, onType, onFinishTyping);
 	}
 
-	public void Type(WaitForSecondsRealtime timeBetweenStrokes = null, System.Action onFinishTyping = null)
+	public void Type(WaitForSecondsRealtime timeBetweenStrokes, Action onType, Action onFinishTyping)
 	{
-		onFinishTyping += () => SetAudioLoop(false);
-		TmpTeleType.Type(this, activePopups[0].line.textMesh, timeBetweenStrokes, onFinishTyping);
+		onType += audioSource.Play;
+		TmpTeleType.Type(this, activePopups[0].line.textMesh, timeBetweenStrokes, onType, onFinishTyping);
 	}
-
-	private void SetAudioLoop(bool active) => audioSource.loop = active;
 
 	public virtual void GeneratePopup(string name, string line, Sprite face, int speakerID, AudioClip tone)
 	{
@@ -131,8 +130,6 @@ public class DialoguePopupUI : PopupUI
 	protected void SetSpeakerTone(AudioClip tone)
 	{
 		audioSource.clip = tone;
-		SetAudioLoop(true);
-		audioSource.Play();
 	}
 
 	protected void AddSpeakerID(int speakerID)

@@ -218,7 +218,7 @@ public class ItemPopupUI : PopupUI
 				spr.sprite = sprites.GetItemSprite(this.type);
 			}
 			UpdateName();
-			description.text = Item.ItemDescription(this.type);
+			description.text = Item.Description(this.type);
 		}
 	}
 
@@ -235,7 +235,7 @@ public class ItemPopupUI : PopupUI
 			this.type = type;
 			spr = sprites ? sprites.GetItemSprite(type) : null;
 			name = Item.TypeName(type);
-			description = Item.ItemDescription(type);
+			description = Item.Description(type);
 			this.amount = amount;
 		}
 

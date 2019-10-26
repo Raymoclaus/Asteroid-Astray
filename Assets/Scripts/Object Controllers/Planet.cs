@@ -1,4 +1,5 @@
-﻿using TriggerSystem;
+﻿using SceneControllers;
+using TriggerSystem;
 using TriggerSystem.Triggers;
 using UnityEngine;
 

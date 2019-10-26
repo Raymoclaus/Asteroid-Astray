@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 using TabbedMenuSystem;
 
 public class PauseMenu : TabbedMenuController
@@ -13,11 +12,11 @@ public class PauseMenu : TabbedMenuController
 
 		if (Pause.IsPaused)
 		{
-			Open();
+			InstantOpen();
 		}
 		else
 		{
-			Close();
+			InstantClose();
 		}
 	}
 
@@ -34,5 +33,17 @@ public class PauseMenu : TabbedMenuController
 		StartCoroutine(TimedAction(Pause.SHIFT_DURATION,
 			(float delta) => cGroup.alpha = 1f - delta,
 			base.Close));
+	}
+
+	protected void InstantOpen()
+	{
+		base.Open();
+		cGroup.alpha = 1f;
+	}
+
+	protected void InstantClose()
+	{
+		cGroup.alpha = 0f;
+		base.Close();
 	}
 }

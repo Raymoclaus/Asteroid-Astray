@@ -59,7 +59,7 @@ public class Entity : MonoBehaviour
 		coords = new ChunkCoords(transform.position, EntityNetwork.CHUNK_SIZE);
 		EntityNetwork.AddEntity(this, coords);
 		GetLayers();
-		healthComponent.SetToUpperLimit();
+		healthComponent?.SetToUpperLimit();
 		enabled = true;
 	}
 

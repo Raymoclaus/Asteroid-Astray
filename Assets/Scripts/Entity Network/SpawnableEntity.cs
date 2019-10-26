@@ -2,30 +2,25 @@
 using System;
 using CustomDataTypes;
 
-[System.Serializable]
-public class SpawnableEntity
+[CreateAssetMenu(menuName = "Scriptable Objects/Spawnable Entity")]
+public class SpawnableEntity : ScriptableObject
 {
 	//reference to the prefab
 	public Entity prefab;
 	//name of the Entity type
-	public string name = "default";
-	//chance that the chunk will be filled with this entity type
-	[Range(0.0001f, 1f)]
-	public float rarity;
+	public string entityName = "default";
+	//chance that the chunk will be filled with this entity type compared to others
+	public float startingRarity, endingRarity;
 	//entities with a rarity offset won't appear before a specified zone
 	public int rarityZoneOffset = 1;
-	//entities with a rarity cutoff will not appear after a specified zone (numbers lower than 0 for no cutoff)
-	public int rarityZoneCutoff = -1;
-	//rarity increases from 0 until given rarity. Minimum value is 0. Higher values means less steep curve
-	public float rarityIncreaseSteepness = 1f;
+	//Number of zones the entity can spawn in after the zone offset. Use 0 or lower for infinite spawn range
+	public int rarityZoneCount = -1;
 	//in the event this entity type is spawned, how many should spawn in the chunk
-	public IntPair spawnRange;
+	public int minSpawnCountInChunk, maxSpawnCountInChunk;
 	//determines where in a chunk the entity should be spawned
 	public SpawnPosition posType = SpawnPosition.Random;
 	//convenient off switch for telling the entity generator to ignore this
 	public bool ignore = false;
-	//should not spawn in the same chunk as other entities
-	public bool spacePriority = false;
 
 	public enum SpawnPosition
 	{
@@ -33,24 +28,24 @@ public class SpawnableEntity
 		Center
 	}
 
+	//https://www.desmos.com/calculator/waol9m1mjy
 	public float GetChance(float distance)
 	{
-		if (rarity <= 0f) return 0f;
+		if (startingRarity <= 0f) return 0f;
 
 		int zone = Difficulty.DistanceBasedDifficulty(distance);
 		if (zone < rarityZoneOffset) return 0f;
-		if (rarityZoneCutoff >= 0 && zone > rarityZoneOffset + rarityZoneCutoff) return 0f;
+		int rarityZoneCutoff = rarityZoneOffset + rarityZoneCount;
+		if (rarityZoneCount <= 0) return endingRarity;
+		if (zone > rarityZoneCutoff) return 0f;
+		
+		float zoneDelta = (rarityZoneCount - rarityZoneOffset) / (float)zone + rarityZoneOffset;
 
-		float a = Mathf.Clamp01(rarity);
-		float b = Mathf.Max(0, rarityIncreaseSteepness);
-		float c = Math.Max(0, rarityZoneOffset);
-		float x = distance / Constants.CHUNK_SIZE;
-
-		float calculation = a * ((x - c)/(x - c + b));
-		if (name.ToLower() == "bothive")
+		float calculation = Mathf.Lerp(startingRarity, endingRarity, zoneDelta);
+		if (entityName.ToLower() == "bothive")
 		{
 			Debug.Log($"Distance: {distance}");
-			Debug.Log($"Rarity: {rarity}");
+			Debug.Log($"Rarity: {startingRarity}");
 			Debug.Log($"Zone: {zone}");
 			Debug.Log($"Chance Calculation: {calculation}");
 		}

@@ -1,11 +1,10 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
 
 public class AudioManager : MonoBehaviour
 {
-	public AudioMixerGroup masterMixer, musicMixer, sfxMixer;
+	public AudioMixerGroup masterGroup;
 
 	private const int poolReserve = 400;
 	private Queue<AudioSource> pool = new Queue<AudioSource>(poolReserve);
@@ -20,7 +19,8 @@ public class AudioManager : MonoBehaviour
 
 	private void Update()
 	{
-		masterMixer.audioMixer.SetFloat("Pitch", Time.timeScale);
+		masterGroup.audioMixer.SetFloat("MusicPitch", Time.timeScale);
+		masterGroup.audioMixer.SetFloat("SfxPitch", Time.timeScale);
 
 		for (int i = 0; i < active.Count; i++)
 		{
@@ -74,7 +74,7 @@ public class AudioManager : MonoBehaviour
 		go.SetActive(false);
 		go.transform.parent = holder;
 		AudioSource src = go.AddComponent<AudioSource>();
-		src.outputAudioMixerGroup = sfxMixer;
+		src.outputAudioMixerGroup = masterGroup;
 		src.spatialBlend = 1f;
 		src.minDistance = MIN_DISTANCE;
 		src.maxDistance = MAX_DISTANCE;

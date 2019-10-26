@@ -13,6 +13,9 @@ namespace CustomDataTypes
 
 		public static ChunkCoords Zero => new ChunkCoords(Quadrant.UpperLeft, 0, 0);
 
+		public static Quadrant MaxQuadrantValue
+			=> (Quadrant)(Enum.GetValues(typeof(Quadrant)).Length - 1);
+
 		public ChunkCoords(Vector2 pos, float chunkSize)
 		{
 			this = PosToCoords(pos, chunkSize);

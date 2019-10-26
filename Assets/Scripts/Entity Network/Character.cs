@@ -299,23 +299,25 @@ public class Character : Entity, IInteractor, ICrafter
 
 	public bool Craft(CraftingRecipe recipe)
 	{
-		List<ItemStack> ingredients = recipe.Ingredients;
+		List<ItemStack> ingredients = recipe.IngredientsCopy;
 		for (int i = 0; i < ingredients.Count; i++)
 		{
 			ItemStack stack = ingredients[i];
-			if (defaultInventory.Count(stack.ItemType) < stack.Amount) return false;
+			Item.Type type = stack.ItemType;
+			Inventory inv = GetAppropriateInventory(type);
+			if (ItemStack.Count(inv.ItemStacks, type) < stack.Amount) return false;
 		}
 
 		defaultInventory.RemoveItems(ingredients);
-		List<ItemStack> results = recipe.Results;
+		List<ItemStack> results = recipe.ResultsCopy;
 		if (!defaultInventory.CanFit(results))
 		{
 			defaultInventory.AddItems(ingredients);
 			return false;
 		}
 
-		defaultInventory.AddItems(results);
 		OnItemsCrafted?.Invoke(results);
+		defaultInventory.AddItems(results);
 		return true;
 	}
 
@@ -325,5 +327,44 @@ public class Character : Entity, IInteractor, ICrafter
 	public void AttachToInventoryUI()
 	{
 		InventoryTab.SetInventoryHolder(this);
+	}
+
+	public bool HasItems(List<ItemStack> stacks)
+	{
+		for (int i = 0; i < stacks.Count; i++)
+		{
+			Item.Type type = stacks[i].ItemType;
+			Inventory inv = GetAppropriateInventory(type);
+			int expectedAmount = ItemStack.Count(stacks, type);
+			if (ItemStack.Count(inv.ItemStacks, type) < expectedAmount) return false;
+		}
+		return true;
+	}
+
+	public bool CanCraftRecipe(CraftingRecipe recipe)
+	{
+		List<ItemStack> ingredients = recipe.IngredientsCopy;
+		if (!HasItems(ingredients)) return false;
+
+		List<Inventory> relatedInventories = new List<Inventory>();
+		List<ItemStack> results = recipe.ResultsCopy;
+		for (int i = 0; i < ingredients.Count; i++)
+		{
+			Item.Type type = ingredients[i].ItemType;
+			Inventory inv = GetAppropriateInventory(type);
+			if (relatedInventories.Contains(inv)) continue;
+			List<ItemStack> invStacks = inv.CreateCopyOfStacks();
+			ItemStack.RemoveItems(invStacks, ingredients);
+			relatedInventories.Add(inv);
+
+			for (int j = 0; j < results.Count; j++)
+			{
+				Item.Type resultItemType = results[i].ItemType;
+				Inventory inv2 = GetAppropriateInventory(resultItemType);
+				if (inv != inv2) continue;
+				if (!ItemStack.CanFit(invStacks, results[i])) return false;
+			}
+		}
+		return true;
 	}
 }

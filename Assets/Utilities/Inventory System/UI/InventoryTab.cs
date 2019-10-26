@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace InventorySystem.UI
 {
@@ -17,12 +16,7 @@ namespace InventorySystem.UI
 		private Inventory currentInventory;
 		[SerializeField] private ItemStackUI grabStack;
 		[SerializeField] private CraftingUIController craftingUI;
-
-		[SerializeField] private Image previewImg;
-		[SerializeField] private Text previewName;
-		[SerializeField] private Text previewDesc;
-		[SerializeField] private Text previewFlav;
-		[SerializeField] private ItemSprites sprites;
+		[SerializeField] private ItemPreviewUI itemPreviewUI;
 
 		private void Awake()
 		{
@@ -62,6 +56,8 @@ namespace InventorySystem.UI
 
 			craftingUI.SetCrafter(inventoryHolder as ICrafter);
 			craftingUI.Setup();
+
+			itemPreviewUI.SetItemType(Item.Type.Blank);
 		}
 
 		public override void OnClose()
@@ -92,28 +88,20 @@ namespace InventorySystem.UI
 			grabStack.transform.position = pos;
 		}
 
-		//private void UpdatePreview()
-		//{
-		//	Item.Type previewType =
-		//		grabbing ? grabStack.ItemType : GetInventory(currentContext.context)
-		//		.stacks[currentContext.selected].GetItemType();
-		//	if (previewType == Item.Type.Blank) return;
+		private void UpdatePreview(Item.Type type)
+		{
+			Item.Type previewType =
+				IsGrabbing ? grabStack.ItemType : type;
+			if (previewType == Item.Type.Blank) return;
 
-		//	if (sprites != null)
-		//	{
-		//		previewImg.sprite = sprites.GetItemSprite(previewType);
-		//	}
-		//	previewImg.color = previewType == Item.Type.Blank ? Color.clear : Color.white;
-		//	previewName.text = Item.TypeName(previewType);
-		//	previewDesc.text = Item.ItemDescription(previewType);
-		//	previewFlav.text = Item.ItemFlavourText(previewType);
-		//}
+			itemPreviewUI.SetItemType(previewType);
+		}
 
-		//public void PointerEnter(GameObject slot)
-		//{
-		//	UpdateSelected(slot);
-		//	UpdatePreview();
-		//}
+		public void SlotHover(Slot slot)
+		{
+			Item.Type slotType = slot.ItemType;
+			UpdatePreview(slotType);
+		}
 
 		public void SlotClickDown(Slot slot)
 		{
@@ -121,7 +109,7 @@ namespace InventorySystem.UI
 			if (grabStack.ItemType == slot.ItemType
 				&& !slot.IsMaxed)
 			{
-				int leftOver = inv.AddToStack(slot.ItemType, slot.Amount, slot.ID);
+				int leftOver = inv.AddToStack(grabStack.ItemType, grabStack.Amount, slot.ID);
 				grabStack.Amount = leftOver;
 			}
 			else
@@ -131,6 +119,8 @@ namespace InventorySystem.UI
 			}
 		}
 
-		private bool IsGrabbing => grabStack.ItemType != Item.Type.Blank;
+		public Slot SlotLastClickedIn { get; set; }
+
+		public bool IsGrabbing => grabStack.ItemType != Item.Type.Blank;
 	}
 }

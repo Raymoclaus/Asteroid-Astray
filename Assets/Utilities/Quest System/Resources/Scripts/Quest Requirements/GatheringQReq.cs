@@ -10,13 +10,12 @@ namespace QuestSystem.Requirements
 		public Item.Type typeNeeded;
 		public int amountNeeded = 1;
 		private int currentAmount = 0;
-		private const string formattedDescription = "{0}: {1} / {2}";
 		private IInventoryHolder inventoryHolder;
 
 		public GatheringQReq(Item.Type typeNeeded, int amountNeeded,
 			IInventoryHolder inventoryHolder, string description = null)
 			: base(string.IsNullOrWhiteSpace(description)
-				  ? $"Gather # {typeNeeded}" : description, amountNeeded)
+				  ? "Gather {0} {1}: {2} / {0}" : description)
 		{
 			this.typeNeeded = typeNeeded;
 			this.amountNeeded = amountNeeded;
@@ -58,7 +57,7 @@ namespace QuestSystem.Requirements
 		}
 
 		public override string GetDescription =>
-			string.Format(formattedDescription, description, currentAmount, amountNeeded);
+			string.Format(description, amountNeeded, typeNeeded, currentAmount);
 
 		public override IWaypoint GetWaypoint => null;
 	}

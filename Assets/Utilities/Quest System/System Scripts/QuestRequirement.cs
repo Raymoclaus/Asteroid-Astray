@@ -9,12 +9,6 @@
 			this.description = description;
 		}
 
-		public QuestRequirement(string description, int amount)
-			: this(description.Replace("#", amount.ToString()))
-		{
-
-		}
-
 		public bool Completed { get; private set; }
 		protected bool active = false;
 

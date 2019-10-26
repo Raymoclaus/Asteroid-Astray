@@ -9,19 +9,8 @@ namespace InventorySystem
 	{
 		[SerializeField] private List<ItemStack> recipeList, result;
 
-		public List<ItemStack> Ingredients => Copy(recipeList);
-		public List<ItemStack> Results => Copy(result);
-
-		private List<ItemStack> Copy(List<ItemStack> stacks)
-		{
-			List<ItemStack> newList = new List<ItemStack>(stacks);
-
-			for (int i = 0; i < newList.Count; i++)
-			{
-				newList[i] = new ItemStack(stacks[i]);
-			}
-			return newList;
-		}
+		public List<ItemStack> IngredientsCopy => ItemStack.CreateCopyOfStacks(recipeList);
+		public List<ItemStack> ResultsCopy => ItemStack.CreateCopyOfStacks(result);
 
 		public int GetPriority()
 		{

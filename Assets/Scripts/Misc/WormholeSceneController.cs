@@ -1,5 +1,6 @@
 ﻿using CurveTracerSystem;
 using CustomYieldInstructions;
+using SceneControllers;
 using System;
 using System.Collections;
 using UnityEngine;
@@ -87,6 +88,8 @@ public class WormholeSceneController : MonoBehaviour
 
 	private void CloseWormhole()
 	{
+		SceneLoader.SceneAsync sa = SceneLoader.PrepareScene("SpaceScene");
+
 		StartCoroutine(TimerAction(1f, (float delta) =>
 		{
 			wormhole.SetFloat("_Radius", (1f - delta) * 0.35f);
@@ -95,7 +98,7 @@ public class WormholeSceneController : MonoBehaviour
 			StartCoroutine(TimerAction(fadeOutTime / 2f, (float delta) =>
 			{
 				fadeScreen.alpha = delta;
-			}, () => SceneLoader.LoadScene("SpaceScene")));
+			}, sa.LoadSceneWhenReady));
 		}));
 	}
 

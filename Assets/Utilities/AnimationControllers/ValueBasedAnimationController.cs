@@ -3,16 +3,17 @@ using ValueComponents;
 
 public abstract class ValueBasedAnimationController<T> : MonoBehaviour
 {
-	[SerializeField] private ValueComponent<T> valueComponent;
 	[SerializeField] protected Animator animator;
-	[SerializeField] private string animatorValueName;
+	[SerializeField] private string animatorPropertyName;
+
+	protected abstract ValueComponent<T> GetValueComponent { get; }
 
 	private void Awake()
 	{
-		valueComponent.OnValueChanged += UpdateAnimator;
+		GetValueComponent.OnValueChanged += UpdateAnimator;
 	}
 
 	protected abstract void UpdateAnimator(T oldVal, T newVal);
 
-	protected string AnimatorValueName => animatorValueName;
+	protected string AnimatorPropertyName => animatorPropertyName;
 }

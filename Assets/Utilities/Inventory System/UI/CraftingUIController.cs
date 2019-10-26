@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using System;
 
 namespace InventorySystem.UI
 {
@@ -11,13 +12,53 @@ namespace InventorySystem.UI
 
 		[SerializeField] private Transform recipeContent;
 		[SerializeField] private RecipeUIObject recipeObjectPrefab;
+		private List<RecipeUIObject> recipeObjects = new List<RecipeUIObject>();
 		[SerializeField] private GameObject craftingDisabledObject;
 		[SerializeField] private TextMeshProUGUI craftingDisabledReason;
+		[SerializeField] private RecipeTooltip tooltip;
 
 		public void SetCrafter(ICrafter newCrafter)
 		{
 			if (newCrafter == null) return;
+			UnSubscribeFromCrafterInventories(crafter);
 			crafter = newCrafter;
+			SubscribeToCrafterInventories(crafter);
+		}
+
+		private void OnDestroy()
+		{
+			UnSubscribeFromCrafterInventories(crafter);
+		}
+
+		private void SubscribeToCrafterInventories(ICrafter crafter)
+		{
+			if (crafter == null) return;
+			List<Inventory> inventories = crafter.GetAllInventories;
+			for (int i = 0; i < inventories.Count; i++)
+			{
+				inventories[i].OnStackUpdated += UpdateUI;
+			}
+		}
+
+		private void UnSubscribeFromCrafterInventories(ICrafter crafter)
+		{
+			if (crafter == null) return;
+			List<Inventory> inventories = crafter.GetAllInventories;
+			for (int i = 0; i < inventories.Count; i++)
+			{
+				inventories[i].OnStackUpdated -= UpdateUI;
+			}
+		}
+
+		private void UpdateUI(int index, Item.Type type, int amount)
+		{
+			for (int i = 0; i < recipeObjects.Count; i++)
+			{
+				RecipeUIObject recipeObject = recipeObjects[i];
+				recipeObject.UpdateCraftableIndicator();
+				if (recipeObject != LastRecipeHovered) continue;
+				recipeObject.UpdateTooltip(tooltip);
+			}
 		}
 
 		public void Setup()
@@ -52,9 +93,31 @@ namespace InventorySystem.UI
 				{
 					RecipeUIObject recipeObject = Instantiate(
 						recipeObjectPrefab, recipeContent);
-					recipeObject.Initialise(recipes[i]);
+					recipeObject.Initialise(this, recipes[i], crafter);
+					recipeObjects.Add(recipeObject);
 				}
 			}
+		}
+
+		private void Update()
+		{
+			if (tooltip.Hidden || LastRecipeHovered == null) return;
+			Vector3 lastRecipePosition = LastRecipeHovered.transform.position;
+			tooltip.transform.position = lastRecipePosition;
+		}
+
+		private RecipeUIObject LastRecipeHovered { get; set; }
+
+		public void OnHoverEnterRecipeObject(RecipeUIObject recipeUIObj)
+		{
+			LastRecipeHovered = recipeUIObj;
+			recipeUIObj.UpdateTooltip(tooltip);
+			tooltip.Show();
+		}
+
+		public void OnHoverExitRecipeObject(RecipeUIObject recipeUIObj)
+		{
+			tooltip.Hide();
 		}
 	}
 }

@@ -138,7 +138,7 @@ public class TutorialPrompts : MonoBehaviour
 			int id = mainChar.DefaultInventory.FirstInstanceId(Item.Type.RepairKit);
 			if (id < 0 || Pause.IsStopped) return false;
 			string typeName = Item.TypeName(repairKit);
-			string text = id < 8 ? $"Press [Slot{id + 1}:] to use the {typeName}"
+			string text = id < 8 ? $"Press [Slot {id + 1}:] to use the {typeName}"
 			: $"Place the {typeName} in one of the first 8 inventory slots";
 			if (repairKitInputPromptInfo.text != text)
 			{

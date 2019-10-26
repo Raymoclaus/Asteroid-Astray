@@ -48,7 +48,7 @@ namespace TriggerSystem.Triggers
 			}
 		}
 
-		private void AddActor(IActor actor)
+		protected virtual void AddActor(IActor actor)
 		{
 			if (ShouldAddActor(actor))
 			{
@@ -62,7 +62,7 @@ namespace TriggerSystem.Triggers
 		public virtual bool ShouldAddActor(IActor actor)
 			=> actor != null && !nearbyActors.Contains(actor);
 
-		private void RemoveActor(IActor actor)
+		protected virtual void RemoveActor(IActor actor)
 		{
 			if (actor != null && nearbyActors.Contains(actor))
 			{

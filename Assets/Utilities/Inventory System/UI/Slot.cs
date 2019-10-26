@@ -10,13 +10,19 @@ namespace InventorySystem.UI
 		public Inventory Inventory { get; private set; }
 		public int ID { get; private set; }
 
-		public void Initialise(InventoryTab uiController, Inventory inventory, int id)
+		public void Initialise(InventoryTab inventoryUI, Inventory inventory, int id)
 		{
-			inventoryUI = uiController;
+			this.inventoryUI = inventoryUI;
 			Inventory = inventory;
 			ID = id;
 			SetStack(inventory.ItemStacks[id]);
 			Inventory.OnStackUpdated += UpdateStack;
+		}
+
+		private void OnDestroy()
+		{
+			if (Inventory == null) return;
+			Inventory.OnStackUpdated -= UpdateStack;
 		}
 
 		private void UpdateStack(int index, Item.Type type, int amount)
@@ -25,7 +31,30 @@ namespace InventorySystem.UI
 			SetStack(type, amount);
 		}
 
-		public void SlotClicked()
+		public void HoverEnter()
+		{
+			inventoryUI.SlotHover(this);
+		}
+
+		public void Press()
+		{
+			inventoryUI.SlotLastClickedIn = this;
+			Clicked();
+		}
+
+		public void Release()
+		{
+			if (inventoryUI.SlotLastClickedIn == this) return;
+			Drop();
+		}
+
+		public void Drop()
+		{
+			if (!inventoryUI.IsGrabbing) return;
+			Clicked();
+		}
+
+		private void Clicked()
 		{
 			inventoryUI.SlotClickDown(this);
 		}

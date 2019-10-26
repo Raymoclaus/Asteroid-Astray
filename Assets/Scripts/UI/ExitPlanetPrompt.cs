@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using SceneControllers;
+using UnityEngine;
 
 public class ExitPlanetPrompt : MonoBehaviour
 {
