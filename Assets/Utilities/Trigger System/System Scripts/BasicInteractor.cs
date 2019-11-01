@@ -18,5 +18,4 @@ namespace TriggerSystem.Actors.Interactors
 
 		public virtual object ObjectOrderRequest(object order) => null;
 	}
-
 }

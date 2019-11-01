@@ -461,10 +461,10 @@ public class BotHive : Character, ICombat
 	private struct HiveSaveData
 	{
 		public SerializableVector3 position;
-		public Inventory.InventoryData inventory;
+		public Storage.InventoryData inventory;
 		public List<GatherBot.GatherBotData> botData;
 
-		public HiveSaveData(SerializableVector3 position, Inventory.InventoryData inventory,
+		public HiveSaveData(SerializableVector3 position, Storage.InventoryData inventory,
 			List<GatherBot.GatherBotData> botData)
 		{
 			this.position = position;

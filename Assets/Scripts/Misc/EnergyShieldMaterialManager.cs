@@ -38,13 +38,8 @@ public class EnergyShieldMaterialManager : MonoBehaviour
 		}
 	}
 
-	private void Update()
+	private void LateUpdate()
 	{
-		if (Input.GetKeyDown(KeyCode.D))
-		{
-			TakeHit(new Vector2(Random.value - 0.5f, Random.value - 0.5f));
-		}
-
 		transform.eulerAngles = Vector3.zero;
 	}
 

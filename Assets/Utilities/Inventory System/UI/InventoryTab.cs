@@ -1,10 +1,9 @@
 ﻿using System.Collections.Generic;
+using TabbedMenuSystem;
 using UnityEngine;
 
 namespace InventorySystem.UI
 {
-	using TabbedMenuSystem;
-
 	public class InventoryTab : MenuContent
 	{
 		private static IInventoryHolder inventoryHolder;
@@ -13,7 +12,7 @@ namespace InventorySystem.UI
 		[SerializeField] private SlotGroup slotGroupPrefab;
 		private HashSet<SlotGroup> slotGroups = new HashSet<SlotGroup>();
 		[SerializeField] Transform slotGroupsHolder;
-		private Inventory currentInventory;
+		private Storage currentInventory;
 		[SerializeField] private ItemStackUI grabStack;
 		[SerializeField] private CraftingUIController craftingUI;
 		[SerializeField] private ItemPreviewUI itemPreviewUI;
@@ -51,7 +50,7 @@ namespace InventorySystem.UI
 				Destroy(child.gameObject);
 			}
 
-			Inventory defaultInventory = inventoryHolder?.DefaultInventory;
+			Storage defaultInventory = inventoryHolder?.DefaultInventory;
 			CreateSlotGroup(defaultInventory);
 
 			craftingUI.SetCrafter(inventoryHolder as ICrafter);
@@ -66,12 +65,12 @@ namespace InventorySystem.UI
 
 			Item.Type grabbedItem = grabStack.ItemType;
 			if (grabbedItem == Item.Type.Blank) return;
-			Inventory inv = inventoryHolder.GetAppropriateInventory(grabbedItem);
+			Storage inv = inventoryHolder.GetAppropriateInventory(grabbedItem);
 			inv.AddItem(new ItemStack(grabStack.ItemType, grabStack.Amount));
 			grabStack.SetStack(new ItemStack());
 		}
 
-		private void CreateSlotGroup(Inventory inv)
+		private void CreateSlotGroup(Storage inv)
 		{
 			if (inv == null) return;
 
@@ -105,7 +104,7 @@ namespace InventorySystem.UI
 
 		public void SlotClickDown(Slot slot)
 		{
-			Inventory inv = slot.Inventory;
+			Storage inv = slot.Inventory;
 			if (grabStack.ItemType == slot.ItemType
 				&& !slot.IsMaxed)
 			{

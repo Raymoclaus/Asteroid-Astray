@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace InputHandler
+namespace InputHandlerSystem
 {
 	public class Ps4InputHandler : CustomInputHandler
 	{
@@ -8,8 +8,8 @@ namespace InputHandler
 
 		public override bool ProcessInputs(InputContext context)
 		{
-			if (Input.GetAxisRaw("PS4_LeftStick_Horizontal") != 0f
-				|| Input.GetAxisRaw("PS4_LeftStick_Vertical") != 0f) return true;
+			if (UnityEngine.Input.GetAxisRaw("PS4_LeftStick_Horizontal") != 0f
+				|| UnityEngine.Input.GetAxisRaw("PS4_LeftStick_Vertical") != 0f) return true;
 
 			return base.ProcessInputs(context);
 		}
@@ -17,8 +17,8 @@ namespace InputHandler
 		public override float GetLookAngle(Vector2 refLocation)
 		{
 			Vector2 axisInput = new Vector2(
-				Input.GetAxisRaw("PS4_LeftStick_Horizontal"),
-				Input.GetAxisRaw("PS4_LeftStick_Vertical"));
+				UnityEngine.Input.GetAxisRaw("PS4_LeftStick_Horizontal"),
+				UnityEngine.Input.GetAxisRaw("PS4_LeftStick_Vertical"));
 
 			//if the control is not being used then return a non-usable value
 			if (Mathf.Approximately(axisInput.x, 0f) && Mathf.Approximately(axisInput.y, 0f))

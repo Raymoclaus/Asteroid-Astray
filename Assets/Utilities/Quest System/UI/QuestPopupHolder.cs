@@ -23,7 +23,7 @@ namespace QuestSystem.UI
 			for (int i = 0; i < Quest.Requirements.Count; i++)
 			{
 				QuestRequirementUI req = Instantiate(requirementPrefab, transform, false);
-				req.Setup(Quest.Requirements[i]);
+				req.Setup(Quest.Requirements[i], Quest.QuestTaker);
 				requirements.Add(req);
 			}
 

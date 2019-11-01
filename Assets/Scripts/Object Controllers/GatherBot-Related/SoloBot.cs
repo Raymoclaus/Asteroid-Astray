@@ -13,17 +13,13 @@ public class SoloBot : GatherBot
 	{
 		switch (newState)
 		{
-			case AIState.Scanning:
-			case AIState.Gathering:
-			case AIState.Suspicious:
-			case AIState.Attacking:
-			case AIState.Collecting:
-			case AIState.Escaping:
-			case AIState.Wandering:
-			case AIState.Dying:
+			default:
 				base.SetState(newState);
 				break;
-			default:
+			case AIState.Spawning:
+			case AIState.Exploring:
+			case AIState.Storing:
+			case AIState.Signalling:
 				SetState(AIState.Scanning);
 				break;
 		}

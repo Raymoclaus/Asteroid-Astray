@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace InputHandler
+namespace InputHandlerSystem
 {
 	public class KeyboardInputHandler : CustomInputHandler
 	{
@@ -11,7 +11,7 @@ namespace InputHandler
 		{
 			if (!Camera.main) return 0f;
 
-			Vector2 cursorPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+			Vector2 cursorPos = Camera.main.ScreenToWorldPoint(UnityEngine.Input.mousePosition);
 			return -Vector2.SignedAngle(Vector2.up, cursorPos - refLocation);
 		}
 
@@ -19,10 +19,10 @@ namespace InputHandler
 		public override bool ProcessInputs(InputContext context)
 		{
 			//checks if the mouse has moved
-			if (_prevMousePos != (Vector2)Input.mousePosition)
+			if (_prevMousePos != (Vector2)UnityEngine.Input.mousePosition)
 			{
 				//update mouse check variable
-				_prevMousePos = Input.mousePosition;
+				_prevMousePos = UnityEngine.Input.mousePosition;
 				return true;
 			}
 

@@ -28,9 +28,8 @@ public class EntityGenerator : MonoBehaviour
 		instance = this;
 
 		LoadPrefabs();
-
-		SteamPunkConsole spc = FindObjectOfType<SteamPunkConsole>();
-		spc?.GetCommandsFromType(GetType());
+		
+		SteamPunkConsole.GetCommandsFromType(GetType());
 	}
 
 	public static bool IsReady
@@ -132,6 +131,7 @@ public class EntityGenerator : MonoBehaviour
 
 	public static List<Entity> SpawnEntityInChunk(SpawnableEntity se, EntityData? data, ChunkCoords cc)
 	{
+		if (se == null) return null;
 		//determine how many to spawn
 		int numToSpawn = Random.Range(se.minSpawnCountInChunk, se.maxSpawnCountInChunk + 1);
 		List<Entity> spawnedEntities = new List<Entity>(numToSpawn);
@@ -144,6 +144,7 @@ public class EntityGenerator : MonoBehaviour
 
 	public static void SpawnEntityInChunkNonAlloc(SpawnableEntity se, EntityData? data, ChunkCoords cc)
 	{
+		if (se == null) return;
 		//determine how many to spawn
 		int numToSpawn = Random.Range(se.minSpawnCountInChunk, se.maxSpawnCountInChunk + 1);
 		for (int j = 0; j < numToSpawn; j++)

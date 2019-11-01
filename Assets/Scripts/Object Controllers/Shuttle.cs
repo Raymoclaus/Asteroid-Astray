@@ -1,10 +1,11 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.Events;
-using InputHandler;
+using InputHandlerSystem;
 using QuestSystem;
 using QuestSystem.UI;
 using InventorySystem;
+using InventorySystem.UI;
 using ValueComponents;
 using SceneControllers;
 
@@ -710,7 +711,10 @@ public class Shuttle : Character, IStunnable, ICombat
 
 	protected override int GetValue() => DefaultInventory.Value;
 
-	public override bool CanDrill() => base.CanDrill() && drillIsActive;
+	public override bool CanDrill()
+		=> base.CanDrill()
+		&& drillIsActive
+		&& InputManager.GetInput("Cancel Drill") == 0f;
 
 	public void EnterShip(Transform shipHatch)
 	{
@@ -755,13 +759,19 @@ public class Shuttle : Character, IStunnable, ICombat
 	}
 
 	public override bool IsPerformingAction(string action)
-		=> InputManager.GetInput(action) > 0f;
+		=> InputManager.GetInputDown(action);
 
 	public override void Interact(object interactableObject)
 	{
 		if (interactableObject is MainHatchPrompt mainHatch)
 		{
 			EnterShip(mainHatch.transform);
+			return;
+		}
+
+		if (interactableObject is Planet planet)
+		{
+			SceneLoader.LoadScene("PlanetScene");
 		}
 	}
 }

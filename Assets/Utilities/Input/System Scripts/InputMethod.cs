@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace InputHandler
+namespace InputHandlerSystem
 {
 	[CreateAssetMenu(menuName = "Scriptable Objects/Input Method")]
 	public class InputMethod : ScriptableObject

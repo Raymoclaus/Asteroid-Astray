@@ -1,12 +1,10 @@
-﻿using TriggerSystem;
+﻿using DialogueSystem;
+using DialogueSystem.UI;
+using TriggerSystem;
 using UnityEngine;
 
 public class MainHatchPrompt : MonoBehaviour, IActionMessageReceiver
 {
-	private static DialogueController dlgCtrl;
-	protected static DialogueController DlgCtrl
-		=> dlgCtrl ?? (dlgCtrl = FindObjectOfType<DialogueController>());
-
 	[SerializeField] private ConversationWithActions
 		interactBeforeRepairedShuttle,
 		interactBeforeRechargedShip,
@@ -18,19 +16,17 @@ public class MainHatchPrompt : MonoBehaviour, IActionMessageReceiver
 
 	public void PlayDialogueResponse()
 	{
-		if (DlgCtrl.DialogueIsActive()) return;
-
 		if (!NarrativeManager.ShuttleRepaired)
 		{
-			DlgCtrl.StartChat(interactBeforeRepairedShuttle);
+			CommPopupUI.ShowDialogue(new DialogueController(interactBeforeRepairedShuttle));
 		}
 		else if (!NarrativeManager.ShipRecharged)
 		{
-			DlgCtrl.StartChat(interactBeforeRechargedShip);
+			CommPopupUI.ShowDialogue(new DialogueController(interactBeforeRechargedShip));
 		}
 		else
 		{
-			DlgCtrl.StartChat(genericCantEnterShipDialogue);
+			CommPopupUI.ShowDialogue(new DialogueController(genericCantEnterShipDialogue));
 		}
 	}
 

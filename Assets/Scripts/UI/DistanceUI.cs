@@ -1,20 +1,19 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
-using System.Collections.Generic;
-using System.Collections;
 using CustomDataTypes;
 using QuestSystem;
+using TMPro;
+using UIControllers;
 
 public class DistanceUI : MonoBehaviour
 {
-	private const string unit = "Zone: ";
-	[SerializeField] private Text textComponent;
-	[SerializeField] private Quester mainQuester;
-
-	private void Start()
-	{
-		textComponent = textComponent ?? GetComponent<Text>();
-	}
+	private const float GAME_UNITS_TO_DISTANCE_RATIO = 1f / 3f;
+	private const string WAYPOINT_STRING = "{0}m", ZONE_STRING = "Zone: {0}";
+	[SerializeField] private GameObject holder;
+	[SerializeField] private TextMeshProUGUI zoneTextComponent;
+	[SerializeField] private WaypointUIController waypointUI;
+	[SerializeField] private Character mainChar;
+	public static bool Hidden { get; set; }
 
 	private void Update()
 	{
@@ -23,21 +22,32 @@ public class DistanceUI : MonoBehaviour
 
 	private void UpdateText()
 	{
-		if (!textComponent.enabled) return;
+		if (Hidden)
+		{
+			holder.SetActive(false);
+			return;
+		}
+		holder.SetActive(true);
+
+		Vector3 charPos = CurrentPosition;
+		Vector3 waypointPos = CharacterTargetWaypoint;
+		waypointUI.Setup(charPos, waypointPos);
 
 		int zone = Difficulty.DistanceBasedDifficulty(
-			ChunkCoords.GetCenterCell(CharacterCoordinates, EntityNetwork.CHUNK_SIZE).magnitude);
-		textComponent.text = unit + zone;
+			charPos.magnitude);
+		zoneTextComponent.text = string.Format(ZONE_STRING, zone);
 	}
 
 	public void Activate(bool active)
 	{
-		textComponent.enabled = active;
+		zoneTextComponent.enabled = active;
 	}
 
 	private ChunkCoords CharacterCoordinates
 		=> new ChunkCoords(CurrentPosition, EntityNetwork.CHUNK_SIZE);
 
-	private Vector2 CurrentPosition
-		=> mainQuester.transform.position;
+	private Vector3 CurrentPosition
+		=> mainChar.transform.position;
+
+	private Vector3 CharacterTargetWaypoint => mainChar.GetWaypoint.WaypointPosition;
 }

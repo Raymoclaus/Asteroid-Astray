@@ -1,9 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-namespace InputHandler
+namespace InputHandlerSystem
 {
-	[System.Serializable]
+	[Serializable]
 	public class InputCombination
 	{
 		public List<InputCode> inputs = new List<InputCode>();

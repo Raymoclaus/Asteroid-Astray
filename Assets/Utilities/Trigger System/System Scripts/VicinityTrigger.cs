@@ -8,19 +8,19 @@ namespace TriggerSystem.Triggers
 
 	public class VicinityTrigger : MonoBehaviour, ITrigger
 	{
-		private List<IReceiver> receivers = new List<IReceiver>();
+		private HashSet<IReceiver> receivers = new HashSet<IReceiver>();
 		private Collider2D col;
 		private Collider2D Col => col ?? (col = GetComponent<Collider2D>());
 		[SerializeField] private Transform pivot;
 		private int layer = -1;
 		public int TriggerLayer => layer != -1 ? layer : gameObject.layer;
 
-		protected List<IActor> nearbyActors = new List<IActor>();
+		protected HashSet<IActor> nearbyActors = new HashSet<IActor>();
 
 		public event Action<IActor> OnEnteredTrigger, OnExitedTrigger;
 		public event Action OnAllExitedTrigger;
 
-		private void Awake() => GetReceivers();
+		protected virtual void Awake() => GetReceivers();
 
 		private void OnTriggerEnter2D(Collider2D collision)
 		{
@@ -50,13 +50,12 @@ namespace TriggerSystem.Triggers
 
 		protected virtual void AddActor(IActor actor)
 		{
-			if (ShouldAddActor(actor))
-			{
-				nearbyActors.Add(actor);
-				EnteredTrigger(actor);
-				actor.EnteredTrigger(this);
-				OnEnteredTrigger?.Invoke(actor);
-			}
+			if (!ShouldAddActor(actor)) return;
+
+			nearbyActors.Add(actor);
+			EnteredTrigger(actor);
+			actor.EnteredTrigger(this);
+			OnEnteredTrigger?.Invoke(actor);
 		}
 
 		public virtual bool ShouldAddActor(IActor actor)
@@ -80,13 +79,28 @@ namespace TriggerSystem.Triggers
 		}
 
 		protected virtual void EnteredTrigger(IActor actor)
-			=> receivers.ForEach(t => t.EnteredTrigger(actor));
+		{
+			foreach (IReceiver receiver in receivers)
+			{
+				receiver.EnteredTrigger(actor);
+			}
+		}
 
 		protected virtual void ExitedTrigger(IActor actor)
-			=> receivers.ForEach(t => t.ExitedTrigger(actor));
+		{
+			foreach (IReceiver receiver in receivers)
+			{
+				receiver.ExitedTrigger(actor);
+			}
+		}
 
 		protected virtual void AllExitedTrigger()
-			=> receivers.ForEach(t => t.AllExitedTrigger());
+		{
+			foreach (IReceiver receiver in receivers)
+			{
+				receiver.AllExitedTrigger();
+			}
+		}
 
 		public void SetCollider(Collider2D col) => this.col = col;
 
@@ -103,5 +117,4 @@ namespace TriggerSystem.Triggers
 		public Vector3 PivotPosition => pivot != null ? pivot.position
 			: transform.position;
 	}
-
 }

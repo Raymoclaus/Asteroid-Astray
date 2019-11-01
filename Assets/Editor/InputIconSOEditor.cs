@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using UnityEditor;
-using InputHandler.UI;
+using InputHandlerSystem.UI;
 
 [CustomEditor(typeof(InputIconSO), true)]
 public class InputIconSOEditor : Editor

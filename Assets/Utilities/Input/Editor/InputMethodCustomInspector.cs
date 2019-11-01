@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
+using InputHandlerSystem;
 using UnityEngine;
 using UnityEditor;
 
-namespace InputHandler.InputEditor
+namespace InputHandlerSystem.CustomisedEditor
 {
 	[CustomEditor(typeof(InputMethod), true)]
 	public class InputMethodCustomInspector : Editor

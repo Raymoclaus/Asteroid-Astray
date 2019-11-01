@@ -13,9 +13,9 @@ namespace QuestSystem.Requirements
 		private IInventoryHolder inventoryHolder;
 
 		public GatheringQReq(Item.Type typeNeeded, int amountNeeded,
-			IInventoryHolder inventoryHolder, string description = null)
+			IInventoryHolder inventoryHolder, string description = null, IWaypoint waypoint = null)
 			: base(string.IsNullOrWhiteSpace(description)
-				  ? "Gather {0} {1}: {2} / {0}" : description)
+				  ? "Gather {0} {1}: {2} / {0}" : description, waypoint)
 		{
 			this.typeNeeded = typeNeeded;
 			this.amountNeeded = amountNeeded;
@@ -23,8 +23,8 @@ namespace QuestSystem.Requirements
 		}
 
 		public GatheringQReq(Item.Type typeNeeded, IInventoryHolder inventoryHolder,
-			string description = null)
-			: this(typeNeeded, 1, inventoryHolder, description)
+			string description = null, IWaypoint waypoint = null)
+			: this(typeNeeded, 1, inventoryHolder, description, waypoint)
 		{
 
 		}
@@ -58,8 +58,5 @@ namespace QuestSystem.Requirements
 
 		public override string GetDescription =>
 			string.Format(description, amountNeeded, typeNeeded, currentAmount);
-
-		public override IWaypoint GetWaypoint => null;
 	}
-
 }

@@ -22,7 +22,7 @@ public class ItemPickupMovementController : MonoBehaviour, IPhysicsController
 			AdjustVelocity(Vector3.zero);
 		}
 
-		transform.position += CurrentVelocity * Time.deltaTime;
+		transform.position += CurrentVelocity * Time.deltaTime * Time.timeScale;
 	}
 
 	private void AdjustVelocity(Vector3 velocity)
@@ -74,8 +74,8 @@ public class ItemPickupMovementController : MonoBehaviour, IPhysicsController
 		float distanceToPosition = direction.magnitude;
 		direction.Normalize();
 		float currentSpeed = CurrentVelocity.magnitude;
-		float adjustedSpeed = Mathf.Min(distanceToPosition,
-			(currentSpeed + speed) * Time.deltaTime) / Time.deltaTime;
+		float adjustedSpeed = Mathf.Min(distanceToPosition / Time.deltaTime,
+			currentSpeed + speed);
 		Move(direction * adjustedSpeed);
 	}
 

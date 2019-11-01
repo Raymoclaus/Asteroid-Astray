@@ -8,7 +8,6 @@ using UnityEngine.PostProcessing;
 public class CameraCtrl : MonoBehaviour
 {
 	[HideInInspector] private Camera cam = null;
-	[SerializeField] private PostProcessingBehaviour ppb;
 	public Camera Cam => cam ?? (cam = GetComponent<Camera>());
 	[SerializeField] private Transform targetToFollow;
 	private Transform panView;
@@ -49,7 +48,6 @@ public class CameraCtrl : MonoBehaviour
 
 	private void Start()
 	{
-		ppb.enabled = false;
 		//get ref to ChunkFiller component
 		chunkFiller = chunkFiller ?? GetComponent<ChunkFiller>();
 		//get camera's coordinates on the grid
@@ -66,7 +64,6 @@ public class CameraCtrl : MonoBehaviour
 	{
 		//get list of entities that are within the camera's view range
 		GetEntitiesInView(coords);
-		ppb.enabled = true;
 	}
 
 	private void Update()

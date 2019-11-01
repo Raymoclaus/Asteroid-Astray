@@ -1,8 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using System.Collections.Generic;
 using TMPro;
-using System;
+using UnityEngine;
 
 namespace InventorySystem.UI
 {
@@ -33,7 +31,7 @@ namespace InventorySystem.UI
 		private void SubscribeToCrafterInventories(ICrafter crafter)
 		{
 			if (crafter == null) return;
-			List<Inventory> inventories = crafter.GetAllInventories;
+			List<Storage> inventories = crafter.GetAllInventories;
 			for (int i = 0; i < inventories.Count; i++)
 			{
 				inventories[i].OnStackUpdated += UpdateUI;
@@ -43,7 +41,7 @@ namespace InventorySystem.UI
 		private void UnSubscribeFromCrafterInventories(ICrafter crafter)
 		{
 			if (crafter == null) return;
-			List<Inventory> inventories = crafter.GetAllInventories;
+			List<Storage> inventories = crafter.GetAllInventories;
 			for (int i = 0; i < inventories.Count; i++)
 			{
 				inventories[i].OnStackUpdated -= UpdateUI;
@@ -85,10 +83,10 @@ namespace InventorySystem.UI
 				{
 					Destroy(child.gameObject);
 				}
+				recipeObjects.Clear();
 
 				//fill up recipe area with units currently accessible recipes
 				List<CraftingRecipe> recipes = crafter.GetRecipeStorage.recipes;
-
 				for (int i = 0; i < recipes.Count; i++)
 				{
 					RecipeUIObject recipeObject = Instantiate(

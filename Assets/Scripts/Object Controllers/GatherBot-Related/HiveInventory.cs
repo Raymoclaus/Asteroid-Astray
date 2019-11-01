@@ -5,7 +5,7 @@ using System;
 using InventorySystem;
 using CustomDataTypes;
 
-public class HiveInventory : Inventory
+public class HiveInventory : Storage
 {
 	public void Store(List<ItemStack> items)
 	{

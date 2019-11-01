@@ -1,4 +1,5 @@
-﻿using UnityEditor;
+﻿using DialogueSystem;
+using UnityEditor;
 using UnityEngine;
 
 [CustomPropertyDrawer(typeof(ConversationWithActions), true)]

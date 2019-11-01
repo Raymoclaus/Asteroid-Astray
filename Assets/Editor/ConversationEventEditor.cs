@@ -1,23 +1,29 @@
-﻿using UnityEditor;
+﻿using DialogueSystem;
+using UnityEditor;
 using UnityEngine;
 
-[CustomEditor(typeof(ConversationEvent), true)]
-public class ConversationEventEditor : Editor
+namespace DialogueSystem.CustomisedEditor
 {
-	public override void OnInspectorGUI()
+	[CustomEditor(typeof(ConversationEvent), true)]
+	public class ConversationEventEditor : Editor
 	{
-		DrawDefaultInspector();
+		public override void OnInspectorGUI()
+		{
+			DrawDefaultInspector();
 
-		EditorGUI.BeginDisabledGroup(serializedObject.isEditingMultipleObjects);
-		if (GUILayout.Button("Load From File"))
-		{
-			((ConversationEvent)target).Load();
-			EditorUtility.SetDirty(target);
+			EditorGUI.BeginDisabledGroup(serializedObject.isEditingMultipleObjects);
+			if (GUILayout.Button("Load From File"))
+			{
+				((ConversationEvent) target).Load();
+				EditorUtility.SetDirty(target);
+			}
+
+			if (GUILayout.Button("Save To File"))
+			{
+				((ConversationEvent) target).Save();
+			}
+
+			EditorGUI.EndDisabledGroup();
 		}
-		if (GUILayout.Button("Save To File"))
-		{
-			((ConversationEvent)target).Save();
-		}
-		EditorGUI.EndDisabledGroup();
 	}
 }

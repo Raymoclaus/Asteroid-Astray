@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections;
 using UnityEngine;
-using InputHandler;
+using InputHandlerSystem;
 
 public class Pause : MonoBehaviour
 {

@@ -1,8 +1,9 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
-namespace InputHandler
+namespace InputHandlerSystem
 {
-	[System.Serializable]
+	[Serializable]
 	public class ActionCombination
 	{
 		public string actionName;

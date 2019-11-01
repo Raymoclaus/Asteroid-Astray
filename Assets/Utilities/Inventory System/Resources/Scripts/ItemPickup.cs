@@ -1,11 +1,10 @@
 ﻿using System.Linq;
+using InventorySystem.UI;
 using UnityEngine;
 using TriggerSystem;
 
 namespace InventorySystem
 {
-	using InventorySystem.UI;
-
 	public class ItemPickup : MonoBehaviour, IItemHolder
 	{
 		[SerializeField] private SpriteRenderer sprRend;

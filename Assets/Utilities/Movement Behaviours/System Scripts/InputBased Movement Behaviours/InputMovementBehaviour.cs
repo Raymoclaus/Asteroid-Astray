@@ -1,5 +1,5 @@
-﻿using UnityEngine;
-using InputHandler;
+﻿using InputHandlerSystem;
+using UnityEngine;
 
 namespace MovementBehaviours
 {

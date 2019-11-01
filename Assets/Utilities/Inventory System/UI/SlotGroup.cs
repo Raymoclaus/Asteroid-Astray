@@ -1,19 +1,20 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace InventorySystem.UI
 {
-	[System.Serializable]
+	[Serializable]
 	public class SlotGroup : MonoBehaviour
 	{
 		[SerializeField] private Slot slotPrefab;
 		private List<Slot> slots = new List<Slot>();
 		private InventoryTab inventoryUI;
-		private Inventory inventory;
+		private Storage inventory;
 		[Range(0f, 1f)]
 		public float alpha = 1f;
 
-		public void Initialise(InventoryTab uiController, Inventory inv)
+		public void Initialise(InventoryTab uiController, Storage inv)
 		{
 			inventoryUI = uiController;
 			inventory = inv;

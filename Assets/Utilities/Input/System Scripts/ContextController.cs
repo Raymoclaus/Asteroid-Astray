@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace InputHandler
+namespace InputHandlerSystem
 {
 	public class ContextController : MonoBehaviour
 	{

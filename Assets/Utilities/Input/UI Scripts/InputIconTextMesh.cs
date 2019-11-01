@@ -1,9 +1,10 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 
-namespace InputHandler.UI
+namespace InputHandlerSystem.UI
 {
 	[RequireComponent(typeof(TextMeshProUGUI))]
 	public class InputIconTextMesh : MonoBehaviour
@@ -44,13 +45,14 @@ namespace InputHandler.UI
 		private void UpdateIcon()
 		{
 			textMesh = textMesh ?? GetComponent<TextMeshProUGUI>();
-			string s = ReformatText(text);
-			textMesh.text = s;
+			Func<string, TMP_SpriteAssetContainer> getContainer = action => GetCurrentSpriteContainer(action);
+			string s = StringFormatter.ConvertActionTagsToRichText(text, GetCurrentIconSet(), getContainer);
 			if (textMesh == null)
 			{
 				Debug.Log("Text mesh is null");
 				return;
 			}
+			textMesh.text = s;
 			textMesh.gameObject.SetActive(false);
 			textMesh.gameObject.SetActive(true);
 		}
@@ -63,83 +65,10 @@ namespace InputHandler.UI
 			UpdateIcon();
 		}
 
-		private string ReformatText(string input)
-		{
-			if (input == string.Empty) return input;
-			string s = input;
-
-			List<string> actions = InputManager.GetCurrentActions();
-			for (int i = 0; i < actions?.Count; i++)
-			{
-				string action = actions[i];
-				string check;
-				ActionCombination inputCombo = InputManager.GetBinding(action);
-				if (inputCombo == null)
-				{
-					Debug.Log($"No ActionCombination found for {action}");
-					return input;
-				}
-
-				check = $"[:{action}]";
-				if (s.Contains(check))
-				{
-					s = s.Replace(check, $"<color=#00FFFF>{action}</color>");
-				}
-
-				InputIconSO iconSet = GetCurrentIconSet();
-				if (iconSet == null) continue;
-
-				List<Sprite> sprites = iconSet.GetSprites(inputCombo);
-				TMP_SpriteAssetContainer container = GetCurrentSpriteContainer(action);
-				if (container == null)
-				{
-					Debug.Log($"Sprite Container not found for {action}.");
-					return input;
-				}
-				List<TMP_SpriteAsset> assets = container?.spriteAssets;
-
-				check = $"[{action}]";
-				if (s.Contains(check))
-				{
-					string tmpIconString = "";
-					for (int j = 0; j < sprites.Count; j++)
-					{
-						assets[j].spriteSheet = sprites[j].texture;
-						assets[j].material.mainTexture = assets[j].spriteSheet;
-						tmpIconString += $"<sprite=\"{assets[j].name}\" index=0>";
-						if (j != sprites.Count - 1)
-						{
-							tmpIconString += " + ";
-						}
-					}
-					s = s.Replace(check, $"{tmpIconString} <color=#00FFFF>{action}</color>");
-				}
-
-				check = $"[{action}:]";
-				if (s.Contains(check))
-				{
-					string tmpIconString = "";
-					for (int j = 0; j < sprites.Count; j++)
-					{
-						assets[j].spriteSheet = sprites[j].texture;
-						assets[j].material.mainTexture = assets[j].spriteSheet;
-						tmpIconString += $"<sprite=\"{assets[j].name}\" index=0>";
-						if (j != sprites.Count - 1)
-						{
-							tmpIconString += " + ";
-						}
-					}
-					s = s.Replace(check, tmpIconString);
-				}
-			}
-
-			return s;
-		}
-
-		private TMP_SpriteAssetContainer GetCurrentSpriteContainer(string action)
+		private static TMP_SpriteAssetContainer GetCurrentSpriteContainer(string action)
 			=> GetSpriteContainer(action, InputManager.CurrentContext);
 
-		private TMP_SpriteAssetContainer GetSpriteContainer(string action, InputContext context)
+		private static TMP_SpriteAssetContainer GetSpriteContainer(string action, InputContext context)
 		{
 			for (int i = 0; i < iconContainers.Count; i++)
 			{

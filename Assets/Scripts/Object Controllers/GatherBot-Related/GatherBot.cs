@@ -38,8 +38,6 @@ public class GatherBot : Character, IStunnable, ICombat
 	}
 
 	[Header("Gather Bot Fields")]
-
-	#region Fields
 	//references
 	protected BotHive hive;
 	[SerializeField] private ShakeEffect shakeFX;
@@ -151,10 +149,9 @@ public class GatherBot : Character, IStunnable, ICombat
 	[SerializeField] private float dyingDuration = 2f;
 	[SerializeField] private Sprite dyingSprite;
 	private Entity destroyer;
-	private int dropModifier;
+	private float dropModifier;
 	[SerializeField] private GameObject burningEffectsObj;
 	[SerializeField] private GameObject explosionDeathObj;
-	#endregion Fields
 
 	private void Start()
 	{
@@ -227,9 +224,7 @@ public class GatherBot : Character, IStunnable, ICombat
 	}
 
 	private void FixedUpdate() => rb.AddForce(accel);
-
-	#region State Methods
-
+	
 	protected virtual void Spawning()
 	{
 		Transform dock = hive.GetDock(this);
@@ -585,17 +580,12 @@ public class GatherBot : Character, IStunnable, ICombat
 
 	protected virtual void Dying()
 	{
-		if (dyingTimer < dyingDuration)
-		{
-			dyingTimer += Time.deltaTime;
-		}
-		else
+		dyingTimer += Time.deltaTime;
+		if (dyingTimer >= dyingDuration)
 		{
 			DestroySelf(destroyer, dropModifier);
 		}
 	}
-
-	#endregion
 
 	protected virtual void SetState(AIState newState)
 	{
@@ -1275,7 +1265,7 @@ public class GatherBot : Character, IStunnable, ICombat
 		&& target != hive
 		&& !IsSibling(target);
 
-	private bool CheckHealth(Entity destroyer, int dropModifier)
+	protected override bool CheckHealth(Entity destroyer, float dropModifier)
 	{
 		if (healthComponent.Ratio > 0f) return false;
 		if (IsDrilling)

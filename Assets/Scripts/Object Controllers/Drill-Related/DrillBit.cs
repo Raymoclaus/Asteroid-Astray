@@ -6,8 +6,8 @@ public class DrillBit : MonoBehaviour
 	public Collider2D drillCol;
 	public Character parent;
 	public bool IsDrilling { get; private set; }
-	public bool CanDrill { get { return parent.CanDrill(); } }
-	public bool CanLaunch { get { return parent.CanDrillLaunch(); } }
+	public bool CanDrill => parent.CanDrill();
+	public bool CanLaunch => parent.CanDrillLaunch();
 	public Entity drillTarget;
 	private bool firstHit = false;
 	public List<ParticleSystem> DrillSparks;

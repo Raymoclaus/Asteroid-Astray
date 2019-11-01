@@ -3,8 +3,9 @@ using UnityEngine;
 using CustomDataTypes;
 using InventorySystem;
 using ValueComponents;
+using TriggerSystem;
 
-public class Entity : MonoBehaviour
+public class Entity : MonoBehaviour, IActionMessageReceiver
 {
 	[Header("Entity Fields")]
 	[SerializeField] protected ChunkCoords coords;
@@ -200,6 +201,7 @@ public class Entity : MonoBehaviour
 
 	protected virtual void DropLoot(IInventoryHolder target, float dropModifier)
 	{
+		if (loot == null) return;
 		loot.DropAllLoot(target);
 	}
 
@@ -425,6 +427,11 @@ public class Entity : MonoBehaviour
 		{
 			drills[i].StopDrilling(successful);
 		}
+	}
+
+	public void Interacted(IInteractor interactor, string action)
+	{
+		interactor.Interact(this);
 	}
 }
 

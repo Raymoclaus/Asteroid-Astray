@@ -13,12 +13,19 @@ namespace TriggerSystem
 		public event Action OnWaypointReached;
 		public IInteractor expectedInteractor;
 		private IActionTrigger trigger;
-		private bool subscribed;
+		protected bool subscribed;
+		private Vector3 triggerPos;
 
 		private void Awake()
 		{
-			if (trigger == null) return;
+			if (TriggerIsNull) return;
 			Subscribe();
+		}
+
+		private void LateUpdate()
+		{
+			if (TriggerIsNull) return;
+			triggerPos = trigger.PivotPosition;
 		}
 
 		public void SetTrigger(IActionTrigger trigger)
@@ -29,14 +36,14 @@ namespace TriggerSystem
 
 		private void Subscribe()
 		{
-			if (subscribed) return;
+			if (TriggerIsNull || subscribed) return;
 			trigger.OnInteracted += Interacted;
 			subscribed = true;
 		}
 
 		private void Unsubscribe()
 		{
-			if (trigger == null || !subscribed) return;
+			if (TriggerIsNull || !subscribed) return;
 			trigger.OnInteracted -= Interacted;
 			subscribed = false;
 		}
@@ -52,7 +59,12 @@ namespace TriggerSystem
 			OnWaypointReached?.Invoke();
 		}
 
-		public Vector3 WaypointPosition => trigger.PivotPosition;
+		public Vector3 WaypointPosition => !TriggerIsNull
+			? trigger.PivotPosition : triggerPos;
+
+		protected bool TriggerIsNull
+			=> trigger == null
+			|| trigger.Equals(null);
 
 		public static InteractionWaypoint CreateWaypoint(IInteractor expectedInteractor,
 			Vector3 position, float radius, string action)
@@ -66,12 +78,15 @@ namespace TriggerSystem
 			trigger.SetPivot(trigger.transform);
 			trigger.transform.position = position;
 
-			return CreateWaypoint(expectedInteractor, trigger);
+			return CreateWaypoint(expectedInteractor, trigger, position);
 		}
 
-		public static InteractionWaypoint CreateWaypoint(IInteractor expectedInteractor, IActionTrigger trigger)
+		public static InteractionWaypoint CreateWaypoint(
+			IInteractor expectedInteractor, IActionTrigger trigger, Vector3 position)
 		{
-			InteractionWaypoint waypointHolder = new GameObject("New Waypoint").AddComponent<InteractionWaypoint>();
+			InteractionWaypoint waypointHolder
+				= new GameObject("New Waypoint").AddComponent<InteractionWaypoint>();
+			waypointHolder.transform.position = position;
 			waypointHolder.expectedInteractor = expectedInteractor;
 			waypointHolder.SetTrigger(trigger);
 			return waypointHolder;

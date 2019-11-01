@@ -5,7 +5,6 @@ using UnityEngine;
 
 public class Planet : Entity
 {
-	[SerializeField] private InteractionTrigger trigger;
 	[SerializeField] private Transform spriteTransform;
 
 	public override EntityType GetEntityType() => EntityType.Planet;
@@ -23,13 +22,6 @@ public class Planet : Entity
 		float modifiedDistance = distance * BgCameraController.SCROLL_SPEED;
 		Vector3 modifiedPos = originalPos.normalized * modifiedDistance;
 		spriteTransform.position = modifiedPos + Vector3.forward * spriteTransform.position.z;
-
-		trigger.OnInteracted += OnInteracted;
-	}
-
-	private void OnInteracted(IInteractor actor)
-	{
-		actor.Interact(this);
 	}
 
 	public void GoToPlanet()

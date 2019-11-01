@@ -16,7 +16,7 @@ namespace QuestSystem.Requirements
 		public CraftingQReq(Item.Type typeNeeded, int amountNeeded,
 			ICrafter crafter, string description = null)
 			: base(string.IsNullOrWhiteSpace(description)
-				  ? "Craft {0} {1}: {2} / {0}" : description)
+				  ? "Craft {0} {1}: {2} / {0}" : description, null)
 		{
 			this.typeNeeded = typeNeeded;
 			this.amountNeeded = amountNeeded;
@@ -69,8 +69,5 @@ namespace QuestSystem.Requirements
 
 		public override string GetDescription
 			=> string.Format(description, amountNeeded, typeNeeded, currentAmount);
-
-		public override IWaypoint GetWaypoint => null;
 	}
-
 }

@@ -1,5 +1,4 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace InventorySystem.UI
 {
@@ -7,10 +6,10 @@ namespace InventorySystem.UI
 	{
 		[SerializeField] private ItemStackUI stackUI;
 		private InventoryTab inventoryUI;
-		public Inventory Inventory { get; private set; }
+		public Storage Inventory { get; private set; }
 		public int ID { get; private set; }
 
-		public void Initialise(InventoryTab inventoryUI, Inventory inventory, int id)
+		public void Initialise(InventoryTab inventoryUI, Storage inventory, int id)
 		{
 			this.inventoryUI = inventoryUI;
 			Inventory = inventory;

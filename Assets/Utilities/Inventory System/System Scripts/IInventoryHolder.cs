@@ -8,11 +8,11 @@ namespace InventorySystem
 		event Action<Item.Type, int> OnItemCollected, OnItemUsed;
 		int GiveItem(Item.Type itemType);
 		int GiveItem(ItemStack stack);
-		Inventory DefaultInventory { get; }
-		List<Inventory> GetAllInventories { get; }
+		Storage DefaultInventory { get; }
+		List<Storage> GetAllInventories { get; }
 		List<string> GetInventoryNames { get; }
-		Inventory GetInventoryByName(string inventoryName);
-		Inventory GetAppropriateInventory(Item.Type itemType);
+		Storage GetInventoryByName(string inventoryName);
+		Storage GetAppropriateInventory(Item.Type itemType);
 		void AttachToInventoryUI();
 	}
 }

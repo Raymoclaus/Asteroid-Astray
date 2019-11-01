@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,28 +10,33 @@ namespace TriggerSystem.Triggers
 	{
 		[SerializeField] protected bool enabledInteractionActions = true;
 		[SerializeField] protected string action = "Interact";
-		private List<IReceiver> receivers = new List<IReceiver>();
-		private List<IInteractor> nearbyInteractors = new List<IInteractor>();
+		private HashSet<IReceiver> receivers = new HashSet<IReceiver>();
+		private HashSet<IInteractor> nearbyInteractors = new HashSet<IInteractor>();
 
 		public event Action<IInteractor> OnInteracted;
+
+		protected override void Awake()
+		{
+			base.Awake();
+			GetReceivers();
+		}
 
 		private void Update()
 		{
 			RemoveNullInteractors();
 
-			for (int i = 0; i < nearbyInteractors.Count; i++)
+			foreach (IInteractor interactor in nearbyInteractors)
 			{
-				IInteractor interactor = nearbyInteractors[i];
 				if (interactor.IsPerformingAction(ActionRequired))
 				{
-					OnInteracted?.Invoke(interactor);
+					Interact(interactor);
 				}
 			}
 		}
 
 		private void RemoveNullInteractors()
 		{
-			nearbyInteractors.RemoveAll(t => t == null);
+			nearbyInteractors.RemoveWhere(t => t == null);
 		}
 
 		protected override void AddActor(IActor actor)
@@ -78,9 +82,11 @@ namespace TriggerSystem.Triggers
 
 		public virtual void Interact(IInteractor interactor)
 		{
-			receivers.ForEach(t => t.Interacted(interactor, ActionRequired));
+			foreach (IReceiver receiver in receivers)
+			{
+				receiver.Interacted(interactor, ActionRequired);
+			}
 			OnInteracted?.Invoke(interactor);
 		}
 	}
-
 }

@@ -1,8 +1,9 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
-namespace InputHandler.UI
+namespace InputHandlerSystem.UI
 {
-	[System.Serializable]
+	[Serializable]
 	public struct InputIcon
 	{
 		public Sprite sprite;
@@ -12,7 +13,7 @@ namespace InputHandler.UI
 		{
 			this.sprite = sprite;
 			input = new InputCode(InputCode.InputType.Button);
-			System.Enum.TryParse(sprite.name.Replace(ignoreSubstring, string.Empty), out input.buttonCode);
+			Enum.TryParse(sprite.name.Replace(ignoreSubstring, string.Empty), out input.buttonCode);
 		}
 	}
 }

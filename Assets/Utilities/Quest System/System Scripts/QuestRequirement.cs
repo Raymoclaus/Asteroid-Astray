@@ -3,10 +3,12 @@
 	public abstract class QuestRequirement
 	{
 		protected string description;
+		protected IWaypoint waypoint;
 
-		public QuestRequirement(string description)
+		public QuestRequirement(string description, IWaypoint waypoint)
 		{
 			this.description = description;
+			this.waypoint = waypoint;
 		}
 
 		public bool Completed { get; private set; }
@@ -26,7 +28,7 @@
 
 		public virtual string GetDescription => description;
 
-		public virtual IWaypoint GetWaypoint => null;
+		public virtual IWaypoint GetWaypoint => waypoint;
 
 		public virtual void Activate() => active = true;
 	}

@@ -3,16 +3,16 @@ using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 using InventorySystem;
+using InventorySystem.UI;
 using TriggerSystem;
 using ValueComponents;
-using InventorySystem.UI;
 
 public class Character : Entity, IInteractor, ICrafter
 {
 	[Header("Character Fields")]
 
-	[SerializeField] private Inventory defaultInventory;
-	[SerializeField] private List<Inventory> inventories;
+	[SerializeField] private Storage defaultInventory;
+	[SerializeField] private List<Storage> inventories;
 	public event Action<Item.Type, int> OnItemCollected;
 	public event Action<List<ItemStack>> OnItemsCrafted;
 	public event Action<Item.Type, int> OnItemUsed;
@@ -27,6 +27,8 @@ public class Character : Entity, IInteractor, ICrafter
 	[SerializeField] private LaunchTrailController launchTrailEffect;
 	[SerializeField] private GameObject drillLaunchImpactEffect;
 
+	[SerializeField] private Waypoint defaultWaypoint, currentWaypoint;
+
 	public Action<Entity> OnEntityDestroyed;
 
 	protected override void Awake()
@@ -39,9 +41,8 @@ public class Character : Entity, IInteractor, ICrafter
 		{
 			inventories.Add(DefaultInventory);
 		}
-
-		SteamPunkConsole spc = FindObjectOfType<SteamPunkConsole>();
-		spc?.GetCommandsFromType(GetType());
+		
+		SteamPunkConsole.GetCommandsFromType(GetType());
 	}
 
 	protected virtual void Update()
@@ -119,7 +120,7 @@ public class Character : Entity, IInteractor, ICrafter
 
 	public ref Action<Item.Type, int> GetOnItemUsedEvent => ref OnItemUsed;
 
-	public virtual Inventory GetAppropriateInventory(Item.Type itemType) => defaultInventory;
+	public virtual Storage GetAppropriateInventory(Item.Type itemType) => defaultInventory;
 
 	private bool CanUseItem => !ItemUsageOnCooldown;
 
@@ -165,9 +166,9 @@ public class Character : Entity, IInteractor, ICrafter
 
 	public CraftingRecipeStorage GetRecipeStorage => recipeStorage;
 
-	public Inventory DefaultInventory => defaultInventory;
+	public Storage DefaultInventory => defaultInventory;
 
-	public List<Inventory> GetAllInventories => inventories;
+	public List<Storage> GetAllInventories => inventories;
 
 	public List<string> GetInventoryNames
 	{
@@ -211,7 +212,7 @@ public class Character : Entity, IInteractor, ICrafter
 
 	public virtual int GiveItem(Item.Type itemType)
 	{
-		Inventory inv = GetAppropriateInventory(itemType);
+		Storage inv = GetAppropriateInventory(itemType);
 		int remainingItems = inv.AddItem(itemType);
 		if (remainingItems == 0)
 		{
@@ -228,7 +229,7 @@ public class Character : Entity, IInteractor, ICrafter
 	{
 		Item.Type itemType = stack.ItemType;
 		int amount = stack.Amount;
-		Inventory inv = GetAppropriateInventory(itemType);
+		Storage inv = GetAppropriateInventory(itemType);
 		int remainingItems = inv.AddItem(itemType, amount);
 		int difference = amount - remainingItems;
 		if (difference != 0)
@@ -271,13 +272,13 @@ public class Character : Entity, IInteractor, ICrafter
 	{
 		if (order is Item.Type itemType)
 		{
-			Inventory inv = GetAppropriateInventory(itemType);
+			Storage inv = GetAppropriateInventory(itemType);
 			bool removed = inv.RemoveItem(itemType);
 			return removed;
 		}
 		if (order is ItemStack stack)
 		{
-			Inventory inv = GetAppropriateInventory(stack.ItemType);
+			Storage inv = GetAppropriateInventory(stack.ItemType);
 			bool removed = inv.RemoveItem(stack);
 			return removed;
 		}
@@ -290,10 +291,13 @@ public class Character : Entity, IInteractor, ICrafter
 		if (interactableObject is Item.Type itemType)
 		{
 			defaultInventory.AddItem(itemType);
+			return;
 		}
+
 		if (interactableObject is ItemStack stack)
 		{
 			defaultInventory.AddItem(stack);
+			return;
 		}
 	}
 
@@ -304,7 +308,7 @@ public class Character : Entity, IInteractor, ICrafter
 		{
 			ItemStack stack = ingredients[i];
 			Item.Type type = stack.ItemType;
-			Inventory inv = GetAppropriateInventory(type);
+			Storage inv = GetAppropriateInventory(type);
 			if (ItemStack.Count(inv.ItemStacks, type) < stack.Amount) return false;
 		}
 
@@ -321,7 +325,7 @@ public class Character : Entity, IInteractor, ICrafter
 		return true;
 	}
 
-	public Inventory GetInventoryByName(string inventoryName)
+	public Storage GetInventoryByName(string inventoryName)
 		=> inventories.FirstOrDefault(t => t.InventoryName == inventoryName);
 
 	public void AttachToInventoryUI()
@@ -334,7 +338,7 @@ public class Character : Entity, IInteractor, ICrafter
 		for (int i = 0; i < stacks.Count; i++)
 		{
 			Item.Type type = stacks[i].ItemType;
-			Inventory inv = GetAppropriateInventory(type);
+			Storage inv = GetAppropriateInventory(type);
 			int expectedAmount = ItemStack.Count(stacks, type);
 			if (ItemStack.Count(inv.ItemStacks, type) < expectedAmount) return false;
 		}
@@ -346,12 +350,12 @@ public class Character : Entity, IInteractor, ICrafter
 		List<ItemStack> ingredients = recipe.IngredientsCopy;
 		if (!HasItems(ingredients)) return false;
 
-		List<Inventory> relatedInventories = new List<Inventory>();
+		List<Storage> relatedInventories = new List<Storage>();
 		List<ItemStack> results = recipe.ResultsCopy;
 		for (int i = 0; i < ingredients.Count; i++)
 		{
 			Item.Type type = ingredients[i].ItemType;
-			Inventory inv = GetAppropriateInventory(type);
+			Storage inv = GetAppropriateInventory(type);
 			if (relatedInventories.Contains(inv)) continue;
 			List<ItemStack> invStacks = inv.CreateCopyOfStacks();
 			ItemStack.RemoveItems(invStacks, ingredients);
@@ -360,11 +364,14 @@ public class Character : Entity, IInteractor, ICrafter
 			for (int j = 0; j < results.Count; j++)
 			{
 				Item.Type resultItemType = results[i].ItemType;
-				Inventory inv2 = GetAppropriateInventory(resultItemType);
+				Storage inv2 = GetAppropriateInventory(resultItemType);
 				if (inv != inv2) continue;
 				if (!ItemStack.CanFit(invStacks, results[i])) return false;
 			}
 		}
 		return true;
 	}
+
+	public Waypoint GetWaypoint => currentWaypoint != null ? currentWaypoint
+		: defaultWaypoint;
 }

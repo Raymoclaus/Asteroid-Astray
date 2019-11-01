@@ -14,7 +14,7 @@ namespace QuestSystem.Requirements
 
 		public ItemUseQReq(Item.Type typeNeeded, int amountNeeded,
 			IInventoryHolder inventoryHolder, string description = null)
-			: base(description != null ? description : "Use {0} {1}: {2} / {0}")
+			: base(description != null ? description : "Use {0} {1}: {2} / {0}", null)
 		{
 			this.typeNeeded = typeNeeded;
 			this.amountNeeded = amountNeeded;
@@ -58,5 +58,4 @@ namespace QuestSystem.Requirements
 		public override string GetDescription
 			=> string.Format(description, amountNeeded, typeNeeded, currentAmount);
 	}
-
 }

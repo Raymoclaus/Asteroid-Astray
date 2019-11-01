@@ -3,14 +3,15 @@ using CustomYieldInstructions;
 using SceneControllers;
 using System;
 using System.Collections;
+using DialogueSystem;
 using UnityEngine;
+using DialogueSystem.UI;
 
 public class WormholeSceneController : MonoBehaviour
 {
 	[SerializeField] private CurveTracer shipTracer, shuttleTracer;
 	[SerializeField] private float shipTraceSpeed = 0.1f, shuttleTraceSpeed = 0.12f;
 	[SerializeField] private CanvasGroup fadeScreen;
-	[SerializeField] private DialogueController dialogueCtrl;
 	[SerializeField] private Move cameraMover;
 
 	[SerializeField] private float fadeInTime = 5f, fadeOutTime = 10f;
@@ -34,7 +35,7 @@ public class WormholeSceneController : MonoBehaviour
 			shuttleTracer.GoToEndOfPath(shuttleTraceSpeed, resetDistance: true);
 			shipTracer.GoToEndOfPath(shipTraceSpeed, resetDistance: true, reachedPathEndAction: () =>
 			{
-				dialogueCtrl.StartDialogue(approachingPlanetDialogue, false);
+				DialoguePopupUI.ShowDialogue(new DialogueController(approachingPlanetDialogue));
 			});
 		}));
 	}
@@ -58,7 +59,7 @@ public class WormholeSceneController : MonoBehaviour
 			{
 				DistortWormhole(-1.5f, () => DistortWormhole(-1f));
 				ShrinkShip();
-				dialogueCtrl.StartDialogue(enteringWormholeDialogue, false);
+				DialoguePopupUI.ShowDialogue(new DialogueController(enteringWormholeDialogue));
 				shuttleTracer.GoToEndOfPath(shuttleTraceSpeed * 10f);
 			});
 		}));
@@ -135,7 +136,7 @@ public class WormholeSceneController : MonoBehaviour
 			fadeScreen.alpha = delta;
 		}, () =>
 		{
-			dialogueCtrl.StartDialogue(openingWormholeDialogue, false);
+			DialoguePopupUI.ShowDialogue(new DialogueController(openingWormholeDialogue));
 		}));
 	}
 

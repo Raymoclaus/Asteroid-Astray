@@ -6,7 +6,7 @@ using InventorySystem.UI;
 
 public class HotBarUI : MonoBehaviour
 {
-	[SerializeField] private Inventory inventory;
+	[SerializeField] private Storage inventory;
 	[SerializeField] private ItemSprites sprites;
 	[SerializeField] private Transform[] slots;
 	private Image[] images;

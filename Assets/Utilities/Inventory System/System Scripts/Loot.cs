@@ -1,8 +1,10 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace InventorySystem
 {
-	[System.Serializable]
+	[Serializable]
 	public struct Loot
 	{
 		public Item.Type type;

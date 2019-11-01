@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using InputHandler;
+using InputHandlerSystem;
 
 [RequireComponent(typeof(CanvasGroup))]
 public class TY4PlayingUI : MonoBehaviour

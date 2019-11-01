@@ -1,23 +1,21 @@
 ﻿using CustomDataTypes;
 using InventorySystem;
-using InventorySystem.UI;
 using QuestSystem;
 using QuestSystem.Requirements;
 using System;
 using System.Collections.Generic;
+using DialogueSystem;
+using InventorySystem.UI;
 using TriggerSystem;
 using TriggerSystem.Triggers;
 using UnityEngine;
+using DialogueSystem.UI;
 
 public class NarrativeManager : MonoBehaviour
 {
 	public static bool ShuttleRepaired { get; private set; }
 	public static bool ShipRecharged { get; private set; }
 	
-	private DialogueController dlgCtrl;
-	private DialogueController DlgCtrl
-		=> dlgCtrl != null ? dlgCtrl
-		: (dlgCtrl = FindObjectOfType<DialogueController>());
 	[SerializeField] private SpotlightEffectController spotlightEffectController;
 	[SerializeField] private CustomScreenEffect screenEffects;
 	[SerializeField] private Character mainChar;
@@ -73,6 +71,7 @@ public class NarrativeManager : MonoBehaviour
 	{
 		ChooseStartingLocation();
 		MainHatch.IsLocked = true;
+		SetShuttleRepaired(false);
 		LoadingController.AddListener(StartRecoveryDialogue);
 	}
 
@@ -92,11 +91,11 @@ public class NarrativeManager : MonoBehaviour
 
 		const Item.Type copper = Item.Type.Copper;
 		qReqs.Add(new GatheringQReq(copper, 2,
-			MainChar, $"Obtain # {copper} from asteroids"));
+			MainChar, "Obtain {0} {1} from asteroids: {2} / {0}"));
 
 		const Item.Type iron = Item.Type.Iron;
 		qReqs.Add(new GatheringQReq(iron,
-			MainChar, $"Obtain # {iron} from asteroids"));
+			MainChar, "Obtain {0} {1} from asteroids: {2} / {0}"));
 
 		Quest q = new Quest(
 			"Gather materials",
@@ -128,7 +127,7 @@ public class NarrativeManager : MonoBehaviour
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
 		const Item.Type repairKit = Item.Type.RepairKit;
 		qReqs.Add(new CraftingQReq(repairKit,
-			MainChar, $"Construct # {repairKit} using 2 copper and 1 iron"));
+			MainChar, "Construct {0} {1} using 2 copper and 1 iron"));
 
 		Quest q = new Quest(
 			"Construct a Repair Kit",
@@ -182,12 +181,15 @@ public class NarrativeManager : MonoBehaviour
 		List<QuestReward> qRewards = new List<QuestReward>();
 
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-		InteractionWaypoint wp = InteractionWaypoint.CreateWaypoint(MainChar, MainHatchTrigger);
+		InteractionWaypoint wp = InteractionWaypoint.CreateWaypoint(MainChar,
+			MainHatchTrigger, MainHatchTrigger.PivotPosition);
 		qReqs.Add(new InteractionQReq(wp, "Return to the ship."));
 
 		Quest q = new Quest(
 			"Find the ship",
-			"Communication and Navigation systems on the shuttle have been restored, but we still can't contact Dendro. Find your way back to the ship and check if Dendro is still alright.",
+			"Communication and Navigation systems on the shuttle have been restored," +
+			" but we still can't contact Dendro. Find your way back to the ship and" +
+			" check if Dendro is still alright.",
 			MainQuester, qRewards, qReqs);
 		q.OnQuestComplete += CompletedReturnToTheShipQuest;
 
@@ -203,19 +205,6 @@ public class NarrativeManager : MonoBehaviour
 	{
 		if (MainChar == null) return;
 
-		List<QuestReward> qRewards = new List<QuestReward>();
-
-		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-		qReqs.Add(new GatheringQReq(Item.Type.CorruptedCorvorite,
-			MainChar, "Find the nearby energy source."));
-
-		Quest q = new Quest(
-			"Acquire an Energy Source",
-			"The ship appears intact, however it is in a powered-down state. We need to find an energy source.",
-			MainQuester, qRewards, qReqs);
-		q.OnQuestComplete += CompletedFindEnergySourceQuest;
-
-		GiveQuest(MainQuester, q);
 		//create a deranged bot
 		ChunkCoords emptyChunk = EntityGenerator.GetNearbyEmptyChunk();
 		SpawnableEntity se = EntityGenerator.GetSpawnableEntity(derangedSoloBotPrefab);
@@ -231,6 +220,22 @@ public class NarrativeManager : MonoBehaviour
 			entityPrompt.OnEnteredTrigger -= triggerEnterAction;
 		};
 		entityPrompt.OnEnteredTrigger += triggerEnterAction;
+
+		List<QuestReward> qRewards = new List<QuestReward>();
+
+		List<QuestRequirement> qReqs = new List<QuestRequirement>();
+		Waypoint wp = Waypoint.CreateWaypoint(MainChar, entityPrompt,
+			entityPrompt.PivotPosition);
+		qReqs.Add(new GatheringQReq(Item.Type.CorruptedCorvorite,
+			MainChar, "Find the nearby energy source.", wp));
+
+		Quest q = new Quest(
+			"Acquire an Energy Source",
+			"The ship appears intact, however it is in a powered-down state. We need to find an energy source.",
+			MainQuester, qRewards, qReqs);
+		q.OnQuestComplete += CompletedFindEnergySourceQuest;
+
+		GiveQuest(MainQuester, q);
 	}
 
 	private void CompletedFindEnergySourceQuest(Quest quest)
@@ -247,7 +252,7 @@ public class NarrativeManager : MonoBehaviour
 
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
 
-		Waypoint wp = Waypoint.CreateWaypoint(MainChar, MainHatchTrigger);
+		Waypoint wp = Waypoint.CreateWaypoint(MainChar, MainHatchTrigger, MainHatchTrigger.PivotPosition);
 		qReqs.Add(new WaypointQReq(wp, "Return to the ship."));
 
 		Quest q = new Quest(
@@ -270,7 +275,11 @@ public class NarrativeManager : MonoBehaviour
 
 	public void ActivateScriptedDrops(bool activate) => FirstQuestScriptedDrops.scriptedDropsActive = activate;
 
-	public void SetShuttleRepaired(bool repaired) => ShuttleRepaired = repaired;
+	public void SetShuttleRepaired(bool repaired)
+	{
+		DistanceUI.Hidden = !repaired;
+		ShuttleRepaired = repaired;
+	}
 
 	public void SetShipRecharged(bool recharged) => ShipRecharged = recharged;
 
@@ -286,18 +295,15 @@ public class NarrativeManager : MonoBehaviour
 
 	private void GiveQuest(Quester quester, Quest q) => quester.AcceptQuest(q);
 
-	public void StartDialogue(ConversationWithActions ce, bool chat = false)
+	public void StartDialogue(ConversationWithActions ce, bool chat)
 	{
-		DlgCtrl.SkipEntireChat(true);
-
+		DialogueController dialogueController = new DialogueController(ce);
 		if (chat)
 		{
-			DlgCtrl.StartChat(ce);
+			CommPopupUI.ShowDialogue(dialogueController);
+			return;
 		}
-		else
-		{
-			DlgCtrl.StartDialogue(ce);
-		}
+		DialoguePopupUI.ShowDialogue(dialogueController);
 	}
 
 	private void ChooseStartingLocation()

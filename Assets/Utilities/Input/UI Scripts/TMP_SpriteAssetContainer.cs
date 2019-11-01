@@ -2,7 +2,7 @@
 using UnityEngine;
 using TMPro;
 
-namespace InputHandler.UI
+namespace InputHandlerSystem.UI
 {
 	[CreateAssetMenu(menuName = "Scriptable Objects/Input System/TMP_SpriteAsset Container")]
 	public class TMP_SpriteAssetContainer : ScriptableObject
@@ -10,5 +10,4 @@ namespace InputHandler.UI
 		public string action;
 		public List<TMP_SpriteAsset> spriteAssets;
 	}
-
 }

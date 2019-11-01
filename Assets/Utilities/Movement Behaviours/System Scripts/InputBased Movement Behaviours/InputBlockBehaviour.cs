@@ -1,4 +1,4 @@
-﻿using InputHandler;
+﻿using InputHandlerSystem;
 
 namespace MovementBehaviours
 {

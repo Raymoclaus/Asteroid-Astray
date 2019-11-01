@@ -1,15 +1,11 @@
-﻿using System;
-
-namespace QuestSystem.Requirements
+﻿namespace QuestSystem.Requirements
 {
 	public class WaypointQReq : QuestRequirement
 	{
-		private IWaypoint waypoint;
-
 		public WaypointQReq(IWaypoint waypoint, string description)
-			: base(description)
+			: base(description, waypoint)
 		{
-			this.waypoint = waypoint;
+
 		}
 
 		public override void Activate()
@@ -30,9 +26,5 @@ namespace QuestSystem.Requirements
 
 			QuestRequirementCompleted();
 		}
-
-		public override string GetDescription => description;
-
-		public override IWaypoint GetWaypoint => waypoint;
 	}
 }

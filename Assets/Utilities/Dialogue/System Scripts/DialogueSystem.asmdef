@@ -1,0 +1,14 @@
+{
+    "name": "DialogueSystem",
+    "references": [
+        "GUID:ee569390b9bb68a4899c48217b95461b"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}

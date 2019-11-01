@@ -15,10 +15,10 @@ public class CharacterAnimationController : MonoBehaviour
 		=> anim != null
 		&& anim.runtimeAnimatorController != null;
 
-	public void SetDirection(int direction)
+	public void SetDirection(float angle)
 	{
 		if (!CanAnimate) return;
-		anim.SetInteger(directionName, direction);
+		anim.SetFloat(directionName, angle);
 	}
 
 	public void SetRunning(bool running)

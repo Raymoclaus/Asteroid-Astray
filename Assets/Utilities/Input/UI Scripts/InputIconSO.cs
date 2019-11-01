@@ -2,7 +2,7 @@
 using System.Linq;
 using UnityEngine;
 
-namespace InputHandler.UI
+namespace InputHandlerSystem.UI
 {
 	[CreateAssetMenu(menuName = "Scriptable Objects/Input Icon List")]
 	public class InputIconSO : ScriptableObject

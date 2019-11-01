@@ -11,12 +11,19 @@ namespace TriggerSystem
 		public event Action OnWaypointReached;
 		public IActor expectedActor;
 		private ITrigger trigger;
-		private bool subscribed;
+		protected bool subscribed;
+		private Vector3 triggerPos;
 
 		private void Awake()
 		{
-			if (trigger == null) return;
+			if (TriggerIsNull) return;
 			Subscribe();
+		}
+
+		private void LateUpdate()
+		{
+			if (TriggerIsNull) return;
+			triggerPos = trigger.PivotPosition;
 		}
 
 		public void SetTrigger(ITrigger trigger)
@@ -27,14 +34,14 @@ namespace TriggerSystem
 
 		private void Subscribe()
 		{
-			if (subscribed) return;
+			if (TriggerIsNull || subscribed) return;
 			trigger.OnEnteredTrigger += EnteredTrigger;
 			subscribed = true;
 		}
 
 		private void Unsubscribe()
 		{
-			if (trigger == null || !subscribed) return;
+			if (TriggerIsNull || !subscribed) return;
 			trigger.OnEnteredTrigger -= EnteredTrigger;
 			subscribed = false;
 		}
@@ -50,9 +57,12 @@ namespace TriggerSystem
 			OnWaypointReached?.Invoke();
 		}
 
-		public Vector3 WaypointPosition => trigger.PivotPosition;
+		public Vector3 WaypointPosition => !TriggerIsNull
+			? trigger.PivotPosition : triggerPos;
 
-		public ref Action GetOnWaypointReachedEvent => ref OnWaypointReached;
+		protected bool TriggerIsNull
+			=> trigger == null
+			|| trigger.Equals(null);
 
 		public static Waypoint CreateWaypoint(IActor expectedActor, Vector3 position, float radius)
 		{
@@ -64,12 +74,13 @@ namespace TriggerSystem
 			trigger.SetPivot(trigger.transform);
 			trigger.transform.position = position;
 
-			return CreateWaypoint(expectedActor, trigger);
+			return CreateWaypoint(expectedActor, trigger, position);
 		}
 
-		public static Waypoint CreateWaypoint(IActor expectedActor, ITrigger trigger)
+		public static Waypoint CreateWaypoint(IActor expectedActor, ITrigger trigger, Vector3 position)
 		{
 			Waypoint waypointHolder = new GameObject("New Waypoint").AddComponent<Waypoint>();
+			waypointHolder.transform.position = position;
 			waypointHolder.expectedActor = expectedActor;
 			waypointHolder.SetTrigger(trigger);
 			return waypointHolder;

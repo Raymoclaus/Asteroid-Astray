@@ -1,4 +1,4 @@
-﻿namespace InputHandler
+﻿namespace InputHandlerSystem
 {
 	public enum InputMode
 	{

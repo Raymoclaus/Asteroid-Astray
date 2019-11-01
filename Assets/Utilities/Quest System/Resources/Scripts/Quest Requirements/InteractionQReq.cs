@@ -4,12 +4,9 @@ namespace QuestSystem.Requirements
 {
 	public class InteractionQReq : QuestRequirement
 	{
-		private Vector3? location;
-		private IInteractionWaypoint waypoint;
-
 		public InteractionQReq(IInteractionWaypoint waypoint,
 			string description)
-			: base(description)
+			: base(description, waypoint)
 		{
 			this.waypoint = waypoint;
 		}
@@ -30,11 +27,5 @@ namespace QuestSystem.Requirements
 		{
 			QuestRequirementCompleted();
 		}
-
-		public override string GetDescription => description;
-
-		public override IWaypoint GetWaypoint
-			=> waypoint;
 	}
-
 }

@@ -1,7 +1,8 @@
-﻿using UnityEngine;
+﻿using InputHandlerSystem;
+using UnityEngine;
 using UnityEditor;
 
-namespace InputHandler.InputEditor
+namespace InputHandlerSystem.CustomisedEditor
 {
 	[CustomPropertyDrawer(typeof(InputCode), true)]
 	public class InputCodePropertyDrawer : PropertyDrawer

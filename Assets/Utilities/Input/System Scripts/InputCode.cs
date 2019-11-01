@@ -1,9 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-namespace InputHandler
+namespace InputHandlerSystem
 {
-	[System.Serializable]
+	[Serializable]
 	public class InputCode
 	{
 		public enum InputType
@@ -36,7 +37,7 @@ namespace InputHandler
 						if (axisName == string.Empty) return false;
 						try
 						{
-							Input.GetAxisRaw(axisName);
+							UnityEngine.Input.GetAxisRaw(axisName);
 							return true;
 						}
 						catch (UnityException e)
@@ -53,10 +54,10 @@ namespace InputHandler
 			switch (inputType)
 			{
 				default: return 0f;
-				case InputType.Button: return Input.GetKey(buttonCode) ? 1f : 0f;
+				case InputType.Button: return UnityEngine.Input.GetKey(buttonCode) ? 1f : 0f;
 				case InputType.Axis:
 					return Mathf.Clamp01(
-						Input.GetAxis(axisName) * (axisPositiveDirection ? 1f : -1f));
+						UnityEngine.Input.GetAxis(axisName) * (axisPositiveDirection ? 1f : -1f));
 			}
 		}
 
@@ -65,7 +66,7 @@ namespace InputHandler
 			switch (inputType)
 			{
 				default: return false;
-				case InputType.Button: return Input.GetKeyDown(buttonCode);
+				case InputType.Button: return UnityEngine.Input.GetKeyDown(buttonCode);
 			}
 		}
 
@@ -74,7 +75,7 @@ namespace InputHandler
 			switch (inputType)
 			{
 				default: return false;
-				case InputType.Button: return Input.GetKeyUp(buttonCode);
+				case InputType.Button: return UnityEngine.Input.GetKeyUp(buttonCode);
 			}
 		}
 
