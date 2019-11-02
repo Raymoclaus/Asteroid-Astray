@@ -6,6 +6,7 @@ using InventorySystem;
 using InventorySystem.UI;
 using TriggerSystem;
 using ValueComponents;
+using DialogueSystem;
 
 public class Character : Entity, IInteractor, ICrafter
 {
@@ -28,6 +29,9 @@ public class Character : Entity, IInteractor, ICrafter
 	[SerializeField] private GameObject drillLaunchImpactEffect;
 
 	[SerializeField] private Waypoint defaultWaypoint, currentWaypoint;
+
+	[SerializeField] private DialogueController activeDialoguePrefab, passiveDialoguePrefab;
+	private static DialogueController activeDialogue, passiveDialogue;
 
 	public Action<Entity> OnEntityDestroyed;
 
@@ -374,4 +378,28 @@ public class Character : Entity, IInteractor, ICrafter
 
 	public Waypoint GetWaypoint => currentWaypoint != null ? currentWaypoint
 		: defaultWaypoint;
+
+	protected DialogueController ActiveDialogue
+	{
+		get
+		{
+			if (activeDialogue != null) return activeDialogue;
+			activeDialogue = FindObjectOfType<ActiveDialogueController>();
+			if (activeDialogue != null) return activeDialogue;
+			if (activeDialoguePrefab == null) return null;
+			return activeDialogue = Instantiate(activeDialoguePrefab);
+		}
+	}
+
+	protected DialogueController PassiveDialogue
+	{
+		get
+		{
+			if (passiveDialogue != null) return passiveDialogue;
+			passiveDialogue = FindObjectOfType<PassiveDialogueController>();
+			if (passiveDialogue != null) return passiveDialogue;
+			if (passiveDialoguePrefab == null) return null;
+			return passiveDialogue = Instantiate(passiveDialoguePrefab);
+		}
+	}
 }

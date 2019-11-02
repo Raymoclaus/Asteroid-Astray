@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -6,8 +8,10 @@ namespace InventorySystem.UI
 {
 	public class ItemPopupUI : PopupUI
 	{
-		private List<ItemPopupObject> activePopups = new List<ItemPopupObject>();
-		private List<ItemPopupObject> inactivePopups = new List<ItemPopupObject>();
+		[SerializeField]
+		protected float scrollDelay = 3f, fullDelay = 5f;
+		protected float scrollDelayTimer = 0f;
+		[SerializeField] private RectTransform popupPrefab;
 		private List<PopupData> popupsToShow = new List<PopupData>();
 		public Color textColor;
 		[SerializeField]
@@ -16,23 +20,35 @@ namespace InventorySystem.UI
 		[SerializeField]
 		private ItemSprites sprites;
 
-		private void Awake()
+		protected override PopupObject GetAnInactivePopup
 		{
-			for (int i = 0; i < transform.childCount; i++)
+			get
 			{
-				RectTransform popup = (RectTransform)transform.GetChild(i);
-				ItemPopupObject po = new ItemPopupObject(sprites,
-					popup,
-					popup.GetComponent<Image>(),
-					popup.GetChild(0).GetComponent<Image>(),
-					popup.GetChild(1).GetChild(0).GetComponent<Text>(),
-					popup.GetChild(1).GetChild(1).GetComponent<Text>());
-				inactivePopups.Add(po);
-				ActivateUIDetails(po, false);
+				PopupObject po = base.GetAnInactivePopup;
+				if (po == null)
+				{
+					po = CreatePopup();
+				}
+
+				return po;
 			}
-			popupHeight = ((RectTransform)transform.GetChild(0)).rect.height;
-			xPos = ((RectTransform)transform.GetChild(0)).anchoredPosition.x;
 		}
+
+		private ItemPopupObject CreatePopup()
+		{
+			RectTransform popup = Instantiate(popupPrefab, popupPrefab.position, Quaternion.identity, transform);
+			ItemPopupObject po = new ItemPopupObject(sprites,
+				popup,
+				popup.GetComponent<Image>(),
+				popup.GetChild(0).GetComponent<Image>(),
+				popup.GetChild(1).GetChild(0).GetComponent<Text>(),
+				popup.GetChild(1).GetChild(1).GetComponent<Text>());
+			inactivePopups.Add(po);
+			po.ActivateUIDetails(false);
+			return po;
+		}
+
+		private float XPos => popupPrefab.rect.height;
 
 		private void Update()
 		{
@@ -43,10 +59,10 @@ namespace InventorySystem.UI
 					scrollDelayTimer += Time.unscaledDeltaTime;
 					if (scrollDelayTimer >= scrollDelay)
 					{
-						RemovePopup(activePopups.Count - 1);
-						for (int i = 0; i < activePopups.Count; i++)
+						RemovePopupsWithID(activePopups.Count - 1);
+						foreach (ItemPopupObject ipo in activePopups)
 						{
-							activePopups[i].SetTimer(Mathf.Max(0f, activePopups[i].timer - scrollDelayTimer));
+							ipo.SetTimer(Mathf.Max(0f, ipo.Timer - scrollDelayTimer));
 						}
 						scrollDelayTimer = 0f;
 					}
@@ -58,11 +74,9 @@ namespace InventorySystem.UI
 
 				if (activePopups.Count < popupViewLimit)
 				{
-					ItemPopupObject po = inactivePopups[0];
-					activePopups.Insert(0, po);
-					inactivePopups.RemoveAt(0);
+					ItemPopupObject po = (ItemPopupObject)GetAnInactivePopup;
 					po.transform.anchoredPosition =
-						new Vector2(xPos, -popupHeight / 2f - popupViewLimit * (popupHeight - 1));
+						new Vector2(xPos, -po.Height / 2f - popupViewLimit * (po.Height - 1));
 					po.SetTimer(0f);
 					po.amount = popupsToShow[0].amount;
 					po.UpdateData(popupsToShow[0].type);
@@ -72,78 +86,69 @@ namespace InventorySystem.UI
 				}
 			}
 
-			for (int i = 0; i < activePopups.Count; i++)
+			foreach (ItemPopupObject ipo in activePopups)
 			{
-				ItemPopupObject po = activePopups[i];
-				po.UIimg.material.SetFloat("_Flash", 1f);
-				float delta = po.UIimg.material.GetFloat("_Radius");
-				float yPos = -popupHeight / 2f - popupHeight * (popupViewLimit - i - 1);
-				if (!Mathf.Approximately(delta, 1f) || !Mathf.Approximately(po.transform.anchoredPosition.y, yPos))
+				int ID = ipo.ID;
+				ipo.UIimg.material.SetFloat("_Flash", 1f);
+				float delta = ipo.UIimg.material.GetFloat("_Radius");
+				float popupHeight = ipo.Height;
+				float yPos = -popupHeight / 2f - popupHeight * (popupViewLimit - ID - 1);
+				if (!Mathf.Approximately(delta, 1f) || !Mathf.Approximately(ipo.transform.anchoredPosition.y, yPos))
 				{
 					delta = Mathf.MoveTowards(delta, 1f, Time.unscaledDeltaTime * popupEntrySpeed);
-					po.UIimg.material.SetFloat("_Radius", delta);
-					po.transform.anchoredPosition = Vector2.Lerp(po.transform.anchoredPosition,
+					ipo.UIimg.material.SetFloat("_Radius", delta);
+					ipo.transform.anchoredPosition = Vector2.Lerp(ipo.transform.anchoredPosition,
 						new Vector2(xPos, yPos),
 						Time.unscaledDeltaTime * popupMoveSpeed);
 					if (delta >= 0.833f)
 					{
-						ActivateUIDetails(po, true);
-						po.name.color = po.description.color =
+						ipo.ActivateUIDetails(true);
+						ipo.name.color = ipo.description.color =
 							Color.Lerp(Color.white, textColor, (delta - 0.833f) / textFadeSpeed);
 					}
 				}
 
-				po.AddTimer(Time.unscaledDeltaTime);
-				if (po.timer >= fullDelay)
+				ipo.AddTimer(Time.unscaledDeltaTime);
+				if (ipo.Timer >= fullDelay)
 				{
-					RemovePopup(i);
+					RemovePopupsWithID(ID);
 				}
 			}
 
-			for (int i = 0; i < inactivePopups.Count; i++)
+			foreach (ItemPopupObject ipo in inactivePopups)
 			{
-				ItemPopupObject po = inactivePopups[i];
-				po.UIimg.material.SetFloat("_Flash", 0f);
-				float delta = po.UIimg.material.GetFloat("_Radius");
+				ipo.UIimg.material.SetFloat("_Flash", 0f);
+				float delta = ipo.UIimg.material.GetFloat("_Radius");
 				if (!Mathf.Approximately(delta, 0f))
 				{
-					po.UIimg.material.SetFloat("_Radius",
+					ipo.UIimg.material.SetFloat("_Radius",
 						Mathf.MoveTowards(delta, 0f, Time.unscaledDeltaTime));
-					po.transform.anchoredPosition = Vector2.Lerp(po.transform.anchoredPosition,
-						new Vector2(xPos, po.transform.anchoredPosition.y),
+					ipo.transform.anchoredPosition = Vector2.Lerp(ipo.transform.anchoredPosition,
+						new Vector2(xPos, ipo.transform.anchoredPosition.y),
 						Time.unscaledDeltaTime * popupMoveSpeed);
 					if (delta <= 0f)
 					{
-						po.transform.gameObject.SetActive(false);
+						ipo.transform.gameObject.SetActive(false);
 					}
 				}
 			}
 		}
 
-		protected override void RemovePopup(int index)
+		protected override void RemovePopup(PopupObject po)
 		{
-			ItemPopupObject po = activePopups[index];
-			inactivePopups.Add(po);
-			activePopups.Remove(po);
-			ActivateUIDetails(po, false);
-		}
-
-		private void ActivateUIDetails(ItemPopupObject po, bool activate)
-		{
-			po.spr.enabled = activate;
-			po.name.enabled = activate;
-			po.description.enabled = activate;
+			ItemPopupObject ipo = (ItemPopupObject) po;
+			ipo.ActivateUIDetails(false);
+			base.RemovePopup(po);
 		}
 
 		public void GeneratePopup(Item.Type type, int amount = 1)
 		{
 			PopupData data = new PopupData(sprites, type, amount);
-			for (int i = 0; i < activePopups.Count; i++)
+			foreach (ItemPopupObject ipo in activePopups)
 			{
-				ItemPopupObject po = activePopups[i];
-				if (po.type == type)
+				if (ipo.type == type)
 				{
-					po.AddAmount(data.amount);
+					ipo.AddAmount(data.amount);
 					return;
 				}
 			}
@@ -171,24 +176,21 @@ namespace InventorySystem.UI
 			public Text name, description;
 			public int amount;
 
-			public ItemPopupObject(ItemSprites sprites, RectTransform transform, Image UIimg, Image spr, Text name, Text description, Item.Type type = Item.Type.Blank, int amount = 0)
+			public ItemPopupObject(ItemSprites sprites, RectTransform transform,
+				Image UIimg, Image spr, Text name, Text description) : base(transform)
 			{
 				this.sprites = sprites;
-				this.transform = transform;
-				this.type = type;
 				this.UIimg = UIimg;
 				this.UIimg.material = Instantiate(this.UIimg.material);
 				this.spr = spr;
 				this.name = name;
 				this.description = description;
-				timer = 0f;
-				this.amount = amount;
 			}
 
 			public int AddAmount(int amount)
 			{
 				this.amount += amount;
-				timer = 0f;
+				ResetTimer();
 				UpdateName();
 				return this.amount;
 			}
@@ -217,6 +219,13 @@ namespace InventorySystem.UI
 				}
 				UpdateName();
 				description.text = Item.Description(this.type);
+			}
+
+			public void ActivateUIDetails(bool activate)
+			{
+				spr.enabled = activate;
+				name.enabled = activate;
+				description.enabled = activate;
 			}
 		}
 

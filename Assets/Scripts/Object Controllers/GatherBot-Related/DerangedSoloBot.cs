@@ -29,7 +29,7 @@ public class DerangedSoloBot : SoloBot
 			default:
 				if (newState == AIState.Dying)
 				{
-					CommPopupUI.ShowDialogue(new DialogueController(destroyingFirstDerangedBot));
+					PassiveDialogue.StartDialogue(destroyingFirstDerangedBot);
 				}
 				base.SetState(newState);
 				break;

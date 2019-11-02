@@ -9,13 +9,14 @@ using InventorySystem.UI;
 using TriggerSystem;
 using TriggerSystem.Triggers;
 using UnityEngine;
-using DialogueSystem.UI;
 
 public class NarrativeManager : MonoBehaviour
 {
 	public static bool ShuttleRepaired { get; private set; }
 	public static bool ShipRecharged { get; private set; }
-	
+
+	[SerializeField] private DialogueController activeDialoguePrefab, passiveDialoguePrefab;
+	private DialogueController activeDialogue, passiveDialogue;
 	[SerializeField] private SpotlightEffectController spotlightEffectController;
 	[SerializeField] private CustomScreenEffect screenEffects;
 	[SerializeField] private Character mainChar;
@@ -34,38 +35,24 @@ public class NarrativeManager : MonoBehaviour
 	private TutorialPrompts tutPrompts;
 	private TutorialPrompts TutPrompts
 		=> tutPrompts ?? (tutPrompts = FindObjectOfType<TutorialPrompts>());
-	[SerializeField] private InventoryTab inventoryUI;
-	private InventoryTab InventoryUI
-		=> inventoryUI ?? (inventoryUI = FindObjectOfType<InventoryTab>());
 	[SerializeField] private TY4PlayingUI ty4pUI;
 
 	[SerializeField] private ConversationWithActions
-		recoveryDialogue,
-		UseThrustersDialogue,
-		completedFirstGatheringQuestDialogue,
-		useRepairKitDialogue,
-		findShipDialogue,
-		foundShipDialogue,
-		foundDerangedBotDialogue,
-		questionHowToObtainEnergySourceDialogue,
-		acquiredEnergySourceDialogue,
-		rechargedTheShipDialogue;
+		recoveryConversation,
+		useThrustersConversation,
+		completedFirstGatheringQuestConversation,
+		useRepairKitConversation,
+		findShipConversation,
+		foundShipConversation,
+		foundDerangedBotConversation,
+		questionHowToObtainEnergySourceConversation,
+		acquiredEnergySourceConversation,
+		rechargedTheShipConversation;
 
 	[Header("Entity Profiles")]
 	[SerializeField] private EntityProfile claire;
 
 	[SerializeField] private Entity botHivePrefab, soloBotPrefab;
-
-	private void DevCheatSpawn(Entity e)
-	{
-		Vector2 centerPos = MainChar.transform.position;
-		float randomAngle = UnityEngine.Random.value * Mathf.PI * 2f;
-		Vector2 randomUnit = new Vector2(Mathf.Sin(randomAngle), Mathf.Cos(randomAngle));
-		Vector2 spawnPos = centerPos + randomUnit * 3f;
-
-		Entity newEntity = Instantiate(e);
-		newEntity.Teleport(spawnPos);
-	}
 
 	private void Start()
 	{
@@ -75,10 +62,34 @@ public class NarrativeManager : MonoBehaviour
 		LoadingController.AddListener(StartRecoveryDialogue);
 	}
 
+	protected DialogueController ActiveDialogue
+	{
+		get
+		{
+			if (activeDialogue != null) return activeDialogue;
+			activeDialogue = FindObjectOfType<ActiveDialogueController>();
+			if (activeDialogue != null) return activeDialogue;
+			if (activeDialoguePrefab == null) return null;
+			return activeDialogue = Instantiate(activeDialoguePrefab);
+		}
+	}
+
+	protected DialogueController PassiveDialogue
+	{
+		get
+		{
+			if (passiveDialogue != null) return passiveDialogue;
+			passiveDialogue = FindObjectOfType<PassiveDialogueController>();
+			if (passiveDialogue != null) return passiveDialogue;
+			if (passiveDialoguePrefab == null) return null;
+			return passiveDialogue = Instantiate(passiveDialoguePrefab);
+		}
+	}
+
 	private void StartRecoveryDialogue()
 	{
 		ActivateSpotlight(true);
-		StartDialogue(recoveryDialogue, false);
+		StartDialogue(recoveryConversation, false);
 	}
 
 	public void StartFirstGatheringQuest()
@@ -106,7 +117,7 @@ public class NarrativeManager : MonoBehaviour
 
 		GiveQuest(MainQuester, q);
 		FirstQuestScriptedDrops.scriptedDropsActive = true;
-		StartDialogue(UseThrustersDialogue, true);
+		StartDialogue(useThrustersConversation, true);
 		TutPrompts?.drillInputPromptInfo.SetIgnore(false);
 	}
 
@@ -114,7 +125,7 @@ public class NarrativeManager : MonoBehaviour
 	{
 		ActivateScriptedDrops(false);
 		StartCraftYourFirstRepairKitQuest();
-		StartDialogue(completedFirstGatheringQuestDialogue, true);
+		StartDialogue(completedFirstGatheringQuestConversation, true);
 		TutPrompts?.drillInputPromptInfo.SetIgnore(true);
 	}
 
@@ -142,7 +153,7 @@ public class NarrativeManager : MonoBehaviour
 	private void CompletedCraftYourFirstRepairKitQuest(Quest quest)
 	{
 		StartRepairTheShuttleQuest();
-		StartDialogue(useRepairKitDialogue, true);
+		StartDialogue(useRepairKitConversation, true);
 		TutPrompts?.pauseInputPromptInfo.SetIgnore(true);
 	}
 
@@ -170,7 +181,7 @@ public class NarrativeManager : MonoBehaviour
 	{
 		SetShuttleRepaired(true);
 		StartReturnToTheShipQuest();
-		StartDialogue(findShipDialogue, true);
+		StartDialogue(findShipConversation, true);
 		TutPrompts?.repairKitInputPromptInfo.SetIgnore(true);
 	}
 
@@ -198,7 +209,7 @@ public class NarrativeManager : MonoBehaviour
 
 	private void CompletedReturnToTheShipQuest(Quest quest)
 	{
-		StartDialogue(foundShipDialogue, false);
+		StartDialogue(foundShipConversation, false);
 	}
 
 	public void StartFindEnergySourceQuest()
@@ -216,7 +227,7 @@ public class NarrativeManager : MonoBehaviour
 		triggerEnterAction = (IActor actor) =>
 		{
 			if (!(actor is Shuttle)) return;
-			StartDialogue(foundDerangedBotDialogue, true);
+			StartDialogue(foundDerangedBotConversation, true);
 			entityPrompt.OnEnteredTrigger -= triggerEnterAction;
 		};
 		entityPrompt.OnEnteredTrigger += triggerEnterAction;
@@ -241,7 +252,7 @@ public class NarrativeManager : MonoBehaviour
 	private void CompletedFindEnergySourceQuest(Quest quest)
 	{
 		StartRechargeTheShipQuest();
-		StartDialogue(acquiredEnergySourceDialogue, true);
+		StartDialogue(acquiredEnergySourceConversation, true);
 	}
 
 	public void StartRechargeTheShipQuest()
@@ -266,7 +277,7 @@ public class NarrativeManager : MonoBehaviour
 
 	private void CompletedRechargeTheShipQuest(Quest quest)
 	{
-		StartDialogue(rechargedTheShipDialogue, false);
+		StartDialogue(rechargedTheShipConversation, false);
 		TakeItem(Item.Type.CorruptedCorvorite, 1);
 		MainHatch.IsLocked = false;
 	}
@@ -287,7 +298,7 @@ public class NarrativeManager : MonoBehaviour
 	{
 		Pause.DelayedAction(() =>
 		{
-			StartDialogue(questionHowToObtainEnergySourceDialogue, true);
+			StartDialogue(questionHowToObtainEnergySourceConversation, true);
 		}, delay, true);
 	}
 
@@ -297,13 +308,12 @@ public class NarrativeManager : MonoBehaviour
 
 	public void StartDialogue(ConversationWithActions ce, bool chat)
 	{
-		DialogueController dialogueController = new DialogueController(ce);
 		if (chat)
 		{
-			CommPopupUI.ShowDialogue(dialogueController);
+			PassiveDialogue.StartDialogue(ce);
 			return;
 		}
-		DialoguePopupUI.ShowDialogue(dialogueController);
+		ActiveDialogue.StartDialogue(ce);
 	}
 
 	private void ChooseStartingLocation()

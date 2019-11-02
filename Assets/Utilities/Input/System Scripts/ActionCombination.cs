@@ -29,14 +29,7 @@ namespace InputHandlerSystem
 
 		public InputCombination GetCurrentCombination() => currentCombination;
 
-		public InputCombination GetValidCombination()
-		{
-			if (currentCombination.IsValid) return currentCombination;
-			if (defaultCombination.IsValid) return defaultCombination;
-			return null;
-		}
-
-		public bool Contains(InputCode code) => GetValidCombination().Contains(code);
+		public bool Contains(InputCode code) => Combination.Contains(code);
 
 		public bool AnyInput()
 		{
@@ -92,9 +85,11 @@ namespace InputHandlerSystem
 
 		public void ResetToDefault() => currentCombination = new InputCombination();
 
-		public int DefaultCombinationCount => defaultCombination.inputs.Count;
+		public int DefaultCombinationCount => defaultCombination?.inputs.Count ?? 0;
 
-		public int CurrentCombinationCount => currentCombination.inputs.Count;
+		public int CurrentCombinationCount => currentCombination?.inputs.Count ?? 0;
+
+		public int ValidCombinationCount => Combination?.inputs.Count ?? 0;
 
 		public override string ToString()
 		{

@@ -24,6 +24,7 @@ public class Entity : MonoBehaviour, IActionMessageReceiver
 	protected static AudioManager audioMngr;
 	protected static AudioManager AudioMngr
 		=> audioMngr ?? (audioMngr = FindObjectOfType<AudioManager>());
+
 	[SerializeField] protected ScreenRippleEffectController screenRippleSO;
 	[SerializeField] private bool shouldDisablePhysicsOnDistance = true;
 	[SerializeField] private bool shouldDisableObjectOnDistance = true;

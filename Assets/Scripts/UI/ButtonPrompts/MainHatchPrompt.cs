@@ -5,10 +5,11 @@ using UnityEngine;
 
 public class MainHatchPrompt : MonoBehaviour, IActionMessageReceiver
 {
+	[SerializeField] private DialogueController passiveDialogue;
 	[SerializeField] private ConversationWithActions
 		interactBeforeRepairedShuttle,
 		interactBeforeRechargedShip,
-		genericCantEnterShipDialogue;
+		genericCantEnterShipConversation;
 	
 	public bool IsLocked { get; set; }
 
@@ -18,15 +19,15 @@ public class MainHatchPrompt : MonoBehaviour, IActionMessageReceiver
 	{
 		if (!NarrativeManager.ShuttleRepaired)
 		{
-			CommPopupUI.ShowDialogue(new DialogueController(interactBeforeRepairedShuttle));
+			passiveDialogue.StartDialogue(interactBeforeRepairedShuttle);
 		}
 		else if (!NarrativeManager.ShipRecharged)
 		{
-			CommPopupUI.ShowDialogue(new DialogueController(interactBeforeRechargedShip));
+			passiveDialogue.StartDialogue(interactBeforeRechargedShip);
 		}
 		else
 		{
-			CommPopupUI.ShowDialogue(new DialogueController(genericCantEnterShipDialogue));
+			passiveDialogue.StartDialogue(genericCantEnterShipConversation);
 		}
 	}
 

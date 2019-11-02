@@ -12,7 +12,7 @@ namespace DialogueSystem
 		public int Length { get { return conversationEvent?.conversation.Length ?? 0; } }
 		public UnityEvent endEvent = new UnityEvent();
 
-		public UnityEvent GetEndEvent() => endEvent;
+		public UnityEvent EndEvent => endEvent;
 
 		public void AddAction(int index, Action action)
 		{
@@ -37,11 +37,15 @@ namespace DialogueSystem
 			endEvent.AddListener(new UnityAction(action));
 		}
 
-		public DialogueTextEvent[] GetLines() => conversationEvent.conversation;
+		public DialogueTextEvent[] Lines => conversationEvent.conversation;
 
-		public EntityProfile[] GetSpeakers() => conversationEvent.speakers;
+		public DialogueTextEvent GetLine(int index)
+			=> index >= 0 && index < Length
+				? conversationEvent.conversation[index] : null;
 
-		public ConversationEventPosition GetNextConversation()
+		public EntityProfile[] Speakers => conversationEvent.speakers;
+
+		public ConversationEventPosition NextConversation
 			=> conversationEvent.GetNextConversation();
 
 		public void EnsureLength()

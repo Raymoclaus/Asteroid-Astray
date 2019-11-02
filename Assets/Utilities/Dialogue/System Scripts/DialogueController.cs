@@ -1,41 +1,78 @@
 ﻿using System;
 using System.Collections.Generic;
-using TimerUtilities;
 using UnityEngine;
 
 namespace DialogueSystem
 {
-	public class DialogueController
+	public class DialogueController : MonoBehaviour
 	{
-		public event Action OnRevealCharacter, OnLineRevealed; 
+		public event Action OnDialogueStarted, OnRevealCharacter,
+			OnAllCharactersRevealed, OnLineRevealed, OnDialogueEnded; 
 
 		private ConversationWithActions currentConversation;
-		private DialogueEvent[] currentEvents;
 		private EntityProfile[] speakers;
 		private int currentPosition = -1;
 		private List<ConversationWithActions> dialogueQueue = new List<ConversationWithActions>();
-		private double characterRevealTime = 0.1f;
-		private SmartTimer characterRevealTimer = new SmartTimer(),
-			waitEventTimer = new SmartTimer();
+		[SerializeField] private float characterRevealTime = 0.02f;
+		private float revealTimer;
 
-		public string currentSpeakerName { get; private set; }
-		public string currentSpeakerText { get; private set; }
+		public string CurrentSpeakerName { get; private set; }
+		public string CurrentSpeakerText { get; private set; }
 		public int RevealedCharacterCount { get; private set; }
-		public Sprite currentSpeakerFace { get; private set; }
-		public int currentSpeakerID { get; private set; }
-		public AudioClip currentSpeakerTone { get; private set; }
+		public Sprite CurrentSpeakerFace { get; private set; }
+		public int CurrentSpeakerID { get; private set; }
+		public AudioClip CurrentSpeakerTone { get; private set; }
 
-		public DialogueController(ConversationWithActions conversation)
+		[SerializeField] private AudioSource audioSource;
+
+		protected virtual void Awake()
 		{
-			StartDialogue(conversation);
+			if (currentConversation == null)
+			{
+				enabled = false;
+			}
 		}
 
-		private bool TypingDialogue { get; set; }
-		private bool DialogueIsRunning => currentPosition >= 0 || dialogueQueue.Count > 0;
-
-		public void Next()
+		protected virtual void Update()
 		{
-			if (TypingDialogue)
+			if (!IsTyping) return;
+
+			revealTimer += CharacterRevealSpeed;
+			if (revealTimer >= characterRevealTime)
+			{
+				if (CurrentSpeakerTone != null)
+				{
+					audioSource.PlayOneShot(CurrentSpeakerTone);
+				}
+			}
+			while (revealTimer >= characterRevealTime)
+			{
+				revealTimer -= characterRevealTime;
+				RevealedCharacterCount++;
+				OnRevealCharacter?.Invoke();
+			}
+
+			if (!IsTyping)
+			{
+				OnAllCharactersRevealed?.Invoke();
+			}
+		}
+
+		protected virtual float CharacterRevealSpeed => Time.deltaTime;
+
+		protected bool IsTyping
+			=> DialogueIsRunning
+			&& RevealedCharacterCount < GetTextLength(CurrentSpeakerText);
+
+		public bool DialogueIsRunning
+			=> currentConversation != null
+			   && (currentPosition >= 0 || dialogueQueue.Count > 0);
+
+		protected virtual void Next()
+		{
+			if (!DialogueIsRunning) return;
+
+			if (IsTyping)
 			{
 				RevealAllCharacters();
 			}
@@ -45,11 +82,11 @@ namespace DialogueSystem
 			}
 		}
 
-		public void Skip()
+		protected virtual void Skip()
 		{
 			if (!DialogueIsRunning) return;
 
-			for (; currentPosition < currentEvents.Length; currentPosition++)
+			for (; currentPosition < currentConversation.Length; currentPosition++)
 			{
 				currentConversation.InvokeEvent(currentPosition);
 			}
@@ -59,12 +96,14 @@ namespace DialogueSystem
 
 		private void GetNextEvent()
 		{
+			if (!DialogueIsRunning) return;
+
 			//increment to next event
 			currentPosition++;
-			if (currentPosition >= currentEvents.Length)
+			if (currentPosition >= currentConversation.Length)
 			{
 				//look for a linked conversation
-				ConversationEventPosition cep = currentConversation.GetNextConversation();
+				ConversationEventPosition cep = currentConversation.NextConversation;
 				if (cep != null)
 				{
 					//start at the appropriate place in the new conversation
@@ -73,51 +112,50 @@ namespace DialogueSystem
 				else
 				{
 					//end all conversation
-					currentConversation.InvokeEndEvent();
-					currentPosition = -1;
-					currentEvents = null;
-					speakers = null;
+					EndDialogue();
 				}
 			}
 
 			TriggerCurrentEvent();
 		}
 
+		protected virtual void EndDialogue()
+		{
+			if (!DialogueIsRunning) return;
+
+			currentConversation.InvokeEndEvent();
+			currentPosition = -1;
+			speakers = null;
+			enabled = false;
+			OnDialogueEnded?.Invoke();
+		}
+
 		private void TriggerCurrentEvent()
 		{
-			if (CurrentEvent == null) return;
-
-			switch (CurrentEvent)
-			{
-				case DialogueTextEvent textEvent:
-					ShowText(textEvent);
-					break;
-				case DialogueWaitEvent waitEvent:
-					Wait(waitEvent);
-					break;
-				default:
-					Debug.LogWarning($"No implementation for type: {CurrentEvent.GetType()}");
-					return;
-			}
+			if (CurrentLine == null) return;
+			GetDialogueLine(CurrentLine);
 		}
+
+		private DialogueTextEvent CurrentLine
+			=> currentConversation.GetLine(currentPosition);
 
 		private void Wait(DialogueWaitEvent waitEvent)
 		{
-			waitEventTimer.DelayedAction(waitEvent.waitDuration, GetNextEvent, false);
+			Coroutines.DelayedAction(waitEvent.waitDuration, GetNextEvent);
 		}
 
-		private void ShowText(DialogueTextEvent textEvent)
+		private void GetDialogueLine(DialogueTextEvent textEvent)
 		{
 			int speakerID = textEvent.speakerID;
 			EntityProfile currentSpeaker = speakers[speakerID];
-			currentSpeakerName = currentSpeaker.entityName;
-			currentSpeakerText = textEvent.line;
-			currentSpeakerFace = currentSpeaker.face;
-			currentSpeakerTone = currentSpeaker.chatTone;
+			CurrentSpeakerID = speakerID;
+			CurrentSpeakerName = currentSpeaker.entityName;
+			CurrentSpeakerText = textEvent.line;
+			CurrentSpeakerFace = currentSpeaker.face;
+			CurrentSpeakerTone = currentSpeaker.chatTone;
 			OnLineRevealed?.Invoke();
 
-			//characterRevealTimer.RepeatingAction(characterRevealTime, TmpTele);
-			RevealAllCharacters();
+			RevealedCharacterCount = 0;
 
 			//TO REMOVE
 			currentConversation.InvokeEvent(currentPosition);
@@ -125,28 +163,27 @@ namespace DialogueSystem
 
 		private void RevealAllCharacters()
 		{
-			RevealedCharacterCount = int.MaxValue;
+			RevealedCharacterCount = GetTextLength(CurrentSpeakerText);
 			OnRevealCharacter?.Invoke();
+			OnAllCharactersRevealed?.Invoke();
 		}
 
-		private DialogueEvent CurrentEvent
-			=> currentEvents == null ||
-			   currentPosition < 0
-			   || currentPosition > currentEvents.Length
-				? null : currentEvents[currentPosition];
+		protected virtual int GetTextLength(string text)
+			=> text?.CountExcludingRichTextTags() ?? 0;
 
-		public void StartDialogue(ConversationWithActions newDialogue)
+		public virtual void StartDialogue(ConversationWithActions newConversation)
 		{
-			if (DialogueIsRunning || newDialogue == null) return;
-			Setup(newDialogue);
+			if (DialogueIsRunning || newConversation == null) return;
+			enabled = true;
+			Setup(newConversation);
 			TriggerCurrentEvent();
+			OnDialogueStarted?.Invoke();
 		}
 
-		private void Setup(ConversationWithActions dialogue, int position = 0)
+		private void Setup(ConversationWithActions conversation, int position = 0)
 		{
-			currentConversation = dialogue;
-			currentEvents = currentConversation.GetLines();
-			speakers = currentConversation.GetSpeakers();
+			currentConversation = conversation;
+			speakers = currentConversation.Speakers;
 			currentPosition = position;
 		}
 	}

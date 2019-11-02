@@ -41,7 +41,7 @@ public class DialoguePromptsEditor : PropertyDrawer
 					Rect textRect = new Rect(position.x + 15f, position.y + height,
 						textWidth, DEFAULT_HEIGHT * 3f);
 
-					string text = prompt.GetLines()[i].line;
+					string text = prompt.Lines[i].line;
 					GUIContent textLabel = new GUIContent(text);
 					EditorGUI.LabelField(textRect, textLabel);
 					height += EditorStyles.label.CalcHeight(textLabel, textWidth);

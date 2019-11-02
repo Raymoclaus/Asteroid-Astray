@@ -64,5 +64,4 @@ namespace QuestSystem.UI
 		private QuestPopupHolder GetPopupForQuest(Quest quest)
 			=> popups.First(t => t.Quest == quest);
 	}
-
 }

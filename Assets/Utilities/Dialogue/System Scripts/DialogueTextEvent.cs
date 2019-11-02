@@ -4,7 +4,7 @@ using UnityEngine;
 namespace DialogueSystem
 {
 	[Serializable]
-	public class DialogueTextEvent : DialogueEvent
+	public class DialogueTextEvent
 	{
 		[SerializeField]
 		[TextArea(1, 2)]

@@ -1,6 +1,8 @@
 {
     "name": "InputHandlerSystem",
-    "references": [],
+    "references": [
+        "GUID:a18ee12ab90ac134cb0e2524097040de"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
