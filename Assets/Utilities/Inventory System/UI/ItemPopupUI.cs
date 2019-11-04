@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,47 +7,65 @@ namespace InventorySystem.UI
 {
 	public class ItemPopupUI : PopupUI
 	{
-		[SerializeField]
-		protected float scrollDelay = 3f, fullDelay = 5f;
+		protected IInventoryHolder inventoryHolder;
+		[SerializeField] protected float scrollDelay = 3f, fullDelay = 5f;
 		protected float scrollDelayTimer = 0f;
 		[SerializeField] private RectTransform popupPrefab;
 		private List<PopupData> popupsToShow = new List<PopupData>();
 		public Color textColor;
-		[SerializeField]
-		private float textFadeSpeed = 0.17f;
-		private float xPos;
-		[SerializeField]
-		private ItemSprites sprites;
+		[SerializeField] private float textFadeSpeed = 0.17f;
+		[SerializeField] private ItemSprites sprites;
 
-		protected override PopupObject GetAnInactivePopup
+		public void SetInventoryHolder(IInventoryHolder newInventoryHolder)
+		{
+			if (newInventoryHolder == null
+			    || newInventoryHolder == inventoryHolder) return;
+			if (inventoryHolder != null)
+			{
+				inventoryHolder.OnItemCollected -= GeneratePopup;
+			}
+
+			inventoryHolder = newInventoryHolder;
+			inventoryHolder.OnItemCollected += GeneratePopup;
+		}
+
+		private new ItemPopupObject GetAnInactivePopup
 		{
 			get
 			{
-				PopupObject po = base.GetAnInactivePopup;
+				ItemPopupObject po = (ItemPopupObject)base.GetAnInactivePopup;
 				if (po == null)
 				{
 					po = CreatePopup();
 				}
-
+				po.MaterialRadius = 0f;
+				po.transform.gameObject.SetActive(true);
+				//po.transform.anchoredPosition =
+				//	new Vector2(XPos, -po.Height / 2f - popupViewLimit * (po.Height - 1));
+				po.SetTimer(0f);
+				ActivatePopup(po);
 				return po;
 			}
 		}
 
 		private ItemPopupObject CreatePopup()
 		{
-			RectTransform popup = Instantiate(popupPrefab, popupPrefab.position, Quaternion.identity, transform);
-			ItemPopupObject po = new ItemPopupObject(sprites,
-				popup,
-				popup.GetComponent<Image>(),
+			RectTransform popup = Instantiate(popupPrefab, transform, false);
+			Image UIImage = popup.GetComponent<Image>();
+			Material materialCopy = Instantiate(UIImage.material);
+			UIImage.material = materialCopy;
+			ItemPopupObject po = new ItemPopupObject(popup,
+				materialCopy,
 				popup.GetChild(0).GetComponent<Image>(),
 				popup.GetChild(1).GetChild(0).GetComponent<Text>(),
 				popup.GetChild(1).GetChild(1).GetComponent<Text>());
+			popup.anchoredPosition += Vector2.down * po.Height;
 			inactivePopups.Add(po);
-			po.ActivateUIDetails(false);
+			po.ActivateElements(false);
 			return po;
 		}
 
-		private float XPos => popupPrefab.rect.height;
+		private float XPos => popupPrefab.anchoredPosition.x;
 
 		private void Update()
 		{
@@ -74,57 +91,58 @@ namespace InventorySystem.UI
 
 				if (activePopups.Count < popupViewLimit)
 				{
-					ItemPopupObject po = (ItemPopupObject)GetAnInactivePopup;
-					po.transform.anchoredPosition =
-						new Vector2(xPos, -po.Height / 2f - popupViewLimit * (po.Height - 1));
-					po.SetTimer(0f);
-					po.amount = popupsToShow[0].amount;
-					po.UpdateData(popupsToShow[0].type);
+					PopupData data = popupsToShow[0];
+					ItemPopupObject po = GetAnInactivePopup;
+					po.Data = data;
 					popupsToShow.RemoveAt(0);
-					po.UIimg.material.SetFloat("_Radius", 0f);
-					po.transform.gameObject.SetActive(true);
 				}
 			}
 
 			foreach (ItemPopupObject ipo in activePopups)
 			{
 				int ID = ipo.ID;
-				ipo.UIimg.material.SetFloat("_Flash", 1f);
-				float delta = ipo.UIimg.material.GetFloat("_Radius");
+				ipo.MaterialFlash = 1f;
+				float delta = ipo.MaterialRadius;
 				float popupHeight = ipo.Height;
-				float yPos = -popupHeight / 2f - popupHeight * (popupViewLimit - ID - 1);
-				if (!Mathf.Approximately(delta, 1f) || !Mathf.Approximately(ipo.transform.anchoredPosition.y, yPos))
+				float targetHeight = GetTargetHeight(ipo);
+				if (!Mathf.Approximately(delta, 1f)
+				    || !Mathf.Approximately(ipo.transform.anchoredPosition.y, targetHeight))
 				{
 					delta = Mathf.MoveTowards(delta, 1f, Time.unscaledDeltaTime * popupEntrySpeed);
-					ipo.UIimg.material.SetFloat("_Radius", delta);
+					ipo.MaterialRadius = delta;
 					ipo.transform.anchoredPosition = Vector2.Lerp(ipo.transform.anchoredPosition,
-						new Vector2(xPos, yPos),
+						new Vector2(XPos, targetHeight),
 						Time.unscaledDeltaTime * popupMoveSpeed);
 					if (delta >= 0.833f)
 					{
-						ipo.ActivateUIDetails(true);
-						ipo.name.color = ipo.description.color =
-							Color.Lerp(Color.white, textColor, (delta - 0.833f) / textFadeSpeed);
+						ipo.ActivateElements(true);
+						Color colorDelta = Color.Lerp(
+							Color.white,
+							textColor,
+							(delta - 0.833f) / textFadeSpeed);
+						ipo.NameColour = ipo.DescriptionColour = colorDelta;
 					}
 				}
 
 				ipo.AddTimer(Time.unscaledDeltaTime);
-				if (ipo.Timer >= fullDelay)
-				{
-					RemovePopupsWithID(ID);
-				}
 			}
+
+			RemovePopupsWithTimerGreaterThanOrEqualToTime(fullDelay);
 
 			foreach (ItemPopupObject ipo in inactivePopups)
 			{
-				ipo.UIimg.material.SetFloat("_Flash", 0f);
-				float delta = ipo.UIimg.material.GetFloat("_Radius");
+				ipo.MaterialFlash = 0f;
+				float delta = ipo.MaterialRadius;
 				if (!Mathf.Approximately(delta, 0f))
 				{
-					ipo.UIimg.material.SetFloat("_Radius",
-						Mathf.MoveTowards(delta, 0f, Time.unscaledDeltaTime));
-					ipo.transform.anchoredPosition = Vector2.Lerp(ipo.transform.anchoredPosition,
-						new Vector2(xPos, ipo.transform.anchoredPosition.y),
+					delta = Mathf.MoveTowards(delta, 0f, Time.unscaledDeltaTime * popupEntrySpeed);
+					ipo.MaterialRadius = delta;
+					Vector2 targetPos = new Vector2(
+						XPos,
+						ipo.transform.anchoredPosition.y);
+					ipo.transform.anchoredPosition =
+						Vector2.Lerp(ipo.transform.anchoredPosition,
+						targetPos,
 						Time.unscaledDeltaTime * popupMoveSpeed);
 					if (delta <= 0f)
 					{
@@ -137,18 +155,21 @@ namespace InventorySystem.UI
 		protected override void RemovePopup(PopupObject po)
 		{
 			ItemPopupObject ipo = (ItemPopupObject) po;
-			ipo.ActivateUIDetails(false);
+			ipo.ActivateElements(false);
 			base.RemovePopup(po);
 		}
 
-		public void GeneratePopup(Item.Type type, int amount = 1)
+		private void GeneratePopup(ItemStack stack)
+			=> GeneratePopup(stack.ItemType, stack.Amount);
+
+		private void GeneratePopup(Item.Type type, int amount = 1)
 		{
 			PopupData data = new PopupData(sprites, type, amount);
 			foreach (ItemPopupObject ipo in activePopups)
 			{
-				if (ipo.type == type)
+				if (ipo.Data.ItemType == type)
 				{
-					ipo.AddAmount(data.amount);
+					ipo.Data.AddAmount(data.Amount);
 					return;
 				}
 			}
@@ -156,100 +177,164 @@ namespace InventorySystem.UI
 			for (int i = 0; i < popupsToShow.Count; i++)
 			{
 				PopupData pd = popupsToShow[i];
-				if (pd.type == type)
+				if (pd.ItemType == type)
 				{
 					pd.AddAmount(amount);
 					return;
 				}
 			}
-			popupsToShow.Add(data);
-		}
 
-		public void GeneratePopup(ItemStack stack)
-			=> GeneratePopup(stack.ItemType, stack.Amount);
+			if (ViewingLimitReached)
+			{
+				popupsToShow.Add(data);
+			}
+			else
+			{
+				ItemPopupObject po = GetAnInactivePopup;
+				po.Data = data;
+			}
+		}
 
 		private class ItemPopupObject : PopupObject
 		{
-			private ItemSprites sprites;
-			public Item.Type type;
-			public Image UIimg, spr;
-			public Text name, description;
-			public int amount;
+			private const string materialRadiusPropertyName = "_Radius",
+				materialFlashPropertyName = "_Flash";
 
-			public ItemPopupObject(ItemSprites sprites, RectTransform transform,
-				Image UIimg, Image spr, Text name, Text description) : base(transform)
+			private PopupData data;
+			private Material Material { get; set; }
+			private Image Spr { get; set; }
+			private Text Name { get; set; }
+			private Text Description { get; set; }
+
+			public ItemPopupObject(RectTransform transform, Material material, Image spr,
+				Text name, Text description) : base(transform)
 			{
-				this.sprites = sprites;
-				this.UIimg = UIimg;
-				this.UIimg.material = Instantiate(this.UIimg.material);
-				this.spr = spr;
-				this.name = name;
-				this.description = description;
+				Material = material;
+				Spr = spr;
+				Name = name;
+				Description = description;
 			}
 
-			public int AddAmount(int amount)
+			public PopupData Data
 			{
-				this.amount += amount;
-				ResetTimer();
+				get => data;
+				set
+				{
+					if (value == null || value == data) return;
+					if (Data != null)
+					{
+						data.OnItemTypeUpdated -= UpdateName;
+						data.OnItemTypeUpdated -= UpdateDescription;
+						data.OnItemTypeUpdated -= UpdateSprite;
+						data.OnAmountUpdated -= UpdateName;
+					}
+					data = value;
+					data.OnItemTypeUpdated += UpdateName;
+					data.OnItemTypeUpdated += UpdateDescription;
+					data.OnItemTypeUpdated += UpdateSprite;
+					data.OnAmountUpdated += UpdateName;
+
+					UpdateElements();
+				}
+			}
+
+			public float MaterialRadius
+			{
+				get => Material.GetFloat(materialRadiusPropertyName);
+				set => Material.SetFloat(materialRadiusPropertyName, value);
+			}
+
+			public float MaterialFlash
+			{
+				get => Material.GetFloat(materialFlashPropertyName);
+				set => Material.SetFloat(materialFlashPropertyName, value);
+			}
+
+			public Color NameColour
+			{
+				get => Name.color;
+				set => Name.color = value;
+			}
+
+			public Color DescriptionColour
+			{
+				get => Description.color;
+				set => Description.color = value;
+			}
+
+			private void UpdateElements()
+			{
+				UpdateSprite();
 				UpdateName();
-				return this.amount;
+				UpdateDescription();
+			}
+
+			public void ActivateElements(bool activate)
+			{
+				Spr.enabled = activate;
+				Name.enabled = activate;
+				Description.enabled = activate;
+			}
+
+			private void UpdateSprite()
+			{
+				Spr.sprite = Data.Spr;
 			}
 
 			private void UpdateName()
 			{
-				if (amount > 1)
+				if (Data.Amount > 1)
 				{
-					name.text = string.Format("{0} (x{1})", type.ToString(), amount);
+					Name.text = $"{Data.ItemName} {Data.Counter}";
+					return;
 				}
-				else
-				{
-					name.text = Item.TypeName(type);
-				}
+				Name.text = Data.ItemName;
 			}
 
-			public void UpdateData(Item.Type? type = null)
+			private void UpdateDescription()
 			{
-				if (type != null)
-				{
-					this.type = (Item.Type)type;
-				}
-				if (sprites)
-				{
-					spr.sprite = sprites.GetItemSprite(this.type);
-				}
-				UpdateName();
-				description.text = Item.Description(this.type);
-			}
-
-			public void ActivateUIDetails(bool activate)
-			{
-				spr.enabled = activate;
-				name.enabled = activate;
-				description.enabled = activate;
+				Description.text = Data.Description;
 			}
 		}
 
 		private class PopupData
 		{
+			public event Action OnItemTypeUpdated, OnAmountUpdated;
+			private ItemSprites Sprites { get; set; }
+			public Item.Type ItemType { get; private set; }
+			public int Amount { get; private set; }
 
-			public Sprite spr;
-			public Item.Type type;
-			public string name, description;
-			public int amount;
-
-			public PopupData(ItemSprites sprites, Item.Type type, int amount = 1)
+			public PopupData(ItemSprites sprites, Item.Type itemType, int amount)
 			{
-				this.type = type;
-				spr = sprites ? sprites.GetItemSprite(type) : null;
-				name = Item.TypeName(type);
-				description = Item.Description(type);
-				this.amount = amount;
+				Sprites = sprites;
+				SetItemType(itemType);
+				SetAmount(amount);
+			}
+
+			public void SetItemType(Item.Type type)
+			{
+				ItemType = type;
+				OnItemTypeUpdated?.Invoke();
+			}
+
+			public void SetAmount(int amount)
+			{
+				Amount = amount;
+				OnAmountUpdated?.Invoke();
 			}
 
 			public void AddAmount(int amount)
 			{
-				this.amount += amount;
+				SetAmount(Amount + amount);
 			}
+
+			public Sprite Spr => Sprites?.GetItemSprite(ItemType);
+
+			public string ItemName => Item.TypeName(ItemType);
+
+			public string Description => Item.Description(ItemType);
+
+			public string Counter => $"(x{Amount})";
 		}
 	}
 }

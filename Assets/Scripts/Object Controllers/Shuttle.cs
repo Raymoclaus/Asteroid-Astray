@@ -81,7 +81,6 @@ public class Shuttle : Character, IStunnable, ICombat
 	[SerializeField] private float launchZoomOutSize = 5f;
 	[SerializeField] private float launchLookAheadDistance = 5f;
 	private List<ICombat> enemies = new List<ICombat>();
-	[SerializeField] private ItemPopupUI popupUI;
 	private bool isTemporarilyInvincible = false;
 	[SerializeField] private ColorReplacementGroup cRGroup;
 	[SerializeField] private bool drillIsActive = true;
@@ -148,6 +147,7 @@ public class Shuttle : Character, IStunnable, ICombat
 		AttachToInventoryUI();
 
 		OnItemCollected += ReceiveItem;
+		FindObjectOfType<ItemPopupUI>()?.SetInventoryHolder(this);
 	}
 
 	protected override void Update()
@@ -368,11 +368,6 @@ public class Shuttle : Character, IStunnable, ICombat
 		if (AudioMngr)
 		{
 			AudioMngr.PlaySFX(collectResourceSound, transform.position, transform, pitch: resourceCollectedPitch);
-		}
-		popupUI = popupUI ?? FindObjectOfType<ItemPopupUI>();
-		if (popupUI != null)
-		{
-			popupUI.GeneratePopup(type, amount);
 		}
 	}
 

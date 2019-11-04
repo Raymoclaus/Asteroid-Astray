@@ -1,9 +1,16 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace DialogueSystem.UI
 {
-	public class ActiveDialoguePopupUI : GameDialoguePopupUI
+	public class ActiveDialoguePopupUI : GameDialoguePopupUI, IElementHider
 	{
+		[SerializeField] private UIGroupHider groupHider;
+		public UIGroupHider GroupHider => groupHider;
+
+		public event Action<IElementHider> OnActivate;
+		public event Action<IElementHider> OnDeactivate;
+
 		protected override void Update()
 		{
 			foreach (DialoguePopupObject dpo in activePopups)
@@ -35,6 +42,29 @@ namespace DialogueSystem.UI
 					dpo.transform.anchoredPosition += dir * popupMoveSpeed * Time.unscaledDeltaTime;
 				}
 			}
+		}
+
+		public override void SetDialogueController(DialogueController newController)
+		{
+			if (newController == null) return;
+			if (dialogueController != null)
+			{
+				dialogueController.OnDialogueStarted -= Activate;
+				dialogueController.OnDialogueEnded -= Deactivate;
+			}
+			base.SetDialogueController(newController);
+			dialogueController.OnDialogueStarted += Activate;
+			dialogueController.OnDialogueEnded += Deactivate;
+		}
+
+		private void Activate()
+		{
+			OnActivate?.Invoke(this);
+		}
+
+		private void Deactivate()
+		{
+			OnDeactivate?.Invoke(this);
 		}
 
 		protected override void CreatePopupOfCurrentLine()

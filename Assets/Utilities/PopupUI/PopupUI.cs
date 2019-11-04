@@ -14,6 +14,8 @@ public abstract class PopupUI : MonoBehaviour
 
 	protected int ActivePopupCount => activePopups.Count;
 
+	protected bool ViewingLimitReached => ActivePopupCount >= popupViewLimit;
+
 	protected bool ContainsActivePopup => ActivePopupCount > 0;
 
 	protected void RemoveLastPopup()
@@ -30,10 +32,7 @@ public abstract class PopupUI : MonoBehaviour
 
 	protected void RemovePopupsWithID(int ID)
 	{
-		foreach (PopupObject po in activePopups.Where(t => t.ID == ID).ToList())
-		{
-			RemovePopup(po);
-		}
+		RemoveMatchingPopups(t => t.ID == ID);
 	}
 
 	protected virtual void RemovePopup(PopupObject po)
@@ -42,6 +41,24 @@ public abstract class PopupUI : MonoBehaviour
 
 		inactivePopups.Add(po);
 		activePopups.Remove(po);
+	}
+
+	protected void RemoveMatchingPopups(Func<PopupObject, bool> pattern)
+	{
+		foreach (PopupObject po in activePopups.Where(pattern).ToList())
+		{
+			RemovePopup(po);
+		}
+	}
+
+	protected void RemovePopupUsingTransform(RectTransform transform)
+	{
+		RemoveMatchingPopups(t => t.transform == transform);
+	}
+
+	protected void RemovePopupsWithTimerGreaterThanOrEqualToTime(float time)
+	{
+		RemoveMatchingPopups(t => t.Timer >= time);
 	}
 
 	protected void RemoveAllPopups()

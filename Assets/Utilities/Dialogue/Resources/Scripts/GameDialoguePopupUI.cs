@@ -15,15 +15,15 @@ namespace DialogueSystem.UI
 
 		protected abstract void Update();
 
-		public void SetDialogueController(DialogueController newController)
+		public virtual void SetDialogueController(DialogueController newController)
 		{
-			if (newController == null) return;
+			if (newController == null || newController == dialogueController) return;
 			if (dialogueController != null)
 			{
-				dialogueController.OnLineRevealed += CreatePopupOfCurrentLine;
-				dialogueController.OnDialogueEnded += RemoveAllPopups;
-				dialogueController.OnRevealCharacter += RevealCharacters;
-				dialogueController.OnDialogueStarted += UpdateUI;
+				dialogueController.OnLineRevealed -= CreatePopupOfCurrentLine;
+				dialogueController.OnDialogueEnded -= RemoveAllPopups;
+				dialogueController.OnRevealCharacter -= RevealCharacters;
+				dialogueController.OnDialogueStarted -= UpdateUI;
 			}
 			dialogueController = newController;
 			dialogueController.OnLineRevealed += CreatePopupOfCurrentLine;
