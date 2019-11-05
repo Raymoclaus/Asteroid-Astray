@@ -5,7 +5,6 @@ using System;
 using System.Collections;
 using DialogueSystem;
 using UnityEngine;
-using DialogueSystem.UI;
 
 public class WormholeSceneController : MonoBehaviour
 {
@@ -36,9 +35,14 @@ public class WormholeSceneController : MonoBehaviour
 			shuttleTracer.GoToEndOfPath(shuttleTraceSpeed, resetDistance: true);
 			shipTracer.GoToEndOfPath(shipTraceSpeed, resetDistance: true, reachedPathEndAction: () =>
 			{
-				activeDialogue.StartDialogue(approachingPlanetConversation);
+				StartDialogue(approachingPlanetConversation);
 			});
 		}));
+	}
+
+	private void StartDialogue(ConversationWithActions dialogue)
+	{
+		activeDialogue.StartDialogue(dialogue, true);
 	}
 
 	private void OpenWormhole()
@@ -60,7 +64,7 @@ public class WormholeSceneController : MonoBehaviour
 			{
 				DistortWormhole(-1.5f, () => DistortWormhole(-1f));
 				ShrinkShip();
-				activeDialogue.StartDialogue(enteringWormholeConversation);
+				StartDialogue(enteringWormholeConversation);
 				shuttleTracer.GoToEndOfPath(shuttleTraceSpeed * 10f);
 			});
 		}));
@@ -137,7 +141,7 @@ public class WormholeSceneController : MonoBehaviour
 			fadeScreen.alpha = delta;
 		}, () =>
 		{
-			activeDialogue.StartDialogue(openingWormholeConversation);
+			StartDialogue(openingWormholeConversation);
 		}));
 	}
 

@@ -5,18 +5,15 @@ using QuestSystem.Requirements;
 using System;
 using System.Collections.Generic;
 using DialogueSystem;
-using InventorySystem.UI;
 using TriggerSystem;
 using TriggerSystem.Triggers;
 using UnityEngine;
 
-public class NarrativeManager : MonoBehaviour
+public class NarrativeManager : MonoBehaviour, IChatter
 {
 	public static bool ShuttleRepaired { get; private set; }
 	public static bool ShipRecharged { get; private set; }
-
-	[SerializeField] private DialogueController activeDialoguePrefab, passiveDialoguePrefab;
-	private DialogueController activeDialogue, passiveDialogue;
+	
 	[SerializeField] private SpotlightEffectController spotlightEffectController;
 	[SerializeField] private CustomScreenEffect screenEffects;
 	[SerializeField] private Character mainChar;
@@ -45,7 +42,6 @@ public class NarrativeManager : MonoBehaviour
 		findShipConversation,
 		foundShipConversation,
 		foundDerangedBotConversation,
-		questionHowToObtainEnergySourceConversation,
 		acquiredEnergySourceConversation,
 		rechargedTheShipConversation;
 
@@ -54,36 +50,15 @@ public class NarrativeManager : MonoBehaviour
 
 	[SerializeField] private Entity botHivePrefab, soloBotPrefab;
 
+	public event Action<ConversationWithActions, bool> OnSendActiveDialogue;
+	public event Action<ConversationWithActions, bool> OnSendPassiveDialogue;
+
 	private void Start()
 	{
 		ChooseStartingLocation();
 		MainHatch.IsLocked = true;
 		SetShuttleRepaired(false);
 		LoadingController.AddListener(StartRecoveryDialogue);
-	}
-
-	protected DialogueController ActiveDialogue
-	{
-		get
-		{
-			if (activeDialogue != null) return activeDialogue;
-			activeDialogue = FindObjectOfType<ActiveDialogueController>();
-			if (activeDialogue != null) return activeDialogue;
-			if (activeDialoguePrefab == null) return null;
-			return activeDialogue = Instantiate(activeDialoguePrefab);
-		}
-	}
-
-	protected DialogueController PassiveDialogue
-	{
-		get
-		{
-			if (passiveDialogue != null) return passiveDialogue;
-			passiveDialogue = FindObjectOfType<PassiveDialogueController>();
-			if (passiveDialogue != null) return passiveDialogue;
-			if (passiveDialoguePrefab == null) return null;
-			return passiveDialogue = Instantiate(passiveDialoguePrefab);
-		}
 	}
 
 	private void StartRecoveryDialogue()
@@ -116,7 +91,7 @@ public class NarrativeManager : MonoBehaviour
 		q.OnQuestComplete += CompletedFirstGatheringQuest;
 
 		GiveQuest(MainQuester, q);
-		FirstQuestScriptedDrops.scriptedDropsActive = true;
+		ActivateScriptedDrops(true);
 		StartDialogue(useThrustersConversation, true);
 		TutPrompts?.drillInputPromptInfo.SetIgnore(false);
 	}
@@ -280,26 +255,19 @@ public class NarrativeManager : MonoBehaviour
 		StartDialogue(rechargedTheShipConversation, false);
 		TakeItem(Item.Type.CorruptedCorvorite, 1);
 		MainHatch.IsLocked = false;
+		ShipRecharged = true;
 	}
 
-	public void ActivateSpotlight(bool activate) => screenEffects.SetBlit(spotlightEffectController.spotlightMaterial, activate);
+	public void ActivateSpotlight(bool activate)
+		=> screenEffects.SetBlit(spotlightEffectController.spotlightMaterial, activate);
 
-	public void ActivateScriptedDrops(bool activate) => FirstQuestScriptedDrops.scriptedDropsActive = activate;
+	public void ActivateScriptedDrops(bool activate)
+		=> FirstQuestScriptedDrops.scriptedDropsActive = activate;
 
 	public void SetShuttleRepaired(bool repaired)
 	{
 		DistanceUI.Hidden = !repaired;
 		ShuttleRepaired = repaired;
-	}
-
-	public void SetShipRecharged(bool recharged) => ShipRecharged = recharged;
-
-	public void StartQuestionHowToObtainEnergySourceDialogueAfterDelay(float delay = 3f)
-	{
-		Pause.DelayedAction(() =>
-		{
-			StartDialogue(questionHowToObtainEnergySourceConversation, true);
-		}, delay, true);
 	}
 
 	public void TakeItem(Item.Type type, int amount) => MainChar.TakeItem(type, amount);
@@ -310,10 +278,10 @@ public class NarrativeManager : MonoBehaviour
 	{
 		if (chat)
 		{
-			PassiveDialogue.StartDialogue(ce);
+			OnSendPassiveDialogue?.Invoke(ce, true);
 			return;
 		}
-		ActiveDialogue.StartDialogue(ce);
+		OnSendActiveDialogue?.Invoke(ce, true);
 	}
 
 	private void ChooseStartingLocation()

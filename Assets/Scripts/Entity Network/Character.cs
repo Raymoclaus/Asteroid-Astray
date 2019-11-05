@@ -8,7 +8,7 @@ using TriggerSystem;
 using ValueComponents;
 using DialogueSystem;
 
-public class Character : Entity, IInteractor, ICrafter
+public class Character : Entity, IInteractor, ICrafter, IChatter
 {
 	[Header("Character Fields")]
 
@@ -17,6 +17,9 @@ public class Character : Entity, IInteractor, ICrafter
 	public event Action<Item.Type, int> OnItemCollected;
 	public event Action<List<ItemStack>> OnItemsCrafted;
 	public event Action<Item.Type, int> OnItemUsed;
+	public event Action<ConversationWithActions, bool> OnSendActiveDialogue;
+	public event Action<ConversationWithActions, bool> OnSendPassiveDialogue;
+
 	[SerializeField] private float itemUseCooldownDuration = 1f;
 	private string itemUseCooldownTimerID;
 	[SerializeField] private CraftingRecipeStorage recipeStorage;
@@ -29,9 +32,6 @@ public class Character : Entity, IInteractor, ICrafter
 	[SerializeField] private GameObject drillLaunchImpactEffect;
 
 	[SerializeField] private Waypoint defaultWaypoint, currentWaypoint;
-
-	[SerializeField] private DialogueController activeDialoguePrefab, passiveDialoguePrefab;
-	private static DialogueController activeDialogue, passiveDialogue;
 
 	public Action<Entity> OnEntityDestroyed;
 
@@ -379,27 +379,13 @@ public class Character : Entity, IInteractor, ICrafter
 	public Waypoint GetWaypoint => currentWaypoint != null ? currentWaypoint
 		: defaultWaypoint;
 
-	protected DialogueController ActiveDialogue
+	protected void SendActiveDialogue(ConversationWithActions dialogue, bool skip)
 	{
-		get
-		{
-			if (activeDialogue != null) return activeDialogue;
-			activeDialogue = FindObjectOfType<ActiveDialogueController>();
-			if (activeDialogue != null) return activeDialogue;
-			if (activeDialoguePrefab == null) return null;
-			return activeDialogue = Instantiate(activeDialoguePrefab);
-		}
+		OnSendActiveDialogue?.Invoke(dialogue, skip);
 	}
 
-	protected DialogueController PassiveDialogue
+	protected void SendPassiveDialogue(ConversationWithActions dialogue, bool skip)
 	{
-		get
-		{
-			if (passiveDialogue != null) return passiveDialogue;
-			passiveDialogue = FindObjectOfType<PassiveDialogueController>();
-			if (passiveDialogue != null) return passiveDialogue;
-			if (passiveDialoguePrefab == null) return null;
-			return passiveDialogue = Instantiate(passiveDialoguePrefab);
-		}
+		OnSendPassiveDialogue?.Invoke(dialogue, skip);
 	}
 }

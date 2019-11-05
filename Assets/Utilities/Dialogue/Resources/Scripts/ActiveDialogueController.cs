@@ -11,9 +11,9 @@ namespace DialogueSystem
 			FindObjectOfType<ActiveDialoguePopupUI>()?.SetDialogueController(this);
 		}
 		
-		public override void StartDialogue(ConversationWithActions newConversation)
+		public override void StartDialogue(ConversationWithActions newConversation, bool skip)
 		{
-			base.StartDialogue(newConversation);
+			base.StartDialogue(newConversation, skip);
 			Pause.InstantPause(true);
 		}
 

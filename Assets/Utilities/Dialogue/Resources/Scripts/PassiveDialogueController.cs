@@ -18,7 +18,7 @@ namespace DialogueSystem
 		{
 			base.Update();
 
-			if (IsTyping)
+			if (IsTyping || IsWaitingOnDelayedText)
 			{
 				autoScrollTimer = 0f;
 			}
@@ -28,6 +28,7 @@ namespace DialogueSystem
 				if (autoScrollTimer >= autoScrollTime)
 				{
 					Next();
+					autoScrollTimer = 0f;
 				}
 			}
 		}

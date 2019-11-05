@@ -21,7 +21,14 @@ public static class Coroutines
 	}
 
 	public static Coroutine DelayedAction(float time, Action action)
-		=> Start(PDelayedAction(new WaitForSeconds(time), action));
+	{
+		if (time <= 0f)
+		{
+			action?.Invoke();
+			return null;
+		}
+		return Start(PDelayedAction(new WaitForSeconds(time), action));
+	}
 
 	public static Coroutine DelayedAction(WaitForSeconds time, Action action)
 		=> Start(PDelayedAction(time, action));

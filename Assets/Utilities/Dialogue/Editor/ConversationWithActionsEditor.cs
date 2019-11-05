@@ -3,18 +3,21 @@ using UnityEditor;
 using UnityEngine;
 
 [CustomPropertyDrawer(typeof(ConversationWithActions), true)]
-public class DialoguePromptsEditor : PropertyDrawer
+public class ConversationWithActionsEditor : PropertyDrawer
 {
 	private float height;
 
 	public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
 	{
+		if (position.width == 1f)
+		{
+			return;
+		}
 		Object target = property.serializedObject.targetObject;
 		ConversationWithActions prompt = (ConversationWithActions)fieldInfo.GetValue(target);
 		prompt.EnsureLength();
-
+		
 		EditorGUI.BeginProperty(position, label, property);
-		position = EditorGUI.PrefixLabel(position, new GUIContent());
 		int indent = EditorGUI.indentLevel;
 		EditorStyles.label.wordWrap = true;
 		EditorStyles.label.fontStyle = FontStyle.Normal;
@@ -45,6 +48,15 @@ public class DialoguePromptsEditor : PropertyDrawer
 						textWidth, textHeight);
 					EditorGUI.LabelField(textRect, textLabel);
 					height += textHeight;
+
+					float delayWidth = position.width - 15f;
+					GUIContent delayLabel = new GUIContent("Delay");
+					float delayHeight = EditorStyles.numberField.CalcHeight(delayLabel, delayWidth);
+					Rect delayRect = new Rect(position.x + 15f, position.y + height,
+						delayWidth, delayHeight);
+					float getDelay = EditorGUI.FloatField(delayRect, delayLabel, prompt.GetDelay(i));
+					prompt.SetDelay(i, getDelay);
+					height += delayHeight;
 
 					SerializedProperty eventProperty = eventsListProperty.GetArrayElementAtIndex(i);
 					float eventHeight = EditorGUI.GetPropertyHeight(eventProperty);

@@ -9,7 +9,7 @@ namespace DialogueSystem
 	{
 		public ConversationEvent conversationEvent;
 		public List<UnityEvent> events = new List<UnityEvent>();
-		public int Length { get { return conversationEvent?.conversation.Length ?? 0; } }
+		public int Length => conversationEvent?.conversation.Length ?? 0;
 		public UnityEvent endEvent = new UnityEvent();
 
 		public UnityEvent EndEvent => endEvent;
@@ -54,6 +54,16 @@ namespace DialogueSystem
 			{
 				events.Add(new UnityEvent());
 			}
+		}
+
+		public float GetDelay(int index)
+		{
+			return conversationEvent.conversation[index].delay;
+		}
+
+		public void SetDelay(int index, float value)
+		{
+			conversationEvent.conversation[index].delay = value;
 		}
 	}
 }

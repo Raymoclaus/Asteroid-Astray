@@ -24,12 +24,14 @@ namespace DialogueSystem.UI
 				dialogueController.OnDialogueEnded -= RemoveAllPopups;
 				dialogueController.OnRevealCharacter -= RevealCharacters;
 				dialogueController.OnDialogueStarted -= UpdateUI;
+				dialogueController.OnStartDelayedText -= RemoveAllPopups;
 			}
 			dialogueController = newController;
 			dialogueController.OnLineRevealed += CreatePopupOfCurrentLine;
 			dialogueController.OnDialogueEnded += RemoveAllPopups;
 			dialogueController.OnRevealCharacter += RevealCharacters;
 			dialogueController.OnDialogueStarted += UpdateUI;
+			dialogueController.OnStartDelayedText += RemoveAllPopups;
 			UpdateUI();
 		}
 

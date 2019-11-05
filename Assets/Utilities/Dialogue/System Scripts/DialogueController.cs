@@ -7,7 +7,8 @@ namespace DialogueSystem
 	public class DialogueController : MonoBehaviour
 	{
 		public event Action OnDialogueStarted, OnRevealCharacter,
-			OnAllCharactersRevealed, OnLineRevealed, OnDialogueEnded; 
+			OnAllCharactersRevealed, OnLineRevealed, OnDialogueEnded,
+			OnStartDelayedText; 
 
 		private ConversationWithActions currentConversation;
 		private EntityProfile[] speakers;
@@ -35,7 +36,7 @@ namespace DialogueSystem
 
 		protected virtual void Update()
 		{
-			if (!IsTyping) return;
+			if (!IsTyping || IsWaitingOnDelayedText) return;
 
 			revealTimer += CharacterRevealSpeed;
 			if (revealTimer >= characterRevealTime)
@@ -153,13 +154,29 @@ namespace DialogueSystem
 			CurrentSpeakerText = textEvent.line;
 			CurrentSpeakerFace = currentSpeaker.face;
 			CurrentSpeakerTone = currentSpeaker.chatTone;
-			OnLineRevealed?.Invoke();
 
-			RevealedCharacterCount = 0;
+			float delay = textEvent.delay;
+			Action action = () =>
+			{
+				RevealedCharacterCount = 0;
+				OnLineRevealed?.Invoke();
+				currentConversation.InvokeEvent(currentPosition);
+			};
 
-			//TO REMOVE
-			currentConversation.InvokeEvent(currentPosition);
+			if (delay > 0f)
+			{
+				IsWaitingOnDelayedText = true;
+				action += () => IsWaitingOnDelayedText = false;
+				OnStartDelayedText?.Invoke();
+				Coroutines.DelayedAction(textEvent.delay, action);
+			}
+			else
+			{
+				action?.Invoke();
+			}
 		}
+
+		protected bool IsWaitingOnDelayedText { get; private set; }
 
 		private void RevealAllCharacters()
 		{
@@ -171,9 +188,9 @@ namespace DialogueSystem
 		protected virtual int GetTextLength(string text)
 			=> text?.CountExcludingRichTextTags() ?? 0;
 
-		public virtual void StartDialogue(ConversationWithActions newConversation)
+		public virtual void StartDialogue(ConversationWithActions newConversation, bool skip)
 		{
-			if (DialogueIsRunning || newConversation == null) return;
+			if ((DialogueIsRunning && !skip) || newConversation == null) return;
 			enabled = true;
 			Setup(newConversation);
 			TriggerCurrentEvent();

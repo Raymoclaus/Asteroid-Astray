@@ -1,11 +1,10 @@
-﻿using DialogueSystem;
-using DialogueSystem.UI;
+﻿using System;
+using DialogueSystem;
 using TriggerSystem;
 using UnityEngine;
 
-public class MainHatchPrompt : MonoBehaviour, IActionMessageReceiver
+public class MainHatchPrompt : MonoBehaviour, IActionMessageReceiver, IChatter
 {
-	[SerializeField] private DialogueController passiveDialogue;
 	[SerializeField] private ConversationWithActions
 		interactBeforeRepairedShuttle,
 		interactBeforeRechargedShip,
@@ -15,19 +14,22 @@ public class MainHatchPrompt : MonoBehaviour, IActionMessageReceiver
 
 	[SerializeField] private Animator anim;
 
+	public event Action<ConversationWithActions, bool> OnSendActiveDialogue;
+	public event Action<ConversationWithActions, bool> OnSendPassiveDialogue;
+
 	public void PlayDialogueResponse()
 	{
 		if (!NarrativeManager.ShuttleRepaired)
 		{
-			passiveDialogue.StartDialogue(interactBeforeRepairedShuttle);
+			OnSendPassiveDialogue?.Invoke(interactBeforeRepairedShuttle, false);
 		}
 		else if (!NarrativeManager.ShipRecharged)
 		{
-			passiveDialogue.StartDialogue(interactBeforeRechargedShip);
+			OnSendPassiveDialogue?.Invoke(interactBeforeRechargedShip, false);
 		}
 		else
 		{
-			passiveDialogue.StartDialogue(genericCantEnterShipConversation);
+			OnSendPassiveDialogue?.Invoke(genericCantEnterShipConversation, false);
 		}
 	}
 
