@@ -7,5 +7,4 @@ namespace TriggerSystem
 		Vector3 FacingDirection { get; }
 		Transform GetTransform { get; }
 	}
-
 }

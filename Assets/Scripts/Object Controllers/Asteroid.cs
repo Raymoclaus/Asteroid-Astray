@@ -124,7 +124,7 @@ public class Asteroid : Entity
 
 	private void UpdateSprite()
 	{
-		float hpRatio = healthComponent.Ratio;
+		float hpRatio = healthComponent.CurrentRatio;
 
 	}
 
@@ -140,7 +140,7 @@ public class Asteroid : Entity
 	protected override bool CheckHealth(Entity destroyer, float dropModifier)
 	{
 		UpdateSprite();
-		if (healthComponent.Ratio > 0f) return false;
+		if (healthComponent.CurrentRatio > 0f) return false;
 		return base.CheckHealth(destroyer, dropModifier);
 	}
 
@@ -165,7 +165,7 @@ public class Asteroid : Entity
 		Entity destroyer, float dropModifier)
 	{
 		//calculate shake intensity. Gets more intense the less health it has
-		ShakeFX.SetIntensity(damage / healthComponent.upperLimit * (3f - (healthComponent.Ratio * 2f)));
+		ShakeFX.SetIntensity(damage / healthComponent.UpperLimit * (3f - (healthComponent.CurrentRatio * 2f)));
 		return base.TakeDrillDamage(damage, drillPos, destroyer, dropModifier);
 	}
 

@@ -3,7 +3,7 @@ using AttackData;
 
 namespace MovementBehaviours
 {
-	public class RollTowardsProjectileBehaviour : MovementBehaviour, IAttackReceiver
+	public class RollTowardsProjectileBehaviour : MovementBehaviour, IAttackTrigger
 	{
 		public void ReceiveAttack(AttackManager atkM)
 		{

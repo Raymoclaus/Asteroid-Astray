@@ -1,0 +1,15 @@
+{
+    "name": "AttackData.Components",
+    "references": [
+        "GUID:6810b20c7b1c34a46974c3c27f918b3a",
+        "GUID:7b22a53d92b84844e9f797c309bcda9b"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}

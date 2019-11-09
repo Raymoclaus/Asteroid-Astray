@@ -197,7 +197,7 @@ public class Shuttle : Character, IStunnable, ICombat
 				speedMod *= 1f - Mathf.Abs(lookDirection - (360f - rot.z)) / 180f;
 				if (!IsBoosting)
 				{
-					Boost(speedMod > 0.9f && boostComponent.Ratio >= 0.5f);
+					Boost(speedMod > 0.9f && boostComponent.CurrentRatio >= 0.5f);
 				}
 				else
 				{
@@ -532,9 +532,9 @@ public class Shuttle : Character, IStunnable, ICombat
 	public override bool TakeDamage(float damage, Vector2 damagePos,
 		Entity destroyer, float dropModifier, bool flash)
 	{
-		float oldVal = healthComponent.Ratio;
+		float oldVal = healthComponent.CurrentRatio;
 		bool dead = base.TakeDamage(damage, damagePos, destroyer, dropModifier, flash);
-		float newVal = healthComponent.Ratio;
+		float newVal = healthComponent.CurrentRatio;
 
 		if (oldVal == newVal) return false;
 
@@ -553,7 +553,7 @@ public class Shuttle : Character, IStunnable, ICombat
 
 	private void Boost(bool input)
 	{
-		if (canBoost && input && boostComponent.Ratio > 0f && !Pause.IsStopped)
+		if (canBoost && input && boostComponent.CurrentRatio > 0f && !Pause.IsStopped)
 		{
 			if (!IsBoosting)
 			{
@@ -753,8 +753,11 @@ public class Shuttle : Character, IStunnable, ICombat
 		//open hatch
 	}
 
-	public override bool IsPerformingAction(string action)
+	public override bool StartedPerformingAction(string action)
 		=> InputManager.GetInputDown(action);
+
+	public override bool IsPerformingAction(string action)
+		=> InputManager.GetInput(action) > 0f;
 
 	public override void Interact(object interactableObject)
 	{
@@ -768,5 +771,14 @@ public class Shuttle : Character, IStunnable, ICombat
 		{
 			SceneLoader.LoadScene("PlanetScene");
 		}
+	}
+
+	public override bool ShouldAttack(string action)
+		=> base.ShouldAttack(action)
+		   && StartedPerformingAction(action);
+
+	public override void ReceiveRecoil(Vector3 recoilVector)
+	{
+		velocity = recoilVector;
 	}
 }

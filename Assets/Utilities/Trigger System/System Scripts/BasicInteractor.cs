@@ -1,10 +1,15 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace TriggerSystem.Actors.Interactors
 {
 	public class BasicInteractor : MonoBehaviour, IInteractor
 	{
 		[SerializeField] private bool canTriggerPrompts;
+
+		public event Action<IActor> OnDisabled;
+
+		private void OnDisable() => OnDisabled?.Invoke(this);
 
 		public bool CanTriggerPrompts => canTriggerPrompts;
 
@@ -14,8 +19,10 @@ namespace TriggerSystem.Actors.Interactors
 
 		public virtual void Interact(object interactableObject) { }
 
-		public virtual bool IsPerformingAction(string action) => false;
+		public virtual bool StartedPerformingAction(string action) => false;
 
 		public virtual object ObjectOrderRequest(object order) => null;
+
+		public virtual Vector3 Position => transform.position;
 	}
 }

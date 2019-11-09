@@ -530,7 +530,7 @@ public class GatherBot : Character, IStunnable, ICombat
 		//run away if hp drops below 50% while also having lower health than the target
 		if (!IsSwarmInCombat)
 		{
-			float hpRatio = healthComponent.Ratio;
+			float hpRatio = healthComponent.CurrentRatio;
 			if (hpRatio < 0.5f && hpRatio < targetEntity.HealthRatio)
 			{
 				scaryEntities.Add(targetEntity);
@@ -1045,7 +1045,7 @@ public class GatherBot : Character, IStunnable, ICombat
 	{
 		hive = botHive;
 		SetState(AIState.Spawning);
-		healthComponent.upperLimit = maxHp;
+		healthComponent.SetUpperLimit(maxHp, false);
 		healthComponent.SetToUpperLimit();
 		dockID = dockingID;
 	}
@@ -1097,7 +1097,7 @@ public class GatherBot : Character, IStunnable, ICombat
 	{
 		Instantiate(forcePulseWave, transform.position, Quaternion.identity, ParticleGenerator.holder);
 		Vector2 point = transform.position;
-		int layers = (1 << layerSolid) | (1 << layerProjectile);
+		int layers = (1 << LayerSolid) | (1 << LayerProjectile);
 		Collider2D[] colliders = Physics2D.OverlapCircleAll(point, explosionRadius, layers);
 		List<Rigidbody2D> rbs = new List<Rigidbody2D>();
 		for (int i = 0; i < colliders.Length; i++)
@@ -1267,7 +1267,7 @@ public class GatherBot : Character, IStunnable, ICombat
 
 	protected override bool CheckHealth(Entity destroyer, float dropModifier)
 	{
-		if (healthComponent.Ratio > 0f) return false;
+		if (healthComponent.CurrentRatio > 0f) return false;
 		if (IsDrilling)
 		{
 			drill.drillTarget.StopDrilling(drill);
@@ -1275,7 +1275,7 @@ public class GatherBot : Character, IStunnable, ICombat
 		SetState(AIState.Dying);
 		this.destroyer = destroyer;
 		this.dropModifier = dropModifier;
-		return healthComponent.Ratio <= 0f;
+		return healthComponent.CurrentRatio <= 0f;
 	}
 
 	public override void DestroySelf(Entity destroyer, float dropModifier)
@@ -1345,7 +1345,7 @@ public class GatherBot : Character, IStunnable, ICombat
 
 		float targetThreatValue = baseThreatMultiplier * sc.level * sc.hpRatio * 1.5f;
 		float gatherBotBackupModifier = hive?.childBots.Count ?? 1f;
-		float selfThreatValue = GetLevel() * healthComponent.Ratio;
+		float selfThreatValue = GetLevel() * healthComponent.CurrentRatio;
 		float swarmThreatValue = selfThreatValue * gatherBotBackupModifier;
 		bool isValuable = sc.value >= valuableLootThreshold;
 

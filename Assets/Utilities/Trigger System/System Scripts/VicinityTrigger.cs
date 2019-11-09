@@ -32,7 +32,7 @@ namespace TriggerSystem.Triggers
 			RemoveActor(collision.GetComponentInParent<IActor>());
 		}
 
-		private void GetReceivers()
+		protected virtual void GetReceivers()
 		{
 			Transform t = transform;
 			while (t != null)
@@ -53,6 +53,7 @@ namespace TriggerSystem.Triggers
 			if (!ShouldAddActor(actor)) return;
 
 			nearbyActors.Add(actor);
+			actor.OnDisabled += RemoveActor;
 			EnteredTrigger(actor);
 			actor.EnteredTrigger(this);
 			OnEnteredTrigger?.Invoke(actor);
@@ -66,6 +67,7 @@ namespace TriggerSystem.Triggers
 			if (actor != null && nearbyActors.Contains(actor))
 			{
 				nearbyActors.Remove(actor);
+				actor.OnDisabled -= RemoveActor;
 				ExitedTrigger(actor);
 				actor.ExitedTrigger(this);
 				OnExitedTrigger?.Invoke(actor);

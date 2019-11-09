@@ -1,9 +1,10 @@
 ﻿using System.Collections;
+using TriggerSystem;
 using UnityEngine;
 using ValueComponents;
 
 [RequireComponent(typeof(SpriteRenderer))]
-public class EnergyShieldMaterialManager : MonoBehaviour
+public class EnergyShieldMaterialManager : MonoBehaviour, ITriggerMessageReceiver
 {
 	[SerializeField] private RangedFloatComponent shieldComponent;
 	private Material mat;
@@ -17,11 +18,17 @@ public class EnergyShieldMaterialManager : MonoBehaviour
 		targetRippleProgress = 0.7f;
 	[SerializeField] private Vector3 defaultScale = Vector3.one * 1.2f;
 
+	private static int attackLayer = -1;
+
+	private static int AttackLayer => attackLayer >= 0
+		? attackLayer
+		: (attackLayer = LayerMask.NameToLayer("Attack"));
+
 	private void Awake()
 	{
 		sprRend = GetComponent<SpriteRenderer>();
 		mat = sprRend.material;
-		UpdateShield(shieldComponent.Ratio, 1f);
+		UpdateShield(shieldComponent.CurrentRatio, 1f);
 		shieldComponent.OnValueChanged += UpdateShield;
 		SetDefaultScale();
 	}
@@ -127,4 +134,27 @@ public class EnergyShieldMaterialManager : MonoBehaviour
 	public void SetDefaultScale() => SetScaleMod(1f);
 
 	public void SetScaleMod(float mod) => transform.localScale = defaultScale * mod;
+
+	public void EnteredTrigger(IActor actor)
+	{
+		if (actor is IAttackActor attack)
+		{
+			Vector3 attackPos = attack.Position;
+			Vector3 dir = attackPos - transform.position;
+			TakeHit(dir);
+		}
+	}
+
+	public void ExitedTrigger(IActor actor)
+	{
+
+	}
+
+	public void AllExitedTrigger()
+	{
+
+	}
+
+	public bool CanReceiveMessagesFromLayer(int layer)
+		=> layer == AttackLayer;
 }

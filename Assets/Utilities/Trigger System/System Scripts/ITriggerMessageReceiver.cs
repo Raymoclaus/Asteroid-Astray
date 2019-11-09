@@ -7,5 +7,4 @@
 		void AllExitedTrigger();
 		bool CanReceiveMessagesFromLayer(int layer);
 	}
-
 }

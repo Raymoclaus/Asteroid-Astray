@@ -12,5 +12,6 @@ namespace DialogueSystem
 		public byte speakerID;
 		public const string DEFAULT_LINE = "<No dialogue line available>";
 		public float delay;
+		public float characterRevealSpeedMultiplier = 1f;
 	}
 }

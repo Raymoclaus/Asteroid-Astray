@@ -27,7 +27,7 @@ namespace TriggerSystem.Triggers
 
 			foreach (IInteractor interactor in nearbyInteractors)
 			{
-				if (interactor.IsPerformingAction(ActionRequired))
+				if (interactor.StartedPerformingAction(ActionRequired))
 				{
 					Interact(interactor);
 				}

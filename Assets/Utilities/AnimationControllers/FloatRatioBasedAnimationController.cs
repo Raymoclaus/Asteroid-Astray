@@ -12,6 +12,6 @@ public class FloatRatioBasedAnimationController : ValueBasedAnimationController<
 
 	protected override void UpdateAnimator(float oldVal, float newVal)
 	{
-		animator.SetFloat(AnimatorPropertyName, rangedFloatComponent.Ratio);
+		animator.SetFloat(AnimatorPropertyName, rangedFloatComponent.CurrentRatio);
 	}
 }

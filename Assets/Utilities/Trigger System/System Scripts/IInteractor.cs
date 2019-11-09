@@ -2,7 +2,7 @@
 {
 	public interface IInteractor : IActor
 	{
-		bool IsPerformingAction(string action);
+		bool StartedPerformingAction(string action);
 		object ObjectOrderRequest(object order);
 		void Interact(object interactableObject);
 	}

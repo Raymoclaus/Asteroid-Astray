@@ -1,0 +1,21 @@
+{
+    "name": "WeaponSystem.Resources",
+    "references": [
+        "GUID:954bb8cbf2669bc499814525d4bcd035",
+        "GUID:85c1dc83e5a6de945b38b97f994d8cd7",
+        "GUID:6810b20c7b1c34a46974c3c27f918b3a",
+        "GUID:c574cd17ca91efb428ec1e7b18bdf9ac",
+        "GUID:b3052cfafca8a0548b7e05d38b184e0c",
+        "GUID:7b22a53d92b84844e9f797c309bcda9b",
+        "GUID:b21154195c8351d4d85f7cf03fffa3ee",
+        "GUID:e4b812858eb8f2a4ca40edd42635206e"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}

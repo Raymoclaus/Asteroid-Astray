@@ -1,9 +1,11 @@
-﻿using System.Collections;
+﻿using System;
 using System.Collections.Generic;
+using AttackData;
+using TriggerSystem;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
-public class LaserBlast : MonoBehaviour, IProjectile
+public class LaserBlast : MonoBehaviour, IProjectile, IAttackActor
 {
 	private double sharedID = -1;
 	private LaserWeapon weaponSystem;
@@ -42,8 +44,21 @@ public class LaserBlast : MonoBehaviour, IProjectile
 	[SerializeField]
 	private AudioClip weakHitSound;
 	protected static AudioManager audioMngr;
+
+	public event Action<IActor> OnDisabled;
+
+	private void OnDisable() => OnDisabled?.Invoke(this);
+
 	protected static AudioManager AudioMngr
 		=> audioMngr ?? (audioMngr = FindObjectOfType<AudioManager>());
+
+	public Vector3 FacingDirection => direction;
+
+	public bool CanTriggerPrompts => false;
+
+	public AttackManager GetAttackManager => GetComponent<AttackManager>();
+
+	public Vector3 Position => transform.position;
 
 	public void Shoot(Vector2 startPos, Quaternion startRot, Vector2 startingDir, Vector2 followDir,
 		List<LaserBlast> p, Transform wep, Entity shooter, double ID, LaserWeapon wepSystem)
@@ -67,6 +82,7 @@ public class LaserBlast : MonoBehaviour, IProjectile
 		weaponSystem = wepSystem;
 
 		gameObject.SetActive(true);
+		GetAttackManager.AddAttackComponent<OwnerComponent>(shooter);
 	}
 
 	private void Update()
@@ -113,29 +129,29 @@ public class LaserBlast : MonoBehaviour, IProjectile
 
 	public void Hit(Entity obj, Vector2 contactPoint)
 	{
-		//calculate damage
-		float damageCalc = damage;
-		if (!converged)
-		{
-			damageCalc *= damageReductionBeforeConverge;
-		}
+		////calculate damage
+		//float damageCalc = damage;
+		//if (!converged)
+		//{
+		//	damageCalc *= damageReductionBeforeConverge;
+		//}
 
-		//create explosion effect based on damage dealt
-		bool isStrongHit = damageCalc >= damage * 0.9f;
-		float dirToObject = Vector2.SignedAngle(Vector2.up, (Vector2)obj.transform.position - contactPoint);
-		GameObject hitFX = Instantiate(isStrongHit ? strongHit : weakHit);
-		hitFX.transform.position = contactPoint;
-		hitFX.transform.eulerAngles = Vector3.forward * (dirToObject + 180f);
-		//play sound effect
-		if (AudioMngr != null)
-		{
-			AudioMngr.PlaySFX(isStrongHit ? strongHitSound : weakHitSound, contactPoint,
-			pitch: Random.value * 0.2f + 0.9f);
-		}
-		//report damage calculation to the object taking the damage
-		obj.TakeDamage(damageCalc, contactPoint, parent, 1f, true);
-		//destroy projectile
-		Dissipate();
+		////create explosion effect based on damage dealt
+		//bool isStrongHit = damageCalc >= damage * 0.9f;
+		//float dirToObject = Vector2.SignedAngle(Vector2.up, (Vector2)obj.transform.position - contactPoint);
+		//GameObject hitFX = Instantiate(isStrongHit ? strongHit : weakHit);
+		//hitFX.transform.position = contactPoint;
+		//hitFX.transform.eulerAngles = Vector3.forward * (dirToObject + 180f);
+		////play sound effect
+		//if (AudioMngr != null)
+		//{
+		//	AudioMngr.PlaySFX(isStrongHit ? strongHitSound : weakHitSound, contactPoint,
+		//	pitch: Random.value * 0.2f + 0.9f);
+		//}
+		////report damage calculation to the object taking the damage
+		//obj.TakeDamage(damageCalc, contactPoint, parent, 1f, true);
+		////destroy projectile
+		//Dissipate();
 	}
 
 	private void Dissipate()
@@ -151,5 +167,20 @@ public class LaserBlast : MonoBehaviour, IProjectile
 	public Entity GetShooter()
 	{
 		return parent;
+	}
+
+	public void EnteredTrigger(ITrigger vTrigger)
+	{
+
+	}
+
+	public void ExitedTrigger(ITrigger vTrigger)
+	{
+
+	}
+
+	public void Hit(IAttackTrigger trigger)
+	{
+		Dissipate();
 	}
 }

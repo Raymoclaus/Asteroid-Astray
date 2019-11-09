@@ -13,10 +13,16 @@ public class HUDMeterController : MonoBehaviour
 
 	private void Awake()
 	{
+		UpdateValues(floatComponent.CurrentRatio, floatComponent.CurrentRatio);
 		floatComponent.OnValueChanged += UpdateValues;
 	}
 
-	public void UpdateMeter()
+	private void Update()
+	{
+		UpdateMeter();
+	}
+
+	private void UpdateMeter()
 	{
 		secondaryBarWaitTimer += Time.deltaTime;
 		if (secondaryBarWaitTimer > secondaryBarWaitDuration)
@@ -27,17 +33,17 @@ public class HUDMeterController : MonoBehaviour
 		}
 	}
 
-	public void UpdateValues(float oldVal, float newVal)
+	private void UpdateValues(float oldVal, float newVal)
 	{
-		SetValue(fillAmountString, newVal);
+		SetValue(fillAmountString, floatComponent.CurrentRatio);
 		if (secondaryBarWaitTimer > secondaryBarWaitDuration)
 		{
-			SetValue(damageFillAmountString, oldVal);
+			SetValue(damageFillAmountString, floatComponent.GetRatio(oldVal));
 		}
 		secondaryBarWaitTimer = 0f;
 	}
 
-	public void SetValue(string propertyName, float value)
+	private void SetValue(string propertyName, float value)
 	{
 		mat.SetFloat(propertyName, value);
 	}

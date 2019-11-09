@@ -20,6 +20,7 @@ namespace DialogueSystem
 		public string CurrentSpeakerName { get; private set; }
 		public string CurrentSpeakerText { get; private set; }
 		public int RevealedCharacterCount { get; private set; }
+		public float CharacterRevealSpeedMultiplier { get; private set; } = 1f;
 		public Sprite CurrentSpeakerFace { get; private set; }
 		public int CurrentSpeakerID { get; private set; }
 		public AudioClip CurrentSpeakerTone { get; private set; }
@@ -38,7 +39,7 @@ namespace DialogueSystem
 		{
 			if (!IsTyping || IsWaitingOnDelayedText) return;
 
-			revealTimer += CharacterRevealSpeed;
+			revealTimer += CharacterRevealSpeed * CharacterRevealSpeedMultiplier;
 			if (revealTimer >= characterRevealTime)
 			{
 				if (CurrentSpeakerTone != null)
@@ -154,6 +155,7 @@ namespace DialogueSystem
 			CurrentSpeakerText = textEvent.line;
 			CurrentSpeakerFace = currentSpeaker.face;
 			CurrentSpeakerTone = currentSpeaker.chatTone;
+			CharacterRevealSpeedMultiplier = textEvent.characterRevealSpeedMultiplier;
 
 			float delay = textEvent.delay;
 			Action action = () =>
