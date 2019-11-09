@@ -1,4 +1,5 @@
 ﻿using AttackData;
+using AudioUtilities;
 using System.Collections.Generic;
 using UnityEngine;
 using ValueComponents;
@@ -11,13 +12,20 @@ namespace WeaponSystem
 		[SerializeField] protected RangedFloatComponent cooldownComponent;
 		[SerializeField] private float recoveryDuration;
 		[SerializeField] protected float damageMultiplier = 1f;
+		[SerializeField] private AudioSO clip;
+		private static AudioManager audioMngr;
+
+		private static AudioManager AudioMngr =>
+			audioMngr != null
+				? audioMngr
+				: (audioMngr = FindObjectOfType<AudioManager>());
 
 		protected virtual void Awake()
 		{
 			cooldownComponent.SetToLowerLimit();
 		}
 
-		protected virtual void Update()
+		private void FixedUpdate()
 		{
 			float reduction = Time.deltaTime;
 			ReduceCooldownBySeconds(reduction);
@@ -42,17 +50,25 @@ namespace WeaponSystem
 
 		public float DamageMultiplier => damageMultiplier;
 
+		protected virtual Vector3 WeaponPosition
+			=> transform.position;
+
 		public virtual AttackManager Attack(float damageMultiplier, List<IAttacker> owners)
 		{
 			if (!ShouldAttack) return null;
-
-			AttackManager attack = Instantiate(attackPrefab, transform.position,
-				Quaternion.identity, null);
+			AttackManager attack = SpawnAttack();
 			attack.SetData<OwnerComponent>(owners, true);
 			attack.SetData<DamageComponent>(DamageMultiplier, false);
 			cooldownComponent.SetValue(CooldownDuration);
 			owners.ForEach(t => t.ReceiveRecoveryDuration(recoveryDuration));
+			AudioMngr.PlaySFX(clip, transform.position, null);
 			return attack;
+		}
+
+		protected virtual AttackManager SpawnAttack()
+		{
+			return Instantiate(attackPrefab, WeaponPosition,
+				Quaternion.identity, null);
 		}
 
 		public virtual string TriggerAction => "Attack";

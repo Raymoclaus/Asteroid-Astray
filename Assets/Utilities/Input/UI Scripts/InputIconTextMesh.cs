@@ -44,9 +44,12 @@ namespace InputHandlerSystem.UI
 
 		private void UpdateIcon()
 		{
+			if (InputManager.GetMode() == InputMode.None) return;
+
+			InputIconSO iconSet = GetCurrentIconSet();
 			textMesh = textMesh ?? GetComponent<TextMeshProUGUI>();
 			Func<string, TMP_SpriteAssetContainer> getContainer = action => GetCurrentSpriteContainer(action);
-			string s = StringFormatter.ConvertActionTagsToRichText(text, GetCurrentIconSet(), getContainer);
+			string s = StringFormatter.ConvertActionTagsToRichText(text, iconSet, getContainer);
 			if (textMesh == null)
 			{
 				Debug.Log("Text mesh is null");

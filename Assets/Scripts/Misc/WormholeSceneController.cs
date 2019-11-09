@@ -166,16 +166,6 @@ public class WormholeSceneController : MonoBehaviour
 		}, null));
 	}
 
-	private Action MethodName = () =>
-	{
-
-	};
-
-	private Func<bool> FunctionName = () =>
-	{
-		return false;
-	};
-
 	private IEnumerator TimerAction(float duration, Action<float> action, Action finishTimerAction)
 	{
 		yield return new ActionOverTime(duration, action);

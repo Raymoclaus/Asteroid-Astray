@@ -1,6 +1,4 @@
-﻿using System;
-using InputHandlerSystem;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace WeaponSystem
 {

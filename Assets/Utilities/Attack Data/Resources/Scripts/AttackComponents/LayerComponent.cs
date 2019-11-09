@@ -4,7 +4,7 @@ namespace AttackData
 {
 	public class LayerComponent : AttackComponent
 	{
-		private ComponentData data;
+		public ComponentData data;
 
 		public override void AssignData(object data = null)
 		{
@@ -17,9 +17,10 @@ namespace AttackData
 		public override bool VerifyTarget(IAttackTrigger target)
 			=> base.VerifyTarget(target) && data.ContainsLayer(target.LayerName);
 
+		[System.Serializable]
 		public struct ComponentData
 		{
-			public int layerMask;
+			public LayerMask layerMask;
 
 			public ComponentData(params string[] layerNames)
 			{

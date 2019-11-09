@@ -59,13 +59,13 @@ namespace AttackData
 			set => Velocity = Direction * value;
 		}
 
-		protected Vector3 Direction
+		protected virtual Vector3 Direction
 		{
 			get => Velocity.normalized;
 			set => Velocity = value.normalized * CurrentSpeed;
 		}
 
-		protected Vector3 Velocity
+		protected virtual Vector3 Velocity
 		{
 			get => VelocityComp.velocity;
 			set

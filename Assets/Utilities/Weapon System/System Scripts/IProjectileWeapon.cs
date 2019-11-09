@@ -1,4 +1,5 @@
-﻿using AttackData;
+﻿using UnityEngine;
+using AttackData;
 
 namespace WeaponSystem
 {
@@ -8,6 +9,7 @@ namespace WeaponSystem
 		bool IsCompatible(IAmmo ammo);
 		int ClipSize { get; }
 		float ReloadDuration { get; }
+		Vector3 RecoilVector { get; }
 		IDirectionalObject DirectionalObject { get; set; }
 	}
 }

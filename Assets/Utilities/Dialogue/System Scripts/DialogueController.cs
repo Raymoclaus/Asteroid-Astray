@@ -64,7 +64,9 @@ namespace DialogueSystem
 
 		protected bool IsTyping
 			=> DialogueIsRunning
-			&& RevealedCharacterCount < GetTextLength(CurrentSpeakerText);
+			&& RevealedCharacterCount < TextLength;
+
+		protected int TextLength { get; set; }
 
 		public bool DialogueIsRunning
 			=> currentConversation != null
@@ -153,6 +155,7 @@ namespace DialogueSystem
 			CurrentSpeakerID = speakerID;
 			CurrentSpeakerName = currentSpeaker.entityName;
 			CurrentSpeakerText = textEvent.line;
+			TextLength = GetTextLength(CurrentSpeakerText);
 			CurrentSpeakerFace = currentSpeaker.face;
 			CurrentSpeakerTone = currentSpeaker.chatTone;
 			CharacterRevealSpeedMultiplier = textEvent.characterRevealSpeedMultiplier;
@@ -182,7 +185,7 @@ namespace DialogueSystem
 
 		private void RevealAllCharacters()
 		{
-			RevealedCharacterCount = GetTextLength(CurrentSpeakerText);
+			RevealedCharacterCount = TextLength;
 			OnRevealCharacter?.Invoke();
 			OnAllCharactersRevealed?.Invoke();
 		}

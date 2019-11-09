@@ -58,6 +58,7 @@ public class NarrativeManager : MonoBehaviour, IChatter
 		ChooseStartingLocation();
 		MainHatch.IsLocked = true;
 		SetShuttleRepaired(false);
+		MainChar.CanAttack = false;
 		LoadingController.AddListener(StartRecoveryDialogue);
 	}
 

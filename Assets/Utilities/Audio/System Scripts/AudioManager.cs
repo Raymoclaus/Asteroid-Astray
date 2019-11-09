@@ -36,6 +36,12 @@ namespace AudioUtilities
 			}
 		}
 
+		public void PlaySFX(AudioSO sound, Vector3 position, Transform parent)
+		{
+			PlaySFX(sound.PickRandomClip(), position, parent,
+				sound.PickRandomVolume(), sound.PickRandomPitch());
+		}
+
 		public void PlaySFX(AudioClip clip, Vector3 position, Transform parent = null, float volume = 1f,
 			float pitch = 1f)
 		{

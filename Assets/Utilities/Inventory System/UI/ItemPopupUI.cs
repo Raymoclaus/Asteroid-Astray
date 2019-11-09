@@ -169,7 +169,7 @@ namespace InventorySystem.UI
 			{
 				if (ipo.Data.ItemType == type)
 				{
-					ipo.Data.AddAmount(data.Amount);
+					ipo.AddAmount(data.Amount);
 					return;
 				}
 			}
@@ -236,6 +236,12 @@ namespace InventorySystem.UI
 
 					UpdateElements();
 				}
+			}
+
+			public void AddAmount(int amount)
+			{
+				Data.AddAmount(amount);
+				ResetTimer();
 			}
 
 			public float MaterialRadius

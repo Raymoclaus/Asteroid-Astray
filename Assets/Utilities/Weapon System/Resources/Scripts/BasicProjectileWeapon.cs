@@ -11,12 +11,14 @@ namespace WeaponSystem
 		[SerializeField] private RangedFloatComponent reloadComponent;
 		[SerializeField] private float fireSpeed;
 		[SerializeField] private float recoilAmount;
+		[SerializeField] private float stoppingPower = 0.8f;
+		[SerializeField] private GameObject muzzleFlashEffect;
 
 		protected override void Awake()
 		{
 			base.Awake();
 			AmmunitionPool = new ObjectPool<IAmmo>(
-				() => (IAmmo)Instantiate(attackPrefab));
+				() => (IAmmo)SpawnAttack());
 			clipComponent.SetToUpperLimit();
 			reloadComponent.SetToLowerLimit();
 		}
@@ -49,9 +51,6 @@ namespace WeaponSystem
 		public virtual Vector3 FireVelocity
 			=> Direction * fireSpeed;
 
-		protected virtual Vector3 WeaponPosition
-			=> transform.position;
-
 		public override AttackManager Attack(float damageMultiplier, List<IAttacker> owners)
 		{
 			if (GetAttack == null) return null;
@@ -64,7 +63,10 @@ namespace WeaponSystem
 			ammo.SetInitialWeaponDirection(DirectionalObject.Direction);
 			ammo.SetIntialVelocity(FireVelocity);
 			ammo.SetInitialWeaponPosition(WeaponPosition);
-			owners.ForEach(t => t.ReceiveRecoil(RecoilVector));
+			owners.ForEach(t => t.ReceiveStoppingPower(stoppingPower));
+
+			Instantiate(muzzleFlashEffect, WeaponPosition, transform.rotation, null);
+
 			return ammo.GetAttackManager;
 		}
 	}

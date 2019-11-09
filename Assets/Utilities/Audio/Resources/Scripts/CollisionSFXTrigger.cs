@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using AudioUtilities;
+using UnityEngine;
 
 public class CollisionSFXTrigger : MonoBehaviour
 {

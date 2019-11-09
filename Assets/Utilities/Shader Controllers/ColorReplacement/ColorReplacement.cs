@@ -1,12 +1,11 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Renderer))]
 public class ColorReplacement : MonoBehaviour
 {
 	public Renderer rend;
-	MaterialPropertyBlock mpb;
+	private MaterialPropertyBlock mpb;
 
 	private void Awake()
 	{
@@ -16,6 +15,7 @@ public class ColorReplacement : MonoBehaviour
 
 	public void SetColor(Color col)
 	{
+		if (mpb == null) return;
 		rend.GetPropertyBlock(mpb);
 		mpb.SetColor("_Color", col);
 		rend.SetPropertyBlock(mpb);
@@ -23,6 +23,7 @@ public class ColorReplacement : MonoBehaviour
 
 	public void SetBlendAmount(float blendAmount)
 	{
+		if (mpb == null) return;
 		rend.GetPropertyBlock(mpb);
 		mpb.SetFloat("_BlendAmount", blendAmount);
 		rend.SetPropertyBlock(mpb);

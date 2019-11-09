@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using AudioUtilities;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class LaserWeapon : MonoBehaviour

@@ -3,10 +3,8 @@
 public class PassivePrompts : MonoBehaviour
 {
 	private Shuttle mainChar;
-	private Shuttle MainChar
-	{
-		get { return mainChar ?? (mainChar = FindObjectOfType<Shuttle>()); }
-	}
+	private Shuttle MainChar => mainChar != null ? mainChar
+		: (mainChar = FindObjectOfType<Shuttle>());
 
 	[SerializeField] private GameObject
 		goPrompt,

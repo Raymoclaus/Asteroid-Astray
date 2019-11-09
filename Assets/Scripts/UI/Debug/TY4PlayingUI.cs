@@ -8,8 +8,8 @@ public class TY4PlayingUI : MonoBehaviour
 	private CanvasGroup CGroup => cGroup ?? (cGroup = GetComponent<CanvasGroup>());
 	public bool active = false;
 	public bool CanDisable = false;
-	private Shuttle mainChar;
-	private Shuttle MainChar => mainChar ?? (mainChar = FindObjectOfType<Shuttle>());
+	private Character mainChar;
+	private Character MainChar => mainChar ?? (mainChar = FindObjectOfType<Shuttle>());
 
 	private void Awake() => CGroup.alpha = active ? 1f : 0f;
 
@@ -39,8 +39,7 @@ public class TY4PlayingUI : MonoBehaviour
 		Pause.InstantPause(this.active);
 		if (active)
 		{
-			MainChar.CanLaunch = true;
-			MainChar.CanShoot = true;
+			MainChar.CanAttack = true;
 		}
 	}
 }

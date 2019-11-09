@@ -8,6 +8,7 @@ using InventorySystem;
 using InventorySystem.UI;
 using ValueComponents;
 using SceneControllers;
+using AudioUtilities;
 
 public class Shuttle : Character, IStunnable, ICombat
 {
@@ -85,9 +86,9 @@ public class Shuttle : Character, IStunnable, ICombat
 	[SerializeField] private ColorReplacementGroup cRGroup;
 	[SerializeField] private bool drillIsActive = true;
 	[SerializeField] private bool canShoot;
-	public bool CanShoot { get { return canShoot; } set { canShoot = value; } }
+	public bool CanShoot { get => canShoot && CanAttack; set => canShoot = value; }
 	[SerializeField] private bool canLaunch;
-	public bool CanLaunch { get { return canLaunch; } set { canLaunch = value; } }
+	public bool CanLaunch { get => canLaunch && CanAttack; set => canLaunch = value; }
 	[SerializeField] private float launchDamage = 500f;
 	public bool hasControl = true;
 	[SerializeField] private bool autoPilot;
@@ -490,9 +491,9 @@ public class Shuttle : Character, IStunnable, ICombat
 		CanDrillLaunch()
 		&& InputManager.GetInputUp("Cancel Drill")
 		&& hasControl
-		&& canLaunch;
+		&& CanLaunch;
 
-	public override bool CanDrillLaunch() => base.CanDrillLaunch() && canLaunch;
+	public override bool CanDrillLaunch() => base.CanDrillLaunch() && CanLaunch;
 
 	public void Stun()
 	{
@@ -775,10 +776,10 @@ public class Shuttle : Character, IStunnable, ICombat
 
 	public override bool ShouldAttack(string action)
 		=> base.ShouldAttack(action)
-		   && StartedPerformingAction(action);
+		   && IsPerformingAction(action);
 
 	public override void ReceiveRecoil(Vector3 recoilVector)
 	{
-		velocity = recoilVector;
+		rb.AddForce(recoilVector);
 	}
 }

@@ -3,6 +3,7 @@ using System;
 using UnityEngine;
 using InventorySystem;
 using CustomDataTypes;
+using AudioUtilities;
 
 [RequireComponent(typeof(HiveInventory))]
 public class BotHive : Character, ICombat

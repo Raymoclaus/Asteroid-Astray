@@ -31,6 +31,9 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 	[SerializeField] protected DrillBit drill;
 	public bool IsDrilling => drill == null ? false : drill.IsDrilling;
 
+	[SerializeField] private EnergyShieldMaterialManager shieldMat;
+	[SerializeField] protected RangedFloatComponent shieldComponent;
+
 	[SerializeField] private FloatComponent recoveryTimerComponent;
 
 	[SerializeField] private LaunchTrailController launchTrailEffect;
@@ -156,7 +159,6 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 		}
 	}
 
-	[SerializeField] protected RangedFloatComponent shieldComponent;
 	private bool HasShield => shieldComponent != null ? shieldComponent.CurrentRatio > 0f : false;
 
 	public virtual bool TakeShieldDamage(float damage, Vector2 damagePos,
@@ -164,6 +166,8 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 	{
 		float expectedResult = shieldComponent.CurrentValue - damage;
 		shieldComponent.SubtractValue(damage);
+		Vector3 attackDirection = (damagePos - (Vector2)transform.position).normalized;
+		shieldMat.TakeHit(attackDirection);
 		if (expectedResult < 0f)
 		{
 			return base.TakeDamage(Mathf.Abs(expectedResult), damagePos, destroyer, dropModifier, flash);
@@ -399,14 +403,14 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 		OnSendPassiveDialogue?.Invoke(dialogue, skip);
 	}
 
-	public bool CanReceiveMessagesFromLayer(int layer)
-	{
-		throw new NotImplementedException();
-	}
-
 	public virtual void ReceiveRecoil(Vector3 recoilVector)
 	{
 		rb.AddForce(recoilVector);
+	}
+
+	public virtual void ReceiveStoppingPower(float stoppingPower)
+	{
+		rb.velocity *= 1f - stoppingPower;
 	}
 
 	public void ReceiveRecoveryDuration(float recoveryDuration)
@@ -419,7 +423,10 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 
 	public virtual bool ShouldAttack(string action)
 		=> !IsRecovering
-		   && !Pause.IsStopped;
+		   && !Pause.IsStopped
+			&& CanAttack;
+
+	public bool CanAttack { get; set; } = true;
 
 	public float DamageMultiplier => damageMultiplier;
 }

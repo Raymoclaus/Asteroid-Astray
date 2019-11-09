@@ -18,9 +18,11 @@ public abstract class PopupUI : MonoBehaviour
 
 	protected bool ContainsActivePopup => ActivePopupCount > 0;
 
+	protected int HighestID => ActivePopupCount > 0 ? activePopups.Max(t => t.ID) : -1;
+
 	protected void RemoveLastPopup()
 	{
-		int maxID = activePopups.Max(t => t.ID);
+		int maxID = HighestID;
 		RemovePopupsWithID(maxID);
 	}
 
@@ -41,6 +43,21 @@ public abstract class PopupUI : MonoBehaviour
 
 		inactivePopups.Add(po);
 		activePopups.Remove(po);
+
+		int ID = po.ID;
+		int maxID = HighestID;
+		for (int i = ID + 1; i <= maxID; i++)
+		{
+			DecrementPopupsWithID(i);
+		}
+	}
+
+	private void DecrementPopupsWithID(int ID)
+	{
+		foreach (PopupObject po in activePopups.Where(t => t.ID == ID))
+		{
+			po.ID--;
+		}
 	}
 
 	protected void RemoveMatchingPopups(Func<PopupObject, bool> pattern)

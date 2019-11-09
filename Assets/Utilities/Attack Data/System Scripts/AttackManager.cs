@@ -110,17 +110,22 @@ namespace AttackData
 			{
 				if (component.ShouldDestroy())
 				{
-					if (IsAttachedToPool)
-					{
-						gameObject.SetActive(false);
-						OnReturnToPool?.Invoke(this);
-					}
-					else
-					{
-						Destroy(gameObject);
-					}
+					DestroySelf();
 					return;
 				}
+			}
+		}
+
+		protected virtual void DestroySelf()
+		{
+			if (IsAttachedToPool)
+			{
+				gameObject.SetActive(false);
+				OnReturnToPool?.Invoke(this);
+			}
+			else
+			{
+				Destroy(gameObject);
 			}
 		}
 

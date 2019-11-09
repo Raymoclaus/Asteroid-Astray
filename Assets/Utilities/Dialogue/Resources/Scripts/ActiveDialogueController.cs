@@ -5,6 +5,8 @@ namespace DialogueSystem
 {
 	public class ActiveDialogueController : GameDialogueController
 	{
+		public bool pause = true;
+
 		protected override void Awake()
 		{
 			base.Awake();
@@ -14,13 +16,19 @@ namespace DialogueSystem
 		public override void StartDialogue(ConversationWithActions newConversation, bool skip)
 		{
 			base.StartDialogue(newConversation, skip);
-			Pause.InstantPause(true);
+			if (pause)
+			{
+				Pause.InstantPause(true);
+			}
 		}
 
 		protected override void EndDialogue()
 		{
 			base.EndDialogue();
-			Pause.InstantPause(false);
+			if (pause)
+			{
+				Pause.InstantPause(false);
+			}
 		}
 
 		protected override float CharacterRevealSpeed => Time.unscaledDeltaTime;

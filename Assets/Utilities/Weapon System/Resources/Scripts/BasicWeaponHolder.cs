@@ -37,10 +37,18 @@ namespace WeaponSystem
 		{
 			if (owners.Exists(t => !t.ShouldAttack(action))) return;
 
+			Vector3 recoilVector = Vector3.zero;
 			foreach (IWeapon weapon in GetWeaponsWithTriggerAction(action))
 			{
-				weapon.Attack(damageMultiplier, owners);
+				if (weapon.Attack(damageMultiplier, owners) != null)
+				{
+					if (weapon is IProjectileWeapon pWeapon)
+					{
+						recoilVector += pWeapon.RecoilVector;
+					}
+				}
 			}
+			owners.ForEach(t => t.ReceiveRecoil(recoilVector));
 		}
 
 		private IEnumerable<IWeapon> GetWeaponsWithTriggerAction(string action)
