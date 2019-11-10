@@ -5,7 +5,9 @@ using UnityEngine;
 using System.Collections;
 using CielaSpike;
 using System.IO;
+using System.Linq;
 using CustomDataTypes;
+using GenericExtensions;
 
 public class SceneryController : MonoBehaviour
 {
@@ -16,7 +18,7 @@ public class SceneryController : MonoBehaviour
 	private bool ready;
 	public static bool IsDone => instance != null && instance.texturesGenerated;
 
-	private List<List<List<List<CosmicItem>>>> items = new List<List<List<List<CosmicItem>>>>();
+	private List<List<List<List<CosmicItem>>>> items = new List<List<List<List<CosmicItem>>>>(1000);
 	private const int RESERVE_SIZE = 100;
 	private const int LARGE_DISTANCE = 500;
 	public List<Sprite> types, lessFrequentTypes;
@@ -26,11 +28,11 @@ public class SceneryController : MonoBehaviour
 	public Vector2 imageBrightnessRange;
 	[SerializeField] private Camera cam;
 	private Camera Cam { get { return cam ?? (cam = FindObjectOfType<Camera>()); } }
-	private int ViewDistance { get { return Mathf.CeilToInt(Cam?.fieldOfView ?? 1f); } }
-	
-	private Queue<StarFieldMaterialPropertyManager> pool = new Queue<StarFieldMaterialPropertyManager>();
-	private Queue<StarFieldMaterialPropertyManager> active = new Queue<StarFieldMaterialPropertyManager>();
-	private Queue<StarFieldMaterialPropertyManager> transitionActive = new Queue<StarFieldMaterialPropertyManager>();
+	private int ViewDistance => Mathf.CeilToInt(Cam?.fieldOfView ?? 1f);
+
+	private List<StarFieldMaterialPropertyManager> pool = new List<StarFieldMaterialPropertyManager>(1000);
+	private List<StarFieldMaterialPropertyManager> active = new List<StarFieldMaterialPropertyManager>(1000);
+	private List<StarFieldMaterialPropertyManager> transitionActive = new List<StarFieldMaterialPropertyManager>(1000);
 
 	private ChunkCoords currentCoords = ChunkCoords.Invalid;
 	public IntPair cosmicDensity = new IntPair(10, 100);
@@ -38,6 +40,8 @@ public class SceneryController : MonoBehaviour
 	private Vector2 perlinOffset;
 	public float starMinDistance = 400f, starDistanceRange = 200f;
 	public Vector2 scaleRange = new Vector2(1f, 4f);
+	public bool hasLoopPoint = false;
+	public int loopSize = 5;
 	public bool fadeBasedOnDistance = true;
 	private Transform sceneryHolder;
 	private int backgroundLayer;
@@ -129,42 +133,65 @@ public class SceneryController : MonoBehaviour
 			ChunkCoords newCoords = new ChunkCoords(transform.position, EntityNetwork.CHUNK_SIZE);
 			if (newCoords != currentCoords)
 			{
-				CoordsChanged(newCoords);
+				CoordsChanged(newCoords, currentCoords);
 				currentCoords = newCoords;
 			}
 		}
 	}
 
-	private void CoordsChanged(ChunkCoords newCoords)
+	private void CoordsChanged(ChunkCoords newCoords, ChunkCoords oldCoords)
 	{
-		//send all active objects to the transition pool
+		HashSet<ChunkCoords> activeCoords = new HashSet<ChunkCoords>();
+		HashSet<ChunkCoords> removedCoords = new HashSet<ChunkCoords>();
+		//send some active objects to the transition pool
 		for (int i = active.Count - 1; i >= 0; i--)
 		{
-			transitionActive.Enqueue(active.Dequeue());
+			StarFieldMaterialPropertyManager sfmpm = active[i];
+			activeCoords.Add(sfmpm.coord);
+			if (ChunkCoords.SquareDistance(sfmpm.coord, newCoords) > ViewDistance)
+			{
+				removedCoords.Add(sfmpm.coord);
+				active.RemoveAt(i);
+				transitionActive.Add(sfmpm);
+			}
 		}
 
 		//activate or create new items to fill in the scenery
-		List<ChunkCoords> coords = EntityNetwork.GetCoordsInRange(
-			newCoords, ViewDistance, ignoreLackOfExistenceInGrid: true);
-		for (int i = 0; i < coords.Count; i++)
-		{
-			ChunkCoords c = coords[i];
-			FillSpace(c);
-			//create new cosmic items
-			if (Chunk(c).Count == 0)
+		EntityNetwork.IterateCoordsInRange(newCoords,
+			ViewDistance,
+			cc =>
 			{
-				FillChunk(c);
-			}
+				if (ChunkCoords.SquareDistance(cc, oldCoords) <= ViewDistance)
+				{
+					return false;
+				}
+				ChunkCoords loopedCoords = cc;
+				if (hasLoopPoint)
+				{
+					loopedCoords.x = Mathf.Abs(cc.x) % loopSize;
+					loopedCoords.y = Mathf.Abs(cc.y) % loopSize;
+				}
+				FillSpace(loopedCoords);
+				//create new cosmic items
+				if (Chunk(loopedCoords).Count == 0)
+				{
+					FillChunk(loopedCoords);
+				}
 
-			SetUpScenery(c);
-		}
+				SetUpScenery(cc, loopedCoords);
+				return false;
+			},
+			true);
 	}
 
-	private void SetUpScenery(ChunkCoords c)
+	private void SetUpScenery(ChunkCoords cc, ChunkCoords loopedCoords)
 	{
-		for (int i = 0; i < Chunk(c).Count; i++)
+		ChunkCoords c = ChunkCoords.ConvertToUpRight(cc);
+		Vector2 chunkPos = new Vector2(c.x * EntityNetwork.CHUNK_SIZE,
+			c.y * EntityNetwork.CHUNK_SIZE);
+		for (int i = 0; i < Chunk(loopedCoords).Count; i++)
 		{
-			CosmicItem item = Chunk(c)[i];
+			CosmicItem item = Chunk(loopedCoords)[i];
 			StarFieldMaterialPropertyManager sfmpm;
 			SpriteRenderer rend;
 			Transform tr;
@@ -172,7 +199,9 @@ public class SceneryController : MonoBehaviour
 
 			if (transitionActive.Count > 0)
 			{
-				sfmpm = transitionActive.Dequeue();
+				int last = transitionActive.Count - 1;
+				sfmpm = transitionActive[last];
+				transitionActive.RemoveAt(last);
 				rend = sfmpm.rend;
 				tr = sfmpm.transform;
 				obj = sfmpm.obj;
@@ -184,10 +213,10 @@ public class SceneryController : MonoBehaviour
 				rend = sfmpm.rend;
 				tr = sfmpm.transform;
 				obj = sfmpm.obj;
-				obj.SetActive(true);
 			}
 
-			tr.position = item.pos;
+			Vector3 itemPos = item.pos + (Vector3)chunkPos;
+			tr.position = itemPos;
 			List<Sprite> listToUse = item.common ? types : lessFrequentTypes;
 			if (item.type >= listToUse.Count)
 			{
@@ -213,17 +242,15 @@ public class SceneryController : MonoBehaviour
 				}
 			}
 			sfmpm.SetColor(col);
-			active.Enqueue(sfmpm);
-			tr.localScale = Vector2.one * item.size;
-			tr.eulerAngles = Vector3.forward * item.rotation * 45f;
+			active.Add(sfmpm);
+			tr.localScale.Set(item.size, item.size, 1f);
+			tr.eulerAngles.Set(0f, 0f, item.rotation * 45f);
+			sfmpm.coord = cc;
 		}
 
-		while (transitionActive.Count > 0)
-		{
-			StarFieldMaterialPropertyManager sfmpm = transitionActive.Dequeue();
-			sfmpm.obj.SetActive(false);
-			pool.Enqueue(sfmpm);
-		}
+		transitionActive.ForEach(t => t.rend.enabled = false);
+		pool.AddRange(transitionActive);
+		transitionActive.Clear();
 	}
 
 	private void FillChunk(ChunkCoords c)
@@ -238,9 +265,8 @@ public class SceneryController : MonoBehaviour
 		amount = amount * (max - min) + min;
 		for (int i = 0; i < (int)amount; i++)
 		{
-			Vector2Pair area = ChunkCoords.GetCellArea(c, EntityNetwork.CHUNK_SIZE);
-			Vector3 spawnPos = new Vector3(UnityEngine.Random.Range(area.a.x, area.b.x),
-				UnityEngine.Random.Range(area.a.y, area.b.y),
+			Vector3 spawnPos = new Vector3(UnityEngine.Random.Range(0f, EntityNetwork.CHUNK_SIZE),
+				UnityEngine.Random.Range(0f, EntityNetwork.CHUNK_SIZE),
 				(1f - Mathf.Pow(UnityEngine.Random.value, 7f * (max / amount))) * starDistanceRange + starMinDistance);
 			bool common = lessFrequentTypes.Count == 0 || UnityEngine.Random.value <= commonTypeFrequency;
 			List<Sprite> listToChooseFrom = common ? types : lessFrequentTypes;
@@ -254,26 +280,30 @@ public class SceneryController : MonoBehaviour
 	{
 		if (pool.Count == 0)
 		{
-			AddOneToPool();
+			return CreateOne();
 		}
-		return pool.Dequeue();
+
+		int last = pool.Count - 1;
+		StarFieldMaterialPropertyManager sfmpm = pool[last];
+		pool.RemoveAt(last);
+		sfmpm.rend.enabled = true;
+		return sfmpm;
 	}
 
-	private void AddOneToPool()
+	private StarFieldMaterialPropertyManager CreateOne()
 	{
 		GameObject obj = new GameObject();
 		obj.transform.parent = sceneryHolder;
 		obj.layer = backgroundLayer;
-		obj.SetActive(false);
 
 		SpriteRenderer rend = obj.AddComponent<SpriteRenderer>();
 		rend.material = customSpriteMaterial;
 
 		StarFieldMaterialPropertyManager sfmpm = new StarFieldMaterialPropertyManager(rend, obj.transform, obj);
-		pool.Enqueue(sfmpm);
+		return sfmpm;
 	}
 
-	public IEnumerator CreateStarSystems(System.Action a)
+	public IEnumerator CreateStarSystems(Action a)
 	{
 		yield return null;
 		//if textures have already been generated then don't worry about making more
@@ -588,6 +618,7 @@ public class SceneryController : MonoBehaviour
 		public SpriteRenderer rend;
 		public Transform transform;
 		public GameObject obj;
+		public ChunkCoords coord { get; set; }
 
 		public StarFieldMaterialPropertyManager(SpriteRenderer rend, Transform transform, GameObject obj)
 		{
@@ -623,17 +654,17 @@ public class SceneryController : MonoBehaviour
 
 		while (items.Count <= (int)cc.quadrant)
 		{
-			items.Add(new List<List<List<CosmicItem>>>());
+			items.Add(new List<List<List<CosmicItem>>>(1000));
 		}
 
 		while (Quad(cc).Count <= cc.x)
 		{
-			Quad(cc).Add(new List<List<CosmicItem>>());
+			Quad(cc).Add(new List<List<CosmicItem>>(1000));
 		}
 
 		while (Column(cc).Count <= cc.y)
 		{
-			Column(cc).Add(new List<CosmicItem>());
+			Column(cc).Add(new List<CosmicItem>(1000));
 		}
 	}
 }

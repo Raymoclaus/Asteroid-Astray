@@ -17,6 +17,14 @@ namespace InputHandlerSystem
 		{
 			keyLayout, ps4Layout
 		};
+
+		private static InputContext[] contexts;
+
+		private static InputContext[] Contexts
+			=> contexts != null
+				? contexts
+				: (contexts = Resources.LoadAll<InputContext>("Input Contexts"));
+
 		//keep track of current context
 		private static InputContext currentContext;
 		public static InputContext CurrentContext
@@ -43,7 +51,7 @@ namespace InputHandlerSystem
 					SetContext(contextCtrl.contextName);
 					return currentContext;
 				}
-				InputContext[] anyContext = Resources.LoadAll<InputContext>("");
+				InputContext[] anyContext = Contexts;
 				if (anyContext.Length != 0)
 				{
 					SetContext(anyContext[0].contextName);
@@ -135,16 +143,15 @@ namespace InputHandlerSystem
 		public static void SetContext(string contextName)
 		{
 			if (currentContext != null && currentContext.contextName == contextName) return;
+			
+			if (Contexts.Length == 0) return;
 
-			InputContext[] contexts = Resources.LoadAll<InputContext>("");
-			if (contexts.Length == 0) return;
-
-			for (int i = 0; i < contexts.Length; i++)
+			for (int i = 0; i < Contexts.Length; i++)
 			{
-				if (string.Compare(contexts[i].contextName.ToLower(), contextName.ToLower()) == 0)
+				if (string.Compare(Contexts[i].contextName.ToLower(), contextName.ToLower()) == 0)
 				{
 					Debug.Log($"Input context set to {contextName}");
-					currentContext = contexts[i];
+					currentContext = Contexts[i];
 					return;
 				}
 			}

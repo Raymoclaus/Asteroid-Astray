@@ -11,7 +11,7 @@ namespace InputHandlerSystem
 		{
 			if (!Camera.main) return 0f;
 
-			Vector2 cursorPos = Camera.main.ScreenToWorldPoint(UnityEngine.Input.mousePosition);
+			Vector2 cursorPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
 			return -Vector2.SignedAngle(Vector2.up, cursorPos - refLocation);
 		}
 
@@ -19,10 +19,10 @@ namespace InputHandlerSystem
 		public override bool ProcessInputs(InputContext context)
 		{
 			//checks if the mouse has moved
-			if (_prevMousePos != (Vector2)UnityEngine.Input.mousePosition)
+			if (_prevMousePos != (Vector2)Input.mousePosition)
 			{
 				//update mouse check variable
-				_prevMousePos = UnityEngine.Input.mousePosition;
+				_prevMousePos = Input.mousePosition;
 				return true;
 			}
 

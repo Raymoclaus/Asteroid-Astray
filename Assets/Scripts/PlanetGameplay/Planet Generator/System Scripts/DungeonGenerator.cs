@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using CustomDataTypes;
 
@@ -10,8 +9,6 @@ public class DungeonGenerator
 		PlanetData data = new PlanetData();
 		PlanetDifficultyModifiers difficultyModifiers
 			= new PlanetDifficultyModifiers(difficultySetting);
-		PlanetRoomTypeWeightings roomTypeWeightings = GetRoomTypeWeightings();
-		PuzzleTypeWeightings puzzleWeightings = GetPuzzleWeightings();
 
 		DungeonRoom currentRoom = null;
 		int keyLevel = 1;
@@ -38,8 +35,7 @@ public class DungeonGenerator
 			for (int i = 0; i < branchLength; i++)
 			{
 				DungeonRoom newRoom = CreateRandomExit(data, currentRoom, false,
-					keyLevel, false, false, roomTypeWeightings,
-					puzzleWeightings, difficultyModifiers);
+					keyLevel, false, false, difficultyModifiers);
 				if (newRoom == currentRoom) break;
 				currentRoom = newRoom;
 			}
@@ -57,8 +53,7 @@ public class DungeonGenerator
 				lockRoom = existingRooms[randomIndex];
 			} while (lockRoom == currentRoom || lockRoom.ExitCount == 4);
 			lockRoom = CreateRandomExit(data, lockRoom, true,
-				keyLevel, j == branchCount - 1, false,
-				roomTypeWeightings, puzzleWeightings, difficultyModifiers);
+				keyLevel, j == branchCount - 1, false, difficultyModifiers);
 			keyLevel++;
 
 			//rule 6 -	"Current room" is the new room on the other side of the locked exit
@@ -87,8 +82,7 @@ public class DungeonGenerator
 			for (int j = 0; j < branchLength; j++)
 			{
 				DungeonRoom newRoom = CreateRandomExit(data, currentRoom, false,
-					keyLevel, false, j == branchLength - 1, roomTypeWeightings,
-					puzzleWeightings, difficultyModifiers);
+					keyLevel, false, j == branchLength - 1, difficultyModifiers);
 				if (newRoom == currentRoom) break;
 				currentRoom = newRoom;
 			}
@@ -107,16 +101,20 @@ public class DungeonGenerator
 		return data;
 	}
 
-	private PuzzleTypeWeightings GetPuzzleWeightings()
-		=> Resources.LoadAll<PuzzleTypeWeightings>(string.Empty).FirstOrDefault();
+	private static PuzzleTypeWeightings puzzleWeightings;
+	private static PuzzleTypeWeightings PuzzleWeightings
+		=> puzzleWeightings != null
+			? puzzleWeightings
+			: (puzzleWeightings = Resources.Load<PuzzleTypeWeightings>("Puzzle Type Weightings"));
 
-	private PlanetRoomTypeWeightings GetRoomTypeWeightings()
-		=> Resources.LoadAll<PlanetRoomTypeWeightings>(string.Empty).FirstOrDefault();
+	private static PlanetRoomTypeWeightings roomWeightings;
+	private static PlanetRoomTypeWeightings RoomWeightings
+		=> roomWeightings != null
+			? roomWeightings
+			: (roomWeightings = Resources.Load<PlanetRoomTypeWeightings>("Room Type Weightings"));
 
 	private DungeonRoom CreateRandomExit(PlanetData data, DungeonRoom room, bool locked,
 		int lockID, bool bossRoom, bool treasure,
-		PlanetRoomTypeWeightings roomTypeWeightings,
-		PuzzleTypeWeightings puzzleWeightings,
 		PlanetDifficultyModifiers difficultyModifiers)
 	{
 		if (room.ExitCount == 4) return room;
@@ -152,8 +150,7 @@ public class DungeonGenerator
 		}
 		else
 		{
-			newRoom = PickRandomRoom(pos, room, roomTypeWeightings,
-			puzzleWeightings, difficultyModifiers);
+			newRoom = PickRandomRoom(pos, room, difficultyModifiers);
 		}
 		data.AddRoom(newRoom);
 
@@ -170,62 +167,59 @@ public class DungeonGenerator
 	}
 
 	private DungeonRoom PickRandomRoom(IntPair position, DungeonRoom previousRoom,
-		PlanetRoomTypeWeightings roomTypeWeightings,
-		PuzzleTypeWeightings puzzleRoomWeightings,
 		PlanetDifficultyModifiers difficultyModifiers)
 	{
 		float totalWeighting =
-			roomTypeWeightings.emptyRoomWeighting +
-			roomTypeWeightings.puzzleRoomWeighting +
-			roomTypeWeightings.enemiesRoomWeighting +
-			roomTypeWeightings.treasureRoomWeighting +
-			roomTypeWeightings.npcRoomWeighting;
+			RoomWeightings.emptyRoomWeighting +
+			RoomWeightings.puzzleRoomWeighting +
+			RoomWeightings.enemiesRoomWeighting +
+			RoomWeightings.treasureRoomWeighting +
+			RoomWeightings.npcRoomWeighting;
 		float randomValue = Random.Range(0f, totalWeighting);
 
-		if ((randomValue = randomValue - roomTypeWeightings.emptyRoomWeighting) < 0f)
+		if ((randomValue = randomValue - RoomWeightings.emptyRoomWeighting) < 0f)
 		{
 			return new DungeonRoom(position, previousRoom);
 		}
-		if ((randomValue = randomValue - roomTypeWeightings.puzzleRoomWeighting) < 0f)
+		if ((randomValue = randomValue - RoomWeightings.puzzleRoomWeighting) < 0f)
 		{
-			return PickRandomPuzzleRoom(position, previousRoom, puzzleRoomWeightings);
+			return PickRandomPuzzleRoom(position, previousRoom);
 		}
-		if ((randomValue = randomValue - roomTypeWeightings.enemiesRoomWeighting) < 0f)
+		if ((randomValue = randomValue - RoomWeightings.enemiesRoomWeighting) < 0f)
 		{
 			return new EnemyRoom(position, previousRoom,
 				difficultyModifiers.enemyRoomDifficulty);
 		}
-		if ((randomValue = randomValue - roomTypeWeightings.treasureRoomWeighting) < 0f)
+		if ((randomValue = randomValue - RoomWeightings.treasureRoomWeighting) < 0f)
 		{
 			return new TreasureRoom(position, previousRoom);
 		}
 		return new NpcRoom(position, previousRoom);
 	}
 
-	private DungeonRoom PickRandomPuzzleRoom(IntPair position, DungeonRoom previousRoom,
-		PuzzleTypeWeightings puzzleWeightings)
+	private DungeonRoom PickRandomPuzzleRoom(IntPair position, DungeonRoom previousRoom)
 	{
 		float totalWeighting =
-			puzzleWeightings.randomMazeRoomWeighting +
-			puzzleWeightings.randomTileLightRoomWeighting +
-			puzzleWeightings.randomBeamRedirectionRoomWeighting +
-			puzzleWeightings.randomBlockPushRoomWeighting +
-			puzzleWeightings.randomPatternMatchRoomWeighting;
+			PuzzleWeightings.randomMazeRoomWeighting +
+			PuzzleWeightings.randomTileLightRoomWeighting +
+			PuzzleWeightings.randomBeamRedirectionRoomWeighting +
+			PuzzleWeightings.randomBlockPushRoomWeighting +
+			PuzzleWeightings.randomPatternMatchRoomWeighting;
 		float randomValue = Random.Range(0f, totalWeighting);
 
-		if ((randomValue = randomValue - puzzleWeightings.randomMazeRoomWeighting) < 0f)
+		if ((randomValue = randomValue - PuzzleWeightings.randomMazeRoomWeighting) < 0f)
 		{
 			return new MazeRoom(position, previousRoom);
 		}
-		if ((randomValue = randomValue - puzzleWeightings.randomTileLightRoomWeighting) < 0f)
+		if ((randomValue = randomValue - PuzzleWeightings.randomTileLightRoomWeighting) < 0f)
 		{
 			return new TileFlipPuzzleRoom(position, previousRoom);
 		}
-		if ((randomValue = randomValue - puzzleWeightings.randomBeamRedirectionRoomWeighting) < 0f)
+		if ((randomValue = randomValue - PuzzleWeightings.randomBeamRedirectionRoomWeighting) < 0f)
 		{
 			return new DungeonRoom(position, previousRoom);
 		}
-		if ((randomValue = randomValue - puzzleWeightings.randomBlockPushRoomWeighting) < 0f)
+		if ((randomValue = randomValue - PuzzleWeightings.randomBlockPushRoomWeighting) < 0f)
 		{
 			return new BlockPushPuzzleRoom(position, previousRoom);
 		}

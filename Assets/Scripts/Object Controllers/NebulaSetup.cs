@@ -57,8 +57,6 @@ public class NebulaSetup : Entity
 			Expansion();
 			shouldExpand = false;
 		}
-		
-		RepositionInNetwork();
 	}
 
 	//This will determine where to set up more particle systems and create them in those positions

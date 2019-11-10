@@ -1,6 +1,7 @@
 ﻿using System;
 using UnityEngine;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using TMPro;
 
@@ -13,7 +14,6 @@ namespace InputHandlerSystem.UI
 		private static List<ContextualInputIconContainer> iconContainers
 			= new List<ContextualInputIconContainer>();
 		[SerializeField] [TextArea(1, 3)] private string text;
-		private static List<InputIconSO> modeIcons = new List<InputIconSO>();
 
 		private void Awake()
 		{
@@ -26,18 +26,17 @@ namespace InputHandlerSystem.UI
 			InputManager.InputModeChanged -= UpdateIcon;
 		}
 
-		private void GetIconSoReferences()
-		{
-			List<InputIconSO> so = Resources.LoadAll<InputIconSO>("")
-				.Where(t => !IsDuplicate(t)).ToList();
-			modeIcons.AddRange(so);
-		}
+		private static InputIconSO[] modeIcons;
+		private static InputIconSO[] ModeIcons
+			=> modeIcons != null
+				? modeIcons
+				: (modeIcons = Resources.LoadAll<InputIconSO>("Input Icons"));
 
 		private bool IsDuplicate(InputIconSO inputIconSo)
 		{
-			for (int i = 0; i < modeIcons.Count; i++)
+			for (int i = 0; i < ModeIcons.Length; i++)
 			{
-				if (modeIcons[i].inputMode == inputIconSo.inputMode) return true;
+				if (ModeIcons[i].inputMode == inputIconSo.inputMode) return true;
 			}
 			return false;
 		}
@@ -78,21 +77,26 @@ namespace InputHandlerSystem.UI
 				if (iconContainers[i].context == context)
 					return iconContainers[i].GetContainer(action);
 			}
-			ContextualInputIconContainer container = Resources.LoadAll<ContextualInputIconContainer>("")
+			ContextualInputIconContainer container = Containers
 				.Where(t => t.context == context).First();
 			iconContainers.Add(container);
 			return container.GetContainer(action);
 		}
+
+		private static ContextualInputIconContainer[] containers;
+		private static ContextualInputIconContainer[] Containers
+			=> containers != null
+				? containers
+				: (containers = Resources.LoadAll<ContextualInputIconContainer>("Input Icons"));
 
 		private InputIconSO GetCurrentIconSet()
 			=> GetIconSet(InputManager.GetMode());
 
 		private InputIconSO GetIconSet(InputMode mode)
 		{
-			GetIconSoReferences();
-			for (int i = 0; i < modeIcons.Count; i++)
+			for (int i = 0; i < ModeIcons.Length; i++)
 			{
-				InputIconSO so = modeIcons[i];
+				InputIconSO so = ModeIcons[i];
 				if (so.inputMode == mode) return so;
 			}
 			return null;

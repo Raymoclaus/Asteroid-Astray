@@ -8,7 +8,6 @@ namespace InventorySystem
 	public class ItemPickup : MonoBehaviour, IItemHolder
 	{
 		[SerializeField] private SpriteRenderer sprRend;
-		private static ItemSprites spritesAsset;
 
 		private Item.Type itemType;
 		public Item.Type ItemType
@@ -29,20 +28,14 @@ namespace InventorySystem
 
 		private void UpdateSprite()
 		{
-			GetItemSprites();
-			if (spritesAsset != null)
-			{
-				sprRend.sprite = spritesAsset.GetItemSprite(itemType);
-			}
+			sprRend.sprite = Sprites.GetItemSprite(itemType);
 		}
 
-		private void GetItemSprites()
-		{
-			if (spritesAsset == null)
-			{
-				spritesAsset = Resources.LoadAll<ItemSprites>("").FirstOrDefault();
-			}
-		}
+		private static ItemSprites sprites;
+		private static ItemSprites Sprites
+			=> sprites != null
+				? sprites
+				: (sprites = Resources.Load<ItemSprites>("Inventory System Scriptable Objects/ItemSpritesSO"));
 
 		public void SendItem(IInteractor interactor) => interactor.Interact(itemType);
 

@@ -23,10 +23,9 @@ public class MazeRoom : DungeonRoom
 		IntPair[] exits = new IntPair[ExitCount];
 
 		int count = 0;
-		Direction[] directions = (Direction[])System.Enum.GetValues(typeof(Direction));
-		for (int i = 0; i < directions.Length; i++)
+		for (int i = 0; i < ChunkCoords.DIRECTION_COUNT; i++)
 		{
-			Direction dir = directions[i];
+			Direction dir = (Direction)i;
 			if (HasExit(dir))
 			{
 				bool vertical = dir.IsVertical();

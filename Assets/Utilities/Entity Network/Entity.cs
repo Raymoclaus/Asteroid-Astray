@@ -14,12 +14,10 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 	public Collider2D[] col;
 	public Rigidbody2D rb;
 	private static Camera mainCam;
-	protected static Camera MainCam { get { return mainCam ?? (mainCam = Camera.main); } }
+	protected static Camera MainCam => mainCam ?? (mainCam = Camera.main);
 	private static CameraCtrl mainCamCtrl;
 	protected static CameraCtrl CameraControl
-	{
-		get { return mainCamCtrl ?? (mainCamCtrl = MainCam.GetComponent<CameraCtrl>()); }
-	}
+		=> mainCamCtrl ?? (mainCamCtrl = MainCam.GetComponent<CameraCtrl>());
 	[SerializeField] private static ParticleGenerator partGen;
 	protected static ParticleGenerator PartGen
 		=> partGen ?? (partGen = FindObjectOfType<ParticleGenerator>());
@@ -28,14 +26,9 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 		=> audioMngr ?? (audioMngr = FindObjectOfType<AudioManager>());
 
 	[SerializeField] protected ScreenRippleEffectController screenRippleSO;
-	[SerializeField] private bool shouldDisablePhysicsOnDistance = true;
-	[SerializeField] private bool shouldDisableObjectOnDistance = true;
-	[SerializeField] private bool shouldDisableGameObjectOnShortDistance = true;
-	[HideInInspector] public bool isActive = true;
-	[HideInInspector] public bool disabled = false;
-	[HideInInspector] public bool isInPhysicsRange = false;
+	[SerializeField] private bool shouldDisableGameObjectOnExitPhysicsRange = true;
+	[SerializeField] private bool shouldDisableGameObjectOnExitViewRange = false;
 	private Vector3 vel;
-	private float disableTime;
 	[SerializeField] protected bool isInvulnerable;
 
 	[SerializeField] protected RangedFloatComponent healthComponent;
@@ -64,10 +57,7 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 		: (layerShield = LayerMask.NameToLayer("Shield"));
 
 	//components to disable/enable
-	public List<MonoBehaviour> ScriptComponents;
 	public Renderer[] rends;
-
-	private static int entitiesActive;
 
 	protected virtual void Awake()
 	{
@@ -77,14 +67,14 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 
 	public virtual void Initialise()
 	{
-		entitiesActive++;
 		coords = new ChunkCoords(transform.position, EntityNetwork.CHUNK_SIZE);
 		EntityNetwork.AddEntity(this, coords);
+		RepositionInNetwork(true);
 		healthComponent?.SetToUpperLimit();
 		enabled = true;
 	}
 
-	public virtual void LateUpdate() => RepositionInNetwork();
+	protected void LateUpdate() => RepositionInNetwork(false);
 
 	private void OnDestroy()
 	{
@@ -93,82 +83,96 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 		mainCamCtrl = null;
 	}
 
-	public void RepositionInNetwork()
+	public bool IsInPhysicsRange { get; set; } = true;
+	public bool IsInViewRange { get; set; } = true;
+
+	public void RepositionInNetwork(bool forceUpdate)
 	{
 		ChunkCoords newCc = new ChunkCoords(transform.position, EntityNetwork.CHUNK_SIZE);
-		bool repositioned = false;
-		if (newCc != coords)
-		{ 
-			EntityNetwork.Reposition(this, newCc);
-			repositioned = true;
-		}
+		if (newCc == coords && !forceUpdate) return;
 
-		SetAllActivity(IsInView());
-		isInPhysicsRange = IsInPhysicsRange();
-		if (shouldDisablePhysicsOnDistance)
+		EntityNetwork.Reposition(this, newCc);
+
+		bool foundInPhysicsRange = CheckIfInPhysicsRange();
+		bool foundInViewRange = CheckInCameraViewRange();
+		bool justEnteredPhysicsRange = !IsInPhysicsRange && foundInPhysicsRange;
+		bool justExitedPhysicsRange = IsInPhysicsRange && !foundInPhysicsRange;
+		bool justEnteredViewRange = !IsInViewRange && foundInViewRange;
+		bool justExitedViewRange = IsInViewRange && !foundInViewRange;
+
+		if (justEnteredPhysicsRange)
 		{
-			if (isInPhysicsRange)
-			{
-				if (!disabled) return;
-				entitiesActive++;
-				disabled = false;
-				gameObject.SetActive(true);
-				if (rb != null)
-				{
-					rb.simulated = true;
-				}
-				PhysicsReEnabled();
-			}
-			else
-			{
-				if (disabled) return;
-				if (repositioned && OnExitPhysicsRange()) return;
-				entitiesActive--;
-				disabled = true;
-				vel = rb == null ? vel : (Vector3)rb.velocity;
-				if (rb != null)
-				{
-					rb.simulated = !shouldDisablePhysicsOnDistance;
-				}
-				gameObject.SetActive(!shouldDisablePhysicsOnDistance);
-			}
+			IsInPhysicsRange = true;
+			OnEnterPhysicsRange();
+		}
+		if (justExitedPhysicsRange)
+		{
+			IsInPhysicsRange = false;
+			OnExitPhysicsRange();
+		}
+		if (justEnteredViewRange)
+		{
+			IsInViewRange = true;
+			OnEnterViewRange();
+		}
+		if (justExitedViewRange)
+		{
+			IsInViewRange = false;
+			OnExitViewRange();
 		}
 	}
 
 	protected float DistanceFromCenter => transform.position.magnitude;
 
-	public virtual bool OnExitPhysicsRange() => false;
+	protected virtual void OnEnterPhysicsRange()
+	{
+		if (shouldDisableGameObjectOnExitPhysicsRange
+		    && !shouldDisableGameObjectOnExitViewRange)
+		{
+			gameObject.SetActive(true);
+			GameObjectReEnabled();
+		}
+
+		if (rb != null)
+		{
+			rb.velocity = vel;
+		}
+	}
+
+	protected virtual void OnExitPhysicsRange()
+	{
+		vel = rb == null ? vel : (Vector3)rb.velocity;
+		if (shouldDisableGameObjectOnExitPhysicsRange
+		    && !shouldDisableGameObjectOnExitViewRange)
+		{
+			gameObject.SetActive(false);
+		}
+	}
+
+	protected virtual void OnEnterViewRange()
+	{
+		ActivateRenderers(true);
+		if (shouldDisableGameObjectOnExitViewRange)
+		{
+			gameObject.SetActive(true);
+			GameObjectReEnabled();
+		}
+	}
+
+	protected virtual void OnExitViewRange()
+	{
+		ActivateRenderers(false);
+		if (shouldDisableGameObjectOnExitViewRange)
+		{
+			gameObject.SetActive(false);
+		}
+	}
 
 	public void SetCoordinates(ChunkCoords newCc) => coords = newCc;
 
-	protected bool IsInView() => CameraControl?.IsCoordInView(coords) ?? false;
+	protected bool CheckInCameraViewRange() => CameraControl?.IsCoordInView(coords) ?? false;
 
-	protected bool IsInPhysicsRange() => CameraControl?.IsCoordInPhysicsRange(coords) ?? false;
-
-	public void SetAllActivity(bool active)
-	{
-		if (active == isActive || !shouldDisableObjectOnDistance) return;
-
-		isActive = active;
-
-		if (shouldDisableGameObjectOnShortDistance)
-		{
-			gameObject.SetActive(active);
-			return;
-		}
-
-		ActivateRenderers(active);
-
-		//enable/disable all relevant components
-		for (int i = 0; i < ScriptComponents.Count; i++)
-		{
-			MonoBehaviour script = ScriptComponents[i];
-			if (script != null)
-			{
-				script.enabled = active;
-			}
-		}
-	}
+	protected bool CheckIfInPhysicsRange() => CameraControl?.IsCoordInPhysicsRange(coords) ?? false;
 
 	protected void ActivateAllColliders(bool activate)
 	{
@@ -229,7 +233,7 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 
 	public override string ToString() => string.Format("{0} at coordinates {1}.", GetEntityType(), coords);
 
-	public virtual void PhysicsReEnabled() { }
+	protected virtual void GameObjectReEnabled() { }
 
 	public virtual Scan ReturnScan() => new Scan(GetEntityType(), healthComponent.CurrentRatio, GetLevel(), GetValue()); 
 
@@ -248,8 +252,6 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 	public virtual void AttachLaser(bool attach) { }
 
 	public virtual void AttachStraightWeapon(bool attach) { }
-
-	public static int GetActive() => entitiesActive;
 
 	protected virtual void OnCollisionEnter2D(Collision2D collision)
 	{

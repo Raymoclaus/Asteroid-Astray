@@ -7,6 +7,12 @@ namespace InputHandlerSystem
 {
 	public abstract class CustomInputHandler
 	{
+		private static InputMethod[] inputMethods;
+		private static InputMethod[] InputMethods
+			=> inputMethods != null
+			? inputMethods
+			: (inputMethods = Resources.LoadAll<InputMethod>("Input Contexts"));
+
 		public CustomInputHandler() => LoadBindings();
 
 		public virtual bool ProcessInputs(InputContext context)
@@ -44,13 +50,12 @@ namespace InputHandlerSystem
 				Debug.Log("No context given");
 				return null;
 			}
-
-			InputMethod[] inputMethods = Resources.LoadAll<InputMethod>("");
-			if (inputMethods.Length == 0) return null;
 			
-			for (int i = 0; i < inputMethods.Length; i++)
+			if (InputMethods.Length == 0) return null;
+			
+			for (int i = 0; i < InputMethods.Length; i++)
 			{
-				InputMethod method = inputMethods[i];
+				InputMethod method = InputMethods[i];
 				if (method.context == context
 					&& method.inputMode == GetInputMode()) return method;
 			}
@@ -59,12 +64,11 @@ namespace InputHandlerSystem
 
 		public void SetAllBindingsToDefaults()
 		{
-			List<InputMethod> inputMethods = Resources.LoadAll<InputMethod>("")
-				.Where(t => t.inputMode == GetInputMode()).ToList();
-
-			for (int i = 0; i < inputMethods.Count; i++)
+			IEnumerable<InputMethod> methods
+				= InputMethods.Where(t => t.inputMode == GetInputMode());
+			foreach (InputMethod method in methods)
 			{
-				inputMethods[i].ResetToDefaults();
+				method.ResetToDefaults();
 			}
 		}
 

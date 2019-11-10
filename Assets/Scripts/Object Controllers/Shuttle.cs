@@ -12,35 +12,44 @@ using AudioUtilities;
 
 public class Shuttle : Character, IStunnable, ICombat
 {
-	[Header("Shuttle Fields")]
-	
-	[Tooltip("Requires reference to the SpriteRenderer of the shuttle.")]
+	[Header("Shuttle Fields")] [Tooltip("Requires reference to the SpriteRenderer of the shuttle.")]
 	public SpriteRenderer SprRend;
+
 	[Tooltip("Requires reference to the Animator of the shuttle's transform.")]
 	public Animator shuttleAnimator;
 
 	[Tooltip("Rate of speed accumulation when moving forward.")]
 	public float EngineStrength = 3f;
-	[Tooltip("Rate of speed decay.")]
-	public float Deceleration = 1f;
+
+	[Tooltip("Rate of speed decay.")] public float Deceleration = 1f;
+
 	[Tooltip("If speed is higher than this limit then deceleration is increased to compensate.")]
 	public float SpeedLimit = 3f;
+
 	[Tooltip("When drilling, this is multiplied with the speed limit to allow for faster boost after drilling" +
-		" completes.")]
+	         " completes.")]
 	public float DrillBoost = 2f;
+
 	[SerializeField] private float drillDamageMultiplier = 0.5f;
+
 	[Tooltip("Controls how quickly the shuttle can rotate.")]
 	public float MaxRotSpeed = 10f;
-	[Tooltip("Controls how effective the shuttle's deceleration mechanism is.")]
-	[Range(0f, 1f)] public float decelerationEffectiveness = 0.01f;
+
+	[Tooltip("Controls how effective the shuttle's deceleration mechanism is.")] [Range(0f, 1f)]
+	public float decelerationEffectiveness = 0.01f;
+
 	//used as a temporary storage for rigidbody velocity when the constraints are frozen
 	public Vector3 velocity;
+
 	//the rotation that the shuttle should be at
 	public Vector3 rot;
+
 	//force of acceleration via the shuttle
 	public Vector2 accel;
+
 	//store last look direction, useful for joysticks
 	private float lastLookDirection;
+
 	//return how far over the speed limit the shuttle's velocity is
 	private float SpeedCheck
 	{
@@ -66,13 +75,16 @@ public class Shuttle : Character, IStunnable, ICombat
 			return speedCheck;
 		}
 	}
+
 	//efficiency with the searching algorithm used by the auto pilot
 	private float autoPilotTimer;
-	private List<Entity> asteroids = new List<Entity>();
+
 	//transform for the auto pilot to follow
 	private Transform followTarget;
+
 	//used to adjust speed temporarily
 	private float speedMultiplier = 1f;
+
 	//whether the shuttle can perform a drill launch
 	public float drillLaunchSpeed = 10f;
 	[SerializeField] private float drillLaunchMaxAngle = 60f;
@@ -86,52 +98,76 @@ public class Shuttle : Character, IStunnable, ICombat
 	[SerializeField] private ColorReplacementGroup cRGroup;
 	[SerializeField] private bool drillIsActive = true;
 	[SerializeField] private bool canShoot;
-	public bool CanShoot { get => canShoot && CanAttack; set => canShoot = value; }
+
+	public bool CanShoot
+	{
+		get => canShoot && CanAttack;
+		set => canShoot = value;
+	}
+
 	[SerializeField] private bool canLaunch;
-	public bool CanLaunch { get => canLaunch && CanAttack; set => canLaunch = value; }
+
+	public bool CanLaunch
+	{
+		get => canLaunch && CanAttack;
+		set => canLaunch = value;
+	}
+
 	[SerializeField] private float launchDamage = 500f;
 	public bool hasControl = true;
 	[SerializeField] private bool autoPilot;
 	public bool isKinematic;
 	[SerializeField] private TY4PlayingUI ty4pUI;
 	public UnityEvent EnteringShip;
-	
+
 	private bool canBoost = true;
 	public bool CanBoost { get; private set; }
 
 	//how long a boost can last
 	[SerializeField] private RangedFloatComponent boostComponent;
+
 	//how much a boost affects speed
 	[SerializeField] private float boostSpeedMultiplier = 2f;
+
 	//how long it takes before boost fuel begins recharging
 	[SerializeField] private float boostRechargeTime = 2f;
+
 	private string boostRechargeTimerID;
+
 	//how quickly the boost fuel recharges
 	[SerializeField] private float rechargeSpeed = 1f;
+
 	//how much boosting ignores existing momentum
 	[SerializeField] private float boostCounterVelocity = 0.1f;
+
 	//whether the shuttle is boosting or not
 	private bool IsBoosting { get; set; }
+
 	//reference to sonic boom animation
 	[SerializeField] private GameObject sonicBoomBoostEffect;
 	public float boostInvulnerabilityTime = 0.2f;
 	[SerializeField] private AnimationCurve cameraZoomOnEnterShip;
-	
+
 	private bool laserAttached = false;
 	private bool straightWeaponAttached = false;
-	
+
 	[SerializeField] private AudioClip collectResourceSound;
 	private float resourceCollectedTime;
 	private float resourceCollectedPitch = 1f;
 	private float resourceCollectedPitchIncreaseAmount = 0.2f;
 	[SerializeField] public AudioSO collisionSounds;
 	private ContactPoint2D[] contacts = new ContactPoint2D[1];
-	
+
 	public delegate void GoInputEventHandler();
+
 	public event GoInputEventHandler OnGoInput;
+
 	public delegate void LaunchInputEventHandler();
+
 	public event LaunchInputEventHandler OnLaunchInput;
+
 	public delegate void DrillCompleteEventHandler(bool successful);
+
 	public event DrillCompleteEventHandler OnDrillComplete;
 
 	protected override void Awake()
@@ -203,7 +239,8 @@ public class Shuttle : Character, IStunnable, ICombat
 				else
 				{
 					float boostThreshold = Mathf.MoveTowards(0f, 1f,
-						(Vector2.Distance(transform.position, followTarget.position)) / 2f) * 0.9f;
+						                       (Vector2.Distance(transform.position, followTarget.position)) / 2f) *
+					                       0.9f;
 					boostThreshold = Mathf.Max(boostThreshold, 0.5f);
 					Boost(speedMod > boostThreshold);
 				}
@@ -224,6 +261,7 @@ public class Shuttle : Character, IStunnable, ICombat
 		{
 			rotMod = Mathf.Abs(rotMod - 360f);
 		}
+
 		rotMod /= 180f;
 		rotMod = Mathf.Pow(rotMod, 0.8f);
 		rot.y = Mathf.Lerp(rot.y, rotMod * 45f, Time.deltaTime * 60f);
@@ -243,6 +281,7 @@ public class Shuttle : Character, IStunnable, ICombat
 			{
 				OnGoInput?.Invoke();
 			}
+
 			if (IsDrilling)
 			{
 				float launchInput = InputManager.GetInput("Cancel Drill");
@@ -252,8 +291,10 @@ public class Shuttle : Character, IStunnable, ICombat
 					input = 0f;
 				}
 			}
+
 			accel.y += input * EngineStrength * speedMultiplier;
 		}
+
 		float magnitude = accel.magnitude;
 
 		//if no acceleration then ignore the rest
@@ -271,6 +312,7 @@ public class Shuttle : Character, IStunnable, ICombat
 		{
 			magnitude = topSpeed;
 		}
+
 		accel *= magnitude * speedMod;
 	}
 
@@ -313,6 +355,7 @@ public class Shuttle : Character, IStunnable, ICombat
 			{
 				rb.velocity = velocity;
 			}
+
 			velocity = rb.velocity;
 			//keep constraints unfrozen
 			rb.constraints = RigidbodyConstraints2D.None | RigidbodyConstraints2D.FreezeRotation;
@@ -364,6 +407,7 @@ public class Shuttle : Character, IStunnable, ICombat
 		{
 			resourceCollectedPitch = 1f;
 		}
+
 		resourceCollectedTime = Pause.timeSinceOpen;
 		//play resource collect sound
 		if (AudioMngr)
@@ -374,41 +418,57 @@ public class Shuttle : Character, IStunnable, ICombat
 
 	private void SearchForNearestAsteroid()
 	{
-		autoPilotTimer = Pause.timeSinceOpen;
-
 		int searchRange = 1;
-		asteroids.Clear();
 
-		while (asteroids.Count == 0)
+		float closestDistance = float.PositiveInfinity;
+		Asteroid closestAsteroid = null;
+		while (closestAsteroid == null)
 		{
-			EntityNetwork.GetEntitiesInRange(coords, searchRange, EntityType.Asteroid, addToList: asteroids);
+			EntityNetwork.IterateEntitiesInRange(
+				coords,
+				searchRange,
+				e =>
+				{
+					if (e is Asteroid asteroid)
+					{
+						float dist = Vector2.Distance(transform.position, e.transform.position);
+						if (dist < closestDistance)
+						{
+							closestDistance = dist;
+							closestAsteroid = asteroid;
+						}
+					}
+
+					return false;
+				});
 			searchRange++;
 		}
 
-		float shortestDist = float.PositiveInfinity;
-		for (int i = 0; i < asteroids.Count; i++)
-		{
-			Entity e = asteroids[i];
-			float dist = Vector2.Distance(transform.position, e.transform.position);
-			if (dist < shortestDist || float.IsPositiveInfinity(shortestDist))
-			{
-				shortestDist = dist;
-				followTarget = e.transform;
-			}
-		}
+		followTarget = closestAsteroid.transform;
+		autoPilotTimer = Pause.timeSinceOpen;
 	}
 
 	private void SetRot(float newRot) => rot.z = ((newRot % 360f) + 360f) % 360f;
 
 	public override EntityType GetEntityType() => EntityType.Shuttle;
 
+	private static readonly string[] SLOT_ACTIONS = {
+		"Slot 0",
+		"Slot 1",
+		"Slot 2",
+		"Slot 3",
+		"Slot 4",
+		"Slot 5",
+		"Slot 6",
+		"Slot 7"
+	};
 	protected override void CheckItemUsageInput()
 	{
 		base.CheckItemUsageInput();
 
 		for (int i = 0; i < 8; i++)
 		{
-			if (InputManager.GetInput($"Slot {i + 1}") > 0f)
+			if (InputManager.GetInput(SLOT_ACTIONS[i]) > 0f)
 			{
 				CheckItemUsage(i);
 			}

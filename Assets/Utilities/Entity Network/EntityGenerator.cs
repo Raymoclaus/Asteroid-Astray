@@ -92,22 +92,23 @@ public class EntityGenerator : MonoBehaviour
 
 	private ChunkCoords ClosestValidNonFilledChunk(SpawnableEntity se)
 	{
-		int minRange = (int)((se.GetMinimumDistanceToBeSpawned() + Constants.CHUNK_SIZE / 2) / Constants.CHUNK_SIZE);
-		List<ChunkCoords> coordsList = new List<ChunkCoords>();
-		int count = 0;
-		while (count < 100)
+		int minRange = Mathf.Max(0, se.rarityZoneOffset);
+		ChunkCoords coords = ChunkCoords.Invalid;
+		while (coords == ChunkCoords.Invalid)
 		{
-			EntityNetwork.GetCoordsOnRangeBorder(ChunkCoords.Zero, minRange, coordsList, true);
-			for (int i = 0; i < coordsList.Count; i++)
-			{
-				if (!Chunk(coordsList[i]) && se.GetChance(ChunkCoords.GetCenterCell(coordsList[i], EntityNetwork.CHUNK_SIZE).magnitude) > 0f)
+			EntityNetwork.IterateCoordsOnRangeBorder(ChunkCoords.Zero, minRange,
+				cc =>
 				{
-					return coordsList[i];
-				}
-			}
-			coordsList.Clear();
+					if (!Chunk(cc))
+					{
+						coords = cc;
+						return true;
+					}
+
+					return false;
+				},
+				true);
 			minRange++;
-			count++;
 		}
 		return ChunkCoords.Invalid;
 	}

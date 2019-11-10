@@ -51,16 +51,4 @@ public class SpawnableEntity : ScriptableObject
 		}
 		return calculation;
 	}
-
-	public float GetMinimumDistanceToBeSpawned()
-	{
-		float dist = 0f;
-		float chance = 0f;
-		while (chance <= 0f)
-		{
-			chance = GetChance(dist);
-			dist += Constants.CHUNK_SIZE;
-		}
-		return dist;
-	}
 }

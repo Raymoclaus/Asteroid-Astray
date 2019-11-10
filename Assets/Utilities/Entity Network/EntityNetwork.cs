@@ -14,7 +14,7 @@ public class EntityNetwork : MonoBehaviour
 	private static EntityNetwork instance;
 
 	private static int QuadrantCount
-		=> Enum.GetValues(typeof(Direction)).Length;
+		=> ChunkCoords.DIRECTION_COUNT;
 	//Determines the physical size of cells in the grid
 	public const float CHUNK_SIZE = 10f;
 	//network of entities
@@ -24,8 +24,6 @@ public class EntityNetwork : MonoBehaviour
 	//check if grid has already been created
 	private bool gridIsSetUp = false;
 	private static event Action OnLoaded;
-
-	private List<ChunkCoords> coordsInRangeCache = new List<ChunkCoords>();
 
 	private void Awake()
 	{
@@ -58,42 +56,28 @@ public class EntityNetwork : MonoBehaviour
 	public static bool IsReady => instance != null && instance.gridIsSetUp;
 
 	/// Returns a list of all entities located in cells within range of the given coordinates
-	public static List<Entity> GetEntitiesInRange(ChunkCoords center, int range, EntityType? type = null,
-		List<Entity> exclusions = null, List<Entity> addToList = null)
+	public static bool IterateEntitiesInRange(ChunkCoords center, int range, Func<Entity, bool> action)
 	{
-		instance.coordsInRangeCache.Clear();
-		List<ChunkCoords> coordsInRange = GetCoordsInRange(center, range, instance.coordsInRangeCache);
-		//declare a list to be filled and reserve some room
-		return GetEntitiesAtCoords(coordsInRange, type, exclusions, addToList);
+		return IterateCoordsInRange(
+			center,
+			range,
+			cc =>
+			{
+				return IterateEntitiesAtCoord(cc, action);
+			},
+			false);
 	}
 
-	/// Returns a list of entities located in specified coordinates
-	public static List<Entity> GetEntitiesAtCoords(List<ChunkCoords> coordsList, EntityType? type = null,
-		List<Entity> exclusions = null, List<Entity> addToList = null)
+	public static bool IterateEntitiesAtCoord(ChunkCoords coord, Func<Entity, bool> action)
 	{
-		List<Entity> entitiesInCoords = addToList ?? new List<Entity>(coordsList.Count);
-		//loop through coordinates list and grab all entities at each coordinate
-		for (int i = 0; i < coordsList.Count; i++)
+		if (!ChunkExists(coord)) return false;
+		List<Entity> entities = Chunk(coord);
+		for (int i = 0; i < entities.Count; i++)
 		{
-			ChunkCoords coord = coordsList[i];
-			if (type == null)
-			{
-				entitiesInCoords.AddRange(Chunk(coord));
-			}
-			else
-			{
-				EntityType filter = (EntityType)type;
-				for (int j = 0; j < Chunk(coord).Count; j++)
-				{
-					Entity e = Chunk(coord)[j];
-					if (e.GetEntityType() == filter && !EntityIsInSet(e, exclusions))
-					{
-						entitiesInCoords.Add(e);
-					}
-				}
-			}
+			if (action(entities[i])) return true;
 		}
-		return entitiesInCoords;
+
+		return false;
 	}
 
 	/// Iterates over a given list and checks if a given entity is within the set
@@ -110,36 +94,37 @@ public class EntityNetwork : MonoBehaviour
 	}
 
 	/// Returns a list of coordinates around a given center coordinate in a specified range
-	public static List<ChunkCoords> GetCoordsInRange(ChunkCoords center, int range,
-		List<ChunkCoords> coordsInRange = null, bool ignoreLackOfExistenceInGrid = false)
+	public static bool IterateCoordsInRange(ChunkCoords center, int range,
+		Func<ChunkCoords, bool> action, bool ignoreLackOfExistenceInGrid)
 	{
 		int r = range + 2;
-		coordsInRange = coordsInRange ?? new List<ChunkCoords>(r * r);
 		//loop through surrounding chunks
 		for (int i = 0; i <= range; i++)
 		{
-			GetCoordsOnRangeBorder(center, i, coordsInRange, ignoreLackOfExistenceInGrid);
+			if (IterateCoordsOnRangeBorder(center, i, action, ignoreLackOfExistenceInGrid))
+			{
+				return true;
+			}
 		}
 
-		return coordsInRange;
+		return false;
 	}
 
 	/// Returns a list of coordinates that are a specified distance from a given center coordinate
-	public static List<ChunkCoords> GetCoordsOnRangeBorder(ChunkCoords center, int range,
-		List<ChunkCoords> addToList = null, bool ignoreLackOfExistenceInGrid = false)
+	public static bool IterateCoordsOnRangeBorder(ChunkCoords center, int range,
+		Func<ChunkCoords, bool> exitCondition, bool ignoreLackOfExistenceInGrid)
 	{
 		int r = range * 8;
-		addToList = addToList ?? new List<ChunkCoords>(r);
 
 		ChunkCoords pos = new ChunkCoords(IntPair.zero, CHUNK_SIZE);
 		for (pos.x = -range; pos.x <= range;)
 		{
 			for (pos.y = -range; pos.y <= range;)
 			{
-				ChunkCoords validCC = center + pos;
+				ChunkCoords validCC = (center + pos).Validate();
 				if (ignoreLackOfExistenceInGrid || ChunkExists(validCC))
 				{
-					addToList.Add(validCC);
+					if (exitCondition?.Invoke(validCC) ?? false) return true;
 				}
 				pos.y += pos.x <= -range || pos.x >= range ?
 					1 : range * 2;
@@ -148,7 +133,7 @@ public class EntityNetwork : MonoBehaviour
 				1 : range * 2;
 		}
 
-		return addToList;
+		return false;
 	}
 
 	/// Adds a given entity to the list at given coordinates

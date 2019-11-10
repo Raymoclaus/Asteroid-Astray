@@ -72,7 +72,6 @@ public class GatherBot : Character, IStunnable, ICombat
 	//gathering variables
 	private float searchTimer, scanInterval = 0.3f;
 	private int drillCount, drillLimit = 3;
-	private List<Entity> surroundingEntities = new List<Entity>(100);
 	[SerializeField] private int storageCapacity = 10;
 	private int itemsCollected;
 	private bool waitingForResources;
@@ -244,7 +243,7 @@ public class GatherBot : Character, IStunnable, ICombat
 		{
 			if (!scanStarted)
 			{
-				if (isActive)
+				if (IsInViewRange)
 				{
 					StartCoroutine(ScanRings());
 				}
@@ -252,8 +251,18 @@ public class GatherBot : Character, IStunnable, ICombat
 				entitiesScanned.Clear();
 				new Thread(() =>
 				{
-					EntityNetwork.GetEntitiesInRange(coords, 1,
-						exclusions: new List<Entity> { this }, addToList: entitiesScanned);
+					EntityNetwork.IterateEntitiesInRange(
+						coords,
+						1,
+						e =>
+						{
+							if (e != this)
+							{
+								entitiesScanned.Add(e);
+							}
+
+							return false;
+						});
 				}).Start();
 			}
 			else
@@ -311,7 +320,7 @@ public class GatherBot : Character, IStunnable, ICombat
 			SearchForNearestAsteroid();
 		}
 		Vector2 targetPos = targetEntity.transform.position;
-		if (targetEntity.disabled)
+		if (!targetEntity.gameObject.activeSelf)
 		{
 			GoToLocation(targetPos, false, 1f, true);
 			float distLeft = Vector2.Distance(transform.position, targetPos);
@@ -717,37 +726,36 @@ public class GatherBot : Character, IStunnable, ICombat
 	private void SearchForNearestAsteroid()
 	{
 		int searchRange = 1;
-		surroundingEntities.Clear();
 
-		while (surroundingEntities.Count == 0)
+		Asteroid closestAsteroid = null;
+		float closestDistance = float.PositiveInfinity;
+		while (closestAsteroid == null)
 		{
-			EntityNetwork.GetEntitiesInRange(coords, searchRange, EntityType.Asteroid, addToList: surroundingEntities);
-
-			for (int i = 0; i < surroundingEntities.Count; i++)
-			{
-				Entity e = surroundingEntities[i];
-				if (!(hive?.VerifyGatheringTarget(this, e) ?? true))
+			EntityNetwork.IterateEntitiesInRange(
+				coords,
+				searchRange,
+				e =>
 				{
-					surroundingEntities.RemoveAt(i);
-					i--;
-				}
-			}
+					if (e is Asteroid asteroid)
+					{
+						if ((hive != null && hive.VerifyGatheringTarget(this, e))
+						    || hive == null)
+						{
+							float dist = Vector2.Distance(transform.position, e.transform.position);
+							if (dist < closestDistance)
+							{
+								closestDistance = dist;
+								closestAsteroid = asteroid;
+							}
+						}
+					}
 
+					return false;
+				});
 			searchRange++;
 		}
 
-		float shortestDist = float.PositiveInfinity;
-		for (int i = 0; i < surroundingEntities.Count; i++)
-		{
-			Entity e = surroundingEntities[i];
-			float dist = Vector2.Distance(transform.position, e.transform.position);
-			if (dist < shortestDist || float.IsPositiveInfinity(shortestDist))
-			{
-				shortestDist = dist;
-				targetEntity = e;
-			}
-		}
-
+		targetEntity = closestAsteroid;
 		searchTimer = Pause.timeSinceOpen;
 	}
 
@@ -1053,7 +1061,7 @@ public class GatherBot : Character, IStunnable, ICombat
 	public void Activate(bool active)
 	{
 		activated = active;
-		ActivateRenderers(activated && IsInView());
+		ActivateRenderers(activated && CheckInCameraViewRange());
 		ActivateAllColliders(active);
 	}
 

@@ -125,7 +125,7 @@ public class DrillBit : MonoBehaviour
 
 	public void StartDrilling(Entity newTarget)
 	{
-		if (parent.isActive)
+		if (parent.IsInViewRange)
 		{
 			TriggerParticleEffects(true);
 		}

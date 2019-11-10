@@ -9,7 +9,7 @@ namespace CustomDataTypes
 
 		public DirectionalArray()
 		{
-			array = new T[Length];
+			array = new T[ValuesLength];
 		}
 
 		public T this[Direction direction]
@@ -47,8 +47,8 @@ namespace CustomDataTypes
 			get => array[(int)Direction.Left];
 			set => array[(int)Direction.Left] = value;
 		}
-
-		public int Length => System.Enum.GetValues(typeof(Direction)).Length;
+		
+		public int ValuesLength => ChunkCoords.DIRECTION_COUNT;
 
 		public IEnumerator<T> GetEnumerator() => ((IEnumerable<T>)array).GetEnumerator();
 

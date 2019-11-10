@@ -96,7 +96,7 @@ public class Asteroid : Entity
 
 	private void CreateDebris(Vector2 pos)
 	{
-		if (!isActive || Pause.IsStopped) return;
+		if (!IsInViewRange || Pause.IsStopped) return;
 
 		if (!PartGen) return;
 
@@ -109,7 +109,7 @@ public class Asteroid : Entity
 
 	private void CreateDust(Vector2 pos, float alpha = 0.1f)
 	{
-		if (!isActive || Pause.IsStopped) return;
+		if (!IsInViewRange || Pause.IsStopped) return;
 		
 		if (PartGen == null) return;
 
@@ -129,12 +129,24 @@ public class Asteroid : Entity
 
 	}
 
-	public override bool OnExitPhysicsRange()
+	protected override void OnEnterPhysicsRange()
 	{
+		base.OnEnterPhysicsRange();
 		Vector2 newDir = -rb.velocity;
 		newDir.Normalize();
 		rb.velocity = newDir * VelocityRange;
-		return true;
+	}
+
+	protected override void OnEnterViewRange()
+	{
+		base.OnEnterViewRange();
+		ActivateAllColliders(true);
+	}
+
+	protected override void OnExitViewRange()
+	{
+		base.OnExitViewRange();
+		ActivateAllColliders(false);
 	}
 
 	// If health is below zero, this will destroy itself

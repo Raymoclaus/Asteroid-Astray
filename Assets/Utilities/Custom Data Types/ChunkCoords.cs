@@ -6,6 +6,7 @@ namespace CustomDataTypes
 	[Serializable]
 	public struct ChunkCoords
 	{
+		public const int DIRECTION_COUNT = 4;
 		public Quadrant quadrant;
 		public int x, y;
 
@@ -14,7 +15,7 @@ namespace CustomDataTypes
 		public static ChunkCoords Zero => new ChunkCoords(Quadrant.UpperLeft, 0, 0);
 
 		public static Quadrant MaxQuadrantValue
-			=> (Quadrant)(Enum.GetValues(typeof(Quadrant)).Length - 1);
+			=> (Quadrant)DIRECTION_COUNT - 1;
 
 		public ChunkCoords(Vector2 pos, float chunkSize)
 		{
@@ -117,7 +118,7 @@ namespace CustomDataTypes
 		{
 			return this != Invalid
 				   && (int)quadrant >= 0
-				   && (int)quadrant < Enum.GetValues(typeof(Direction)).Length
+				   && (int)quadrant < DIRECTION_COUNT
 				   && x >= 0
 				   && y >= 0;
 		}
@@ -132,7 +133,7 @@ namespace CustomDataTypes
 
 			//fix direction to be within bounds
 			quadrant = (Quadrant)(Math.Abs((int)quadrant)
-				% Enum.GetValues(typeof(Direction)).Length);
+				% DIRECTION_COUNT);
 			//adjust direction if x is not valid
 			if (x < 0)
 			{
@@ -207,19 +208,17 @@ namespace CustomDataTypes
 		}
 
 		/// Returns the distance between two coordinates. (Diagonal distance is treated the same as axis distance)
-		public static int MaxDistance(ChunkCoords cc1, ChunkCoords cc2)
+		public static int SquareDistance(ChunkCoords cc1, ChunkCoords cc2)
 		{
 			cc1 = ConvertToUpRight(cc1);
 			cc2 = ConvertToUpRight(cc2);
-			int x = cc1.x - cc2.x;
-			x = x < 0 ? -x : x;
-			int y = cc1.y - cc2.y;
-			y = y < 0 ? -y : y;
+			int x = Mathf.Abs(cc1.x - cc2.x);
+			int y = Mathf.Abs(cc1.y - cc2.y);
 			return Math.Max(x, y);
 		}
 
 		/// Converts the x and y components of a coordinate set so that they are easier to compare
-		private static ChunkCoords ConvertToUpRight(ChunkCoords cc)
+		public static ChunkCoords ConvertToUpRight(ChunkCoords cc)
 		{
 			if (cc.quadrant == Quadrant.UpperRight)
 			{

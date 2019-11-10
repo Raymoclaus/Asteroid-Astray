@@ -38,14 +38,6 @@ public class CameraCtrl : MonoBehaviour
 
 	public ChunkFiller chunkFiller;
 
-	//cache
-	private List<ChunkCoords> notInViewAnymore = new List<ChunkCoords>();
-	private List<ChunkCoords> newCoords = new List<ChunkCoords>();
-	private List<Entity> notInView = new List<Entity>();
-	private List<ChunkCoords> newCoordsInView = new List<ChunkCoords>();
-	private List<Entity> nowInView = new List<Entity>();
-	private List<Entity> physicsRange = new List<Entity>();
-
 	private void Start()
 	{
 		//get ref to ChunkFiller component
@@ -63,7 +55,7 @@ public class CameraCtrl : MonoBehaviour
 	private void Initialise()
 	{
 		//get list of entities that are within the camera's view range
-		GetEntitiesInView(coords);
+		UpdateEntitiesInView(coords, ChunkCoords.Invalid);
 	}
 
 	private void Update()
@@ -88,15 +80,15 @@ public class CameraCtrl : MonoBehaviour
 	{
 		ChunkCoords newCc = new ChunkCoords(newPos, EntityNetwork.CHUNK_SIZE);
 		if (newCc == coords) return;
-		CoordsChanged(newCc);
-		coords = newCc;
+		CoordsChanged(newCc, coords);
 	}
 
 	/// Only called if the camera's coordinates change
-	private void CoordsChanged(ChunkCoords newCoords)
+	private void CoordsChanged(ChunkCoords newCoords, ChunkCoords oldCoords)
 	{
+		coords = newCoords;
 		if (!EntityNetwork.IsReady) return;
-		GetEntitiesInView(newCoords);
+		UpdateEntitiesInView(newCoords, oldCoords);
 	}
 
 	/// Sets position to be just above and ahead of the target
@@ -170,73 +162,76 @@ public class CameraCtrl : MonoBehaviour
 	}
 
 	/// Disables all entities previously in view, gets a new list of entities and enables them.
-	private void GetEntitiesInView(ChunkCoords? cc = null)
+	private void UpdateEntitiesInView(ChunkCoords newCoords, ChunkCoords oldCoords)
 	{
-		//if no coordinates are provided then just search around the center of the grid by default
-		ChunkCoords center = cc ?? ChunkCoords.Zero;
 		//keep track of coords previous in view
 		//query the EntityNetwork for a list of coordinates in view based on camera's size
-		newCoordsInView.Clear();
-		EntityNetwork.GetCoordsInRange(center, ENTITY_VIEW_RANGE + RangeModifier, newCoordsInView);
-		//create a lists and filter out coordinates that are still in view
-		notInViewAnymore.Clear();
-		newCoords.Clear();
-		notInViewAnymore.AddRange(coordsInView);
-		newCoords.AddRange(newCoordsInView);
-		for (int i = notInViewAnymore.Count - 1; i >= 0; i--)
-		{
-			int index = -1;
-			for (int j = 0; j < newCoords.Count; j++)
+		int range = ENTITY_VIEW_RANGE + RangeModifier;
+		EntityNetwork.IterateEntitiesInRange(
+			oldCoords,
+			range,
+			e =>
 			{
-				if (newCoords[j] == notInViewAnymore[i])
+				ChunkCoords eCC = e.GetCoords();
+				int rangeFromNewCoord = ChunkCoords.SquareDistance(newCoords, eCC);
+				if (rangeFromNewCoord > range)
 				{
-					index = j;
-					break;
+					e.RepositionInNetwork(true);
 				}
-			}
-			if (index != -1)
+
+				return false;
+			});
+
+		EntityNetwork.IterateEntitiesInRange(
+			newCoords,
+			range,
+			e =>
 			{
-				notInViewAnymore.RemoveAt(i);
-				newCoords.RemoveAt(index);
-			}
-		}
-		coordsInView = newCoordsInView;
-		
-		//disable all entities previously in view
-		notInView.Clear();
-		EntityNetwork.GetEntitiesAtCoords(notInViewAnymore, addToList: notInView);
-		for (int i = 0; i < notInView.Count; i++)
-		{
-			Entity e = notInView[i];
-			e.SetAllActivity(false);
-		}
+				ChunkCoords eCC = e.GetCoords();
+				int rangeFromOldCoord = ChunkCoords.SquareDistance(oldCoords, eCC);
+				if (rangeFromOldCoord > range)
+				{
+					e.RepositionInNetwork(true);
+				}
 
-		//enables all entities now in view
-		nowInView.Clear();
-		EntityNetwork.GetEntitiesAtCoords(newCoords, addToList: nowInView);
-		for (int i = 0; i < nowInView.Count; i++)
-		{
-			Entity e = nowInView[i];
-			e.SetAllActivity(true);
-		}
+				return false;
+			});
 
-		CheckPhysicsRange(center);
+		CheckPhysicsRange(newCoords, oldCoords);
 	}
 
-	private void CheckPhysicsRange(ChunkCoords center)
+	private void CheckPhysicsRange(ChunkCoords newCoords, ChunkCoords oldCoords)
 	{
-		physicsRange.Clear();
-		EntityNetwork.GetEntitiesInRange(center, Constants.MAX_PHYSICS_RANGE,
-			addToList: physicsRange);
-
-		for (int i = 0; i < physicsRange.Count; i++)
-		{
-			Entity e = physicsRange[i];
-			if (e && !e.gameObject.activeSelf)
+		int range = Constants.MAX_PHYSICS_RANGE;
+		EntityNetwork.IterateEntitiesInRange(
+			oldCoords,
+			range,
+			e =>
 			{
-				e.RepositionInNetwork();
-			}
-		}
+				ChunkCoords eCC = e.GetCoords();
+				int rangeFromNewCoord = ChunkCoords.SquareDistance(newCoords, eCC);
+				if (rangeFromNewCoord > range)
+				{
+					e.RepositionInNetwork(true);
+				}
+
+				return false;
+			});
+
+		EntityNetwork.IterateEntitiesInRange(
+			newCoords,
+			range,
+			e =>
+			{
+				ChunkCoords eCC = e.GetCoords();
+				int rangeFromOldCoord = ChunkCoords.SquareDistance(oldCoords, eCC);
+				if (rangeFromOldCoord > range)
+				{
+					e.RepositionInNetwork(true);
+				}
+
+				return false;
+			});
 	}
 
 	public void CamShake()
@@ -286,12 +281,12 @@ public class CameraCtrl : MonoBehaviour
 
 	public bool IsCoordInView(ChunkCoords coord)
 	{
-		return ChunkCoords.MaxDistance(coord, coords) <= ENTITY_VIEW_RANGE + RangeModifier;
+		return ChunkCoords.SquareDistance(coord, coords) <= ENTITY_VIEW_RANGE + RangeModifier;
 	}
 
 	public bool IsCoordInPhysicsRange(ChunkCoords coord)
 	{
-		return ChunkCoords.MaxDistance(coord, coords) < Constants.MAX_PHYSICS_RANGE;
+		return ChunkCoords.SquareDistance(coord, coords) < Constants.MAX_PHYSICS_RANGE;
 	}
 
 	public void Zoom(float zoomLevel)

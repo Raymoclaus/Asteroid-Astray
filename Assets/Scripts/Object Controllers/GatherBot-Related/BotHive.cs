@@ -4,6 +4,7 @@ using UnityEngine;
 using InventorySystem;
 using CustomDataTypes;
 using AudioUtilities;
+using Random = UnityEngine.Random;
 
 [RequireComponent(typeof(HiveInventory))]
 public class BotHive : Character, ICombat
@@ -45,7 +46,6 @@ public class BotHive : Character, ICombat
 
 	//cache
 	private List<ChunkCoords> botOccupiedCoords = new List<ChunkCoords>();
-	private List<ChunkCoords> searchCoords = new List<ChunkCoords>();
 	#endregion
 
 	protected override void Awake()
@@ -210,49 +210,48 @@ public class BotHive : Character, ICombat
 
 	public void AssignUnoccupiedCoords(GatherBot b)
 	{
+		if (b == null) return;
 		CheckEmptyMarkedCoords();
 		botOccupiedCoords.Clear();
 		botOccupiedCoords.AddRange(emptyCoords);
 
 		for (int i = 0; i < childBots.Count; i++)
 		{
-			if (b == null) return;
-			EntityNetwork.GetCoordsInRange(childBots[i].GetIntendedCoords(), 1, botOccupiedCoords);
+			EntityNetwork.IterateCoordsInRange(
+				childBots[i].GetIntendedCoords(),
+				1,
+				cc =>
+				{
+					botOccupiedCoords.Add(cc);
+					return false;
+				},
+				false);
 		}
 
+		//find a random nearby coordinate that is not already occupied
 		int searchRange = 1;
-		searchCoords.Clear();
-
-		ChunkCoords location = ChunkCoords.Zero;
-		bool finished = false;
-		while (!finished)
+		ChunkCoords location = ChunkCoords.Invalid;
+		while (location == ChunkCoords.Invalid)
 		{
-			if (b == null) return;
-			EntityNetwork.GetCoordsOnRangeBorder(coords, searchRange, searchCoords);
-			searchRange++;
-
-			for (int i = searchCoords.Count - 1; i >= 0; i--)
-			{
-				ChunkCoords c = searchCoords[i];
-				for (int j = 0; j < botOccupiedCoords.Count; j++)
+			EntityNetwork.IterateCoordsOnRangeBorder(
+				coords,
+				searchRange,
+				cc =>
 				{
-					ChunkCoords cc = botOccupiedCoords[j];
-					if (c == cc)
+					if (botOccupiedCoords.Contains(cc)) return false;
+					if (Random.value < 0.1f)
 					{
-						searchCoords.RemoveAt(i);
-						break;
+						location = cc;
+						return true;
 					}
-				}
-			}
-			if (searchCoords.Count > 0)
-			{
-				finished = true;
-				location = searchCoords[new System.Random().Next(searchCoords.Count)];
-			}
+
+					return false;
+				},
+				false);
+			searchRange++;
 		}
 
 		Vector2 pos = ChunkCoords.GetCenterCell(location, EntityNetwork.CHUNK_SIZE);
-		if (b == null) return;
 		b.HiveOrders(pos);
 	}
 

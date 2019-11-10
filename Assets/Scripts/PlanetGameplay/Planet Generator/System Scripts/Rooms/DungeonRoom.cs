@@ -71,7 +71,7 @@ public class DungeonRoom
 			}
 		}
 
-		for (int i = 0; i < exitExists.Length; i++)
+		for (int i = 0; i < exitExists.ValuesLength; i++)
 		{
 			Direction dir = (Direction)i;
 			if (exitExists[dir])
@@ -195,22 +195,21 @@ public class DungeonRoom
 
 	protected void LockAllExceptPreviousRoom()
 	{
-		Direction[] directions = (Direction[])Enum.GetValues(typeof(Direction));
-		for (int i = 0; i < directions.Length; i++)
+		for (int i = 0; i < ChunkCoords.DIRECTION_COUNT; i++)
 		{
-			if (GetRoom(directions[i]) != previousRoom)
+			Direction direction = (Direction) i;
+			if (GetRoom(direction) != previousRoom)
 			{
-				Lock(directions[i], 0);
+				Lock(direction, 0);
 			}
 		}
 	}
 
 	protected void UnlockAllExitsOfLockType(int lockID)
 	{
-		Direction[] directions = (Direction[])Enum.GetValues(typeof(Direction));
-		for (int i = 0; i < directions.Length; i++)
+		for (int i = 0; i < ChunkCoords.DIRECTION_COUNT; i++)
 		{
-			Direction direction = directions[i];
+			Direction direction = (Direction)i;
 			if (exitLockType[direction] != lockID) continue;
 			Unlock(direction);
 		}
