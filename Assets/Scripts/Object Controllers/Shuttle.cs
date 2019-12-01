@@ -119,9 +119,7 @@ public class Shuttle : Character, IStunnable, ICombat
 	public bool isKinematic;
 	[SerializeField] private TY4PlayingUI ty4pUI;
 	public UnityEvent EnteringShip;
-
-	private bool canBoost = true;
-	public bool CanBoost { get; private set; }
+	public bool CanBoost { get; private set; } = true;
 
 	//how long a boost can last
 	[SerializeField] private RangedFloatComponent boostComponent;
@@ -190,6 +188,11 @@ public class Shuttle : Character, IStunnable, ICombat
 	protected override void Update()
 	{
 		base.Update();
+
+		if (Input.GetKeyDown(KeyCode.U))
+		{
+			autoPilot = !autoPilot;
+		}
 
 		if (!stunned)
 		{
@@ -453,14 +456,14 @@ public class Shuttle : Character, IStunnable, ICombat
 	public override EntityType GetEntityType() => EntityType.Shuttle;
 
 	private static readonly string[] SLOT_ACTIONS = {
-		"Slot 0",
 		"Slot 1",
 		"Slot 2",
 		"Slot 3",
 		"Slot 4",
 		"Slot 5",
 		"Slot 6",
-		"Slot 7"
+		"Slot 7",
+		"Slot 8"
 	};
 	protected override void CheckItemUsageInput()
 	{
@@ -614,7 +617,7 @@ public class Shuttle : Character, IStunnable, ICombat
 
 	private void Boost(bool input)
 	{
-		if (canBoost && input && boostComponent.CurrentRatio > 0f && !Pause.IsStopped)
+		if (CanBoost && input && boostComponent.CurrentRatio > 0f && !Pause.IsStopped)
 		{
 			if (!IsBoosting)
 			{

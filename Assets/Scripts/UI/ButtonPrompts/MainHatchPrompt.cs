@@ -11,6 +11,7 @@ public class MainHatchPrompt : MonoBehaviour, IActionMessageReceiver, IChatter
 		genericCantEnterShipConversation;
 	
 	public bool IsLocked { get; set; }
+	public bool CanSendDialogue { get; set; } = true;
 
 	[SerializeField] private Animator anim;
 
@@ -46,5 +47,10 @@ public class MainHatchPrompt : MonoBehaviour, IActionMessageReceiver, IChatter
 			Open();
 			interactor.Interact(this);
 		}
+	}
+
+	public void AllowSendingDialogue(bool allow)
+	{
+		CanSendDialogue = allow;
 	}
 }

@@ -105,7 +105,7 @@ public class SceneryController : MonoBehaviour
 		sceneryHolder = new GameObject("Scenery Holder").transform;
 		sceneryHolder.gameObject.layer = backgroundLayer;
 		perlinOffset = new Vector2(UnityEngine.Random.value, UnityEngine.Random.value);
-		folderPath = Application.dataPath + typesPath;
+		folderPath = Application.persistentDataPath + typesPath;
 		lessFrequentImageFolderPath = folderPath + "/LessFrequentImages";
 		ready = true;
 
@@ -119,7 +119,10 @@ public class SceneryController : MonoBehaviour
 
 	private void OnDestroy()
 	{
-		if (sceneryHolder) Destroy(sceneryHolder.gameObject);
+		if (sceneryHolder)
+		{
+			Destroy(sceneryHolder.gameObject);
+		}
 	}
 
 	private void CheckCoords()
@@ -161,7 +164,8 @@ public class SceneryController : MonoBehaviour
 			ViewDistance,
 			cc =>
 			{
-				if (ChunkCoords.SquareDistance(cc, oldCoords) <= ViewDistance)
+				int dist = ChunkCoords.SquareDistance(cc, oldCoords);
+				if (dist <= ViewDistance && dist != -1)
 				{
 					return false;
 				}
@@ -309,7 +313,14 @@ public class SceneryController : MonoBehaviour
 		//if textures have already been generated then don't worry about making more
 		int needToGenerate = Mathf.Max(variety - types.Count, 0);
 		texturesGenerated = needToGenerate <= 0;
-		if (texturesGenerated) yield break;
+		if (texturesGenerated)
+		{
+			texturesGenerated = true;
+			OnStarFieldCreated?.Invoke();
+			OnStarFieldCreated = null;
+			yield break;
+		}
+
 		StartCoroutine(CheckForExistingStars(needToGenerate));
 
 		while (!done)

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using InputHandlerSystem;
 using UnityEngine;
 
 public class LoadingController : MonoBehaviour
@@ -20,7 +21,7 @@ public class LoadingController : MonoBehaviour
 			return !instance?.finishedLoading ?? false;
 		}
 	}
-	
+
 	private static event Action OnLoadingComplete;
 
 	private void Awake()

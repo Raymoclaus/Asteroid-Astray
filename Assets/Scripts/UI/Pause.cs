@@ -24,6 +24,7 @@ public class Pause : MonoBehaviour
 		if (instance == null)
 		{
 			instance = this;
+			DontDestroyOnLoad(gameObject);
 		}
 		else
 		{
@@ -65,11 +66,6 @@ public class Pause : MonoBehaviour
 			{
 				Time.timeScale = scl;
 			}
-		}
-
-		if (Input.GetKeyDown(KeyCode.BackQuote))
-		{
-			InstantPause(!IsStopped);
 		}
 
 		Time.fixedDeltaTime = IsStopped ? 1f : 0.01666666f / Time.timeScale;

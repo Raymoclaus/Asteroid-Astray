@@ -5,21 +5,22 @@ public class DirectionMarker : MonoBehaviour
 {
 	[SerializeField] private float radius = 0.5f;
 	private Shuttle mainChar;
-	private Shuttle MainChar { get { return mainChar ?? (mainChar = FindObjectOfType<Shuttle>()); } }
-	private Vector2 LocationTarget { get { return Vector2.zero; } }
-	private Transform parent { get { return MainChar?.transform ?? transform.parent; } }
+	private Shuttle MainChar => mainChar ?? (mainChar = FindObjectOfType<Shuttle>());
+	private Vector2 LocationTarget => Vector2.zero;
+	private Transform Parent => MainChar?.transform ?? transform.parent;
 	private SpriteRenderer sprRend;
+	private SpriteRenderer SprRend
+		=> sprRend != null ? sprRend : (sprRend = GetComponent<SpriteRenderer>());
 
-	private void Awake()
+	public void Activate(bool active)
 	{
-		sprRend = GetComponent<SpriteRenderer>();
+		if (SprRend == null) return;
+		SprRend.enabled = active;
 	}
-
-	public void Activate(bool active) => sprRend.enabled = active;
 
 	private void Update()
 	{
-		if (!sprRend.enabled) return;
+		if (!SprRend.enabled) return;
 		//get angle of current position to target position in degrees
 		float angle = GetAngle();
 		//rotate transform by angle
@@ -36,6 +37,6 @@ public class DirectionMarker : MonoBehaviour
 
 	private Vector2 GetCurrentPosition()
 	{
-		return parent?.position ?? transform.position;
+		return Parent?.position ?? transform.position;
 	}
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -12,25 +13,25 @@ namespace TriggerSystem.Triggers
 		[SerializeField] protected string action = "Interact";
 		private HashSet<IReceiver> receivers = new HashSet<IReceiver>();
 		private HashSet<IInteractor> nearbyInteractors = new HashSet<IInteractor>();
-
+		private List<IInteractor> toInteract = new List<IInteractor>();
 		public event Action<IInteractor> OnInteracted;
-
-		protected override void Awake()
-		{
-			base.Awake();
-			GetReceivers();
-		}
 
 		private void Update()
 		{
 			RemoveNullInteractors();
 
+			toInteract.Clear();
 			foreach (IInteractor interactor in nearbyInteractors)
 			{
 				if (interactor.StartedPerformingAction(ActionRequired))
 				{
-					Interact(interactor);
+					toInteract.Add(interactor);
 				}
+			}
+
+			for (int i = 0; i < toInteract.Count; i++)
+			{
+				Interact(toInteract[i]);
 			}
 		}
 
@@ -55,8 +56,10 @@ namespace TriggerSystem.Triggers
 			nearbyInteractors.Remove(interactor);
 		}
 
-		private void GetReceivers()
+		protected override void GetReceivers()
 		{
+			base.GetReceivers();
+
 			Transform t = transform;
 			while (t != null)
 			{

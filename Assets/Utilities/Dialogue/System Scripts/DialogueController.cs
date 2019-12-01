@@ -14,7 +14,7 @@ namespace DialogueSystem
 		private EntityProfile[] speakers;
 		private int currentPosition = -1;
 		private List<ConversationWithActions> dialogueQueue = new List<ConversationWithActions>();
-		[SerializeField] private float characterRevealTime = 0.02f;
+		private const float CHARACTER_REVEAL_TIME = 0.03f;
 		private float revealTimer;
 
 		public string CurrentSpeakerName { get; private set; }
@@ -40,16 +40,16 @@ namespace DialogueSystem
 			if (!IsTyping || IsWaitingOnDelayedText) return;
 
 			revealTimer += CharacterRevealSpeed * CharacterRevealSpeedMultiplier;
-			if (revealTimer >= characterRevealTime)
+			if (revealTimer >= CHARACTER_REVEAL_TIME)
 			{
 				if (CurrentSpeakerTone != null)
 				{
 					audioSource.PlayOneShot(CurrentSpeakerTone);
 				}
 			}
-			while (revealTimer >= characterRevealTime)
+			while (revealTimer >= CHARACTER_REVEAL_TIME)
 			{
-				revealTimer -= characterRevealTime;
+				revealTimer -= CHARACTER_REVEAL_TIME;
 				RevealedCharacterCount++;
 				OnRevealCharacter?.Invoke();
 			}
@@ -74,7 +74,7 @@ namespace DialogueSystem
 
 		protected virtual void Next()
 		{
-			if (!DialogueIsRunning) return;
+			if (!DialogueIsRunning || IsWaitingOnDelayedText) return;
 
 			if (IsTyping)
 			{
@@ -143,11 +143,6 @@ namespace DialogueSystem
 		private DialogueTextEvent CurrentLine
 			=> currentConversation.GetLine(currentPosition);
 
-		private void Wait(DialogueWaitEvent waitEvent)
-		{
-			Coroutines.DelayedAction(waitEvent.waitDuration, GetNextEvent);
-		}
-
 		private void GetDialogueLine(DialogueTextEvent textEvent)
 		{
 			int speakerID = textEvent.speakerID;
@@ -173,7 +168,7 @@ namespace DialogueSystem
 				IsWaitingOnDelayedText = true;
 				action += () => IsWaitingOnDelayedText = false;
 				OnStartDelayedText?.Invoke();
-				Coroutines.DelayedAction(textEvent.delay, action);
+				DelayedTextEvent(textEvent.delay, action);
 			}
 			else
 			{
@@ -181,7 +176,12 @@ namespace DialogueSystem
 			}
 		}
 
-		protected bool IsWaitingOnDelayedText { get; private set; }
+		protected virtual void DelayedTextEvent(float delay, Action action)
+		{
+			Coroutines.DelayedAction(delay, action);
+		}
+
+		public bool IsWaitingOnDelayedText { get; private set; }
 
 		private void RevealAllCharacters()
 		{

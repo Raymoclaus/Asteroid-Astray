@@ -39,6 +39,25 @@ public static class Coroutines
 		action?.Invoke();
 	}
 
+	public static Coroutine UnscaledDelayedAction(float time, Action action)
+	{
+		if (time <= 0f)
+		{
+			action?.Invoke();
+			return null;
+		}
+		return Start(PDelayedAction(new WaitForSecondsRealtime(time), action));
+	}
+
+	public static Coroutine UnscaledDelayedAction(WaitForSecondsRealtime time, Action action)
+		=> Start(PDelayedAction(time, action));
+
+	private static IEnumerator PDelayedAction(WaitForSecondsRealtime wait, Action action)
+	{
+		yield return wait;
+		action?.Invoke();
+	}
+
 	private static Coroutine Start(IEnumerator coroutineMethod)
 		=> MonoObj.StartCoroutine(coroutineMethod);
 }

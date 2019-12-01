@@ -6,10 +6,13 @@ public class CharacterAnimationController : MonoBehaviour
 
 	[Header("Animator Property Names")]
 	[SerializeField] private string movingName = "Moving";
-	[SerializeField] private string directionName = "Direction";
-	[SerializeField] private string deathName = "Death";
-	[SerializeField] private string rollName = "Roll";
-	[SerializeField] private string blockName = "Block";
+	[SerializeField] private string directionName = "Direction",
+		deathName = "Death",
+		rollName = "Roll",
+		blockName = "Block",
+		speedMultiplierName = "SpeedMultiplier";
+
+	[SerializeField] private float speedReferenceValue = 1f;
 
 	private bool CanAnimate
 		=> anim != null
@@ -37,6 +40,12 @@ public class CharacterAnimationController : MonoBehaviour
 	{
 		if (!CanAnimate) return;
 		anim.SetBool(blockName, blocking);
+	}
+
+	public void SetSpeedMultiplier(float speed)
+	{
+		if (!CanAnimate) return;
+		anim.SetFloat(speedMultiplierName, speed / speedReferenceValue);
 	}
 
 	public void Die()

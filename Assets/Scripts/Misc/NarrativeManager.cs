@@ -4,6 +4,7 @@ using QuestSystem;
 using QuestSystem.Requirements;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using DialogueSystem;
 using TriggerSystem;
 using TriggerSystem.Triggers;
@@ -14,8 +15,6 @@ public class NarrativeManager : MonoBehaviour, IChatter
 	public static bool ShuttleRepaired { get; private set; }
 	public static bool ShipRecharged { get; private set; }
 	
-	[SerializeField] private SpotlightEffectController spotlightEffectController;
-	[SerializeField] private CustomScreenEffect screenEffects;
 	[SerializeField] private Character mainChar;
 	private Character MainChar => mainChar != null ? mainChar
 		: (mainChar = FindObjectOfType<Character>());
@@ -32,8 +31,10 @@ public class NarrativeManager : MonoBehaviour, IChatter
 	private TutorialPrompts tutPrompts;
 	private TutorialPrompts TutPrompts
 		=> tutPrompts ?? (tutPrompts = FindObjectOfType<TutorialPrompts>());
-	[SerializeField] private TY4PlayingUI ty4pUI;
 
+	public bool CanSendDialogue { get; set; } = true;
+
+	[SerializeField] private TY4PlayingUI ty4pUI;
 	[SerializeField] private ConversationWithActions
 		recoveryConversation,
 		useThrustersConversation,
@@ -42,8 +43,11 @@ public class NarrativeManager : MonoBehaviour, IChatter
 		findShipConversation,
 		foundShipConversation,
 		foundDerangedBotConversation,
+		questionHowToObtainEnergySourceConversation,
 		acquiredEnergySourceConversation,
 		rechargedTheShipConversation;
+
+	private List<ConversationWithActions> conversations;
 
 	[Header("Entity Profiles")]
 	[SerializeField] private EntityProfile claire;
@@ -52,6 +56,23 @@ public class NarrativeManager : MonoBehaviour, IChatter
 
 	public event Action<ConversationWithActions, bool> OnSendActiveDialogue;
 	public event Action<ConversationWithActions, bool> OnSendPassiveDialogue;
+
+	private void Awake()
+	{
+		conversations = new List<ConversationWithActions>
+		{
+			recoveryConversation,
+			useThrustersConversation,
+			completedFirstGatheringQuestConversation,
+			useRepairKitConversation,
+			findShipConversation,
+			foundShipConversation,
+			foundDerangedBotConversation,
+			questionHowToObtainEnergySourceConversation,
+			acquiredEnergySourceConversation,
+			rechargedTheShipConversation
+		};
+	}
 
 	private void Start()
 	{
@@ -64,7 +85,6 @@ public class NarrativeManager : MonoBehaviour, IChatter
 
 	private void StartRecoveryDialogue()
 	{
-		ActivateSpotlight(true);
 		StartDialogue(recoveryConversation, false);
 	}
 
@@ -194,16 +214,17 @@ public class NarrativeManager : MonoBehaviour, IChatter
 
 		//create a deranged bot
 		ChunkCoords emptyChunk = EntityGenerator.GetNearbyEmptyChunk();
-		SpawnableEntity se = EntityGenerator.GetSpawnableEntity(derangedSoloBotPrefab);
+		SpawnableEntity se = EntityGenerator.GetSpawnableEntity("deranged bot");
 		Entity newEntity = EntityGenerator.SpawnOneEntityInChunk(se, null, emptyChunk);
 		//set waypoint to new bot
 		//attach dialogue prompt when player approaches bot
-		VicinityTrigger entityPrompt = newEntity.GetComponentInChildren<VicinityTrigger>();
+		VicinityTrigger entityPrompt = newEntity.GetComponentsInChildren<VicinityTrigger>()
+			.Where(t => t.gameObject.layer == LayerMask.NameToLayer("VicinityTrigger")).FirstOrDefault();
 		Action<IActor> triggerEnterAction = null;
 		triggerEnterAction = (IActor actor) =>
 		{
 			if (!(actor is Shuttle)) return;
-			StartDialogue(foundDerangedBotConversation, true);
+			StartDialogue(foundDerangedBotConversation, false);
 			entityPrompt.OnEnteredTrigger -= triggerEnterAction;
 		};
 		entityPrompt.OnEnteredTrigger += triggerEnterAction;
@@ -259,9 +280,6 @@ public class NarrativeManager : MonoBehaviour, IChatter
 		ShipRecharged = true;
 	}
 
-	public void ActivateSpotlight(bool activate)
-		=> screenEffects.SetBlit(spotlightEffectController.spotlightMaterial, activate);
-
 	public void ActivateScriptedDrops(bool activate)
 		=> FirstQuestScriptedDrops.scriptedDropsActive = activate;
 
@@ -274,6 +292,21 @@ public class NarrativeManager : MonoBehaviour, IChatter
 	public void TakeItem(Item.Type type, int amount) => MainChar.TakeItem(type, amount);
 
 	private void GiveQuest(Quester quester, Quest q) => quester.AcceptQuest(q);
+
+	private ConversationWithActions GetConversation(ConversationEvent ce)
+	{
+		return conversations.FirstOrDefault(t => t.conversationEvent == ce);
+	}
+
+	public void StartActiveDialogue(ConversationEvent ce)
+	{
+		StartDialogue(GetConversation(ce), false);
+	}
+
+	public void StartPassiveDialogue(ConversationEvent ce)
+	{
+		StartDialogue(GetConversation(ce), true);
+	}
 
 	public void StartDialogue(ConversationWithActions ce, bool chat)
 	{
@@ -295,5 +328,10 @@ public class NarrativeManager : MonoBehaviour, IChatter
 		{
 			MainChar.Teleport(pos + randomPos);
 		}
+	}
+
+	public void AllowSendingDialogue(bool allow)
+	{
+		CanSendDialogue = allow;
 	}
 }

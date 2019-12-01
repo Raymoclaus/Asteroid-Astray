@@ -61,7 +61,7 @@ namespace AttackData
 			return component;
 		}
 
-		public T GetAttackComponent<T>() where T : AttackComponent
+		public T GetAttackComponent<T>(bool addOneIfNoneFound = false) where T : AttackComponent
 		{
 			Type type = typeof(T);
 			if (!type.IsSubclassOf(typeof(AttackComponent))) return null;
@@ -69,7 +69,7 @@ namespace AttackData
 			{
 				if (component is T) return (T)component;
 			}
-			return null;
+			return AddAttackComponent<T>();
 		}
 
 		public object GetData<T>() where T : AttackComponent

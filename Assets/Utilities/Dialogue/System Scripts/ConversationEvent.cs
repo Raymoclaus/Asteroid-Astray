@@ -33,15 +33,27 @@ namespace DialogueSystem
 		{
 			string convo = conversationFile.text;
 			string[] lines = convo.Split('\n');
-			conversation = new DialogueTextEvent[lines.Length];
+			DialogueTextEvent[] previousConversation = conversation;
+			if (conversation == null)
+			{
+				conversation = new DialogueTextEvent[lines.Length];
+				previousConversation = conversation;
+			}
+
+			int previousLength = previousConversation.Length;
+
 			for (int i = 0; i < lines.Length; i++)
 			{
 				string[] line = lines[i].Split('|');
-				byte speaker = 0;
+				byte speaker = previousLength <= i ? (byte)0 : previousConversation[i].speakerID;
+				float delay = previousLength <= i ? 0f : previousConversation[i].delay;
+				float revealSpeed = previousLength <= i ? 1f : previousConversation[i].characterRevealSpeedMultiplier;
 				conversation[i] = new DialogueTextEvent();
 				if (line.Length > 1 && byte.TryParse(line[0], out speaker))
 				{
 					conversation[i].speakerID = speaker;
+					conversation[i].delay = delay;
+					conversation[i].characterRevealSpeedMultiplier = revealSpeed;
 					conversation[i].line = line[1];
 				}
 				else

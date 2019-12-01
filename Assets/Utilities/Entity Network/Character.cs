@@ -426,7 +426,14 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 		   && !Pause.IsStopped
 			&& CanAttack;
 
+	public void AllowSendingDialogue(bool allow)
+	{
+		CanSendDialogue = allow;
+	}
+
 	public bool CanAttack { get; set; } = true;
 
 	public float DamageMultiplier => damageMultiplier;
+
+	public bool CanSendDialogue { get; set; } = true;
 }

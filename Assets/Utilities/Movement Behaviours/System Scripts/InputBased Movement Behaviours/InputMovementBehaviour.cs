@@ -5,6 +5,11 @@ namespace MovementBehaviours
 {
 	public class InputMovementBehaviour : MovementBehaviour
 	{
+		private void Awake()
+		{
+			InputManager.SetContext("Ground");
+		}
+
 		protected void Update() => GetMovementInput();
 
 		private void GetMovementInput()

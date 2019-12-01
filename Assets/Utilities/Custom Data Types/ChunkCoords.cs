@@ -207,9 +207,15 @@ namespace CustomDataTypes
 			return this;
 		}
 
-		/// Returns the distance between two coordinates. (Diagonal distance is treated the same as axis distance)
+		/// <summary>
+		/// The distance between two coordinates. (Diagonal distance is treated the same as axis distance)
+		/// </summary>
+		/// <param name="cc1"></param>
+		/// <param name="cc2"></param>
+		/// <returns>Returns an int representing distance. Returns -1 if either input is not valid.</returns>
 		public static int SquareDistance(ChunkCoords cc1, ChunkCoords cc2)
 		{
+			if (!cc1.IsValid() || !cc2.IsValid()) return -1;
 			cc1 = ConvertToUpRight(cc1);
 			cc2 = ConvertToUpRight(cc2);
 			int x = Mathf.Abs(cc1.x - cc2.x);

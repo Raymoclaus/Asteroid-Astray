@@ -42,7 +42,9 @@ namespace WeaponSystem
 
 		public virtual AttackManager GetAttack => attackPrefab;
 
-		public virtual bool ShouldAttack => !IsOnCooldown;
+		public virtual bool ShouldAttack
+			=> !IsOnCooldown
+			   && gameObject.activeInHierarchy;
 
 		public float CooldownDuration => cooldownComponent.UpperLimit;
 
@@ -58,7 +60,11 @@ namespace WeaponSystem
 			if (!ShouldAttack) return null;
 			AttackManager attack = SpawnAttack();
 			attack.SetData<OwnerComponent>(owners, true);
-			attack.SetData<DamageComponent>(DamageMultiplier, false);
+			DamageComponent damageComponent = attack.GetAttackComponent<DamageComponent>();
+			if (damageComponent != null)
+			{
+				damageComponent.Multiply(DamageMultiplier);
+			}
 			cooldownComponent.SetValue(CooldownDuration);
 			owners.ForEach(t => t.ReceiveRecoveryDuration(recoveryDuration));
 			AudioMngr.PlaySFX(clip, transform.position, null);

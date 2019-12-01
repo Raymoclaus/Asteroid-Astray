@@ -23,10 +23,21 @@ namespace SceneControllers
 			return new SceneAsync(ao, sceneName);
 		}
 
+		[SteamPunkConsoleCommand(command = "scene", info = "Changes scene to one with given name. Use scenelist to get a list of scene names.")]
 		public static void LoadScene(string sceneName)
 		{
 			OnSceneLoad?.Invoke(sceneName);
 			SceneManager.LoadScene(sceneName);
+		}
+
+		[SteamPunkConsoleCommand(command = "scenelist", info = "Prints a list of scene names, usable with scene command.")]
+		public static void PrintSceneList()
+		{
+			SteamPunkConsole.WriteLine("Scene names\n==================");
+			for (int i = 0; i < SceneNames.Count; i++)
+			{
+				SteamPunkConsole.WriteLine(SceneNames[i]);
+			}
 		}
 
 		public static void LoadPreparedScene(SceneAsync scene)
@@ -48,6 +59,7 @@ namespace SceneControllers
 				Application.Quit();
 			}
 		}
+		
 
 		private static bool SceneExists(string sceneName)
 		{

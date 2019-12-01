@@ -45,7 +45,7 @@ namespace DialogueSystem.UI
 		protected void UpdateUI()
 		{
 			RemoveAllPopups();
-			if (!dialogueController.DialogueIsRunning) return;
+			if (!dialogueController.DialogueIsRunning || dialogueController.IsWaitingOnDelayedText) return;
 
 			CreatePopupOfCurrentLine();
 		}
@@ -146,7 +146,7 @@ namespace DialogueSystem.UI
 
 			public void SetCharacterRevealedCount(int count)
 			{
-				TextMeshProUGUI mesh = line.textMesh;
+				TextMeshProUGUI mesh = line.TextMesh;
 				mesh.maxVisibleCharacters = count;
 			}
 

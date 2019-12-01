@@ -160,7 +160,7 @@ public class CameraCtrl : MonoBehaviour
 		//ensures the ChunkFiller component fills a wide enough area to fill the camera's view
 		chunkFiller.RangeIncrease = RangeModifier;
 	}
-
+	
 	/// Disables all entities previously in view, gets a new list of entities and enables them.
 	private void UpdateEntitiesInView(ChunkCoords newCoords, ChunkCoords oldCoords)
 	{
@@ -173,8 +173,9 @@ public class CameraCtrl : MonoBehaviour
 			e =>
 			{
 				ChunkCoords eCC = e.GetCoords();
-				int rangeFromNewCoord = ChunkCoords.SquareDistance(newCoords, eCC);
-				if (rangeFromNewCoord > range)
+				if (!IsInRange(newCoords, eCC, range)
+				    || !newCoords.IsValid()
+				    || !eCC.IsValid())
 				{
 					e.RepositionInNetwork(true);
 				}
@@ -188,15 +189,16 @@ public class CameraCtrl : MonoBehaviour
 			e =>
 			{
 				ChunkCoords eCC = e.GetCoords();
-				int rangeFromOldCoord = ChunkCoords.SquareDistance(oldCoords, eCC);
-				if (rangeFromOldCoord > range)
+				if (IsInRange(oldCoords, eCC, range)
+				    || !oldCoords.IsValid()
+				    || !eCC.IsValid())
 				{
 					e.RepositionInNetwork(true);
 				}
 
 				return false;
 			});
-
+		
 		CheckPhysicsRange(newCoords, oldCoords);
 	}
 
@@ -209,8 +211,9 @@ public class CameraCtrl : MonoBehaviour
 			e =>
 			{
 				ChunkCoords eCC = e.GetCoords();
-				int rangeFromNewCoord = ChunkCoords.SquareDistance(newCoords, eCC);
-				if (rangeFromNewCoord > range)
+				if (!IsInRange(newCoords, eCC, range)
+				    || !newCoords.IsValid()
+				    || !eCC.IsValid())
 				{
 					e.RepositionInNetwork(true);
 				}
@@ -224,8 +227,9 @@ public class CameraCtrl : MonoBehaviour
 			e =>
 			{
 				ChunkCoords eCC = e.GetCoords();
-				int rangeFromOldCoord = ChunkCoords.SquareDistance(oldCoords, eCC);
-				if (rangeFromOldCoord > range)
+				if (IsInRange(oldCoords, eCC, range)
+				    || !oldCoords.IsValid()
+				    || !eCC.IsValid())
 				{
 					e.RepositionInNetwork(true);
 				}
@@ -281,12 +285,17 @@ public class CameraCtrl : MonoBehaviour
 
 	public bool IsCoordInView(ChunkCoords coord)
 	{
-		return ChunkCoords.SquareDistance(coord, coords) <= ENTITY_VIEW_RANGE + RangeModifier;
+		return IsInRange(coords, coord, ENTITY_VIEW_RANGE + RangeModifier);
 	}
 
 	public bool IsCoordInPhysicsRange(ChunkCoords coord)
 	{
-		return ChunkCoords.SquareDistance(coord, coords) < Constants.MAX_PHYSICS_RANGE;
+		return IsInRange(coords, coord, Constants.MAX_PHYSICS_RANGE);
+	}
+
+	private bool IsInRange(ChunkCoords center, ChunkCoords check, int range)
+	{
+		return ChunkCoords.SquareDistance(center, check) <= range;
 	}
 
 	public void Zoom(float zoomLevel)

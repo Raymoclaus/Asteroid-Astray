@@ -18,7 +18,7 @@ namespace PhysicsControllers
 		[SerializeField] private float momentumControl = 1f;
 		[Range(0f, 1f)]
 		[SerializeField] private float stoppingMomentumMultiplier = 0.5f;
-		private bool moving = false;
+		private bool applyingForce = false;
 		private bool canMove = true;
 		private Vector2 direction = Vector2.down;
 		public Direction Facing
@@ -52,18 +52,32 @@ namespace PhysicsControllers
 
 		protected virtual void FixedUpdate()
 		{
-			if (!moving)
+			if (!applyingForce)
 			{
 				AdjustVelocity(Vector2.zero);
 			}
 		}
 
+		private void Update()
+		{
+			float speed = CurrentSpeed;
+			if (speed == 0f)
+			{
+				animController.SetRunning(false);
+				animController?.SetSpeedMultiplier(1f);
+			}
+			else
+			{
+				animController?.SetSpeedMultiplier(CurrentSpeed);
+			}
+		}
+
 		private void AdjustVelocity(Vector2 direction)
 		{
-			float distance = Vector2.Distance(Rb.velocity, direction);
-			if (direction == Vector2.zero)
+			float distance = 0f;
+			if (direction != Vector2.zero)
 			{
-				distance = 0f;
+				distance = Vector2.Distance(Rb.velocity, direction);
 			}
 			float delta = Mathf.Lerp(stoppingMomentumMultiplier, 1f, 1f - 1f / distance);
 			SetVelocity(Vector2.MoveTowards(
@@ -93,7 +107,7 @@ namespace PhysicsControllers
 		{
 			if (!CanMove) return;
 
-			moving = true;
+			applyingForce = true;
 			animController?.SetRunning(true);
 			AdjustVelocity(direction);
 			FaceDirection(direction);
@@ -133,8 +147,7 @@ namespace PhysicsControllers
 
 		public void SlowDown()
 		{
-			moving = false;
-			animController?.SetRunning(false);
+			applyingForce = false;
 			OnRunStateChanged?.Invoke(false);
 		}
 
@@ -174,6 +187,8 @@ namespace PhysicsControllers
 		}
 
 		public Vector3 CurrentVelocity => Rb.velocity;
+
+		public float CurrentSpeed => CurrentVelocity.magnitude;
 
 		public void DeactivateColliderForDuration(float duration)
 		{

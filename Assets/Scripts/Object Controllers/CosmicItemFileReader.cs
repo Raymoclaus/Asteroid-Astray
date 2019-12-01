@@ -6,7 +6,7 @@ using System.Text;
 
 public static class CosmicItemFileReader
 {
-	private static string path = Application.dataPath + "/../BackgroundInfo.txt";
+	private static string path = Application.persistentDataPath + "/../BackgroundInfo.txt";
 	private const char
 		quadSeparator = '/',
 		xSeparator = '?',

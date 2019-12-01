@@ -26,7 +26,9 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 		=> audioMngr ?? (audioMngr = FindObjectOfType<AudioManager>());
 
 	[SerializeField] protected ScreenRippleEffectController screenRippleSO;
+	[Tooltip("shouldDisableGameObjectOnExitPhysicsRange")]
 	[SerializeField] private bool shouldDisableGameObjectOnExitPhysicsRange = true;
+	[Tooltip("shouldDisableGameObjectOnExitViewRange")]
 	[SerializeField] private bool shouldDisableGameObjectOnExitViewRange = false;
 	private Vector3 vel;
 	[SerializeField] protected bool isInvulnerable;
@@ -290,6 +292,12 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 
 	public void Teleport(Vector2 position) => transform.position = position;
 
+	[SteamPunkConsoleCommand(command = "teleport", info = "Moves selected entity to given world position.")]
+	public void Teleport(int x, int y)
+	{
+		Teleport(new Vector2(x, y));
+	}
+
 	protected virtual object CreateDataObject() => null;
 
 	public virtual void ApplyData(EntityData? data) { }
@@ -461,10 +469,10 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 			}
 		}
 		if (thisAttacker != null && owners.Contains(thisAttacker)) return false;
-		object damageObj = atkMngr.GetData<DamageComponent>();
-		if (damageObj != null)
+		DamageComponent damageComponent = atkMngr.GetAttackComponent<DamageComponent>();
+		if (damageComponent != null)
 		{
-			float damage = (float) damageObj;
+			float damage = damageComponent.DamageIncludingBonuses;
 			TakeDamage(damage, atkMngr.Position, destroyer, 1f, true);
 		}
 

@@ -1,14 +1,15 @@
 ﻿using System.Collections;
-using UnityEditor;
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "Scriptable Objects/Spotlight Effect Controller")]
-public class SpotlightEffectController : ScriptableObject
+public class SpotlightEffectController : MonoBehaviour
 {
 	public Material spotlightMaterial;
 	private string softRadius = "_SoftRadius", hardRadius = "_Radius";
 	private Coroutine currentCoroutine;
-	private const float DEFAULT_SOFT_VALUE = 0.2f, DEFAULT_HARD_VALUE = 0.15f;
+	private const float DEFAULT_CLOSED_SOFT_VALUE = 0.2f, DEFAULT_CLOSED_HARD_VALUE = 0.15f;
+	private const float DEFAULT_OPEN_SOFT_VALUE = 0.5f, DEFAULT_OPEN_HARD_VALUE = 1.5f;
+
+	public CustomScreenEffect customEffects;
 
 	public void ChangeSpotlight(float hardValue, float softValue, float time, bool ignorePause)
 	{
@@ -16,10 +17,10 @@ public class SpotlightEffectController : ScriptableObject
 		currentCoroutine = Coroutines.MonoObj.StartCoroutine(Go(hardValue, softValue, time, ignorePause));
 	}
 
-	public void ChangeSpotlight(float time)
+	public void OpenSpotlightOverTime(float time)
 	{
 		CancelCoroutine();
-		currentCoroutine = Coroutines.MonoObj.StartCoroutine(Go(1.5f, 0.5f, time, true));
+		currentCoroutine = Coroutines.MonoObj.StartCoroutine(Go(DEFAULT_OPEN_HARD_VALUE, DEFAULT_OPEN_SOFT_VALUE, time, true));
 	}
 
 	public void SetSpotlight(float hardValue, float softValue, bool cancelCoro = false)
@@ -32,9 +33,19 @@ public class SpotlightEffectController : ScriptableObject
 		spotlightMaterial.SetFloat(softRadius, softValue); 
 	}
 
-	public void SetSpotlight()
+	public void SetSpotlightToOpen()
 	{
 		SetSpotlight(1.5f, 0.5f, true);
+	}
+
+	public void SetSpotlightToClosed()
+	{
+		SetSpotlight(DEFAULT_CLOSED_HARD_VALUE, DEFAULT_CLOSED_SOFT_VALUE, true);
+	}
+
+	public void ActivateSpotlight(bool activate)
+	{
+		customEffects.SetBlit(spotlightMaterial, activate);
 	}
 
 	private IEnumerator Go(float hardVal, float softVal, float time, bool ignorePause)
@@ -65,7 +76,7 @@ public class SpotlightEffectController : ScriptableObject
 	{
 		if (!Application.isPlaying)
 		{
-			SetSpotlight(DEFAULT_HARD_VALUE, DEFAULT_SOFT_VALUE);
+			SetSpotlight(DEFAULT_CLOSED_HARD_VALUE, DEFAULT_CLOSED_SOFT_VALUE);
 		}
 	}
 }

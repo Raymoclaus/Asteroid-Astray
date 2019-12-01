@@ -1,4 +1,5 @@
-﻿using DialogueSystem.UI;
+﻿using System;
+using DialogueSystem.UI;
 using UnityEngine;
 
 namespace DialogueSystem
@@ -32,5 +33,10 @@ namespace DialogueSystem
 		}
 
 		protected override float CharacterRevealSpeed => Time.unscaledDeltaTime;
+
+		protected override void DelayedTextEvent(float delay, Action action)
+		{
+			Coroutines.UnscaledDelayedAction(delay, action);
+		}
 	}
 }

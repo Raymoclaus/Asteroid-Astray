@@ -140,13 +140,13 @@ public class Asteroid : Entity
 	protected override void OnEnterViewRange()
 	{
 		base.OnEnterViewRange();
-		ActivateAllColliders(true);
+		//ActivateAllColliders(true);
 	}
 
 	protected override void OnExitViewRange()
 	{
 		base.OnExitViewRange();
-		ActivateAllColliders(false);
+		//ActivateAllColliders(false);
 	}
 
 	// If health is below zero, this will destroy itself

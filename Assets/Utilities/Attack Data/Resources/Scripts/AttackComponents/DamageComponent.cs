@@ -11,5 +11,19 @@
 		}
 
 		public override object GetData() => damage;
+
+		public float DamageIncludingBonuses
+			=> damage * Multiplier.multiplier;
+
+		public void Multiply(float multiplierValue)
+		{
+			Multiplier.multiplier *= multiplierValue;
+		}
+
+		private DamageMultiplierComponent multiplier;
+		private DamageMultiplierComponent Multiplier
+			=> multiplier != null
+				? multiplier
+				: (multiplier = AtkMngr.GetAttackComponent<DamageMultiplierComponent>(true));
 	}
 }

@@ -74,9 +74,18 @@ public class ItemPickupMovementController : MonoBehaviour, IPhysicsController
 		float distanceToPosition = direction.magnitude;
 		direction.Normalize();
 		float currentSpeed = CurrentVelocity.magnitude;
-		float adjustedSpeed = Mathf.Min(distanceToPosition / Time.deltaTime,
-			currentSpeed + speed);
-		Move(direction * adjustedSpeed);
+		float timeAdjustedDistance = distanceToPosition / Time.deltaTime / Time.timeScale;
+		float adjustedSpeed = currentSpeed + speed;
+		if (timeAdjustedDistance <= adjustedSpeed)
+		{
+			transform.position = position;
+			CurrentVelocity = Vector3.zero;
+		}
+		else
+		{
+			Vector2 vector = direction * adjustedSpeed;
+			Move(vector);
+		}
 	}
 
 	private void Move(Vector3 velocity)

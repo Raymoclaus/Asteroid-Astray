@@ -10,20 +10,27 @@ namespace InputHandlerSystem.UI
 	[RequireComponent(typeof(TextMeshProUGUI))]
 	public class InputIconTextMesh : MonoBehaviour
 	{
-		public TextMeshProUGUI textMesh;
+		private TextMeshProUGUI textMesh;
+		public TextMeshProUGUI TextMesh
+			=> textMesh != null
+				? textMesh
+				: (textMesh = GetComponent<TextMeshProUGUI>());
+
 		private static List<ContextualInputIconContainer> iconContainers
 			= new List<ContextualInputIconContainer>();
 		[SerializeField] [TextArea(1, 3)] private string text;
 
 		private void Awake()
 		{
-			InputManager.InputModeChanged += UpdateIcon;
+			InputManager.OnInputModeChanged += UpdateIcon;
+			InputManager.OnContextChanged += UpdateIcon;
 			UpdateIcon();
 		}
 
 		private void OnDestroy()
 		{
-			InputManager.InputModeChanged -= UpdateIcon;
+			InputManager.OnInputModeChanged -= UpdateIcon;
+			InputManager.OnContextChanged -= UpdateIcon;
 		}
 
 		private static InputIconSO[] modeIcons;
@@ -46,17 +53,16 @@ namespace InputHandlerSystem.UI
 			if (InputManager.GetMode() == InputMode.None) return;
 
 			InputIconSO iconSet = GetCurrentIconSet();
-			textMesh = textMesh ?? GetComponent<TextMeshProUGUI>();
 			Func<string, TMP_SpriteAssetContainer> getContainer = action => GetCurrentSpriteContainer(action);
 			string s = StringFormatter.ConvertActionTagsToRichText(text, iconSet, getContainer);
-			if (textMesh == null)
+			if (TextMesh == null)
 			{
 				Debug.Log("Text mesh is null");
 				return;
 			}
-			textMesh.text = s;
-			textMesh.gameObject.SetActive(false);
-			textMesh.gameObject.SetActive(true);
+			TextMesh.text = s;
+			TextMesh.gameObject.SetActive(false);
+			TextMesh.gameObject.SetActive(true);
 		}
 
 		public string GetText() => text;

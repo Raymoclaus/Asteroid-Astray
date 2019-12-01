@@ -5,7 +5,6 @@ using UnityEngine;
 public class ChatBehaviour : MonoBehaviour
 {
 	private IChatter chatter;
-
 	private IChatter Chatter => chatter != null
 		? chatter
 		: (chatter = GetComponent<IChatter>());
@@ -28,11 +27,13 @@ public class ChatBehaviour : MonoBehaviour
 
 	private void SendActiveDialogue(ConversationWithActions dialogue, bool skip)
 	{
+		if (!Chatter.CanSendDialogue) return;
 		ActiveDialogue?.StartDialogue(dialogue, skip);
 	}
 
 	private void SendPassiveDialogue(ConversationWithActions dialogue, bool skip)
 	{
+		if (!Chatter.CanSendDialogue) return;
 		PassiveDialogue?.StartDialogue(dialogue, skip);
 	}
 

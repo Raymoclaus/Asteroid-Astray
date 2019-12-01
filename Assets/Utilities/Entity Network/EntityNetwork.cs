@@ -220,6 +220,8 @@ public class EntityNetwork : MonoBehaviour
 	/// This will mostly be used by entities themselves as they are responsible for determining their place in the network
 	public static bool Reposition(Entity e, ChunkCoords destChunk)
 	{
+		if (e.GetCoords() == destChunk) return true;
+
 		if (!destChunk.IsValid())
 		{
 			Debug.LogWarning("Destination coordinates are invalid.");

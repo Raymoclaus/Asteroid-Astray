@@ -2,8 +2,15 @@
 
 namespace AttackData
 {
+	[RequireComponent(typeof(AttackManager))]
 	public abstract class AttackComponent : MonoBehaviour
 	{
+		private AttackManager atkMngr;
+		protected AttackManager AtkMngr
+			=> atkMngr != null
+				? atkMngr
+				: (atkMngr = GetComponent<AttackManager>());
+
 		public virtual void AssignData(object data = null)
 		{
 

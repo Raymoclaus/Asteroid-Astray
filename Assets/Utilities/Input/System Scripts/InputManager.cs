@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace InputHandlerSystem
@@ -19,7 +21,6 @@ namespace InputHandlerSystem
 		};
 
 		private static InputContext[] contexts;
-
 		private static InputContext[] Contexts
 			=> contexts != null
 				? contexts
@@ -29,40 +30,16 @@ namespace InputHandlerSystem
 		private static InputContext currentContext;
 		public static InputContext CurrentContext
 		{
-			get
+			get => currentContext;
+			set
 			{
-				if (mostRecentContextController == null)
-				{
-					currentContext = null;
-				}
-				if (currentContext != null) return currentContext;
-				ContextController[] contextCtrls = Object.FindObjectsOfType<ContextController>();
-				if (contextCtrls.Length != 0)
-				{
-					ContextController contextCtrl = contextCtrls[0];
-					for (int i = 1; i < contextCtrls.Length; i++)
-					{
-						if (contextCtrls[i].priority > contextCtrl.priority)
-						{
-							contextCtrl = contextCtrls[i];
-						}
-					}
-					mostRecentContextController = contextCtrl;
-					SetContext(contextCtrl.contextName);
-					return currentContext;
-				}
-				InputContext[] anyContext = Contexts;
-				if (anyContext.Length != 0)
-				{
-					SetContext(anyContext[0].contextName);
-				}
-				return currentContext;
+				currentContext = value;
+				Debug.Log($"Input context set to {currentContext.contextName}");
+				OnContextChanged?.Invoke();
 			}
 		}
-		private static ContextController mostRecentContextController;
 
-		public delegate void InputModeChangedEventHandler();
-		public static event InputModeChangedEventHandler InputModeChanged;
+		public static event Action OnInputModeChanged, OnContextChanged;
 
 		private static void CheckForModeUpdate()
 		{
@@ -87,7 +64,7 @@ namespace InputHandlerSystem
 			if (prevMode != mode)
 			{
 				Debug.LogWarning($"Input mode set to: {mode}");
-				InputModeChanged?.Invoke();
+				OnInputModeChanged?.Invoke();
 			}
 		}
 
@@ -142,7 +119,7 @@ namespace InputHandlerSystem
 
 		public static void SetContext(string contextName)
 		{
-			if (currentContext != null && currentContext.contextName == contextName) return;
+			if (CurrentContext != null && CurrentContext.contextName == contextName) return;
 			
 			if (Contexts.Length == 0) return;
 
@@ -150,8 +127,7 @@ namespace InputHandlerSystem
 			{
 				if (string.Compare(Contexts[i].contextName.ToLower(), contextName.ToLower()) == 0)
 				{
-					Debug.Log($"Input context set to {contextName}");
-					currentContext = Contexts[i];
+					CurrentContext = Contexts[i];
 					return;
 				}
 			}
