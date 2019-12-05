@@ -1,13 +1,15 @@
 ﻿using UnityEngine;
+using UnityEngine.Events;
 
 namespace MovementBehaviours
 {
 	public class RepositionBehaviour : MovementBehaviour
 	{
-		private Vector3 repositionLocation;
+		public Vector3 repositionLocation;
 		public bool IsRepositioning { get; private set; }
 		private bool slowDownBeforeReachingPosition;
 		private float goalRadius;
+		public UnityEvent OnReachedGoal;
 
 		protected virtual void Update()
 		{
@@ -17,6 +19,7 @@ namespace MovementBehaviours
 				{
 					SlowDown();
 					IsRepositioning = false;
+					OnReachedGoal?.Invoke();
 				}
 				else
 				{
@@ -38,5 +41,4 @@ namespace MovementBehaviours
 
 		protected bool IsWithinGoalRadius => DistanceToGoal <= goalRadius;
 	}
-
 }

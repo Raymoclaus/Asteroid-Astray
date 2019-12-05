@@ -5,6 +5,8 @@ namespace MovementBehaviours
 	[RequireComponent(typeof(IPhysicsController))]
 	public abstract class MovementBehaviour : MonoBehaviour
 	{
+		[SerializeField] private bool triggerSelfUpdate = true;
+
 		public delegate void RollEventHandler(Vector3 direction);
 		public event RollEventHandler OnRoll;
 		protected void TriggerRoll(Vector3 direction) => OnRoll?.Invoke(direction);
@@ -29,6 +31,12 @@ namespace MovementBehaviours
 			: attackLayer;
 
 		[SerializeField] private float originalSpeed = 5f;
+
+		protected void Update()
+		{
+			if (!triggerSelfUpdate) return;
+			TriggerUpdate();
+		}
 
 		public virtual void TriggerUpdate() { }
 
@@ -75,9 +83,9 @@ namespace MovementBehaviours
 		protected void MoveAwayFromPosition(Vector3 position)
 			=> PhysicsController?.MoveAwayFromPosition(position, Speed);
 
-		protected void SlowDown() => PhysicsController?.SlowDown();
+		public void SlowDown() => PhysicsController?.SlowDown();
 
-		protected void Stop() => PhysicsController?.Stop();
+		public void Stop() => PhysicsController?.Stop();
 
 		protected void SetVelocity(Vector3 direction)
 			=> PhysicsController?.SetVelocity(direction);
@@ -85,5 +93,4 @@ namespace MovementBehaviours
 		protected void FaceDirection(Vector3 direction)
 			=> PhysicsController?.FaceDirection(direction);
 	}
-
 }

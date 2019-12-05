@@ -43,7 +43,7 @@ namespace DialogueSystem
 			=> index >= 0 && index < Length
 				? conversationEvent.conversation[index] : null;
 
-		public EntityProfile[] Speakers => conversationEvent.speakers;
+		public CharacterProfile[] Speakers => conversationEvent.speakers;
 
 		public ConversationEventPosition NextConversation
 			=> conversationEvent.GetNextConversation();

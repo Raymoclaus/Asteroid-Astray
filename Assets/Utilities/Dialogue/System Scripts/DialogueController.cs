@@ -11,7 +11,7 @@ namespace DialogueSystem
 			OnStartDelayedText; 
 
 		private ConversationWithActions currentConversation;
-		private EntityProfile[] speakers;
+		private CharacterProfile[] speakers;
 		private int currentPosition = -1;
 		private List<ConversationWithActions> dialogueQueue = new List<ConversationWithActions>();
 		private const float CHARACTER_REVEAL_TIME = 0.03f;
@@ -44,6 +44,8 @@ namespace DialogueSystem
 			{
 				if (CurrentSpeakerTone != null)
 				{
+					//audioSource.Stop();
+					//audioSource.Play();
 					audioSource.PlayOneShot(CurrentSpeakerTone);
 				}
 			}
@@ -146,13 +148,14 @@ namespace DialogueSystem
 		private void GetDialogueLine(DialogueTextEvent textEvent)
 		{
 			int speakerID = textEvent.speakerID;
-			EntityProfile currentSpeaker = speakers[speakerID];
+			CharacterProfile currentSpeaker = speakers[speakerID];
 			CurrentSpeakerID = speakerID;
-			CurrentSpeakerName = currentSpeaker.entityName;
+			CurrentSpeakerName = currentSpeaker.characterName;
 			CurrentSpeakerText = textEvent.line;
 			TextLength = GetTextLength(CurrentSpeakerText);
 			CurrentSpeakerFace = currentSpeaker.face;
 			CurrentSpeakerTone = currentSpeaker.chatTone;
+			audioSource.clip = CurrentSpeakerTone;
 			CharacterRevealSpeedMultiplier = textEvent.characterRevealSpeedMultiplier;
 
 			float delay = textEvent.delay;

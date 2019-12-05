@@ -72,7 +72,7 @@ namespace InventorySystem
 		{
 			following = true;
 			Follow.PhysicsController.CanMove = true;
-			Follow.OnReachedTarget += GiveItem;
+			Follow.OnReachedTarget.AddListener(GiveItem);
 		}
 
 		public void SetTarget(IInventoryHolder inventoryHolder)

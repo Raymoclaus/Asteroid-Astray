@@ -9,7 +9,7 @@ namespace DialogueSystem
 	public class ConversationEvent : ScriptableObject
 	{
 		[SerializeField] private TextAsset conversationFile;
-		public EntityProfile[] speakers;
+		public CharacterProfile[] speakers;
 		public DialogueTextEvent[] conversation;
 
 		public virtual ConversationEventPosition GetNextConversation()
@@ -34,32 +34,68 @@ namespace DialogueSystem
 			string convo = conversationFile.text;
 			string[] lines = convo.Split('\n');
 			DialogueTextEvent[] previousConversation = conversation;
-			if (conversation == null)
+			int fileLineCount = LineCountFromFile;
+			if (conversation == null || conversation.Length != fileLineCount)
 			{
-				conversation = new DialogueTextEvent[lines.Length];
+				conversation = new DialogueTextEvent[fileLineCount];
 				previousConversation = conversation;
 			}
 
 			int previousLength = previousConversation.Length;
-
-			for (int i = 0; i < lines.Length; i++)
+			int lineCounter = 0;
+			for (int i = 0; lineCounter < fileLineCount; i++)
 			{
 				string[] line = lines[i].Split('|');
-				byte speaker = previousLength <= i ? (byte)0 : previousConversation[i].speakerID;
-				float delay = previousLength <= i ? 0f : previousConversation[i].delay;
-				float revealSpeed = previousLength <= i ? 1f : previousConversation[i].characterRevealSpeedMultiplier;
-				conversation[i] = new DialogueTextEvent();
+				byte speaker = (previousLength <= lineCounter || previousConversation[lineCounter] == null)
+					? (byte)0
+					: previousConversation[lineCounter].speakerID;
+				float delay = (previousLength <= lineCounter || previousConversation[lineCounter] == null)
+					? 0f
+					: previousConversation[lineCounter].delay;
+				float revealSpeed = (previousLength <= lineCounter || previousConversation[lineCounter] == null)
+					? 1f
+					: previousConversation[lineCounter].characterRevealSpeedMultiplier;
 				if (line.Length > 1 && byte.TryParse(line[0], out speaker))
 				{
-					conversation[i].speakerID = speaker;
-					conversation[i].delay = delay;
-					conversation[i].characterRevealSpeedMultiplier = revealSpeed;
-					conversation[i].line = line[1];
+					conversation[lineCounter] = new DialogueTextEvent();
+					conversation[lineCounter].speakerID = speaker;
+					conversation[lineCounter].delay = delay;
+					conversation[lineCounter].characterRevealSpeedMultiplier = revealSpeed;
+					conversation[lineCounter].line = line[1];
+					lineCounter++;
 				}
+				//check for comment
+				else if (line.Length == 1 && line[0].Length > 0 && line[0][0] == '#')
+				{
+
+				}
+				//check for invalid line
 				else
 				{
-					conversation[i].line = DialogueTextEvent.DEFAULT_LINE;
+					conversation[lineCounter] = new DialogueTextEvent();
+					conversation[lineCounter].line = DialogueTextEvent.DEFAULT_LINE;
+					lineCounter++;
 				}
+			}
+		}
+
+		/// <summary>
+		/// Returns number of lines in text file. Excludes blank and comment lines.
+		/// </summary>
+		private int LineCountFromFile
+		{
+			get
+			{
+				string[] lines = conversationFile.text.Split('\n');
+				int counter = 0;
+				for (int i = 0; i < lines.Length; i++)
+				{
+					string line = lines[i];
+					if (line.Length == 0 || line[0] == '#') continue;
+					counter++;
+				}
+
+				return counter;
 			}
 		}
 

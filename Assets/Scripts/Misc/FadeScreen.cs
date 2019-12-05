@@ -5,6 +5,8 @@ using UnityEngine;
 [RequireComponent(typeof(CanvasGroup))]
 public class FadeScreen : MonoBehaviour
 {
+	[SerializeField] private AnimationCurve fadeInCurve, fadeOutCurve;
+
 	private static FadeScreen instance;
 	private static FadeScreen Instance
 	{
@@ -38,5 +40,19 @@ public class FadeScreen : MonoBehaviour
 		{
 			CGroup.alpha = delta;
 		}, finishedAction);
+	}
+
+	public void FadeIn(float duration)
+	{
+		Coroutines.TimedAction(duration,
+			delta => CGroup.alpha = fadeInCurve.Evaluate(delta),
+			null);
+	}
+
+	public void FadeOut(float duration)
+	{
+		Coroutines.TimedAction(duration,
+			delta => CGroup.alpha = fadeOutCurve.Evaluate(delta),
+			null);
 	}
 }

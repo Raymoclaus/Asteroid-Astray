@@ -20,6 +20,7 @@ namespace PhysicsControllers
 		[SerializeField] private float stoppingMomentumMultiplier = 0.5f;
 		private bool applyingForce = false;
 		private bool canMove = true;
+		public Vector2 initialFacingDirection = Vector2.down;
 		private Vector2 direction = Vector2.down;
 		public Direction Facing
 		{
@@ -48,6 +49,8 @@ namespace PhysicsControllers
 			TimerTracker.AddTimer(blockMovementTimerID, 0f, null, null);
 			deactivateColliderTimerID = gameObject.GetInstanceID() + "Deactivate Collider Timer";
 			TimerTracker.AddTimer(deactivateColliderTimerID, 0f, () => EnableCollider = true, null);
+
+			FaceDirection(initialFacingDirection);
 		}
 
 		protected virtual void FixedUpdate()
@@ -179,6 +182,14 @@ namespace PhysicsControllers
 			animController?.SetDirection(angle);
 			OnDirectionChanged?.Invoke(angle);
 		}
+
+		public void FaceUp() => FaceDirection(Vector3.up);
+
+		public void FaceRight() => FaceDirection(Vector3.right);
+
+		public void FaceDown() => FaceDirection(Vector3.down);
+
+		public void FaceLeft() => FaceDirection(Vector3.left);
 
 		public bool EnableCollider
 		{

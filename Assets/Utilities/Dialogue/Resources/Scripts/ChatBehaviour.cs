@@ -1,7 +1,6 @@
 ﻿using DialogueSystem;
 using UnityEngine;
 
-[RequireComponent(typeof(IChatter))]
 public class ChatBehaviour : MonoBehaviour
 {
 	private IChatter chatter;

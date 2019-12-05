@@ -3,9 +3,9 @@
 namespace DialogueSystem
 {
 	[CreateAssetMenu(menuName = "Scriptable Objects/Entity Profile")]
-	public class EntityProfile : ScriptableObject
+	public class CharacterProfile : ScriptableObject
 	{
-		public string entityName;
+		public string characterName;
 		public Sprite face;
 		public AudioClip chatTone;
 	}

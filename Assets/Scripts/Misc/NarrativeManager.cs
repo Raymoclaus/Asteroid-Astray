@@ -50,7 +50,7 @@ public class NarrativeManager : MonoBehaviour, IChatter
 	private List<ConversationWithActions> conversations;
 
 	[Header("Entity Profiles")]
-	[SerializeField] private EntityProfile claire;
+	[SerializeField] private CharacterProfile claire;
 
 	[SerializeField] private Entity botHivePrefab, soloBotPrefab;
 

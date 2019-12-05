@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace MovementBehaviours
 {
@@ -7,7 +8,7 @@ namespace MovementBehaviours
 	{
 		public float goalDistance = 0.1f;
 
-		public event Action OnReachedTarget;
+		public UnityEvent OnReachedTarget;
 
 		public override void TriggerUpdate()
 		{

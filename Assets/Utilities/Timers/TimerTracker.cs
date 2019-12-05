@@ -14,7 +14,7 @@ public static class TimerTracker
 	{
 		MonoEventHolder meh = new GameObject("Timer Tracker Object")
 			.AddComponent<MonoEventHolder>();
-		meh.OnUpdateEvent += Update;
+		meh.OnUpdateAction += Update;
 		return meh;
 	}
 

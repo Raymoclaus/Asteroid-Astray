@@ -36,6 +36,11 @@ public static class SaveLoad
 		File.WriteAllText(KeyPath(appendedPath, key), textToSave);
 	}
 
+	public static void SaveText(string key, string textToSave)
+	{
+		SaveText(string.Empty, key, textToSave);
+	}
+
 	public static string LoadText(string key)
 	{
 		if (!SaveExists(key)) return default;
@@ -55,5 +60,30 @@ public static class SaveLoad
 		DirectoryInfo directory = new DirectoryInfo(path);
 		directory.Delete(true);
 		Directory.CreateDirectory(path);
+	}
+
+	public abstract class DataModule
+	{
+		public string parameterName;
+		public string data;
+
+		public DataModule(string name, string data)
+		{
+			parameterName = name;
+			this.data = data;
+		}
+
+		public DataModule(string name) : this(name, default)
+		{
+
+		}
+	}
+
+	public class DataModule<T> : DataModule
+	{
+		public DataModule(string name, string data) : base(name, data)
+		{
+
+		}
 	}
 }

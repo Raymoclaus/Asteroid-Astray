@@ -10,7 +10,10 @@ namespace MovementBehaviours
 			InputManager.SetContext("Ground");
 		}
 
-		protected void Update() => GetMovementInput();
+		public override void TriggerUpdate()
+		{
+			GetMovementInput();
+		}
 
 		private void GetMovementInput()
 		{

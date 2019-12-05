@@ -3,5 +3,5 @@ using UnityEngine;
 
 public class EntityProfileComponent : MonoBehaviour
 {
-	public EntityProfile profile;
+	public CharacterProfile profile;
 }
