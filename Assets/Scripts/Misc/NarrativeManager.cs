@@ -12,9 +12,11 @@ using UnityEngine;
 
 public class NarrativeManager : MonoBehaviour, IChatter
 {
+	[SerializeField] private ItemObject copper, iron, repairKit, corruptedCorvorite;
 	public static bool ShuttleRepaired { get; private set; }
 	public static bool ShipRecharged { get; private set; }
-	
+
+	[SerializeField] private LimitedScriptedDrops scriptedDrops;
 	[SerializeField] private Character mainChar;
 	private Character MainChar => mainChar != null ? mainChar
 		: (mainChar = FindObjectOfType<Character>());
@@ -95,12 +97,10 @@ public class NarrativeManager : MonoBehaviour, IChatter
 		List<QuestReward> qRewards = new List<QuestReward>();
 
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-
-		const Item.Type copper = Item.Type.Copper;
+		
 		qReqs.Add(new GatheringQReq(copper, 2,
 			MainChar, "Obtain {0} {1} from asteroids: {2} / {0}"));
-
-		const Item.Type iron = Item.Type.Iron;
+		
 		qReqs.Add(new GatheringQReq(iron,
 			MainChar, "Obtain {0} {1} from asteroids: {2} / {0}"));
 
@@ -132,7 +132,6 @@ public class NarrativeManager : MonoBehaviour, IChatter
 		List<QuestReward> qRewards = new List<QuestReward>();
 
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-		const Item.Type repairKit = Item.Type.RepairKit;
 		qReqs.Add(new CraftingQReq(repairKit,
 			MainChar, "Construct {0} {1} using 2 copper and 1 iron"));
 
@@ -160,7 +159,6 @@ public class NarrativeManager : MonoBehaviour, IChatter
 		List<QuestReward> qRewards = new List<QuestReward>();
 
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-		Item.Type repairKit = Item.Type.RepairKit;
 		qReqs.Add(new ItemUseQReq(repairKit, MainChar));
 
 		Quest q = new Quest(
@@ -234,7 +232,7 @@ public class NarrativeManager : MonoBehaviour, IChatter
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
 		Waypoint wp = Waypoint.CreateWaypoint(MainChar, entityPrompt,
 			entityPrompt.PivotPosition);
-		qReqs.Add(new GatheringQReq(Item.Type.CorruptedCorvorite,
+		qReqs.Add(new GatheringQReq(corruptedCorvorite,
 			MainChar, "Find the nearby energy source.", wp));
 
 		Quest q = new Quest(
@@ -275,13 +273,13 @@ public class NarrativeManager : MonoBehaviour, IChatter
 	private void CompletedRechargeTheShipQuest(Quest quest)
 	{
 		StartDialogue(rechargedTheShipConversation, false);
-		TakeItem(Item.Type.CorruptedCorvorite, 1);
+		TakeItem(corruptedCorvorite, 1);
 		MainHatch.IsLocked = false;
 		ShipRecharged = true;
 	}
 
 	public void ActivateScriptedDrops(bool activate)
-		=> FirstQuestScriptedDrops.scriptedDropsActive = activate;
+		=> scriptedDrops.scriptedDropsActive = activate;
 
 	public void SetShuttleRepaired(bool repaired)
 	{
@@ -289,7 +287,7 @@ public class NarrativeManager : MonoBehaviour, IChatter
 		ShuttleRepaired = repaired;
 	}
 
-	public void TakeItem(Item.Type type, int amount) => MainChar.TakeItem(type, amount);
+	public void TakeItem(ItemObject type, int amount) => MainChar.TakeItem(type, amount);
 
 	private void GiveQuest(Quester quester, Quest q) => quester.AcceptQuest(q);
 

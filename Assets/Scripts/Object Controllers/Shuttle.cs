@@ -397,9 +397,9 @@ public class Shuttle : Character, IStunnable, ICombat
 		return ld;
 	}
 
-	public void ReceiveItem(Item.Type type, int amount)
+	public void ReceiveItem(ItemObject type, int amount)
 	{
-		if (type == Item.Type.Blank || amount == 0) return;
+		if (type == ItemObject.Blank || amount == 0) return;
 
 		//increase pitch of sound for successive resource collection, reset after a break
 		if (Pause.timeSinceOpen - resourceCollectedTime < 1f)
@@ -480,7 +480,7 @@ public class Shuttle : Character, IStunnable, ICombat
 
 	protected override bool CheckItemUsage(int itemIndex)
 	{
-		Item.Type itemType = DefaultInventory.ItemStacks[itemIndex].ItemType;
+		ItemObject itemType = DefaultInventory.ItemStacks[itemIndex].ItemType;
 		if (!base.CheckItemUsage(itemIndex)) return false;
 		return true;
 	}
@@ -762,7 +762,7 @@ public class Shuttle : Character, IStunnable, ICombat
 
 	public override ICombat GetICombat() => this;
 
-	public override bool TakeItem(Item.Type type, int amount) => DefaultInventory.RemoveItem(type, amount);
+	public override bool TakeItem(ItemObject type, int amount) => DefaultInventory.RemoveItem(type, amount);
 
 	public override Scan ReturnScan() => new Scan(GetEntityType(), 1f, GetLevel(), GetValue());
 

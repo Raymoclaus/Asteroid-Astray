@@ -7,7 +7,7 @@ namespace InventorySystem
 	public class Storage : MonoBehaviour
 	{
 		//index, type, new amount
-		public event Action<int, Item.Type, int> OnStackUpdated;
+		public event Action<int, ItemObject, int> OnStackUpdated;
 		//old size, new size
 		public event Action<int, int> OnSizeChanged;
 
@@ -41,7 +41,7 @@ namespace InventorySystem
 			TrimPadStacks();
 		}
 
-		public int AmountOfItem(Item.Type type)
+		public int AmountOfItem(ItemObject type)
 		{
 			int amount = 0;
 			for (int i = 0; i < ItemStacks.Count; i++)
@@ -60,11 +60,15 @@ namespace InventorySystem
 
 		public bool ContainsAnyItems => EmptySlotCount< size;
 
-		public int Count(Item.Type? include = null, int minRarity = Item.MIN_RARITY,
-			int maxRarity = Item.MAX_RARITY)
-			=> ItemStack.Count(ItemStacks, include, minRarity, maxRarity);
+		public int CountAll => ItemStack.Count(ItemStacks);
 
-		public int AddToStack(Item.Type itemType, int amount, int index)
+		public int Count(ItemObject type) => ItemStack.Count(ItemStacks, type);
+
+		public int Count(int minRarity, int maxRarity) => ItemStack.Count(ItemStacks, minRarity, maxRarity);
+
+		public int Count(int rarity) => ItemStack.Count(ItemStacks, rarity);
+
+		public int AddToStack(ItemObject itemType, int amount, int index)
 		{
 			if (index < 0 || index >= Size) return amount;
 			ItemStack stack = ItemStacks[index];
@@ -81,7 +85,7 @@ namespace InventorySystem
 		/// <param name="type"></param>
 		/// <param name="num"></param>
 		/// <returns>Returns number of items left over, due to not having room for them.</returns>
-		public int AddItem(Item.Type type, int num = 1)
+		public int AddItem(ItemObject type, int num = 1)
 			=> ItemStack.AddItem(ItemStacks, type, num, noLimit,
 				GetStackUpdatedInvoker, GetSizeChangedInvoker);
 
@@ -104,7 +108,7 @@ namespace InventorySystem
 			=> ItemStack.AddItems(ItemStacks, items, noLimit,
 				GetStackUpdatedInvoker, GetSizeChangedInvoker);
 
-		public bool RemoveItem(Item.Type type, int num = 1)
+		public bool RemoveItem(ItemObject type, int num = 1)
 			=> ItemStack.RemoveItem(ItemStacks, type, num, GetStackUpdatedInvoker);
 
 		public bool RemoveItem(ItemStack stack)
@@ -117,7 +121,7 @@ namespace InventorySystem
 		public List<ItemStack> CreateCopyOfStacks()
 			=> ItemStack.CreateCopyOfStacks(ItemStacks);
 
-		public int SpaceLeftForItemType(Item.Type type, bool includeEmptyStacks)
+		public int SpaceLeftForItemType(ItemObject type, bool includeEmptyStacks)
 			=> ItemStack.SpaceLeftForItemType(ItemStacks, type, includeEmptyStacks);
 
 		public bool CanFit(List<ItemStack> items)
@@ -130,7 +134,7 @@ namespace InventorySystem
 
 		public int NonEmptyCount => ItemStack.GetNonEmptyCount(ItemStacks);
 
-		public bool Contains(Item.Type type, int amount)
+		public bool Contains(ItemObject type, int amount)
 			=> ItemStack.Count(ItemStacks, type) >= amount;
 
 		public bool Contains(ItemStack stack)
@@ -140,7 +144,7 @@ namespace InventorySystem
 		{
 			for (int i = 0; i < stacks.Count; i++)
 			{
-				Item.Type type = stacks[i].ItemType;
+				ItemObject type = stacks[i].ItemType;
 				int expectedAmount = ItemStack.Count(stacks, type);
 				if (!Contains(type, expectedAmount)) return false;
 			}
@@ -182,27 +186,11 @@ namespace InventorySystem
 			TrimPadStacks();
 		}
 
-		public int[] CountRarities(Item.Type? exclude = null)
-		{
-			int[] counts = new int[Item.MAX_RARITY + 1];
-			bool fltr = exclude != null;
-
-			for (int i = 0; i < ItemStacks.Count; i++)
-			{
-				ItemStack stack = ItemStacks[i];
-				if (fltr && stack.ItemType== exclude) continue;
-				int rarity = Item.TypeRarity(stack.ItemType);
-				counts[rarity] += stack.Amount;
-			}
-
-			return counts;
-		}
-
-		public void RemoveByRarity(int rarity, int amount, Item.Type? exclude = null)
+		public void RemoveByRarity(int rarity, int amount, ItemObject exclude = ItemObject.Blank)
 		{
 			for (int i = ItemStacks.Count - 1; i >= 0; i--)
 			{
-				Item.Type type = ItemStacks[i].ItemType;
+				ItemObject type = ItemStacks[i].ItemType;
 				if (type == exclude) continue;
 
 				if (Item.TypeRarity(type) == rarity)
@@ -228,9 +216,9 @@ namespace InventorySystem
 		{
 			if (a < 0 || b < 0 || a >= ItemStacks.Count || b >= ItemStacks.Count || a == b) return;
 
-			//Item.Type typeA = inventory[a].GetItemType();
+			//ItemObject typeA = inventory[a].GetItemType();
 			//int amountA = inventory[a].GetAmount();
-			//Item.Type typeB = inventory[b].GetItemType();
+			//ItemObject typeB = inventory[b].GetItemType();
 			//int amountB = inventory[b].GetAmount();
 
 			//inventory[a].SetItemType(typeB);
@@ -242,11 +230,11 @@ namespace InventorySystem
 			ItemStacks[b] = temp;
 		}
 
-		public bool Insert(Item.Type type, int amount, int place)
+		public bool Insert(ItemObject type, int amount, int place)
 		{
 			if (place < 0 || place >= ItemStacks.Count) return false;
 
-			if (ItemStacks[place].ItemType== Item.Type.Blank)
+			if (ItemStacks[place].ItemType== ItemObject.Blank)
 			{
 				ItemStacks[place].ItemType = type;
 				ItemStacks[place].Amount = amount;
@@ -258,7 +246,7 @@ namespace InventorySystem
 				int i = place + 1;
 				for (; i < ItemStacks.Count; i++)
 				{
-					if (ItemStacks[i].ItemType== Item.Type.Blank)
+					if (ItemStacks[i].ItemType== ItemObject.Blank)
 					{
 						forward = true;
 						break;
@@ -271,7 +259,7 @@ namespace InventorySystem
 					i = place - 1;
 					for (; i >= 0; i--)
 					{
-						if (ItemStacks[i].ItemType== Item.Type.Blank)
+						if (ItemStacks[i].ItemType== ItemObject.Blank)
 						{
 							backward = true;
 							break;
@@ -321,7 +309,7 @@ namespace InventorySystem
 			}
 		}
 
-		public int FirstInstanceId(Item.Type type)
+		public int FirstInstanceId(ItemObject type)
 		{
 			for (int i = 0; i < ItemStacks.Count; i++)
 			{
@@ -330,8 +318,8 @@ namespace InventorySystem
 			return -1;
 		}
 
-		public Action<int, Item.Type, int> GetStackUpdatedInvoker
-			=> (int index, Item.Type type, int amount) => OnStackUpdated?.Invoke(index, type, amount);
+		public Action<int, ItemObject, int> GetStackUpdatedInvoker
+			=> (int index, ItemObject type, int amount) => OnStackUpdated?.Invoke(index, type, amount);
 
 		public Action<int, int> GetSizeChangedInvoker
 			=> (int oldSize, int newSize) => OnSizeChanged?.Invoke(oldSize, newSize);

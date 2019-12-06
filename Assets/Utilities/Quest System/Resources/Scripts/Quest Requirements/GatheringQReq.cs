@@ -7,12 +7,12 @@ namespace QuestSystem.Requirements
 
 	public class GatheringQReq : QuestRequirement
 	{
-		public Item.Type typeNeeded;
+		public ItemObject typeNeeded;
 		public int amountNeeded = 1;
 		private int currentAmount = 0;
 		private IInventoryHolder inventoryHolder;
 
-		public GatheringQReq(Item.Type typeNeeded, int amountNeeded,
+		public GatheringQReq(ItemObject typeNeeded, int amountNeeded,
 			IInventoryHolder inventoryHolder, string description = null, IWaypoint waypoint = null)
 			: base(string.IsNullOrWhiteSpace(description)
 				  ? "Gather {0} {1}: {2} / {0}" : description, waypoint)
@@ -22,7 +22,7 @@ namespace QuestSystem.Requirements
 			this.inventoryHolder = inventoryHolder;
 		}
 
-		public GatheringQReq(Item.Type typeNeeded, IInventoryHolder inventoryHolder,
+		public GatheringQReq(ItemObject typeNeeded, IInventoryHolder inventoryHolder,
 			string description = null, IWaypoint waypoint = null)
 			: this(typeNeeded, 1, inventoryHolder, description, waypoint)
 		{
@@ -41,7 +41,7 @@ namespace QuestSystem.Requirements
 			inventoryHolder.OnItemCollected -= EvaluateEvent;
 		}
 
-		private void EvaluateEvent(Item.Type type, int amount)
+		private void EvaluateEvent(ItemObject type, int amount)
 		{
 			if (Completed || !active) return;
 

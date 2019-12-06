@@ -1,7 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using EquipmentSystem;
 
-public class DrillBit : MonoBehaviour
+public class DrillBit : MonoBehaviour, IEquipment
 {
 	public Collider2D drillCol;
 	public Character parent;

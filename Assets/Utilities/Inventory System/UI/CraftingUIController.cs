@@ -48,7 +48,7 @@ namespace InventorySystem.UI
 			}
 		}
 
-		private void UpdateUI(int index, Item.Type type, int amount)
+		private void UpdateUI(int index, ItemObject type, int amount)
 		{
 			for (int i = 0; i < recipeObjects.Count; i++)
 			{

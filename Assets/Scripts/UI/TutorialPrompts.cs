@@ -6,6 +6,7 @@ using InventorySystem;
 
 public class TutorialPrompts : MonoBehaviour
 {
+	private static ItemObject repairKit;
 	private Shuttle mainChar;
 	private Shuttle MainChar => mainChar ?? (mainChar = FindObjectOfType<Shuttle>());
 
@@ -119,9 +120,9 @@ public class TutorialPrompts : MonoBehaviour
 
 	private void SetUpRepairKitInputPrompt()
 	{
-		Action<Item.Type, int> action = (Item.Type type, int amount) =>
+		Action<ItemObject, int> action = (ItemObject type, int amount) =>
 		{
-			if (type != Item.Type.RepairKit) return;
+			if (type != repairKit) return;
 			repairKitInputPromptInfo.Deactivate();
 		};
 		repairKitInputPromptInfo.SetListeners(() =>
@@ -134,8 +135,7 @@ public class TutorialPrompts : MonoBehaviour
 
 		repairKitInputPromptInfo.SetCondition(() =>
 		{
-			Item.Type repairKit = Item.Type.RepairKit;
-			int id = mainChar.DefaultInventory.FirstInstanceId(Item.Type.RepairKit);
+			int id = mainChar.DefaultInventory.FirstInstanceId(repairKit);
 			if (id < 0 || Pause.IsStopped) return false;
 			string typeName = Item.TypeName(repairKit);
 			string text = id < 8 ? $"Press [Slot {id + 1}:] to use the {typeName}"

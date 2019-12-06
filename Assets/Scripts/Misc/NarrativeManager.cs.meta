@@ -3,7 +3,21 @@ guid: 958a8d7a6b2280b4982812ad99f791ca
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - copper: {fileID: 11400000, guid: fee0833da954fa748ba069530e973833, type: 2}
+  - iron: {fileID: 11400000, guid: b089d433bbadaf9428bffe6b1dbc51da, type: 2}
+  - repairKit: {fileID: 11400000, guid: 775c6175d0aa9774bb1cde616991eefb, type: 2}
+  - corruptedCorvorite: {fileID: 11400000, guid: 25507125cf0cd1d4e8025d529f15ead7,
+      type: 2}
+  - mainChar: {instanceID: 0}
+  - derangedSoloBotPrefab: {fileID: 2978078084290137110, guid: 6c0824332741a194bb146cc85e1b75ad,
+      type: 3}
+  - ty4pUI: {instanceID: 0}
+  - claire: {fileID: 11400000, guid: 08f8786f020354d458469a6f3493c55c, type: 2}
+  - botHivePrefab: {fileID: 114130478335312738, guid: f3b23c8857dc490449cdfca92b37343e,
+      type: 3}
+  - soloBotPrefab: {fileID: 2978078084290137110, guid: 64046b501e164f24f8fe69574364d982,
+      type: 3}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

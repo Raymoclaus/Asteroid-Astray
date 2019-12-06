@@ -56,15 +56,15 @@ namespace InventorySystem.UI
 			craftingUI.SetCrafter(inventoryHolder as ICrafter);
 			craftingUI.Setup();
 
-			itemPreviewUI.SetItemType(Item.Type.Blank);
+			itemPreviewUI.SetItemType(ItemObject.Blank);
 		}
 
 		public override void OnClose()
 		{
 			base.OnClose();
 
-			Item.Type grabbedItem = grabStack.ItemType;
-			if (grabbedItem == Item.Type.Blank) return;
+			ItemObject grabbedItem = grabStack.ItemType;
+			if (grabbedItem == ItemObject.Blank) return;
 			Storage inv = inventoryHolder.GetAppropriateInventory(grabbedItem);
 			inv.AddItem(new ItemStack(grabStack.ItemType, grabStack.Amount));
 			grabStack.SetStack(new ItemStack());
@@ -87,18 +87,18 @@ namespace InventorySystem.UI
 			grabStack.transform.position = pos;
 		}
 
-		private void UpdatePreview(Item.Type type)
+		private void UpdatePreview(ItemObject type)
 		{
-			Item.Type previewType =
+			ItemObject previewType =
 				IsGrabbing ? grabStack.ItemType : type;
-			if (previewType == Item.Type.Blank) return;
+			if (previewType == ItemObject.Blank) return;
 
 			itemPreviewUI.SetItemType(previewType);
 		}
 
 		public void SlotHover(Slot slot)
 		{
-			Item.Type slotType = slot.ItemType;
+			ItemObject slotType = slot.ItemType;
 			UpdatePreview(slotType);
 		}
 
@@ -120,6 +120,6 @@ namespace InventorySystem.UI
 
 		public Slot SlotLastClickedIn { get; set; }
 
-		public bool IsGrabbing => grabStack.ItemType != Item.Type.Blank;
+		public bool IsGrabbing => grabStack.ItemType != ItemObject.Blank;
 	}
 }

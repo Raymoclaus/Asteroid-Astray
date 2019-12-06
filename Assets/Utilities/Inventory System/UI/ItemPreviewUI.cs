@@ -8,9 +8,8 @@ namespace InventorySystem.UI
 	{
 		[SerializeField] private Image image;
 		[SerializeField] private TextMeshProUGUI itemName, description, flavourText;
-		[SerializeField] private ItemSprites sprites;
 
-		public void SetItemType(Item.Type type)
+		public void SetItemType(ItemObject type)
 		{
 			SetImage(type);
 			SetItemName(type);
@@ -18,23 +17,23 @@ namespace InventorySystem.UI
 			SetFlavourText(type);
 		}
 
-		private void SetImage(Item.Type type)
+		private void SetImage(ItemObject type)
 		{
-			image.sprite = sprites.GetItemSprite(type);
-			image.color = type == Item.Type.Blank ? Color.clear : Color.white;
+			image.sprite = Item.GetItemSprite(type);
+			image.color = type == ItemObject.Blank ? Color.clear : Color.white;
 		}
 
-		private void SetItemName(Item.Type type)
+		private void SetItemName(ItemObject type)
 		{
 			itemName.text = Item.TypeName(type);
 		}
 
-		private void SetDescription(Item.Type type)
+		private void SetDescription(ItemObject type)
 		{
 			description.text = Item.Description(type);
 		}
 
-		private void SetFlavourText(Item.Type type)
+		private void SetFlavourText(ItemObject type)
 		{
 			flavourText.text = Item.FlavourText(type);
 		}

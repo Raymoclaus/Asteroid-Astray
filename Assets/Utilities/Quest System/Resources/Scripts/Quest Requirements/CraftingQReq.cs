@@ -8,12 +8,12 @@ namespace QuestSystem.Requirements
 
 	public class CraftingQReq : QuestRequirement
 	{
-		public Item.Type typeNeeded;
+		public ItemObject typeNeeded;
 		public int amountNeeded = 1;
 		private int currentAmount = 0;
 		private ICrafter crafter;
 
-		public CraftingQReq(Item.Type typeNeeded, int amountNeeded,
+		public CraftingQReq(ItemObject typeNeeded, int amountNeeded,
 			ICrafter crafter, string description = null)
 			: base(string.IsNullOrWhiteSpace(description)
 				  ? "Craft {0} {1}: {2} / {0}" : description, null)
@@ -23,7 +23,7 @@ namespace QuestSystem.Requirements
 			this.crafter = crafter;
 		}
 
-		public CraftingQReq(Item.Type typeNeeded, ICrafter crafter,
+		public CraftingQReq(ItemObject typeNeeded, ICrafter crafter,
 			string description = null)
 			: this(typeNeeded, 1, crafter, description)
 		{

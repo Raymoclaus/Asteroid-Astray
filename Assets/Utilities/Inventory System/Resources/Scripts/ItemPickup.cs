@@ -9,8 +9,8 @@ namespace InventorySystem
 	{
 		[SerializeField] private SpriteRenderer sprRend;
 
-		private Item.Type itemType;
-		public Item.Type ItemType
+		private ItemObject itemType;
+		public ItemObject ItemType
 		{
 			get => itemType;
 			set
@@ -20,7 +20,7 @@ namespace InventorySystem
 			}
 		}
 
-		public void SetItemType(Item.Type type)
+		public void SetItemType(ItemObject type)
 		{
 			itemType = type;
 			UpdateSprite();
@@ -28,14 +28,8 @@ namespace InventorySystem
 
 		private void UpdateSprite()
 		{
-			sprRend.sprite = Sprites.GetItemSprite(itemType);
+			sprRend.sprite = Item.GetItemSprite(itemType);
 		}
-
-		private static ItemSprites sprites;
-		private static ItemSprites Sprites
-			=> sprites != null
-				? sprites
-				: (sprites = Resources.Load<ItemSprites>("Inventory System Scriptable Objects/ItemSpritesSO"));
 
 		public void SendItem(IInteractor interactor) => interactor.Interact(itemType);
 

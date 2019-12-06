@@ -24,7 +24,7 @@ namespace InventorySystem.UI
 			Inventory.OnStackUpdated -= UpdateStack;
 		}
 
-		private void UpdateStack(int index, Item.Type type, int amount)
+		private void UpdateStack(int index, ItemObject type, int amount)
 		{
 			if (index != ID) return;
 			SetStack(type, amount);
@@ -58,7 +58,7 @@ namespace InventorySystem.UI
 			inventoryUI.SlotClickDown(this);
 		}
 
-		public Item.Type ItemType
+		public ItemObject ItemType
 		{
 			get => stackUI.ItemType;
 			set => stackUI.ItemType = value;
@@ -72,7 +72,7 @@ namespace InventorySystem.UI
 
 		public void SetStack(ItemStack stack) => stackUI.SetStack(stack);
 
-		public void SetStack(Item.Type type, int amount) => stackUI.SetStack(type, amount);
+		public void SetStack(ItemObject type, int amount) => stackUI.SetStack(type, amount);
 
 		public bool IsMaxed => stackUI.IsMaxed;
 	}

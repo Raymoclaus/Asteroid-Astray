@@ -35,7 +35,7 @@ public class PlanetPlayerInteractor : InputBasedInteractor
 			Droc.Viewer.Go(startRoom, direction);
 		}
 
-		if (interactableObject is Item.Type itemType)
+		if (interactableObject is ItemObject itemType)
 		{
 			inventoryHolder.GiveItem(itemType);
 		}

@@ -28,6 +28,8 @@ public class Asteroid : Entity
 	[SerializeField]
 	private AudioSO collisionSounds;
 
+	[SerializeField] private LimitedScriptedDrops scriptedDrops;
+
 	protected override void Awake()
 	{
 		base.Awake();
@@ -75,9 +77,10 @@ public class Asteroid : Entity
 	{
 		base.DropLoot(target, dropModifier);
 
-		if (FirstQuestScriptedDrops.scriptedDropsActive)
+		if (scriptedDrops.scriptedDropsActive)
 		{
-			List<ItemStack> stacks = FirstQuestScriptedDrops.GetScriptedDrop(target);
+			LootGroup group = scriptedDrops.GetScriptedDrop(target);
+			List<ItemStack> stacks = group.GetStacks;
 			if (stacks != null)
 			{
 				for (int i = 0; i < stacks.Count; i++)

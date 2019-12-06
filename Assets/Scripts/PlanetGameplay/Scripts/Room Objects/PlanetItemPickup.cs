@@ -12,7 +12,7 @@ public class PlanetItemPickup : DestructibleInteractableObject
 	public DungeonRoomObjectComponent Droc => droc != null ? droc
 		: (droc = GetComponent<DungeonRoomObjectComponent>());
 
-	public Item.Type itemType;
+	public ItemObject itemType;
 
 	protected override void PerformAction(IInteractor interactor)
 	{

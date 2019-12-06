@@ -8,12 +8,11 @@ namespace InventorySystem.UI
 	{
 		[SerializeField] private Image img;
 		[SerializeField] private TextMeshProUGUI text;
-		[SerializeField] private ItemSprites sprites;
 		[SerializeField] private ItemStack stack = new ItemStack();
 
 		public ItemStack StackCopy => new ItemStack(stack);
 
-		public Item.Type ItemType
+		public ItemObject ItemType
 		{
 			get => stack.ItemType;
 			set
@@ -40,7 +39,7 @@ namespace InventorySystem.UI
 			SetStack(newStack.ItemType, newStack.Amount);
 		}
 
-		public void SetStack(Item.Type type, int amount)
+		public void SetStack(ItemObject type, int amount)
 		{
 			ItemType = type;
 			Amount = amount;
@@ -48,10 +47,10 @@ namespace InventorySystem.UI
 
 		private void UpdateImage()
 		{
-			img.enabled = ItemType != Item.Type.Blank;
-			if (ItemType != Item.Type.Blank)
+			img.enabled = ItemType != ItemObject.Blank;
+			if (ItemType != ItemObject.Blank)
 			{
-				img.sprite = sprites.GetItemSprite(ItemType);
+				img.sprite = Item.GetItemSprite(ItemType);
 			}
 		}
 

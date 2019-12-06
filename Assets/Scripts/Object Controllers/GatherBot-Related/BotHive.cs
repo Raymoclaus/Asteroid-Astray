@@ -9,6 +9,7 @@ using Random = UnityEngine.Random;
 [RequireComponent(typeof(HiveInventory))]
 public class BotHive : Character, ICombat
 {
+	private static ItemObject pureCorvorite;
 	[Header("Bot Hive Fields")]
 
 	#region Fields
@@ -63,7 +64,7 @@ public class BotHive : Character, ICombat
 		resourceCount = UnityEngine.Random.Range(
 			minLeftoverResources + botCreationCost * minInitialBotCount,
 			minLeftoverResources + (botCreationCost + botUpgradeCost * maxInitialUpgrades) * maxBotCount + 1);
-		inventory.AddItem(Item.Type.PureCorvorite, resourceCount);
+		inventory.AddItem(pureCorvorite, resourceCount);
 		SpendResources();
 	}
 
@@ -147,7 +148,7 @@ public class BotHive : Character, ICombat
 
 			resourceCount -= botCreationCost;
 			toBeSpent -= botCreationCost;
-			inventory.RemoveItem(Item.Type.PureCorvorite, botCreationCost);
+			inventory.RemoveItem(pureCorvorite, botCreationCost);
 		}
 		GatherBot bot = Instantiate(botPrefab);
 		bot.Create(this, botBaseHP, dockID);
@@ -167,7 +168,7 @@ public class BotHive : Character, ICombat
 		//bot.Upgrade();
 		resourceCount -= botUpgradeCost;
 		toBeSpent -= botUpgradeCost;
-		inventory.RemoveItem(Item.Type.PureCorvorite, botUpgradeCost);
+		inventory.RemoveItem(pureCorvorite, botUpgradeCost);
 	}
 
 	public void ActivateBot(int ID, Vector2 position)
@@ -293,7 +294,7 @@ public class BotHive : Character, ICombat
 		b.Activate(false);
 		dockAnims[b.dockID].SetTrigger("Dismantle1");
 		inventory.Store(items);
-		resourceCount = inventory.Count(Item.Type.PureCorvorite);
+		resourceCount = inventory.Count(pureCorvorite);
 		SpendResources(b);
 	}
 

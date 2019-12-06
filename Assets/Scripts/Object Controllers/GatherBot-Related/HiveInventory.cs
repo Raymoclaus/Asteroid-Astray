@@ -7,6 +7,8 @@ using CustomDataTypes;
 
 public class HiveInventory : Storage
 {
+	private static ItemObject pureCorvorite;
+
 	public void Store(List<ItemStack> items)
 	{
 		do
@@ -18,22 +20,20 @@ public class HiveInventory : Storage
 
 	private void ConvertResources()
 	{
-		int[] rarityCounts = CountRarities(Item.Type.PureCorvorite);
-
-		for (int i = 1; i < rarityCounts.Length; i++)
+		for (int i = Item.MIN_RARITY; i < Item.MAX_RARITY; i++)
 		{
-			int count = rarityCounts[i];
-			IntPair costReturn = rarityCostReturns(i);
+			int count = Count(i);
+			IntPair costReturn = RarityCostReturns(i);
 			if (count >= costReturn.x)
 			{
 				int amount = count / costReturn.x;
-				AddItem(Item.Type.PureCorvorite, amount);
-				RemoveByRarity(i, amount * count, Item.Type.PureCorvorite);
+				AddItem(pureCorvorite, amount);
+				RemoveByRarity(i, amount * count, pureCorvorite);
 			}
 		}
 	}
 
-	private IntPair rarityCostReturns(int rarity)
+	private IntPair RarityCostReturns(int rarity)
 	{
 		IntPair costReturn = IntPair.one;
 		switch (rarity)

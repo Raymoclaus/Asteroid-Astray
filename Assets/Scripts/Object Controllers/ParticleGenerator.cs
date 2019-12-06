@@ -90,9 +90,9 @@ public class ParticleGenerator : MonoBehaviour
 		}
 	}
 
-	public void DropResource(IInventoryHolder target, Vector2 pos, Item.Type type)
+	public void DropResource(IInventoryHolder target, Vector2 pos, ItemObject type)
 	{
-		if (type == Item.Type.Blank) return;
+		if (type == ItemObject.Blank) return;
 
 		ResourceDrop rd = Instantiate(dropPrefab);
 		rd.Create(target, pos, type);

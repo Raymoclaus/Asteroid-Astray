@@ -11,13 +11,14 @@ using AttackData;
 
 public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 {
+	protected static ItemObject repairKit;
 	[Header("Character Fields")]
 
 	[SerializeField] private Storage defaultInventory;
 	[SerializeField] private List<Storage> inventories;
-	public event Action<Item.Type, int> OnItemCollected;
+	public event Action<ItemObject, int> OnItemCollected;
 	public event Action<List<ItemStack>> OnItemsCrafted;
-	public event Action<Item.Type, int> OnItemUsed;
+	public event Action<ItemObject, int> OnItemUsed;
 	public event Action<ConversationWithActions, bool> OnSendActiveDialogue;
 	public event Action<ConversationWithActions, bool> OnSendPassiveDialogue;
 	public event Action<IActor> OnDisabled;
@@ -108,24 +109,23 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 	{
 		List<ItemStack> stacks = DefaultInventory.ItemStacks;
 		if (stacks[itemIndex].Amount<= 0) return false;
-		Item.Type type = stacks[itemIndex].ItemType;
+		ItemObject type = stacks[itemIndex].ItemType;
 		if (!UseItem(type)) return false;
 		stacks[itemIndex].RemoveAmount(1);
 		return true;
 	}
 
-	protected bool UseItem(Item.Type type)
+	protected bool UseItem(ItemObject type)
 	{
 		bool used = false;
 		int amountUsed = 0;
-		switch (type)
+
+		if (type == repairKit)
 		{
-			default: break;
-			case Item.Type.RepairKit:
-				used = true;
-				amountUsed = 1;
-				break;
+			used = true;
+			amountUsed = 1;
 		}
+
 		if (used)
 		{
 			TimerTracker.SetTimer(itemUseCooldownTimerID, itemUseCooldownDuration);
@@ -134,15 +134,15 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 		return used;
 	}
 
-	public ref Action<Item.Type, int> GetOnItemUsedEvent => ref OnItemUsed;
+	public ref Action<ItemObject, int> GetOnItemUsedEvent => ref OnItemUsed;
 
-	public virtual Storage GetAppropriateInventory(Item.Type itemType) => defaultInventory;
+	public virtual Storage GetAppropriateInventory(ItemObject itemType) => defaultInventory;
 
 	private bool CanUseItem => !ItemUsageOnCooldown;
 
 	private bool ItemUsageOnCooldown => TimerTracker.GetTimer(itemUseCooldownTimerID) > 0f;
 
-	public virtual bool TakeItem(Item.Type type, int amount) => false;
+	public virtual bool TakeItem(ItemObject type, int amount) => false;
 
 	protected override void DropLoot(IInventoryHolder target, float dropModifier)
 	{
@@ -227,7 +227,7 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 
 	public virtual GameObject GetLaunchImpactAnimation() => drillLaunchImpactEffect;
 
-	public virtual int GiveItem(Item.Type itemType)
+	public virtual int GiveItem(ItemObject itemType)
 	{
 		Storage inv = GetAppropriateInventory(itemType);
 		int remainingItems = inv.AddItem(itemType);
@@ -244,7 +244,7 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 
 	public virtual int GiveItem(ItemStack stack)
 	{
-		Item.Type itemType = stack.ItemType;
+		ItemObject itemType = stack.ItemType;
 		int amount = stack.Amount;
 		Storage inv = GetAppropriateInventory(itemType);
 		int remainingItems = inv.AddItem(itemType, amount);
@@ -260,7 +260,8 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 		"Gives an item to the Shuttle")]
 	public void GiveItemCommand(string itemName, int amount)
 	{
-		bool successful = Enum.TryParse(itemName, true, out Item.Type itemType);
+		ItemObject itemType = Item.GetItemByName(itemName);
+		bool successful = itemType != null;
 		if (!successful)
 		{
 			Debug.Log($"No Item with name {itemName} found.");
@@ -286,7 +287,7 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 
 	public virtual object ObjectOrderRequest(object order)
 	{
-		if (order is Item.Type itemType)
+		if (order is ItemObject itemType)
 		{
 			Storage inv = GetAppropriateInventory(itemType);
 			bool removed = inv.RemoveItem(itemType);
@@ -304,7 +305,7 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 
 	public virtual void Interact(object interactableObject)
 	{
-		if (interactableObject is Item.Type itemType)
+		if (interactableObject is ItemObject itemType)
 		{
 			defaultInventory.AddItem(itemType);
 			return;
@@ -323,7 +324,7 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 		for (int i = 0; i < ingredients.Count; i++)
 		{
 			ItemStack stack = ingredients[i];
-			Item.Type type = stack.ItemType;
+			ItemObject type = stack.ItemType;
 			Storage inv = GetAppropriateInventory(type);
 			if (ItemStack.Count(inv.ItemStacks, type) < stack.Amount) return false;
 		}
@@ -353,7 +354,7 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 	{
 		for (int i = 0; i < stacks.Count; i++)
 		{
-			Item.Type type = stacks[i].ItemType;
+			ItemObject type = stacks[i].ItemType;
 			Storage inv = GetAppropriateInventory(type);
 			int expectedAmount = ItemStack.Count(stacks, type);
 			if (ItemStack.Count(inv.ItemStacks, type) < expectedAmount) return false;
@@ -370,7 +371,7 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 		List<ItemStack> results = recipe.ResultsCopy;
 		for (int i = 0; i < ingredients.Count; i++)
 		{
-			Item.Type type = ingredients[i].ItemType;
+			ItemObject type = ingredients[i].ItemType;
 			Storage inv = GetAppropriateInventory(type);
 			if (relatedInventories.Contains(inv)) continue;
 			List<ItemStack> invStacks = inv.CreateCopyOfStacks();
@@ -379,7 +380,7 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 
 			for (int j = 0; j < results.Count; j++)
 			{
-				Item.Type resultItemType = results[i].ItemType;
+				ItemObject resultItemType = results[i].ItemType;
 				Storage inv2 = GetAppropriateInventory(resultItemType);
 				if (inv != inv2) continue;
 				if (!ItemStack.CanFit(invStacks, results[i])) return false;

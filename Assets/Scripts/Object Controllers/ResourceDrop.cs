@@ -15,7 +15,7 @@ public class ResourceDrop : MonoBehaviour
 	private float spawnTime;
 	public ParticleSystem ps;
 	public SpriteRenderer rend;
-	private Item.Type type;
+	private ItemObject type;
 
 	private void Start()
 	{
@@ -70,7 +70,7 @@ public class ResourceDrop : MonoBehaviour
 		}
 	}
 
-	public void Create(IInventoryHolder target, Vector2 pos, Item.Type type)
+	public void Create(IInventoryHolder target, Vector2 pos, ItemObject type)
 	{
 		follow = target;
 		transform.position = pos;

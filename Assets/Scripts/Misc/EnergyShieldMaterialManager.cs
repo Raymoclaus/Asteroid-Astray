@@ -1,9 +1,10 @@
 ﻿using System.Collections;
+using EquipmentSystem;
 using UnityEngine;
 using ValueComponents;
 
 [RequireComponent(typeof(SpriteRenderer))]
-public class EnergyShieldMaterialManager : MonoBehaviour
+public class EnergyShieldMaterialManager : MonoBehaviour, IEquipment
 {
 	[SerializeField] private RangedFloatComponent shieldComponent;
 	private Material mat;

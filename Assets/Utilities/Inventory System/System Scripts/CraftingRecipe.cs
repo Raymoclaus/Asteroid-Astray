@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace InventorySystem
 {
-	[CreateAssetMenu(menuName = "Scriptable Objects/Crafting Recipe")]
+	[CreateAssetMenu(menuName = "Scriptable Objects/Inventory System/Crafting Recipe")]
 	public class CraftingRecipe : ScriptableObject
 	{
 		[SerializeField] private List<ItemStack> recipeList, result;

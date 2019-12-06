@@ -7,12 +7,12 @@ namespace QuestSystem.Requirements
 
 	public class ItemUseQReq : QuestRequirement
 	{
-		public Item.Type typeNeeded;
+		public ItemObject typeNeeded;
 		public int amountNeeded = 1;
 		private int currentAmount = 0;
 		private IInventoryHolder inventoryHolder;
 
-		public ItemUseQReq(Item.Type typeNeeded, int amountNeeded,
+		public ItemUseQReq(ItemObject typeNeeded, int amountNeeded,
 			IInventoryHolder inventoryHolder, string description = null)
 			: base(description != null ? description : "Use {0} {1}: {2} / {0}", null)
 		{
@@ -21,7 +21,7 @@ namespace QuestSystem.Requirements
 			this.inventoryHolder = inventoryHolder;
 		}
 
-		public ItemUseQReq(Item.Type typeNeeded,
+		public ItemUseQReq(ItemObject typeNeeded,
 			IInventoryHolder inventoryHolder, string description = null)
 			: this(typeNeeded, 1, inventoryHolder, description)
 		{
@@ -40,7 +40,7 @@ namespace QuestSystem.Requirements
 			inventoryHolder.OnItemUsed -= EvaluateEvent;
 		}
 
-		private void EvaluateEvent(Item.Type type, int amount)
+		private void EvaluateEvent(ItemObject type, int amount)
 		{
 			if (Completed || !active) return;
 

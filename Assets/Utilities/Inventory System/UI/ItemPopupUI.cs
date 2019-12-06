@@ -14,7 +14,6 @@ namespace InventorySystem.UI
 		private List<PopupData> popupsToShow = new List<PopupData>();
 		public Color textColor;
 		[SerializeField] private float textFadeSpeed = 0.17f;
-		[SerializeField] private ItemSprites sprites;
 
 		public void SetInventoryHolder(IInventoryHolder newInventoryHolder)
 		{
@@ -162,9 +161,9 @@ namespace InventorySystem.UI
 		private void GeneratePopup(ItemStack stack)
 			=> GeneratePopup(stack.ItemType, stack.Amount);
 
-		private void GeneratePopup(Item.Type type, int amount = 1)
+		private void GeneratePopup(ItemObject type, int amount = 1)
 		{
-			PopupData data = new PopupData(sprites, type, amount);
+			PopupData data = new PopupData(type, amount);
 			foreach (ItemPopupObject ipo in activePopups)
 			{
 				if (ipo.Data.ItemType == type)
@@ -306,18 +305,16 @@ namespace InventorySystem.UI
 		private class PopupData
 		{
 			public event Action OnItemTypeUpdated, OnAmountUpdated;
-			private ItemSprites Sprites { get; set; }
-			public Item.Type ItemType { get; private set; }
+			public ItemObject ItemType { get; private set; }
 			public int Amount { get; private set; }
 
-			public PopupData(ItemSprites sprites, Item.Type itemType, int amount)
+			public PopupData(ItemObject itemType, int amount)
 			{
-				Sprites = sprites;
 				SetItemType(itemType);
 				SetAmount(amount);
 			}
 
-			public void SetItemType(Item.Type type)
+			public void SetItemType(ItemObject type)
 			{
 				ItemType = type;
 				OnItemTypeUpdated?.Invoke();
@@ -334,7 +331,7 @@ namespace InventorySystem.UI
 				SetAmount(Amount + amount);
 			}
 
-			public Sprite Spr => Sprites?.GetItemSprite(ItemType);
+			public Sprite Spr => Item.GetItemSprite(ItemType);
 
 			public string ItemName => Item.TypeName(ItemType);
 

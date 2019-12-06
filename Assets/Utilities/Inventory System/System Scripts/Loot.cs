@@ -7,11 +7,11 @@ namespace InventorySystem
 	[Serializable]
 	public struct Loot
 	{
-		public Item.Type type;
+		public ItemObject type;
 		public int minAmount, maxAmount;
 		public float lootChance;
 
-		public Loot(Item.Type type, int minAmount, int maxAmount, float lootChance)
+		public Loot(ItemObject type, int minAmount, int maxAmount, float lootChance)
 		{
 			this.type = type;
 			this.minAmount = Mathf.Min(minAmount, maxAmount);

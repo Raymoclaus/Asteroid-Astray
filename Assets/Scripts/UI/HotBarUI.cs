@@ -7,7 +7,6 @@ using InventorySystem.UI;
 public class HotBarUI : MonoBehaviour
 {
 	[SerializeField] private Storage inventory;
-	[SerializeField] private ItemSprites sprites;
 	[SerializeField] private Transform[] slots;
 	private Image[] images;
 	private Text[] texts;
@@ -36,7 +35,7 @@ public class HotBarUI : MonoBehaviour
 		for (int i = 0; i < slots.Length && i < inventory.ItemStacks.Count; i++)
 		{
 			ItemStack currentStack = inventory.ItemStacks[i];
-			images[i].sprite = sprites.GetItemSprite(currentStack.ItemType);
+			images[i].sprite = Item.GetItemSprite(currentStack.ItemType);
 			int amount = currentStack.Amount;
 			texts[i].text = amount > 0 ? amount.ToString() : string.Empty;
 			images[i].color = amount > 0 ? Color.white : Color.clear;

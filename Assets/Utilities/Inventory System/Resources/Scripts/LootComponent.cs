@@ -8,9 +8,9 @@ namespace InventorySystem
 		public List<Loot> lootStack;
 		public ChasingItemPickup pickupPrefab;
 
-		private void DropItem(Item.Type itemType, IInventoryHolder inventoryHolder)
+		private void DropItem(ItemObject itemType, IInventoryHolder inventoryHolder)
 		{
-			if (itemType == Item.Type.Blank) return;
+			if (itemType == ItemObject.Blank) return;
 
 			if (pickupPrefab == null)
 			{
@@ -27,7 +27,7 @@ namespace InventorySystem
 		{
 			ItemStack stack = loot.GetStack();
 			int amount = stack.Amount;
-			Item.Type itemType = stack.ItemType;
+			ItemObject itemType = stack.ItemType;
 			for (int i = 0; i < amount; i++)
 			{
 				DropItem(itemType, inventoryHolder);

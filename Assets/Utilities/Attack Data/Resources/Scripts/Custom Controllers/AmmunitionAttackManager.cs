@@ -50,7 +50,7 @@ namespace AttackData
 		public void SetInitialWeaponDirection(Vector3 direction)
 			=> InitialWeaponDirection = direction;
 
-		public void SetInitialWeaponPosition(Vector3 position)
+		public void SetInitialWeaponPivot(Vector3 position)
 			=> InitialWeaponPosition = position;
 
 		protected float CurrentSpeed
