@@ -9,13 +9,12 @@ using Random = UnityEngine.Random;
 [RequireComponent(typeof(HiveInventory))]
 public class BotHive : Character, ICombat
 {
-	private static ItemObject pureCorvorite;
 	[Header("Bot Hive Fields")]
-
-	#region Fields
+	
 	//references
 	[SerializeField] private GatherBot botPrefab;
 	[SerializeField] private HiveInventory inventory;
+	[SerializeField] private ItemObject preciousResource;
 	[SerializeField] private Transform dockHolder;
 	private Transform[] docks;
 	[SerializeField] private Animator[] dockAnims;
@@ -47,7 +46,6 @@ public class BotHive : Character, ICombat
 
 	//cache
 	private List<ChunkCoords> botOccupiedCoords = new List<ChunkCoords>();
-	#endregion
 
 	protected override void Awake()
 	{
@@ -64,7 +62,7 @@ public class BotHive : Character, ICombat
 		resourceCount = UnityEngine.Random.Range(
 			minLeftoverResources + botCreationCost * minInitialBotCount,
 			minLeftoverResources + (botCreationCost + botUpgradeCost * maxInitialUpgrades) * maxBotCount + 1);
-		inventory.AddItem(pureCorvorite, resourceCount);
+		inventory.AddItem(preciousResource, resourceCount);
 		SpendResources();
 	}
 
@@ -148,7 +146,7 @@ public class BotHive : Character, ICombat
 
 			resourceCount -= botCreationCost;
 			toBeSpent -= botCreationCost;
-			inventory.RemoveItem(pureCorvorite, botCreationCost);
+			inventory.RemoveItem(preciousResource, botCreationCost);
 		}
 		GatherBot bot = Instantiate(botPrefab);
 		bot.Create(this, botBaseHP, dockID);
@@ -168,7 +166,7 @@ public class BotHive : Character, ICombat
 		//bot.Upgrade();
 		resourceCount -= botUpgradeCost;
 		toBeSpent -= botUpgradeCost;
-		inventory.RemoveItem(pureCorvorite, botUpgradeCost);
+		inventory.RemoveItem(preciousResource, botUpgradeCost);
 	}
 
 	public void ActivateBot(int ID, Vector2 position)
@@ -294,7 +292,7 @@ public class BotHive : Character, ICombat
 		b.Activate(false);
 		dockAnims[b.dockID].SetTrigger("Dismantle1");
 		inventory.Store(items);
-		resourceCount = inventory.Count(pureCorvorite);
+		resourceCount = inventory.Count(preciousResource);
 		SpendResources(b);
 	}
 
@@ -435,6 +433,8 @@ public class BotHive : Character, ICombat
 		}
 		enemies.Add(threat);
 	}
+
+	public ItemObject PreciousResource => preciousResource;
 
 	protected override object CreateDataObject()
 	{

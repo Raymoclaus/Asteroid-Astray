@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using JetBrains.Annotations;
+using UnityEngine;
 
 namespace InventorySystem
 {
@@ -21,5 +22,31 @@ namespace InventorySystem
 		public bool IsKeyItem => isKeyItem;
 		public string Description => description;
 		public string FlavourText => flavourText;
+
+		public override string ToString() => ItemName;
+
+		public static bool operator ==(ItemObject a, ItemObject b)
+		{
+			bool aIsNull = ReferenceEquals(a, null);
+			bool bIsNull = ReferenceEquals(b, null);
+			if (aIsNull || bIsNull)
+			{
+				return aIsNull == bIsNull;
+			}
+
+			return a.ItemName == b.ItemName;
+		}
+
+		public static bool operator !=(ItemObject a, ItemObject b)
+		{
+			bool aIsNull = ReferenceEquals(a, null);
+			bool bIsNull = ReferenceEquals(b, null);
+			if (aIsNull || bIsNull)
+			{
+				return aIsNull != bIsNull;
+			}
+
+			return a.ItemName != b.ItemName;
+		}
 	} 
 }

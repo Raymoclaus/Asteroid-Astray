@@ -20,6 +20,12 @@ public class PauseMenu : TabbedMenuController
 		}
 	}
 
+	private void OnDestroy()
+	{
+		Pause.OnPause -= Open;
+		Pause.OnResume -= Close;
+	}
+
 	protected override void Open()
 	{
 		base.Open();

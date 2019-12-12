@@ -5,9 +5,7 @@ using UnityEngine;
 using System.Collections;
 using CielaSpike;
 using System.IO;
-using System.Linq;
 using CustomDataTypes;
-using GenericExtensions;
 
 public class SceneryController : MonoBehaviour
 {
@@ -315,7 +313,7 @@ public class SceneryController : MonoBehaviour
 		texturesGenerated = needToGenerate <= 0;
 		if (texturesGenerated)
 		{
-			texturesGenerated = true;
+			Debug.Log("Scenery Controller Loaded");
 			OnStarFieldCreated?.Invoke();
 			OnStarFieldCreated = null;
 			yield break;

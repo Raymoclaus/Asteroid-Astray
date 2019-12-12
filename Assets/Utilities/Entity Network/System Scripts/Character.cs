@@ -11,7 +11,6 @@ using AttackData;
 
 public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 {
-	protected static ItemObject repairKit;
 	[Header("Character Fields")]
 
 	[SerializeField] private Storage defaultInventory;
@@ -120,7 +119,7 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 		bool used = false;
 		int amountUsed = 0;
 
-		if (type == repairKit)
+		if (type.ItemName == "Repair Kit")
 		{
 			used = true;
 			amountUsed = 1;
@@ -147,14 +146,17 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 	protected override void DropLoot(IInventoryHolder target, float dropModifier)
 	{
 		base.DropLoot(target, dropModifier);
+		DropInventory(target);
+	}
 
+	protected virtual void DropInventory(IInventoryHolder target)
+	{
 		for (int i = 0; i < DefaultInventory.Size; i++)
 		{
 			ItemStack stack = DefaultInventory.ItemStacks[i];
 			for (int j = 0; j < stack.Amount; j++)
 			{
-				PartGen.DropResource(target,
-					transform.position, stack.ItemType);
+				DropItem(stack.ItemType, target);
 			}
 		}
 	}

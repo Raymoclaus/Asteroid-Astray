@@ -88,8 +88,7 @@ public class Asteroid : Entity
 					ItemStack stack = stacks[i];
 					for (int j = 0; j < stack.Amount; j++)
 					{
-						PartGen.DropResource(target,
-							transform.position, stack.ItemType);
+						DropItem(stack.ItemType, target);
 					}
 				}
 				return;

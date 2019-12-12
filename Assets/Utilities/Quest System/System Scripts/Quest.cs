@@ -35,14 +35,18 @@ namespace QuestSystem
 		{
 			if (!IsComplete) return;
 
-			Debug.Log($"Quest Complete: {Name}");
+			SteamPunkConsole.WriteLine($"Quest Complete: {Name}");
 			QuestComplete(this);
 			Rewards.ForEach(t => t.GiveReward(QuestTaker));
 		}
 
 		public bool IsComplete => !Requirements.Exists(t => !t.Completed);
 
-		public void Activate() => Requirements.ForEach(t => t.Activate());
+		public void Activate()
+		{
+			SteamPunkConsole.WriteLine($"Quest Started: {Name}");
+			Requirements.ForEach(t => t.Activate());
+		}
 
 		public void ForceComplete()
 			=> Requirements.ForEach(t => t.QuestRequirementCompleted());

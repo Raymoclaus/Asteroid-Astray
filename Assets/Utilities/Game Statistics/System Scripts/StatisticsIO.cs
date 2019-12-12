@@ -81,7 +81,6 @@ namespace StatisticsTracker
 		}
 
 		[SteamPunkConsoleCommand(command = "resetStats", info = "Resets all stats to default values and saves.")]
-		[MenuItem("Game Statistics/Reset All Stats")]
 		public static void ResetAllStats()
 		{
 			StatTracker[] stats = Resources.LoadAll<StatTracker>("StatTrackers");

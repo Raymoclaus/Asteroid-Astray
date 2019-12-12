@@ -12,7 +12,6 @@ using UnityEngine;
 
 public class NarrativeManager : MonoBehaviour, IChatter
 {
-	[SerializeField] private ItemObject copper, iron, repairKit, corruptedCorvorite;
 	public static bool ShuttleRepaired { get; private set; }
 	public static bool ShipRecharged { get; private set; }
 
@@ -98,10 +97,10 @@ public class NarrativeManager : MonoBehaviour, IChatter
 
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
 		
-		qReqs.Add(new GatheringQReq(copper, 2,
+		qReqs.Add(new GatheringQReq(Item.GetItemByName("Copper"), 2,
 			MainChar, "Obtain {0} {1} from asteroids: {2} / {0}"));
 		
-		qReqs.Add(new GatheringQReq(iron,
+		qReqs.Add(new GatheringQReq(Item.GetItemByName("Iron"),
 			MainChar, "Obtain {0} {1} from asteroids: {2} / {0}"));
 
 		Quest q = new Quest(
@@ -132,7 +131,7 @@ public class NarrativeManager : MonoBehaviour, IChatter
 		List<QuestReward> qRewards = new List<QuestReward>();
 
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-		qReqs.Add(new CraftingQReq(repairKit,
+		qReqs.Add(new CraftingQReq(Item.GetItemByName("Repair Kit"),
 			MainChar, "Construct {0} {1} using 2 copper and 1 iron"));
 
 		Quest q = new Quest(
@@ -159,7 +158,7 @@ public class NarrativeManager : MonoBehaviour, IChatter
 		List<QuestReward> qRewards = new List<QuestReward>();
 
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-		qReqs.Add(new ItemUseQReq(repairKit, MainChar));
+		qReqs.Add(new ItemUseQReq(Item.GetItemByName("Repair Kit"), MainChar));
 
 		Quest q = new Quest(
 			"Repair the Shuttle",
@@ -232,7 +231,7 @@ public class NarrativeManager : MonoBehaviour, IChatter
 		List<QuestRequirement> qReqs = new List<QuestRequirement>();
 		Waypoint wp = Waypoint.CreateWaypoint(MainChar, entityPrompt,
 			entityPrompt.PivotPosition);
-		qReqs.Add(new GatheringQReq(corruptedCorvorite,
+		qReqs.Add(new GatheringQReq(Item.GetItemByName("Corrupted Corvorite"),
 			MainChar, "Find the nearby energy source.", wp));
 
 		Quest q = new Quest(
@@ -273,7 +272,7 @@ public class NarrativeManager : MonoBehaviour, IChatter
 	private void CompletedRechargeTheShipQuest(Quest quest)
 	{
 		StartDialogue(rechargedTheShipConversation, false);
-		TakeItem(corruptedCorvorite, 1);
+		TakeItem(Item.GetItemByName("Corrupted Corvorite"), 1);
 		MainHatch.IsLocked = false;
 		ShipRecharged = true;
 	}

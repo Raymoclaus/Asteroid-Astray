@@ -57,6 +57,6 @@ namespace QuestSystem.Requirements
 		}
 
 		public override string GetDescription =>
-			string.Format(description, amountNeeded, typeNeeded, currentAmount);
+			string.Format(description, amountNeeded, Item.TypeName(typeNeeded), currentAmount);
 	}
 }

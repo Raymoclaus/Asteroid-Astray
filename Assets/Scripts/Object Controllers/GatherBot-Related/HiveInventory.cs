@@ -7,7 +7,7 @@ using CustomDataTypes;
 
 public class HiveInventory : Storage
 {
-	private static ItemObject pureCorvorite;
+	[SerializeField] private BotHive hive;
 
 	public void Store(List<ItemStack> items)
 	{
@@ -27,8 +27,8 @@ public class HiveInventory : Storage
 			if (count >= costReturn.x)
 			{
 				int amount = count / costReturn.x;
-				AddItem(pureCorvorite, amount);
-				RemoveByRarity(i, amount * count, pureCorvorite);
+				AddItem(hive.PreciousResource, amount);
+				RemoveByRarity(i, amount * count, hive.PreciousResource);
 			}
 		}
 	}

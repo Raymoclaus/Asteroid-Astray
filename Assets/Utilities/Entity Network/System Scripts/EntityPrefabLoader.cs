@@ -40,7 +40,11 @@ public static class EntityPrefabLoader
 
 	public static void LoadPrefabs()
 	{
-		if (IsReady) return;
+		if (IsReady)
+		{
+			OnPrefabsLoaded?.Invoke();
+			return;
+		}
 
 		AsyncOperationHandle<IList<SpawnableEntity>> handle
 			= Addressables.LoadAssetsAsync<SpawnableEntity>("Spawnable Entities", null);

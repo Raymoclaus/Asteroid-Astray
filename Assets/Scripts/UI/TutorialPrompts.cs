@@ -6,7 +6,6 @@ using InventorySystem;
 
 public class TutorialPrompts : MonoBehaviour
 {
-	private static ItemObject repairKit;
 	private Shuttle mainChar;
 	private Shuttle MainChar => mainChar ?? (mainChar = FindObjectOfType<Shuttle>());
 
@@ -15,6 +14,7 @@ public class TutorialPrompts : MonoBehaviour
 	public PromptInfo drillInputPromptInfo;
 	public PromptInfo pauseInputPromptInfo;
 	public PromptInfo repairKitInputPromptInfo;
+	[SerializeField] private ItemObject repairKit;
 
 	private List<PromptInfo> prompts = new List<PromptInfo>();
 

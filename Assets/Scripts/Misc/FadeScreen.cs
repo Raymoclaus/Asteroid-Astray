@@ -1,22 +1,32 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(CanvasGroup))]
 public class FadeScreen : MonoBehaviour
 {
+	[SerializeField] private Image img;
+	[SerializeField] private Color defaultColor = Color.black;
+	[SerializeField] private Sprite defaultImage;
 	[SerializeField] private AnimationCurve fadeInCurve, fadeOutCurve;
 
 	private static FadeScreen instance;
 	private static FadeScreen Instance
 	{
-		get { return instance ?? (instance = FindObjectOfType<FadeScreen>()); }
+		get
+		{
+			return instance != null ? instance : (instance = FindObjectOfType<FadeScreen>());
+		}
 	}
 
 	private static CanvasGroup cGroup;
 	private static CanvasGroup CGroup
 	{
-		get { return cGroup ?? (cGroup = Instance?.GetComponent<CanvasGroup>()); }
+		get
+		{
+			return cGroup != null ? cGroup : (cGroup = Instance?.GetComponent<CanvasGroup>());
+		}
 	}
 
 	private static readonly AnimationCurve defaultCurve
@@ -55,4 +65,12 @@ public class FadeScreen : MonoBehaviour
 			delta => CGroup.alpha = fadeOutCurve.Evaluate(delta),
 			null);
 	}
+
+	public static void SetColour(Color col) => instance.img.color = col;
+
+	public static void ResetColorToDefault() => SetColour(instance.defaultColor);
+
+	public static void SetImage(Sprite spr) => instance.img.sprite = spr;
+
+	public static void ResetImageToDefault() => SetImage(instance.defaultImage);
 }

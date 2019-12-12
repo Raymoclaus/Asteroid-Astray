@@ -8,37 +8,32 @@ namespace InventorySystem
 		public List<Loot> lootStack;
 		public ChasingItemPickup pickupPrefab;
 
-		private void DropItem(ItemObject itemType, IInventoryHolder inventoryHolder)
-		{
-			if (itemType == ItemObject.Blank) return;
+		private static ItemDropper dropper;
+		private static ItemDropper Dropper
+			=> dropper != null ? dropper : (dropper = FindObjectOfType<ItemDropper>());
 
-			if (pickupPrefab == null)
-			{
-				Debug.Log("Pickup prefab is null", gameObject);
-				return;
-			}
-			ChasingItemPickup pickup = Instantiate(pickupPrefab, transform.position,
-				Quaternion.identity, ParticleGenerator.holder);
-			pickup.Pickup.SetItemType(itemType);
-			pickup.SetTarget(inventoryHolder);
+		private void DropItem(ItemObject itemType, IInventoryHolder target)
+		{
+			if (Dropper == null) return;
+			Dropper.DropItem(itemType, transform.position, target);
 		}
 
-		private void DropLoot(Loot loot, IInventoryHolder inventoryHolder)
+		private void DropLoot(Loot loot, IInventoryHolder target)
 		{
 			ItemStack stack = loot.GetStack();
 			int amount = stack.Amount;
 			ItemObject itemType = stack.ItemType;
 			for (int i = 0; i < amount; i++)
 			{
-				DropItem(itemType, inventoryHolder);
+				DropItem(itemType, target);
 			}
 		}
 
-		public void DropAllLoot(IInventoryHolder inventoryHolder)
+		public void DropAllLoot(IInventoryHolder target)
 		{
 			for (int i = 0; i < lootStack.Count; i++)
 			{
-				DropLoot(lootStack[i], inventoryHolder);
+				DropLoot(lootStack[i], target);
 			}
 		}
 	}

@@ -24,6 +24,9 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 	protected static AudioManager audioMngr;
 	protected static AudioManager AudioMngr
 		=> audioMngr ?? (audioMngr = FindObjectOfType<AudioManager>());
+	private static ItemDropper dropper;
+	private static ItemDropper Dropper
+		=> dropper != null ? dropper : (dropper = FindObjectOfType<ItemDropper>());
 
 	[SerializeField] protected ScreenRippleEffectController screenRippleSO;
 	[Tooltip("shouldDisableGameObjectOnExitPhysicsRange")]
@@ -231,6 +234,12 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 		loot.DropAllLoot(target);
 	}
 
+	protected void DropItem(ItemObject item, IInventoryHolder target)
+	{
+		if (Dropper == null) return;
+		Dropper.DropItem(item, transform.position, target);
+	}
+
 	public ChunkCoords GetCoords() => coords;
 
 	public override string ToString() => string.Format("{0} at coordinates {1}.", GetEntityType(), coords);
@@ -284,7 +293,7 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 	public virtual bool TakeDamage(float damage, Vector2 damagePos,
 		Entity destroyer, float dropModifier, bool flash)
 	{
-		if (destroyer == this || isInvulnerable) return false;
+		if (destroyer == this || isInvulnerable || IsDead) return false;
 
 		healthComponent.SubtractValue(damage);
 		return CheckHealth(destroyer, dropModifier);
@@ -453,9 +462,11 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 		interactor.Interact(this);
 	}
 
+	protected bool IsDead => healthComponent.CurrentRatio <= 0f;
+
 	public virtual bool ReceiveAttack(AttackManager atkMngr)
 	{
-		if (atkMngr == null) return false;
+		if (atkMngr == null || IsDead) return false;
 		OwnerComponent ownerComponent = atkMngr.GetAttackComponent<OwnerComponent>();
 		List<IAttacker> owners = ownerComponent.owners;
 		IAttacker thisAttacker = (this as IAttacker);

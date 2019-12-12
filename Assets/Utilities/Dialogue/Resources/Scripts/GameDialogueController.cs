@@ -12,12 +12,12 @@ namespace DialogueSystem
 
 		protected override void Update()
 		{
-			if (InputManager.GetInputDown("Scroll Dialogue"))
+			if (InputManager.GetInputDown("Scroll Dialogue") && !SteamPunkConsole.IsConsoleOpen)
 			{
 				Next();
 			}
 
-			if (Input.GetKeyDown(KeyCode.K))
+			if (Input.GetKeyDown(KeyCode.K) && !SteamPunkConsole.IsConsoleOpen)
 			{
 				Skip();
 			}

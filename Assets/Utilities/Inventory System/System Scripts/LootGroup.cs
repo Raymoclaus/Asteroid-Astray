@@ -8,9 +8,9 @@ namespace InventorySystem
 	{
 		public List<Loot> group;
 
-		public int Count => group.Count;
+		public int Count => group?.Count ?? 0;
 
-		public bool IsEmpty => group == null || group.Count == 0;
+		public bool IsEmpty => Count == 0;
 
 		public List<ItemStack> GetStacks
 		{

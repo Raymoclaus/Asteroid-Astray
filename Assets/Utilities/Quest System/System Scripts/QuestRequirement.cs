@@ -16,7 +16,11 @@
 
 		public delegate void QuestRequirementUpdatedEventHandler();
 		public event QuestRequirementUpdatedEventHandler OnQuestRequirementUpdated;
-		public void QuestRequirementUpdated() => OnQuestRequirementUpdated?.Invoke();
+		public void QuestRequirementUpdated()
+		{
+			SteamPunkConsole.WriteLine($"Requirement Updated: {GetDescription}");
+			OnQuestRequirementUpdated?.Invoke();
+		}
 
 		public delegate void QuestRequirementCompletedEventHandler();
 		public event QuestRequirementCompletedEventHandler OnQuestRequirementCompleted;

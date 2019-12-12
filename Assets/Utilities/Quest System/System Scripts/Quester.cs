@@ -12,7 +12,7 @@ namespace QuestSystem
 
 		public virtual void Update()
 		{
-			if (Input.GetKeyDown(KeyCode.M))
+			if (Input.GetKeyDown(KeyCode.M) && !SteamPunkConsole.IsConsoleOpen)
 			{
 				TopPriorityQuest?.ForceComplete();
 			}

@@ -66,6 +66,10 @@ namespace InventorySystem
 			}
 		}
 
+		public void SetLocation(Vector3 location) => transform.position = location;
+
+		public void SetItem(ItemObject item) => Pickup.SetItemType(item);
+
 		private bool IsWaiting => TimerTracker.GetTimer(idleWaitTimerID) > 0f;
 
 		private void StartFollowing()

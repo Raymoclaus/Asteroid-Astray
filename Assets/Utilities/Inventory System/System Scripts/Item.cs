@@ -25,18 +25,18 @@ namespace InventorySystem
 			return ItemTypes.FirstOrDefault(t => t.ItemName.ToLower() == name.ToLower());
 		}
 
-		public static string TypeName(ItemObject item) => item.ItemName;
+		public static string TypeName(ItemObject item) => item?.ItemName ?? default;
 
-		public static int TypeRarity(ItemObject item) => item.Rarity;
+		public static int TypeRarity(ItemObject item) => item?.Rarity ?? default;
 
-		public static int StackLimit(ItemObject item) => item.StackLimit;
+		public static int StackLimit(ItemObject item) => item?.StackLimit ?? default;
 
-		public static bool IsKeyItem(ItemObject item) => item.IsKeyItem;
+		public static bool IsKeyItem(ItemObject item) => item?.IsKeyItem ?? default;
 
-		public static string Description(ItemObject item) => item.Description;
+		public static string Description(ItemObject item) => item?.Description ?? default;
 
-		public static string FlavourText(ItemObject item) => item.FlavourText;
+		public static string FlavourText(ItemObject item) => item?.FlavourText ?? default;
 
-		public static Sprite GetItemSprite(ItemObject item) => item.Icon;
+		public static Sprite GetItemSprite(ItemObject item) => item?.Icon;
 	}
 }
