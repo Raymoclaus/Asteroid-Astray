@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using SaveSystem;
 using UnityEditor;
 using UnityEngine;
 
@@ -8,6 +9,7 @@ namespace StatisticsTracker
 	public static class StatisticsIO
 	{
 		private const string SAVE_KEY = "statistics";
+		private static readonly SaveTag saveTag = new SaveTag("Statistics");
 
 		[SteamPunkConsoleCommand(command = "loadStats", info = "Loads the game data")]
 		public static void Load()
@@ -50,7 +52,7 @@ namespace StatisticsTracker
 				}
 
 				//set value of matching field
-				bool parsedSuccessfully = stat.SetValue(valueString);
+				bool parsedSuccessfully = stat.Parse(valueString);
 
 				if (!parsedSuccessfully)
 				{
@@ -63,20 +65,25 @@ namespace StatisticsTracker
 		}
 
 		[SteamPunkConsoleCommand(command = "saveStats", info = "Saves the game data")]
+		[MenuItem("Game Statistics/Save All")]
 		public static void SaveAll()
 		{
+			//get all statistics scriptable objects
 			StatTracker[] stats = Resources.LoadAll<StatTracker>("StatTrackers");
-			StringBuilder toSave = new StringBuilder();
+
+			//iterate over the statistics
 			for (int i = 0; i < stats.Length; i++)
 			{
 				StatTracker stat = stats[i];
-				string entry = $"{stat.name.ToLower()}|{stat.FieldType}|{stat.ValueString}";
+				DataModule module = new DataModule(
+					stat.name.ToLower(),
+					stat.ValueString);
+				UnifiedSaveLoad.UpdateUnifiedSaveFile(saveTag, module);
+				string entry = module.ToString();
 				SteamPunkConsole.WriteLine(entry);
-				toSave.AppendLine(entry);
 			}
-
-			string result = toSave.ToString();
-			SaveLoad.SaveText(SAVE_KEY, result);
+			UnifiedSaveLoad.SaveUnifiedSaveFile();
+			
 			SteamPunkConsole.WriteLine("Save Successful");
 		}
 
@@ -121,7 +128,7 @@ namespace StatisticsTracker
 		{
 			StatTracker stat = GetTracker(statName);
 			if (stat == null) return;
-			bool successful = stat.SetValue(value);
+			bool successful = stat.Parse(value);
 			if (successful)
 			{
 				SteamPunkConsole.WriteLine($"{stat.name} set to {value}.");

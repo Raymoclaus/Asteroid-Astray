@@ -114,6 +114,7 @@ namespace TabbedMenuSystem
 			{
 				IMenuTab newTab = prefab.CreateCopy(tabsHolder);
 				newTab.TabText = menuContents[i].TabName;
+				newTab.SetIndex(i);
 				tabs.Add(newTab);
 			}
 		}
@@ -128,26 +129,11 @@ namespace TabbedMenuSystem
 
 			for (int i = 0; i < tabs.Count; i++)
 			{
-				//break if iterator goes beyond list min and max boundaries
-				if (startingIndex - i < 0 && startingIndex + i >= tabs.Count) break;
 				//calculate draw order
-				int drawOrder = upperValue - i;
-
-				//calculate left index
-				int leftIndex = startingIndex - i;
-				if (leftIndex >= 0 && leftIndex < tabs.Count)
-				{
-					//set draw order of tab at calculated index
-					tabs[leftIndex].DrawOrder = drawOrder;
-				}
-
-				//calculate right index
-				int rightIndex = startingIndex + i;
-				if (rightIndex >= 0 && rightIndex < tabs.Count)
-				{
-					//set draw order of tab at calculated index
-					tabs[rightIndex].DrawOrder = drawOrder;
-				}
+				int drawOrder = upperValue - Mathf.Abs(startingIndex - i);
+				tabs[i].DrawOrder = drawOrder;
+				//notifies the tab of the new main tab
+				tabs[i].NotifyOfMainIndex(startingIndex);
 			}
 		}
 

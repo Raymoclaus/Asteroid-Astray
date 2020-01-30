@@ -75,7 +75,6 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 		coords = new ChunkCoords(transform.position, EntityNetwork.CHUNK_SIZE);
 		EntityNetwork.AddEntity(this, coords);
 		RepositionInNetwork(true);
-		healthComponent?.SetToUpperLimit();
 		enabled = true;
 	}
 
@@ -295,8 +294,18 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 	{
 		if (destroyer == this || isInvulnerable || IsDead) return false;
 
-		healthComponent.SubtractValue(damage);
+		DecreaseCurrentHealth(damage);
 		return CheckHealth(destroyer, dropModifier);
+	}
+
+	public virtual void IncreaseCurrentHealth(float increase)
+	{
+		healthComponent.AddValue(increase);
+	}
+
+	public virtual void DecreaseCurrentHealth(float reduction)
+	{
+		healthComponent.SubtractValue(reduction);
 	}
 
 	public void Teleport(Vector2 position) => transform.position = position;

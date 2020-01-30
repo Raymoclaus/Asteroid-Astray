@@ -9,9 +9,9 @@
 		_LineColor("Line Color", Color) = (1, 1, 1, 1)
 		_LineGlowColor("Line Glow Color", Color) = (1, 1, 1, 1)
 		_LineWidth("Line Width", Range(0, 1)) = 0.1
-		_WaveSpeed("Wave Speed", float) = 1
-		_WaveDelay("Wave Delay", float) = 1
 		_WaveAmplitude("Wave Amplitude", float) = 1
+		_WaveOffset("Wave Offset", float) = 1
+		_WaveSpacing("Wave Spacing", int) = 1
 	}
 	SubShader
 	{
@@ -59,7 +59,8 @@
 			}
 			
 			sampler2D _MainTex;
-			float _LineWidth, _CellHeightMatchWidth, _WaveSpeed, _WaveDelay, _WaveAmplitude;
+			float _LineWidth, _CellHeightMatchWidth, _WaveAmplitude, _WaveOffset;
+			int _WaveSpacing;
 			float _Size;
 			fixed4 _BackgroundColor, _LineColor, _LineGlowColor;
 
@@ -72,9 +73,11 @@
 				float height = _ScreenParams.y;
 				float aspectRatio = width / height;
 				pos.y *= lerp(1, height / width, _CellHeightMatchWidth);
-				float time = _Time.y * _WaveSpeed;
-				float waveTime = time - pos.x / _Size - pos.y * aspectRatio / _Size;
-				float waveTimeModPI = fmod(waveTime, PI * 2 * _WaveDelay);
+				float waveTime = _WaveOffset - pos.x / _Size - pos.y * aspectRatio / _Size;
+				float twoPiSpacing = PI * 2 * _WaveSpacing;
+				float waveTimeModPI = waveTime % twoPiSpacing;
+				float modResultIsNegative = step(waveTimeModPI, 0);
+				waveTimeModPI += twoPiSpacing * modResultIsNegative;
 				float readyDelay = step(waveTimeModPI, PI * 2);
 				float cosTime = -cos(waveTime * readyDelay) / 2 + 0.5;
 				pos.y -= cosTime * _Size * _WaveAmplitude;

@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 
 namespace TabbedMenuSystem
@@ -9,8 +10,31 @@ namespace TabbedMenuSystem
 		[SerializeField] private TextMeshProUGUI textComponent;
 		[SerializeField] private Canvas canvas;
 		private string tabText;
+		private int index, indexOfMainTab;
+		[SerializeField] private Image imgRend;
+		[SerializeField] private Sprite main, leftOfMain, rightOfMain;
 
 		public event Action<IMenuTab> OnClicked;
+
+		public int Index
+		{
+			get => index;
+			set
+			{
+				index = value;
+				UpdateImage();
+			}
+		}
+
+		public int IndexOfMainTab
+		{
+			get => indexOfMainTab;
+			set
+			{
+				indexOfMainTab = value;
+				UpdateImage();
+			}
+		}
 
 		public string TabText
 		{
@@ -37,5 +61,25 @@ namespace TabbedMenuSystem
 		{
 			OnClicked?.Invoke(this);
 		}
+
+		private void UpdateImage()
+		{
+			if (index == indexOfMainTab)
+			{
+				imgRend.sprite = main;
+			}
+			else if (index < indexOfMainTab)
+			{
+				imgRend.sprite = leftOfMain;
+			}
+			else
+			{
+				imgRend.sprite = rightOfMain;
+			}
+		}
+
+		public void SetIndex(int index) => Index = index;
+
+		public void NotifyOfMainIndex(int index) => IndexOfMainTab = index;
 	}
 }

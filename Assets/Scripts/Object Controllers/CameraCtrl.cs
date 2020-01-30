@@ -7,7 +7,7 @@ using UnityEngine.PostProcessing;
 [RequireComponent(typeof(Camera))]
 public class CameraCtrl : MonoBehaviour
 {
-	[HideInInspector] private Camera cam = null;
+	[HideInInspector] private Camera cam;
 	public Camera Cam => cam ?? (cam = GetComponent<Camera>());
 	[SerializeField] private Transform targetToFollow;
 	private Transform panView;
@@ -301,5 +301,14 @@ public class CameraCtrl : MonoBehaviour
 	public void Zoom(float zoomLevel)
 	{
 		zoomModifier = zoomLevel;
+	}
+
+	public bool IsInView(GameObject obj)
+	{
+		Vector3 viewportPoint = cam.WorldToViewportPoint(obj.transform.position);
+		return viewportPoint.x >= 0f
+		       && viewportPoint.x <= 1f
+		       && viewportPoint.y >= 0f
+		       && viewportPoint.y <= 1f;
 	}
 }

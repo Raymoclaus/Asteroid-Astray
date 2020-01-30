@@ -12,7 +12,7 @@ namespace StatisticsTracker
 		/// </summary>
 		/// <param name="valueString"></param>
 		/// <returns>Returns whether parsing was successful</returns>
-		public abstract bool SetValue(string valueString);
+		public abstract bool Parse(string valueString);
 
 		/// <summary>
 		/// Returns a string representation of the stat's data.

@@ -4,7 +4,7 @@ using UnityEngine;
 using ValueComponents;
 
 [RequireComponent(typeof(SpriteRenderer))]
-public class EnergyShieldMaterialManager : MonoBehaviour, IEquipment
+public class EnergyShieldMaterialManager : MonoBehaviour, IEquipment, IShieldMaterial
 {
 	[SerializeField] private RangedFloatComponent shieldComponent;
 	private Material mat;
@@ -54,7 +54,7 @@ public class EnergyShieldMaterialManager : MonoBehaviour, IEquipment
 
 	private void Hide() => sprRend.enabled = false;
 
-	public void TakeHit(Vector2 direction)
+	public void TakeHit(Vector3 direction)
 	{
 		StopAllCoroutines();
 		Vector2 pos = direction.normalized * dist;

@@ -145,7 +145,8 @@ public class GatherBot : Character, IStunnable, ICombat
 
 	//dying variables
 	private float dyingTimer = 0f;
-	[SerializeField] private float dyingDuration = 2f;
+	[SerializeField] private float minimumDyingDuration = 3f;
+	[SerializeField] private float maximumDyingDuration = 6f;
 	[SerializeField] private Sprite dyingSprite;
 	private Entity destroyer;
 	private float dropModifier;
@@ -590,7 +591,10 @@ public class GatherBot : Character, IStunnable, ICombat
 	protected virtual void Dying()
 	{
 		dyingTimer += Time.deltaTime;
-		if (dyingTimer >= dyingDuration)
+		bool meetsMinimumTime = dyingTimer >= minimumDyingDuration;
+		bool isInView = CameraControl.IsInView(gameObject);
+		bool meetsMaximumTime = dyingTimer >= maximumDyingDuration;
+		if ((meetsMinimumTime && isInView) || meetsMaximumTime)
 		{
 			DestroySelf(destroyer, dropModifier);
 		}

@@ -14,6 +14,7 @@ namespace InventorySystem.UI
 		[SerializeField] private GameObject craftingDisabledObject;
 		[SerializeField] private TextMeshProUGUI craftingDisabledReason;
 		[SerializeField] private RecipeTooltip tooltip;
+		[SerializeField] private ItemPreviewUI previewUI;
 
 		public void SetCrafter(ICrafter newCrafter)
 		{
@@ -111,6 +112,7 @@ namespace InventorySystem.UI
 			LastRecipeHovered = recipeUIObj;
 			recipeUIObj.UpdateTooltip(tooltip);
 			tooltip.Show();
+			previewUI.SetItemType(recipeUIObj.MainItem);
 		}
 
 		public void OnHoverExitRecipeObject(RecipeUIObject recipeUIObj)

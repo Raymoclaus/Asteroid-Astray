@@ -1,89 +1,43 @@
 ﻿using System.IO;
-using System.Linq;
-using System.Runtime.Serialization.Formatters.Binary;
+using UnityEditor;
 using UnityEngine;
 
-public static class SaveLoad
+namespace SaveSystem
 {
-	private static readonly string path = Application.persistentDataPath + "/saves/",
-		extension = ".txt";
-
-	public static void SerializeSave(string key, object objectToSave)
+	public static class SaveLoad
 	{
-		Directory.CreateDirectory(path);
-		BinaryFormatter formatter = new BinaryFormatter();
-		using (FileStream stream = new FileStream(path + key + extension, FileMode.Create))
+		private static readonly string path = Application.persistentDataPath + "/saves/",
+			extension = ".txt";
+
+		public static void SaveText(string key, string textToSave)
 		{
-			formatter.Serialize(stream, objectToSave);
-		}
-	}
-
-	public static T LoadSerialized<T>(string key)
-	{
-		if (!SaveExists(key)) return default;
-		BinaryFormatter formatter = new BinaryFormatter();
-		T loadedObject = default;
-		using (FileStream stream = new FileStream(KeyPath(key), FileMode.Open))
-		{
-			loadedObject = (T)formatter.Deserialize(stream);
-		}
-		return loadedObject;
-	}
-
-	public static void SaveText(string appendedPath, string key, string textToSave)
-	{
-		Directory.CreateDirectory($"{path}{appendedPath}");
-		File.WriteAllText(KeyPath(appendedPath, key), textToSave);
-	}
-
-	public static void SaveText(string key, string textToSave)
-	{
-		SaveText(string.Empty, key, textToSave);
-	}
-
-	public static string LoadText(string key)
-	{
-		if (!SaveExists(key)) return default;
-		string text = File.ReadAllText(KeyPath(key));
-		text = text.Replace("\t", string.Empty);
-		return text;
-	}
-
-	private static string KeyPath(string key) => KeyPath(string.Empty, key);
-
-	private static string KeyPath(string appendedPath, string key) => $"{path}{appendedPath}{key}{extension}";
-
-	public static bool SaveExists(string key) => File.Exists(KeyPath(key));
-
-	public static void DeleteAllSaveFiles()
-	{
-		DirectoryInfo directory = new DirectoryInfo(path);
-		directory.Delete(true);
-		Directory.CreateDirectory(path);
-	}
-
-	public abstract class DataModule
-	{
-		public string parameterName;
-		public string data;
-
-		public DataModule(string name, string data)
-		{
-			parameterName = name;
-			this.data = data;
+			Directory.CreateDirectory(path);
+			File.WriteAllText(KeyPath(key), textToSave);
 		}
 
-		public DataModule(string name) : this(name, default)
+		public static void SaveText(string key, string[] linesToSave)
 		{
-
+			Directory.CreateDirectory(path);
+			File.WriteAllLines(KeyPath(key), linesToSave);
 		}
-	}
 
-	public class DataModule<T> : DataModule
-	{
-		public DataModule(string name, string data) : base(name, data)
+		public static string LoadText(string key)
 		{
+			if (!SaveExists(key)) return default;
+			string text = File.ReadAllText(KeyPath(key));
+			return text;
+		}
 
+		public static string KeyPath(string key) => $"{path}{key}{extension}";
+
+		public static bool SaveExists(string key) => File.Exists(KeyPath(key));
+
+		[MenuItem("Save System/Delete All Save Files")]
+		public static void DeleteAllSaveFiles()
+		{
+			DirectoryInfo directory = new DirectoryInfo(path);
+			directory.Delete(true);
+			Directory.CreateDirectory(path);
 		}
 	}
 }

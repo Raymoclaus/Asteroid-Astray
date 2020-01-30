@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace StatisticsTracker
 {
-	[CreateAssetMenu(fileName = "New IntStatTracker", menuName = "Scriptable Objects/Stat Tracker/Int Stat Tracker")]
+	[CreateAssetMenu(fileName = "New Int StatTracker", menuName = "Scriptable Objects/Stat Tracker/Int StatTracker")]
 	public class IntStatTracker : StatTracker
 	{
 		public event Action<int, int> OnValueUpdated;
@@ -14,16 +14,16 @@ namespace StatisticsTracker
 
 		public override string ValueString => value.ToString();
 
-		public override bool SetValue(string valueString)
+		public override bool Parse(string valueString)
 		{
-			bool successful = int.TryParse(valueString, out int intVal);
+			bool successful = int.TryParse(valueString, out int val);
 			if (!successful)
 			{
 				SteamPunkConsole.WriteLine($"value \"{valueString}\" could not be parsed as a \"{FieldType}\".");
 				return false;
 			}
 
-			SetValue(intVal);
+			SetValue(val);
 			return true;
 		}
 

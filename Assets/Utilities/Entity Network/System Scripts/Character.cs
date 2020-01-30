@@ -8,6 +8,7 @@ using TriggerSystem;
 using ValueComponents;
 using DialogueSystem;
 using AttackData;
+using EquipmentSystem;
 
 public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 {
@@ -30,9 +31,10 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 	protected bool canDrill, canDrillLaunch;
 	[SerializeField] protected DrillBit drill;
 	public bool IsDrilling => drill == null ? false : drill.IsDrilling;
-
-	[SerializeField] private EnergyShieldMaterialManager shieldMat;
-	[SerializeField] protected RangedFloatComponent shieldComponent;
+	
+	[SerializeField] private GameObject shieldSlot;
+	private ShieldComponent shieldComponent;
+	[SerializeField] protected RangedFloatComponent shieldValue;
 
 	[SerializeField] private FloatComponent recoveryTimerComponent;
 
@@ -48,7 +50,14 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 		base.Awake();
 		itemUseCooldownTimerID = gameObject.GetInstanceID() + "Item Use Cooldown Timer";
 		TimerTracker.AddTimer(itemUseCooldownTimerID, 0f, null, null);
-		shieldComponent?.SetToUpperLimit();
+		if (ShieldIsEquipped)
+		{
+			shieldValue?.SetToUpperLimit();
+		}
+		else
+		{
+			shieldValue?.SetToLowerLimit();
+		}
 		if (!inventories.Contains(DefaultInventory))
 		{
 			inventories.Add(DefaultInventory);
@@ -123,6 +132,7 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 		{
 			used = true;
 			amountUsed = 1;
+			IncreaseCurrentHealth(200f);
 		}
 
 		if (used)
@@ -161,15 +171,31 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 		}
 	}
 
-	private bool HasShield => shieldComponent != null ? shieldComponent.CurrentRatio > 0f : false;
+	private bool HasShield => ShieldIsEquipped
+		&& shieldValue != null
+		&& shieldValue.CurrentRatio > 0f;
+
+	private bool ShieldIsEquipped
+	{
+		get
+		{
+			if (shieldSlot == null) return false;
+			if (shieldComponent == null)
+			{
+				shieldComponent = shieldSlot.GetComponentInChildren<ShieldComponent>();
+			}
+
+			return shieldComponent != null;
+		}
+	}
 
 	public virtual bool TakeShieldDamage(float damage, Vector2 damagePos,
 		Entity destroyer, float dropModifier, bool flash)
 	{
-		float expectedResult = shieldComponent.CurrentValue - damage;
-		shieldComponent.SubtractValue(damage);
+		float expectedResult = shieldValue.CurrentValue - damage;
+		shieldValue.SubtractValue(damage);
 		Vector3 attackDirection = (damagePos - (Vector2)transform.position).normalized;
-		shieldMat.TakeHit(attackDirection);
+		shieldComponent.TakeHit(attackDirection);
 		if (expectedResult < 0f)
 		{
 			return base.TakeDamage(Mathf.Abs(expectedResult), damagePos, destroyer, dropModifier, flash);

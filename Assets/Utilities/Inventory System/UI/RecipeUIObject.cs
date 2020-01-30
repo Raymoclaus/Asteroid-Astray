@@ -103,5 +103,7 @@ namespace InventorySystem.UI
 				case State.InventoryFull: return fullInventoryColor;
 			}
 		}
+
+		public ItemObject MainItem => results[0].ItemType;
 	}
 }

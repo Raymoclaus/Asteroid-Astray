@@ -81,6 +81,7 @@ public class NarrativeManager : MonoBehaviour, IChatter
 		MainHatch.IsLocked = true;
 		SetShuttleRepaired(false);
 		MainChar.CanAttack = false;
+		MainChar.DecreaseCurrentHealth(200f);
 		LoadingController.AddListener(StartRecoveryDialogue);
 	}
 
@@ -320,7 +321,7 @@ public class NarrativeManager : MonoBehaviour, IChatter
 		Vector2 pos = MainHatch.transform.position;
 		float randomAngle = UnityEngine.Random.value * Mathf.PI * 2f;
 		Vector2 randomPos = new Vector2(Mathf.Sin(randomAngle),	Mathf.Cos(randomAngle));
-		randomPos *= UnityEngine.Random.value * 50f + 100f;
+		randomPos *= UnityEngine.Random.value * 15f + 30f;
 		if (MainChar != null)
 		{
 			MainChar.Teleport(pos + randomPos);

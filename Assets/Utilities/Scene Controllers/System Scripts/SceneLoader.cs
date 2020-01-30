@@ -17,6 +17,11 @@ namespace SceneControllers
 		public static SceneAsync PrepareScene(string sceneName,
 			Action<AsyncOperation> preparedAction = null)
 		{
+			if (string.IsNullOrWhiteSpace(sceneName))
+			{
+				sceneName = CurrentSceneName;
+			}
+			Debug.Log($"Loading scene: {sceneName} asynchronously.");
 			AsyncOperation ao = SceneManager.LoadSceneAsync(sceneName);
 			ao.allowSceneActivation = false;
 			ao.completed += preparedAction;
@@ -26,6 +31,11 @@ namespace SceneControllers
 		[SteamPunkConsoleCommand(command = "scene", info = "Changes scene to one with given name. Use scenelist to get a list of scene names.")]
 		public static void LoadScene(string sceneName)
 		{
+			if (string.IsNullOrWhiteSpace(sceneName))
+			{
+				sceneName = CurrentSceneName;
+			}
+			Debug.Log($"Loading scene: {sceneName}.");
 			OnSceneLoad?.Invoke(sceneName);
 			SceneManager.LoadScene(sceneName);
 		}
@@ -59,7 +69,14 @@ namespace SceneControllers
 				Application.Quit();
 			}
 		}
-		
+
+		public static void ResetScene() => LoadScene(CurrentSceneName);
+
+		public static Scene CurrentScene => SceneManager.GetActiveScene();
+
+		public static string CurrentSceneName => GetSceneName(CurrentScene);
+
+		public static string GetSceneName(Scene scene) => scene.name;
 
 		private static bool SceneExists(string sceneName)
 		{

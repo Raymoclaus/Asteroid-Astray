@@ -606,7 +606,7 @@ public class Shuttle : Character, IStunnable, ICombat
 		{
 			ty4pUI?.SetActive(true);
 			healthComponent.SetToUpperLimit();
-			shieldComponent.SetToUpperLimit();
+			shieldValue.SetToUpperLimit();
 		}
 		else
 		{
@@ -675,6 +675,8 @@ public class Shuttle : Character, IStunnable, ICombat
 	public override void DestroyedAnEntity(Entity target)
 	{
 		NotifyOfDestroyedEntity(target);
+
+		if (!CameraControl.IsInView(target.gameObject)) return;
 
 		switch (target.GetEntityType())
 		{
@@ -810,9 +812,6 @@ public class Shuttle : Character, IStunnable, ICombat
 				CameraControl.Zoom(0.5f + evaluation * 0.5f);
 			}, null);
 		});
-
-		//fade out
-		FadeScreen.FadeOut(3f);
 
 		//open hatch
 	}

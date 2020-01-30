@@ -11,66 +11,57 @@ public class FadeScreen : MonoBehaviour
 	[SerializeField] private Sprite defaultImage;
 	[SerializeField] private AnimationCurve fadeInCurve, fadeOutCurve;
 
-	private static FadeScreen instance;
-	private static FadeScreen Instance
-	{
-		get
-		{
-			return instance != null ? instance : (instance = FindObjectOfType<FadeScreen>());
-		}
-	}
+	private CanvasGroup cGroup;
+	private CanvasGroup CGroup => cGroup != null
+		? cGroup
+		: (cGroup = GetComponent<CanvasGroup>());
 
-	private static CanvasGroup cGroup;
-	private static CanvasGroup CGroup
+	public void FadeIn(float duration = 1f, AnimationCurve curve = null,
+		System.Action finishedAction = null,
+		System.Action<float> updatedAction = null)
 	{
-		get
-		{
-			return cGroup != null ? cGroup : (cGroup = Instance?.GetComponent<CanvasGroup>());
-		}
-	}
-
-	private static readonly AnimationCurve defaultCurve
-		= AnimationCurve.Linear(0f, 0f, 1f, 1f);
-
-	public static void FadeIn(float duration = 1f, AnimationCurve curve = null,
-		System.Action finishedAction = null)
-	{
-		curve = curve ?? defaultCurve;
+		curve = curve ?? fadeInCurve;
 		Coroutines.TimedAction(duration, (float delta) =>
 		{
-			CGroup.alpha = 1f - delta;
+			CGroup.alpha = EvaluateCurve(curve, delta);
+			updatedAction?.Invoke(delta);
 		}, finishedAction);
 	}
 
-	public static void FadeOut(float duration = 1f, AnimationCurve curve = null,
-		System.Action finishedAction = null)
+	public void FadeOut(float duration = 1f, AnimationCurve curve = null,
+		System.Action finishedAction = null,
+		System.Action<float> updatedAction = null)
 	{
-		curve = curve ?? defaultCurve;
+		curve = curve ?? fadeOutCurve;
 		Coroutines.TimedAction(duration, (float delta) =>
 		{
-			CGroup.alpha = delta;
+			CGroup.alpha = EvaluateCurve(curve, delta);
+			updatedAction?.Invoke(delta);
 		}, finishedAction);
 	}
 
 	public void FadeIn(float duration)
 	{
-		Coroutines.TimedAction(duration,
-			delta => CGroup.alpha = fadeInCurve.Evaluate(delta),
-			null);
+		FadeIn(duration, fadeInCurve, null, null);
 	}
 
 	public void FadeOut(float duration)
 	{
-		Coroutines.TimedAction(duration,
-			delta => CGroup.alpha = fadeOutCurve.Evaluate(delta),
-			null);
+		FadeOut(duration, fadeOutCurve, null, null);
 	}
 
-	public static void SetColour(Color col) => instance.img.color = col;
+	public void SetColour(Color col) => img.color = col;
 
-	public static void ResetColorToDefault() => SetColour(instance.defaultColor);
+	public void ResetColorToDefault() => SetColour(defaultColor);
 
-	public static void SetImage(Sprite spr) => instance.img.sprite = spr;
+	public void SetColourBlack() => SetColour(Color.black);
 
-	public static void ResetImageToDefault() => SetImage(instance.defaultImage);
+	public void SetColourWhite() => SetColour(Color.white);
+
+	public void SetImage(Sprite spr) => img.sprite = spr;
+
+	public void ResetImageToDefault() => SetImage(defaultImage);
+
+	private float EvaluateCurve(AnimationCurve curve, float delta)
+		=> curve.Evaluate(delta);
 }
