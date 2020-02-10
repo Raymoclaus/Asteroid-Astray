@@ -12,9 +12,17 @@ namespace TabbedMenuSystem
 		public CanvasGroup CGroup => cGroup != null ? cGroup
 			: (cGroup = GetComponent<CanvasGroup>());
 
-		public string TabName => tabName;
+		public string TabName
+		{
+			get => tabName;
+			set => tabName = value;
+		}
 
-		public int PreferredTabIndex => preferredTabIndex;
+		public int PreferredTabIndex
+		{
+			get => preferredTabIndex;
+			set => preferredTabIndex = value;
+		}
 
 		public IMenuContent CreateCopy(Transform parent) => Instantiate(this, parent);
 

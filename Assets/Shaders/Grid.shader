@@ -12,6 +12,8 @@
 		_WaveAmplitude("Wave Amplitude", float) = 1
 		_WaveOffset("Wave Offset", float) = 1
 		_WaveSpacing("Wave Spacing", int) = 1
+		_VignetteSize("Vignette Size", float) = 0
+		_VignetteWidth("Vignette Width", float) = 0
 	}
 	SubShader
 	{
@@ -59,16 +61,28 @@
 			}
 			
 			sampler2D _MainTex;
-			float _LineWidth, _CellHeightMatchWidth, _WaveAmplitude, _WaveOffset;
+			float _LineWidth, _CellHeightMatchWidth, _WaveAmplitude, _WaveOffset,
+				_VignetteSize, _VignetteWidth;
 			int _WaveSpacing;
 			float _Size;
 			fixed4 _BackgroundColor, _LineColor, _LineGlowColor;
+
+			float squareDistance(float2 a, float2 b)
+			{
+				float xDiff = abs(a.x - b.x);
+				float yDiff = abs(a.y - b.y);
+				return xDiff * xDiff + yDiff * yDiff;
+			}
 
 			fixed4 frag (v2f i) : SV_Target
 			{
 				fixed4 col = tex2D(_MainTex, i.uv);
 				float PI = 3.14159;
 				float2 pos = i.uv;
+				float2 center = (0.5, 0.5);
+				float distFromCenter = squareDistance(pos, center);
+				float vignetteMinDist = _VignetteSize - _VignetteWidth;
+				float vignetteDelta = saturate((distFromCenter - vignetteMinDist) / _VignetteWidth);
 				float width = _ScreenParams.x;
 				float height = _ScreenParams.y;
 				float aspectRatio = width / height;
@@ -91,6 +105,7 @@
 				fixed4 lineCol = lerp(_LineColor, _LineGlowColor, cosTime);
 				col *= lerp(_BackgroundColor, lineCol, clamp(0, 1, (gridLineY + gridLineNY) * (gridLineX + gridLineNX)));
 				col.a *= i.diff.a;
+				col.a *= vignetteDelta;
 				return col;
 			}
 			ENDCG

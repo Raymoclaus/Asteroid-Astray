@@ -26,7 +26,7 @@ public class PauseMenu : TabbedMenuController
 		Pause.OnResume -= Close;
 	}
 
-	protected override void Open()
+	public override void Open()
 	{
 		base.Open();
 		StartCoroutine(TimedAction(Pause.SHIFT_DURATION,
@@ -34,7 +34,7 @@ public class PauseMenu : TabbedMenuController
 			null));
 	}
 
-	protected override void Close()
+	public override void Close()
 	{
 		StartCoroutine(TimedAction(Pause.SHIFT_DURATION,
 			(float delta) => cGroup.alpha = 1f - delta,

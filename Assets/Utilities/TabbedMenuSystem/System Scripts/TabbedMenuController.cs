@@ -22,7 +22,7 @@ namespace TabbedMenuSystem
 		private IMenuContent currentContent;
 		[SerializeField] private float tabFadeDuration = 0.5f;
 
-		protected virtual void Open()
+		public virtual void Open()
 		{
 			gameObject.SetActive(true);
 
@@ -38,7 +38,7 @@ namespace TabbedMenuSystem
 			ContentToShow(currentContent, 0f);
 		}
 
-		protected virtual void Close()
+		public virtual void Close()
 		{
 			gameObject.SetActive(false);
 		}
