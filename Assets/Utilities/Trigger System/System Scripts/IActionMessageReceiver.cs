@@ -1,8 +1,10 @@
-﻿namespace TriggerSystem
+﻿using InputHandlerSystem;
+
+namespace TriggerSystem
 {
 	public interface IActionMessageReceiver
 	{
-		void Interacted(IInteractor interactor, string action);
+		void Interacted(IInteractor interactor, InputAction action);
 	}
 
 }

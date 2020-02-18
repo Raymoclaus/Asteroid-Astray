@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace InputHandlerSystem
 {
-	[CreateAssetMenu(menuName = "Scriptable Objects/Input Method")]
+	[CreateAssetMenu(menuName = "Scriptable Objects/Input System/Input Method")]
 	public class InputMethod : ScriptableObject
 	{
 		public InputMode inputMode;
@@ -84,13 +84,13 @@ namespace InputHandlerSystem
 
 		public void UpdateInputs()
 		{
-			while (combinations.Count < context.actions.Count)
+			while (combinations.Count < context.Actions.Count)
 			{
 				combinations.Add(new ActionCombination());
 			}
 
-			combinations.RemoveRange(context.actions.Count,
-				combinations.Count - context.actions.Count);
+			combinations.RemoveRange(context.Actions.Count,
+				combinations.Count - context.Actions.Count);
 
 			for (int i = combinations.Count - 1; i >= 0; i--)
 			{
@@ -100,7 +100,7 @@ namespace InputHandlerSystem
 				combinations.RemoveAt(i);
 			}
 
-			List<string> actions = context.actions;
+			List<string> actions = context.Actions;
 			for (int i = 0; i < actions.Count; i++)
 			{
 				if (ContainsAction(actions[i])) continue;
@@ -118,10 +118,10 @@ namespace InputHandlerSystem
 		{
 			get
 			{
-				if (context.actions.Count != combinations.Count) return false;
-				for (int i = 0; i < context.actions.Count; i++)
+				if (context.Actions.Count != combinations.Count) return false;
+				for (int i = 0; i < context.Actions.Count; i++)
 				{
-					if (GetCombinationIndex(context.actions[i]) == -1) return false;
+					if (GetCombinationIndex(context.Actions[i]) == -1) return false;
 				}
 				return true;
 			}

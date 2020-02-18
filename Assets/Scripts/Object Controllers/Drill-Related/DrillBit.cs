@@ -8,7 +8,7 @@ public class DrillBit : MonoBehaviour, IEquipment
 	public Character parent;
 	public bool IsDrilling { get; private set; }
 	public bool CanDrill => parent.CanDrill();
-	public bool CanLaunch => parent.CanDrillLaunch();
+	public bool CanLaunch => parent.CanDrillLaunch;
 	public Entity drillTarget;
 	private bool firstHit = false;
 	public List<ParticleSystem> DrillSparks;

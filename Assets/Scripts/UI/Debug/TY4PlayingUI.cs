@@ -10,6 +10,7 @@ public class TY4PlayingUI : MonoBehaviour
 	public bool CanDisable = false;
 	private Character mainChar;
 	private Character MainChar => mainChar ?? (mainChar = FindObjectOfType<Shuttle>());
+	[SerializeField] private InputAction scrollDialogueAction;
 
 	private void Awake() => CGroup.alpha = active ? 1f : 0f;
 
@@ -21,7 +22,7 @@ public class TY4PlayingUI : MonoBehaviour
 		}
 
 		if (active
-			&& InputManager.GetInputDown("Scroll Dialogue")
+			&& InputManager.GetInputDown(scrollDialogueAction)
 			&& CGroup.alpha == 1f
 			&& CanDisable)
 		{

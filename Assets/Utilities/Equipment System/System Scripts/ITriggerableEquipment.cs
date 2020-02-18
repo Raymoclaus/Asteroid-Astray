@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using AttackData;
+using InputHandlerSystem;
 
 namespace EquipmentSystem
 {
@@ -10,6 +11,6 @@ namespace EquipmentSystem
 		bool ShouldAttack { get; }
 		float CooldownDuration { get; }
 		bool IsOnCooldown { get; }
-		string TriggerAction { get; }
+		InputAction TriggerAction { get; }
 	} 
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using DialogueSystem;
+using InputHandlerSystem;
 using TriggerSystem;
 using UnityEngine;
 
@@ -36,7 +37,7 @@ public class MainHatchPrompt : MonoBehaviour, IActionMessageReceiver, IChatter
 
 	public void Open() => anim.SetTrigger("Open");
 
-	public void Interacted(IInteractor interactor, string action)
+	public void Interacted(IInteractor interactor, InputAction action)
 	{
 		if (IsLocked)
 		{

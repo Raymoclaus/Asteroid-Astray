@@ -12,7 +12,7 @@ namespace DialogueSystem
 
 		protected override void Update()
 		{
-			if (InputManager.GetInputDown("Scroll Dialogue") && !SteamPunkConsole.IsConsoleOpen)
+			if (InputManager.GetInputDown(scrollDialogueAction) && !SteamPunkConsole.IsConsoleOpen)
 			{
 				Next();
 			}

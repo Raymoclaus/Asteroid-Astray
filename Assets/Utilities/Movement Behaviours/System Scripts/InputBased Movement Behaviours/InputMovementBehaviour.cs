@@ -5,6 +5,8 @@ namespace MovementBehaviours
 {
 	public class InputMovementBehaviour : MovementBehaviour
 	{
+		[SerializeField] private InputAction upAction, rightAction, downAction, leftAction;
+
 		private void Awake()
 		{
 			InputManager.SetContext("Ground");
@@ -18,8 +20,8 @@ namespace MovementBehaviours
 		private void GetMovementInput()
 		{
 			Vector2 direction = new Vector2(
-				InputManager.GetInput("Right") - InputManager.GetInput("Left"),
-				InputManager.GetInput("Up") - InputManager.GetInput("Down"));
+				InputManager.GetInput(rightAction) - InputManager.GetInput(leftAction),
+				InputManager.GetInput(upAction) - InputManager.GetInput(downAction));
 			if (direction != Vector2.zero)
 			{
 				MoveInDirection(direction);

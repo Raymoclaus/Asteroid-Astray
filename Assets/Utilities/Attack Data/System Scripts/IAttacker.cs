@@ -1,4 +1,5 @@
-﻿using System;
+﻿using InputHandlerSystem;
+using System;
 using UnityEngine;
 
 namespace AttackData
@@ -8,7 +9,7 @@ namespace AttackData
 		void ReceiveRecoil(Vector3 recoilVector);
 		void ReceiveStoppingPower(float stoppingPower);
 		void ReceiveRecoveryDuration(float recoveryDuration);
-		bool ShouldAttack(string action);
+		bool ShouldAttack(InputAction action);
 		float DamageMultiplier { get; }
 	} 
 }

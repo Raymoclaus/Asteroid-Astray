@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace InputHandlerSystem.UI
 {
-	[CreateAssetMenu(menuName = "Scriptable Objects/Input Icon List")]
+	[CreateAssetMenu(menuName = "Scriptable Objects/Input System/Input Icon List")]
 	public class InputIconSO : ScriptableObject
 	{
 		public InputMode inputMode;

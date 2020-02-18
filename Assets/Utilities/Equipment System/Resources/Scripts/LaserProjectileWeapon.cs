@@ -1,15 +1,16 @@
 ﻿using System.Collections.Generic;
 using AttackData;
+using InputHandlerSystem;
 using UnityEngine;
 
 namespace EquipmentSystem
 {
 	public class LaserProjectileWeapon : BasicProjectileWeapon
 	{
-		[SerializeField] private string triggerAction = "Attack";
+		[SerializeField] private InputAction triggerAction;
 		[SerializeField] private Transform centrePivot;
 
-		public override string TriggerAction => triggerAction;
+		public override InputAction TriggerAction => triggerAction;
 
 		public override AttackManager Attack(float damageMultiplier, List<IAttacker> owners)
 		{

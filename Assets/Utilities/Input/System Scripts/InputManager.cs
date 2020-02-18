@@ -69,22 +69,22 @@ namespace InputHandlerSystem
 		}
 
 		//returns the input status of a given command. 0f usually means no input.
-		public static float GetInput(string key)
+		public static float GetInput(InputAction action)
 		{
 			CheckForModeUpdate();
-			return GetHandler()?.GetInput(key, CurrentContext) ?? 0f;
+			return GetHandler()?.GetInput(action.ActionName, CurrentContext) ?? 0f;
 		}
 
-		public static bool GetInputDown(string key)
+		public static bool GetInputDown(InputAction action)
 		{
 			CheckForModeUpdate();
-			return GetHandler()?.GetInputDown(key, CurrentContext) ?? false;
+			return GetHandler()?.GetInputDown(action.ActionName, CurrentContext) ?? false;
 		}
 
-		public static bool GetInputUp(string key)
+		public static bool GetInputUp(InputAction action)
 		{
 			CheckForModeUpdate();
-			return GetHandler()?.GetInputUp(key, CurrentContext) ?? false;
+			return GetHandler()?.GetInputUp(action.ActionName, CurrentContext) ?? false;
 		}
 
 		//returns whether the current context contains the given action
@@ -136,6 +136,6 @@ namespace InputHandlerSystem
 
 		public static List<string> GetCurrentActions() => GetActions(CurrentContext);
 
-		public static List<string> GetActions(InputContext context) => context?.actions;
+		public static List<string> GetActions(InputContext context) => context?.Actions;
 	}
 }

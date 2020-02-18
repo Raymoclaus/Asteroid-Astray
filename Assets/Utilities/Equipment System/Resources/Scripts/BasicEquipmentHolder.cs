@@ -1,4 +1,5 @@
 ﻿using AttackData;
+using InputHandlerSystem;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,7 @@ namespace EquipmentSystem
 	public class BasicEquipmentHolder : MonoBehaviour, IEquipmentHolder
 	{
 		private List<IAttacker> owners = new List<IAttacker>();
-		[SerializeField] private string defaultConstantAction = "Attack";
+		[SerializeField] private InputAction defaultConstantAction;
 		[SerializeField] private float damageMultiplier = 1f;
 		private const int INITIAL_SLOT_COUNT = 1;
 		private List<IEquipmentSlot> slots = new List<IEquipmentSlot>();
@@ -34,12 +35,12 @@ namespace EquipmentSystem
 
 			foreach (ITriggerableEquipment weapon in GetAllTriggerrableEquipment)
 			{
-				string action = weapon.TriggerAction;
+				InputAction action = weapon.TriggerAction;
 				PerformAction(action);
 			}
 		}
 
-		protected void PerformAction(string action)
+		protected void PerformAction(InputAction action)
 		{
 			if (owners.Exists(t => !t.ShouldAttack(action))) return;
 
@@ -57,7 +58,7 @@ namespace EquipmentSystem
 			owners.ForEach(t => t.ReceiveRecoil(recoilVector));
 		}
 
-		private IEnumerable<ITriggerableEquipment> GetEquipmentWithTriggerAction(string action)
+		private IEnumerable<ITriggerableEquipment> GetEquipmentWithTriggerAction(InputAction action)
 		{
 			return GetAllTriggerrableEquipment.Where(t => t.TriggerAction == action);
 		}

@@ -1,9 +1,12 @@
 ﻿using InputHandlerSystem;
+using UnityEngine;
 
 namespace MovementBehaviours
 {
 	public class InputRollingBehaviour : MovementBehaviour
 	{
+		[SerializeField] private InputAction rollAction;
+
 		private void Update()
 		{
 			if (ShouldRoll)
@@ -13,7 +16,7 @@ namespace MovementBehaviours
 		}
 
 		private bool ShouldRoll
-			=> InputManager.GetInputDown("Roll");
+			=> InputManager.GetInputDown(rollAction);
 	}
 
 }

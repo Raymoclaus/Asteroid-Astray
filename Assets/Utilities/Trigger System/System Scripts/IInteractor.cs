@@ -1,8 +1,10 @@
-﻿namespace TriggerSystem
+﻿using InputHandlerSystem;
+
+namespace TriggerSystem
 {
 	public interface IInteractor : IActor
 	{
-		bool StartedPerformingAction(string action);
+		bool StartedPerformingAction(InputAction action);
 		object ObjectOrderRequest(object order);
 		void Interact(object interactableObject);
 	}

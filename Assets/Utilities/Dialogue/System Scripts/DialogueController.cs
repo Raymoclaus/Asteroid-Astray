@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using InputHandlerSystem;
 using UnityEngine;
 
 namespace DialogueSystem
@@ -26,6 +27,8 @@ namespace DialogueSystem
 		public AudioClip CurrentSpeakerTone { get; private set; }
 
 		[SerializeField] private AudioSource audioSource;
+
+		[SerializeField] protected InputAction scrollDialogueAction;
 
 		protected virtual void Awake()
 		{

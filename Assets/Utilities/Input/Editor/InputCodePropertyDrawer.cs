@@ -1,5 +1,4 @@
-﻿using InputHandlerSystem;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEditor;
 
 namespace InputHandlerSystem.CustomisedEditor

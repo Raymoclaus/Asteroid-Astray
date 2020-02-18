@@ -5,6 +5,7 @@ using UnityEngine;
 namespace TriggerSystem
 {
 	using System;
+	using InputHandlerSystem;
 	using QuestSystem;
 	using TriggerSystem.Triggers;
 
@@ -67,13 +68,13 @@ namespace TriggerSystem
 			|| trigger.Equals(null);
 
 		public static InteractionWaypoint CreateWaypoint(IInteractor expectedInteractor,
-			Vector3 position, float radius, string action)
+			Vector3 position, float radius, InputAction action)
 		{
 			InteractionTrigger trigger = new GameObject("New Trigger").AddComponent<InteractionTrigger>();
 			CircleCollider2D circleCol = trigger.gameObject.AddComponent<CircleCollider2D>();
 			circleCol.radius = radius;
 
-			trigger.ActionRequired = action;
+			trigger.InteractAction = action;
 			trigger.SetCollider(circleCol);
 			trigger.SetPivot(trigger.transform);
 			trigger.transform.position = position;

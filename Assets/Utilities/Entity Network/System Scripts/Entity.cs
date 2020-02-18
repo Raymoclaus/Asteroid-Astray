@@ -6,6 +6,7 @@ using ValueComponents;
 using TriggerSystem;
 using AttackData;
 using AudioUtilities;
+using InputHandlerSystem;
 
 public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageReceiver
 {
@@ -466,7 +467,7 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 		}
 	}
 
-	public void Interacted(IInteractor interactor, string action)
+	public void Interacted(IInteractor interactor, InputAction action)
 	{
 		interactor.Interact(this);
 	}

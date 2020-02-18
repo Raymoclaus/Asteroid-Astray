@@ -77,7 +77,7 @@ public class TutorialPrompts : MonoBehaviour
 
 		launchInputPromptInfo.SetCondition(() =>
 		{
-			return mainChar.IsDrilling && mainChar.CanDrillLaunch();
+			return mainChar.IsDrilling && mainChar.CanDrillLaunch;
 		});
 	}
 

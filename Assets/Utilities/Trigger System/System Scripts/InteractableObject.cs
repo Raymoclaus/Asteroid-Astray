@@ -1,12 +1,13 @@
-﻿using UnityEngine;
+﻿using InputHandlerSystem;
+using UnityEngine;
 
 namespace TriggerSystem.MessageReceivers
 {
 	public abstract class InteractableObject : MonoBehaviour, IActionMessageReceiver
 	{
-		[SerializeField] private string interactionAction;
+		[SerializeField] private InputAction interactionAction;
 
-		public void Interacted(IInteractor interactor, string action)
+		public void Interacted(IInteractor interactor, InputAction action)
 		{
 			if (VerifyAction(action))
 			{
@@ -16,6 +17,6 @@ namespace TriggerSystem.MessageReceivers
 
 		protected abstract void PerformAction(IInteractor interactor);
 
-		private bool VerifyAction(string action) => action == interactionAction;
+		private bool VerifyAction(InputAction action) => action == interactionAction;
 	}
 }

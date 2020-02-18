@@ -9,6 +9,7 @@ using ValueComponents;
 using DialogueSystem;
 using AttackData;
 using EquipmentSystem;
+using InputHandlerSystem;
 
 public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 {
@@ -229,7 +230,7 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 
 	public void AttachDrill(DrillBit db) => drill = db;
 
-	public virtual bool CanDrillLaunch() => canDrillLaunch;
+	public virtual bool CanDrillLaunch => canDrillLaunch;
 	public virtual bool CanDrill() => canDrill;
 
 	public virtual float GetLaunchDamage() => 0f;
@@ -309,9 +310,9 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 
 	}
 
-	public virtual bool StartedPerformingAction(string action) => false;
+	public virtual bool StartedPerformingAction(InputAction action) => false;
 
-	public virtual bool IsPerformingAction(string action) => false;
+	public virtual bool IsPerformingAction(InputAction action) => false;
 
 	public virtual object ObjectOrderRequest(object order)
 	{
@@ -450,7 +451,7 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 
 	protected bool IsRecovering => recoveryTimerComponent.CurrentValue > 0f;
 
-	public virtual bool ShouldAttack(string action)
+	public virtual bool ShouldAttack(InputAction action)
 		=> !IsRecovering
 		   && !Pause.IsStopped
 			&& CanAttack;

@@ -5,23 +5,23 @@ public class WavyGridController : MonoBehaviour
 	[SerializeField] private Material wavyGridMaterial;
 	[SerializeField] private bool useUnscaledTime;
 	[Header("Wave Variables")]
-	private const string OFFSET_VAR_NAME = "_WaveOffset";
 	[SerializeField] private float waveSpeed = 1f;
 	[SerializeField] private bool pauseWave;
+	private const string OFFSET_VAR_NAME = "_WaveOffset";
 	[Header("Vignette Variables")]
-	private const string VIGNETTE_SIZE_VAR_NAME = "_VignetteSize";
-	private const string VIGNETTE_WIDTH_VAR_NAME = "_VignetteWidth";
-	[SerializeField] private Vector2 emptyPreset = new Vector2(1f, 0f);
-	[SerializeField] private Vector2 unpausedPreset = new Vector2(0.6f, 0.3f);
-	[SerializeField] private Vector2 pausedPreset = new Vector2(0f, 0.3f);
+	[SerializeField] private Vector2 emptyVignettePreset = new Vector2(1f, 0f);
+	[SerializeField] private Vector2 unpausedVignettePreset = new Vector2(0.6f, 0.3f);
+	[SerializeField] private Vector2 pausedVignettePreset = new Vector2(0f, 0.3f);
 	private float transitionTimer = 0f;
 	[SerializeField] private float transitionSpeed = 1f;
 	private Vector2? priorVignette, targetVignette;
 	[SerializeField] private AnimationCurve transitionCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+	private const string VIGNETTE_SIZE_VAR_NAME = "_VignetteSize";
+	private const string VIGNETTE_WIDTH_VAR_NAME = "_VignetteWidth";
 
 	private void Awake()
 	{
-		priorVignette = priorVignette ?? unpausedPreset;
+		priorVignette = priorVignette ?? unpausedVignettePreset;
 		targetVignette = targetVignette ?? priorVignette;
 
 		Pause.OnPause += TransitionVignetteToPausedState;
@@ -69,9 +69,9 @@ public class WavyGridController : MonoBehaviour
 		priorVignette = CurrentVignetteState;
 	}
 
-	public void TransitionVignetteToPausedState() => TransitionVignette(pausedPreset);
+	public void TransitionVignetteToPausedState() => TransitionVignette(pausedVignettePreset);
 
-	public void TransitionVignetteToUnpausedState() => TransitionVignette(unpausedPreset);
+	public void TransitionVignetteToUnpausedState() => TransitionVignette(unpausedVignettePreset);
 
 	public void SetVignetteState(Vector2 target)
 	{

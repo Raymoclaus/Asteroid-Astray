@@ -1,4 +1,5 @@
-﻿using System;
+﻿using InputHandlerSystem;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,7 +10,7 @@ namespace TriggerSystem.Triggers
 	public class InteractionTrigger : VicinityTrigger, IActionTrigger
 	{
 		[SerializeField] protected bool enabledInteractionActions = true;
-		[SerializeField] protected string action = "Interact";
+		[field: SerializeField] public InputAction InteractAction { get; set; }
 		private HashSet<IReceiver> receivers = new HashSet<IReceiver>();
 		private HashSet<IInteractor> nearbyInteractors = new HashSet<IInteractor>();
 		private List<IInteractor> toInteract = new List<IInteractor>();
@@ -22,7 +23,7 @@ namespace TriggerSystem.Triggers
 			toInteract.Clear();
 			foreach (IInteractor interactor in nearbyInteractors)
 			{
-				if (interactor.StartedPerformingAction(ActionRequired))
+				if (interactor.StartedPerformingAction(InteractAction))
 				{
 					toInteract.Add(interactor);
 				}
@@ -76,17 +77,11 @@ namespace TriggerSystem.Triggers
 			set => enabledInteractionActions = value;
 		}
 
-		public string ActionRequired
-		{
-			get => action;
-			set => action = value;
-		}
-
 		public virtual void Interact(IInteractor interactor)
 		{
 			foreach (IReceiver receiver in receivers)
 			{
-				receiver.Interacted(interactor, ActionRequired);
+				receiver.Interacted(interactor, InteractAction);
 			}
 			OnInteracted?.Invoke(interactor);
 		}

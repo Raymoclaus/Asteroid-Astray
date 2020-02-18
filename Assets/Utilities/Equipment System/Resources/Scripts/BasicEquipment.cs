@@ -1,5 +1,6 @@
 ﻿using AttackData;
 using AudioUtilities;
+using InputHandlerSystem;
 using System.Collections.Generic;
 using UnityEngine;
 using ValueComponents;
@@ -77,6 +78,6 @@ namespace EquipmentSystem
 				Quaternion.identity, null);
 		}
 
-		public virtual string TriggerAction => "Attack";
+		public virtual InputAction TriggerAction => null;
 	}
 }

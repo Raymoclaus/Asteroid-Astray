@@ -18,6 +18,7 @@ public class Pause : MonoBehaviour
 	public static float intendedTimeSpeed = 1f;
 	public static event Action OnPause, OnResume;
 	public const float SHIFT_DURATION = 0.5f;
+	[SerializeField] private InputAction pauseAction;
 
 	private void Awake()
 	{
@@ -37,7 +38,7 @@ public class Pause : MonoBehaviour
 	{
 		timeSinceOpen += Time.deltaTime;
 
-		if (InputManager.GetInput("Pause") > 0f && !isShifting && canPause)
+		if (InputManager.GetInput(pauseAction) > 0f && !isShifting && canPause)
 		{
 			if (IsPaused)
 			{
@@ -70,6 +71,12 @@ public class Pause : MonoBehaviour
 
 		Time.fixedDeltaTime = IsStopped ? 1f : 0.01666666f / Time.timeScale;
 	}
+
+	private static bool CanToggle => !isShifting && canPause;
+
+	public static bool CanPause => CanToggle && !IsPaused;
+
+	public static bool CanResume => CanToggle && IsPaused;
 
 	public static void InstantPause(bool pause)
 	{

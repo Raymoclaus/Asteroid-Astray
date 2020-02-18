@@ -1,9 +1,12 @@
 ﻿using InputHandlerSystem;
+using UnityEngine;
 
 namespace MovementBehaviours
 {
 	public class InputBlockBehaviour : MovementBehaviour
 	{
+		[SerializeField] private InputAction blockAction;
+
 		private void Update()
 		{
 			if (ShouldBlock)
@@ -21,7 +24,7 @@ namespace MovementBehaviours
 
 		private bool IsBlocking { get; set; }
 
-		private bool PressingBlockInput => InputManager.GetInput("Block") > 0f;
+		private bool PressingBlockInput => InputManager.GetInput(blockAction) > 0f;
 
 		private bool ShouldBlock
 			=> !IsBlocking

@@ -106,7 +106,7 @@ public class Shuttle : Character, IStunnable, ICombat
 	}
 
 	[SerializeField] private bool canLaunch;
-
+	
 	public bool CanLaunch
 	{
 		get => canLaunch && CanAttack;
@@ -123,7 +123,8 @@ public class Shuttle : Character, IStunnable, ICombat
 
 	//how long a boost can last
 	[SerializeField] private RangedFloatComponent boostComponent;
-
+	//how much boost is available as a percentage
+	public float BoostPercentage => boostComponent.CurrentRatio;
 	//how much a boost affects speed
 	[SerializeField] private float boostSpeedMultiplier = 2f;
 
@@ -155,6 +156,12 @@ public class Shuttle : Character, IStunnable, ICombat
 	private float resourceCollectedPitchIncreaseAmount = 0.2f;
 	[SerializeField] public AudioSO collisionSounds;
 	private ContactPoint2D[] contacts = new ContactPoint2D[1];
+
+	[SerializeField] private InputAction goAction,
+		boostAction,
+		cancelDrillingAction,
+		shootAction;
+	[SerializeField] private InputAction[] slotActions = new InputAction[8];
 
 	public delegate void GoInputEventHandler();
 
@@ -211,7 +218,7 @@ public class Shuttle : Character, IStunnable, ICombat
 		if (!hasControl) return;
 
 		//Check if the player is attempting to boost
-		if (!autoPilot) Boost(InputManager.GetInput("Boost") > 0f);
+		if (!autoPilot) Boost(InputManager.GetInput(boostAction) > 0f);
 		//used for artificially adjusting speed, used by the auto pilot only
 		float speedMod = 1f;
 		//update rotation variable with transform's current rotation
@@ -279,7 +286,7 @@ public class Shuttle : Character, IStunnable, ICombat
 		}
 		else
 		{
-			float input = InputManager.GetInput("Go");
+			float input = InputManager.GetInput(goAction);
 			if (input > 0f)
 			{
 				OnGoInput?.Invoke();
@@ -287,9 +294,9 @@ public class Shuttle : Character, IStunnable, ICombat
 
 			if (IsDrilling)
 			{
-				float launchInput = InputManager.GetInput("Cancel Drill");
+				float launchInput = InputManager.GetInput(cancelDrillingAction);
 				input = Mathf.Clamp01(input + launchInput);
-				if (!CanDrillLaunch() && launchInput > 0f)
+				if (!CanDrillLaunch&& launchInput > 0f)
 				{
 					input = 0f;
 				}
@@ -454,24 +461,14 @@ public class Shuttle : Character, IStunnable, ICombat
 	private void SetRot(float newRot) => rot.z = ((newRot % 360f) + 360f) % 360f;
 
 	public override EntityType GetEntityType() => EntityType.Shuttle;
-
-	private static readonly string[] SLOT_ACTIONS = {
-		"Slot 1",
-		"Slot 2",
-		"Slot 3",
-		"Slot 4",
-		"Slot 5",
-		"Slot 6",
-		"Slot 7",
-		"Slot 8"
-	};
+	
 	protected override void CheckItemUsageInput()
 	{
 		base.CheckItemUsageInput();
 
 		for (int i = 0; i < 8; i++)
 		{
-			if (InputManager.GetInput(SLOT_ACTIONS[i]) > 0f)
+			if (InputManager.GetInput(slotActions[i]) > 0f)
 			{
 				CheckItemUsage(i);
 			}
@@ -494,7 +491,7 @@ public class Shuttle : Character, IStunnable, ICombat
 			return 0f;
 		}
 
-		if (InputManager.GetInput("Cancel Drill") > 0f && CanDrillLaunch())
+		if (InputManager.GetInput(cancelDrillingAction) > 0f && CanDrillLaunch)
 		{
 			GameObject launchCone = drillLaunchArcSprite.gameObject;
 			launchCone.SetActive(true);
@@ -522,11 +519,12 @@ public class Shuttle : Character, IStunnable, ICombat
 		{
 			return calculation * 50f;
 		}
-		else if (InputManager.GetInput("Go") > 0f || InputManager.GetInput("Cancel Drill") > 0f)
+		else if (InputManager.GetInput(goAction) > 0f
+		         || InputManager.GetInput(cancelDrillingAction) > 0f)
 		{
-			if (InputManager.GetInput("Cancel Drill") > 0f)
+			if (InputManager.GetInput(cancelDrillingAction) > 0f)
 			{
-				return CanDrillLaunch() ? 0.001f : 0f;
+				return CanDrillLaunch? 0.001f : 0f;
 			}
 			else
 			{
@@ -551,12 +549,11 @@ public class Shuttle : Character, IStunnable, ICombat
 	}
 
 	public override bool ShouldLaunch() =>
-		CanDrillLaunch()
-		&& InputManager.GetInputUp("Cancel Drill")
+		CanDrillLaunch && InputManager.GetInputUp(cancelDrillingAction)
 		&& hasControl
 		&& CanLaunch;
 
-	public override bool CanDrillLaunch() => base.CanDrillLaunch() && CanLaunch;
+	public override bool CanDrillLaunch => base.CanDrillLaunch && CanLaunch;
 
 	public void Stun()
 	{
@@ -690,7 +687,7 @@ public class Shuttle : Character, IStunnable, ICombat
 	public override bool CanFireLaser() =>
 		laserAttached
 		&& !IsBoosting
-		&& InputManager.GetInput("Shoot") > 0f
+		&& InputManager.GetInput(shootAction) > 0f
 		&& !Pause.IsStopped
 		&& hasControl
 		&& canShoot;
@@ -698,7 +695,7 @@ public class Shuttle : Character, IStunnable, ICombat
 	public override bool CanFireStraightWeapon() =>
 		straightWeaponAttached
 		&& !IsBoosting
-		&& InputManager.GetInput("Shoot") > 0f
+		&& InputManager.GetInput(shootAction) > 0f
 		&& !Pause.IsStopped
 		&& hasControl
 		&& canShoot;
@@ -775,7 +772,7 @@ public class Shuttle : Character, IStunnable, ICombat
 	public override bool CanDrill()
 		=> base.CanDrill()
 		&& drillIsActive
-		&& InputManager.GetInput("Cancel Drill") == 0f;
+		&& InputManager.GetInput(cancelDrillingAction) == 0f;
 
 	public void EnterShip(Transform shipHatch)
 	{
@@ -816,10 +813,10 @@ public class Shuttle : Character, IStunnable, ICombat
 		//open hatch
 	}
 
-	public override bool StartedPerformingAction(string action)
+	public override bool StartedPerformingAction(InputAction action)
 		=> InputManager.GetInputDown(action);
 
-	public override bool IsPerformingAction(string action)
+	public override bool IsPerformingAction(InputAction action)
 		=> InputManager.GetInput(action) > 0f;
 
 	public override void Interact(object interactableObject)
@@ -836,7 +833,7 @@ public class Shuttle : Character, IStunnable, ICombat
 		}
 	}
 
-	public override bool ShouldAttack(string action)
+	public override bool ShouldAttack(InputAction action)
 		=> base.ShouldAttack(action)
 		   && IsPerformingAction(action);
 
