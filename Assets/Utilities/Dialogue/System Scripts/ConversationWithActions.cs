@@ -65,5 +65,15 @@ namespace DialogueSystem
 		{
 			conversationEvent.conversation[index].delay = value;
 		}
+
+		public bool GetAlsoDelayEvent(int index)
+		{
+			return conversationEvent.conversation[index].alsoDelayEventInvocation;
+		}
+
+		public void SetToAlsoDelayEvent(int index, bool value)
+		{
+			conversationEvent.conversation[index].alsoDelayEventInvocation = value;
+		}
 	}
 }

@@ -124,7 +124,7 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 		return true;
 	}
 
-	protected bool UseItem(ItemObject type)
+	protected virtual bool UseItem(ItemObject type)
 	{
 		bool used = false;
 		int amountUsed = 0;

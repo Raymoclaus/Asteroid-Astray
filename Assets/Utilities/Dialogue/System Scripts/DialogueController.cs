@@ -166,19 +166,27 @@ namespace DialogueSystem
 			{
 				RevealedCharacterCount = 0;
 				OnLineRevealed?.Invoke();
-				currentConversation.InvokeEvent(currentPosition);
 			};
 
 			if (delay > 0f)
 			{
 				IsWaitingOnDelayedText = true;
 				action += () => IsWaitingOnDelayedText = false;
+				if (textEvent.alsoDelayEventInvocation)
+				{
+					action += () => currentConversation.InvokeEvent(currentPosition);
+				}
+				else
+				{
+					currentConversation.InvokeEvent(currentPosition);
+				}
 				OnStartDelayedText?.Invoke();
 				DelayedTextEvent(textEvent.delay, action);
 			}
 			else
 			{
 				action?.Invoke();
+				currentConversation.InvokeEvent(currentPosition);
 			}
 		}
 

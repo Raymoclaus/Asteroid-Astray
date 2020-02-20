@@ -9,47 +9,36 @@ using InventorySystem.UI;
 using ValueComponents;
 using SceneControllers;
 using AudioUtilities;
+using DialogueSystem;
+using StatisticsTracker;
 
 public class Shuttle : Character, IStunnable, ICombat
 {
-	[Header("Shuttle Fields")] [Tooltip("Requires reference to the SpriteRenderer of the shuttle.")]
+	[Header("Shuttle Fields")]
+	[Tooltip("Requires reference to the SpriteRenderer of the shuttle.")]
 	public SpriteRenderer SprRend;
-
 	[Tooltip("Requires reference to the Animator of the shuttle's transform.")]
 	public Animator shuttleAnimator;
-
 	[Tooltip("Rate of speed accumulation when moving forward.")]
 	public float EngineStrength = 3f;
-
 	[Tooltip("Rate of speed decay.")] public float Deceleration = 1f;
-
 	[Tooltip("If speed is higher than this limit then deceleration is increased to compensate.")]
 	public float SpeedLimit = 3f;
-
-	[Tooltip("When drilling, this is multiplied with the speed limit to allow for faster boost after drilling" +
-	         " completes.")]
+	[Tooltip("When drilling, this is multiplied with the speed limit to allow for faster boost after drilling completes.")]
 	public float DrillBoost = 2f;
-
 	[SerializeField] private float drillDamageMultiplier = 0.5f;
-
 	[Tooltip("Controls how quickly the shuttle can rotate.")]
 	public float MaxRotSpeed = 10f;
-
 	[Tooltip("Controls how effective the shuttle's deceleration mechanism is.")] [Range(0f, 1f)]
 	public float decelerationEffectiveness = 0.01f;
-
 	//used as a temporary storage for rigidbody velocity when the constraints are frozen
 	public Vector3 velocity;
-
 	//the rotation that the shuttle should be at
 	public Vector3 rot;
-
 	//force of acceleration via the shuttle
 	public Vector2 accel;
-
 	//store last look direction, useful for joysticks
 	private float lastLookDirection;
-
 	//return how far over the speed limit the shuttle's velocity is
 	private float SpeedCheck
 	{
@@ -75,16 +64,12 @@ public class Shuttle : Character, IStunnable, ICombat
 			return speedCheck;
 		}
 	}
-
 	//efficiency with the searching algorithm used by the auto pilot
 	private float autoPilotTimer;
-
 	//transform for the auto pilot to follow
 	private Transform followTarget;
-
 	//used to adjust speed temporarily
 	private float speedMultiplier = 1f;
-
 	//whether the shuttle can perform a drill launch
 	public float drillLaunchSpeed = 10f;
 	[SerializeField] private float drillLaunchMaxAngle = 60f;
@@ -98,21 +83,17 @@ public class Shuttle : Character, IStunnable, ICombat
 	[SerializeField] private ColorReplacementGroup cRGroup;
 	[SerializeField] private bool drillIsActive = true;
 	[SerializeField] private bool canShoot;
-
 	public bool CanShoot
 	{
 		get => canShoot && CanAttack;
 		set => canShoot = value;
 	}
-
 	[SerializeField] private bool canLaunch;
-	
 	public bool CanLaunch
 	{
 		get => canLaunch && CanAttack;
 		set => canLaunch = value;
 	}
-
 	[SerializeField] private float launchDamage = 500f;
 	public bool hasControl = true;
 	[SerializeField] private bool autoPilot;
@@ -120,59 +101,47 @@ public class Shuttle : Character, IStunnable, ICombat
 	[SerializeField] private TY4PlayingUI ty4pUI;
 	public UnityEvent EnteringShip;
 	public bool CanBoost { get; private set; } = true;
-
 	//how long a boost can last
 	[SerializeField] private RangedFloatComponent boostComponent;
 	//how much boost is available as a percentage
 	public float BoostPercentage => boostComponent.CurrentRatio;
 	//how much a boost affects speed
 	[SerializeField] private float boostSpeedMultiplier = 2f;
-
 	//how long it takes before boost fuel begins recharging
 	[SerializeField] private float boostRechargeTime = 2f;
-
 	private string boostRechargeTimerID;
-
 	//how quickly the boost fuel recharges
 	[SerializeField] private float rechargeSpeed = 1f;
-
 	//how much boosting ignores existing momentum
 	[SerializeField] private float boostCounterVelocity = 0.1f;
-
 	//whether the shuttle is boosting or not
 	private bool IsBoosting { get; set; }
-
 	//reference to sonic boom animation
 	[SerializeField] private GameObject sonicBoomBoostEffect;
 	public float boostInvulnerabilityTime = 0.2f;
 	[SerializeField] private AnimationCurve cameraZoomOnEnterShip;
-
 	private bool laserAttached = false;
 	private bool straightWeaponAttached = false;
-
 	[SerializeField] private AudioClip collectResourceSound;
 	private float resourceCollectedTime;
 	private float resourceCollectedPitch = 1f;
 	private float resourceCollectedPitchIncreaseAmount = 0.2f;
 	[SerializeField] public AudioSO collisionSounds;
 	private ContactPoint2D[] contacts = new ContactPoint2D[1];
-
 	[SerializeField] private GameAction goAction,
 		boostAction,
 		cancelDrillingAction,
 		shootAction;
 	[SerializeField] private GameAction[] slotActions = new GameAction[8];
+	[SerializeField] private BoolStatTracker shuttleRepairedStat, mainHatchLockedStat;
+	[SerializeField] private MainHatchPrompt mainHatch;
+	[SerializeField] private ConversationWithActions wormholeRecoveryConversation;
 
 	public delegate void GoInputEventHandler();
-
 	public event GoInputEventHandler OnGoInput;
-
 	public delegate void LaunchInputEventHandler();
-
 	public event LaunchInputEventHandler OnLaunchInput;
-
 	public delegate void DrillCompleteEventHandler(bool successful);
-
 	public event DrillCompleteEventHandler OnDrillComplete;
 
 	protected override void Awake()
@@ -190,6 +159,29 @@ public class Shuttle : Character, IStunnable, ICombat
 
 		OnItemCollected += ReceiveItem;
 		FindObjectOfType<ItemPopupUI>()?.SetInventoryHolder(this);
+
+		//start repair shuttle questline if shuttle is damaged
+		if (shuttleRepairedStat.IsFalse)
+		{
+			//reduce health by repair kit heal amount
+			//TODO: define repair kit value somewhere
+			DecreaseCurrentHealth(200f);
+			//choose a random starting location nearby the main ship
+			Vector2 pos = mainHatch.transform.position;
+			float randomAngle = Random.value * Mathf.PI * 2f;
+			Vector2 randomPos = new Vector2(Mathf.Sin(randomAngle), Mathf.Cos(randomAngle));
+			randomPos *= Random.value * 15f + 30f;
+			Teleport(pos + randomPos);
+			//lock main ship's hatch
+			mainHatch.IsLocked = true;
+			//shuttle can't attack
+			CanAttack = false;
+			//disable distance UI
+			DistanceUI.Hidden = true;
+			//start recovery dialogue
+			LoadingController.AddListener(
+				() => SendActiveDialogue(wormholeRecoveryConversation, true));
+		}
 	}
 
 	protected override void Update()
@@ -480,6 +472,19 @@ public class Shuttle : Character, IStunnable, ICombat
 		ItemObject itemType = DefaultInventory.ItemStacks[itemIndex].ItemType;
 		if (!base.CheckItemUsage(itemIndex)) return false;
 		return true;
+	}
+
+	protected override bool UseItem(ItemObject type)
+	{
+		bool used = base.UseItem(type);
+
+		if (type.ItemName == "Repair Kit")
+		{
+			DistanceUI.Hidden = false;
+			shuttleRepairedStat.SetValue(true);
+		}
+
+		return used;
 	}
 
 	public override float DrillDamageQuery(bool firstHit)

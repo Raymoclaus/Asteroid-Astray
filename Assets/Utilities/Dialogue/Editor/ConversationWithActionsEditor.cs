@@ -58,6 +58,16 @@ public class ConversationWithActionsEditor : PropertyDrawer
 					prompt.SetDelay(i, getDelay);
 					height += delayHeight;
 
+					float delayEventWidth = position.width - 15f;
+					GUIContent delayEventLabel = new GUIContent("Also delay event invocation?");
+					float delayEventHeight = EditorStyles.toggle.CalcHeight(delayEventLabel, delayEventWidth);
+					Rect delayEventRect = new Rect(position.x + 15f, position.y + height,
+						delayEventWidth, delayEventHeight);
+					bool getDelayEventBool = EditorGUI.Toggle(delayEventRect, delayEventLabel,
+						prompt.GetAlsoDelayEvent(i));
+					prompt.SetToAlsoDelayEvent(i, getDelayEventBool);
+					height += delayEventHeight;
+
 					SerializedProperty eventProperty = eventsListProperty.GetArrayElementAtIndex(i);
 					float eventHeight = EditorGUI.GetPropertyHeight(eventProperty);
 					Rect eventRect = new Rect(position.x + 15f, position.y + height,

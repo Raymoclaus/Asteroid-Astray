@@ -76,6 +76,7 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 		coords = new ChunkCoords(transform.position, EntityNetwork.CHUNK_SIZE);
 		EntityNetwork.AddEntity(this, coords);
 		RepositionInNetwork(true);
+		healthComponent.SetToUpperLimit();
 		enabled = true;
 	}
 

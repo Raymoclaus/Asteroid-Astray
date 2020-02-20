@@ -13,7 +13,7 @@ using UnityEngine;
 
 public class NarrativeManager : MonoBehaviour, IChatter
 {
-	[SerializeField] private BoolStatTracker shipRechargedStat, shuttleRepairedStat;
+	[SerializeField] private BoolStatTracker shipRechargedStat;
 	[SerializeField] private LimitedScriptedDrops scriptedDrops;
 	[SerializeField] private Character mainChar;
 	private Character MainChar => mainChar != null ? mainChar
@@ -36,7 +36,6 @@ public class NarrativeManager : MonoBehaviour, IChatter
 
 	[SerializeField] private TY4PlayingUI ty4pUI;
 	[SerializeField] private ConversationWithActions
-		recoveryConversation,
 		useThrustersConversation,
 		completedFirstGatheringQuestConversation,
 		useRepairKitConversation,
@@ -61,7 +60,6 @@ public class NarrativeManager : MonoBehaviour, IChatter
 	{
 		conversations = new List<ConversationWithActions>
 		{
-			recoveryConversation,
 			useThrustersConversation,
 			completedFirstGatheringQuestConversation,
 			useRepairKitConversation,
@@ -72,21 +70,6 @@ public class NarrativeManager : MonoBehaviour, IChatter
 			acquiredEnergySourceConversation,
 			rechargedTheShipConversation
 		};
-	}
-
-	private void Start()
-	{
-		ChooseStartingLocation();
-		MainHatch.IsLocked = true;
-		SetShuttleRepaired(false);
-		MainChar.CanAttack = false;
-		MainChar.DecreaseCurrentHealth(200f);
-		LoadingController.AddListener(StartRecoveryDialogue);
-	}
-
-	private void StartRecoveryDialogue()
-	{
-		StartDialogue(recoveryConversation, false);
 	}
 
 	public void StartFirstGatheringQuest()
@@ -172,7 +155,6 @@ public class NarrativeManager : MonoBehaviour, IChatter
 
 	private void CompletedRepairTheShuttleQuest(Quest quest)
 	{
-		SetShuttleRepaired(true);
 		StartReturnToTheShipQuest();
 		StartDialogue(findShipConversation, true);
 		TutPrompts?.repairKitInputPromptInfo.SetIgnore(true);
@@ -280,12 +262,6 @@ public class NarrativeManager : MonoBehaviour, IChatter
 	public void ActivateScriptedDrops(bool activate)
 		=> scriptedDrops.scriptedDropsActive = activate;
 
-	public void SetShuttleRepaired(bool repaired)
-	{
-		DistanceUI.Hidden = !repaired;
-		shuttleRepairedStat.SetValue(repaired);
-	}
-
 	public void TakeItem(ItemObject type, int amount) => MainChar.TakeItem(type, amount);
 
 	private void GiveQuest(Quester quester, Quest q) => quester.AcceptQuest(q);
@@ -313,18 +289,6 @@ public class NarrativeManager : MonoBehaviour, IChatter
 			return;
 		}
 		OnSendActiveDialogue?.Invoke(ce, true);
-	}
-
-	private void ChooseStartingLocation()
-	{
-		Vector2 pos = MainHatch.transform.position;
-		float randomAngle = UnityEngine.Random.value * Mathf.PI * 2f;
-		Vector2 randomPos = new Vector2(Mathf.Sin(randomAngle),	Mathf.Cos(randomAngle));
-		randomPos *= UnityEngine.Random.value * 15f + 30f;
-		if (MainChar != null)
-		{
-			MainChar.Teleport(pos + randomPos);
-		}
 	}
 
 	public void AllowSendingDialogue(bool allow)
