@@ -2,17 +2,12 @@
 
 namespace InputHandlerSystem
 {
-	[CreateAssetMenu(menuName = "Scriptable Objects/Input System/Input Action")]
-	public class InputAction : ScriptableObject
+	[CreateAssetMenu(menuName = "Scriptable Objects/Input System/Game Action")]
+	public class GameAction : ScriptableObject
 	{
 		[SerializeField] private string actionName;
 		public string ActionName => actionName;
 		[SerializeField] private InputContext context;
 		public InputContext IntendedContext => context;
-
-		public void ChangeName(string newName)
-		{
-			actionName = newName;
-		}
 	} 
 }

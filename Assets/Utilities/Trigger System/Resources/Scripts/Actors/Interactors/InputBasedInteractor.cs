@@ -4,7 +4,7 @@ namespace TriggerSystem.Actors.Interactors
 {
 	public class InputBasedInteractor : BasicInteractor
 	{
-		public override bool StartedPerformingAction(InputAction action)
+		public override bool StartedPerformingAction(GameAction action)
 			=> InputManager.GetInputDown(action);
 	}
 }

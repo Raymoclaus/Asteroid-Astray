@@ -28,7 +28,7 @@ namespace DialogueSystem
 
 		[SerializeField] private AudioSource audioSource;
 
-		[SerializeField] protected InputAction scrollDialogueAction;
+		[SerializeField] protected GameAction scrollDialogueAction;
 
 		protected virtual void Awake()
 		{

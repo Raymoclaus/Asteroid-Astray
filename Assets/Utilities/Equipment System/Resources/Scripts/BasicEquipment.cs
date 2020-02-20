@@ -78,6 +78,6 @@ namespace EquipmentSystem
 				Quaternion.identity, null);
 		}
 
-		public virtual InputAction TriggerAction => null;
+		public virtual GameAction TriggerAction => null;
 	}
 }

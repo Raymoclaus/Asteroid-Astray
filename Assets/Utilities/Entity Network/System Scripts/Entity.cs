@@ -467,7 +467,7 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 		}
 	}
 
-	public void Interacted(IInteractor interactor, InputAction action)
+	public void Interacted(IInteractor interactor, GameAction action)
 	{
 		interactor.Interact(this);
 	}

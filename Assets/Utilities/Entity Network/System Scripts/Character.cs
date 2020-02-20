@@ -310,9 +310,9 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 
 	}
 
-	public virtual bool StartedPerformingAction(InputAction action) => false;
+	public virtual bool StartedPerformingAction(GameAction action) => false;
 
-	public virtual bool IsPerformingAction(InputAction action) => false;
+	public virtual bool IsPerformingAction(GameAction action) => false;
 
 	public virtual object ObjectOrderRequest(object order)
 	{
@@ -451,7 +451,7 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 
 	protected bool IsRecovering => recoveryTimerComponent.CurrentValue > 0f;
 
-	public virtual bool ShouldAttack(InputAction action)
+	public virtual bool ShouldAttack(GameAction action)
 		=> !IsRecovering
 		   && !Pause.IsStopped
 			&& CanAttack;

@@ -10,7 +10,13 @@ namespace TriggerSystem.Triggers
 	public class InteractionTrigger : VicinityTrigger, IActionTrigger
 	{
 		[SerializeField] protected bool enabledInteractionActions = true;
-		[field: SerializeField] public InputAction InteractAction { get; set; }
+		[SerializeField] private GameAction interactAction;
+		public GameAction InteractAction
+		{
+			get => interactAction;
+			set => interactAction = value;
+		}
+
 		private HashSet<IReceiver> receivers = new HashSet<IReceiver>();
 		private HashSet<IInteractor> nearbyInteractors = new HashSet<IInteractor>();
 		private List<IInteractor> toInteract = new List<IInteractor>();

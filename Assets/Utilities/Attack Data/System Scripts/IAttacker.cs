@@ -9,7 +9,7 @@ namespace AttackData
 		void ReceiveRecoil(Vector3 recoilVector);
 		void ReceiveStoppingPower(float stoppingPower);
 		void ReceiveRecoveryDuration(float recoveryDuration);
-		bool ShouldAttack(InputAction action);
+		bool ShouldAttack(GameAction action);
 		float DamageMultiplier { get; }
 	} 
 }

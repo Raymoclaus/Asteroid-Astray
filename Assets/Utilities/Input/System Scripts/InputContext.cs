@@ -22,7 +22,7 @@ namespace InputHandlerSystem
 				return actions;
 			}
 		}
-		private List<InputAction> inputActions = new List<InputAction>();
+		private List<GameAction> inputActions = new List<GameAction>();
 
 		public bool IsValidAction(string action) => GetIndexOfAction(action) != -1;
 
@@ -50,7 +50,7 @@ namespace InputHandlerSystem
 			actions.Clear();
 
 			//find all actions with this context listed as its intended context
-			InputAction[] validActions = Resources.LoadAll<InputAction>(string.Empty)
+			GameAction[] validActions = Resources.LoadAll<GameAction>(string.Empty)
 				.Where(t => t.IntendedContext == this).ToArray();
 
 			//add the found actions to this context's action list

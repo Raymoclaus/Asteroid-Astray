@@ -5,7 +5,7 @@ namespace MovementBehaviours
 {
 	public class InputRollingBehaviour : MovementBehaviour
 	{
-		[SerializeField] private InputAction rollAction;
+		[SerializeField] private GameAction rollAction;
 
 		private void Update()
 		{

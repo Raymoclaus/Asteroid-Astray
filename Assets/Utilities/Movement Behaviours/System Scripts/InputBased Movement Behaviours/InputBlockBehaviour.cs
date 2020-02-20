@@ -5,7 +5,7 @@ namespace MovementBehaviours
 {
 	public class InputBlockBehaviour : MovementBehaviour
 	{
-		[SerializeField] private InputAction blockAction;
+		[SerializeField] private GameAction blockAction;
 
 		private void Update()
 		{

@@ -6,15 +6,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using DialogueSystem;
+using StatisticsTracker;
 using TriggerSystem;
 using TriggerSystem.Triggers;
 using UnityEngine;
 
 public class NarrativeManager : MonoBehaviour, IChatter
 {
-	public static bool ShuttleRepaired { get; private set; }
-	public static bool ShipRecharged { get; private set; }
-
+	[SerializeField] private BoolStatTracker shipRechargedStat, shuttleRepairedStat;
 	[SerializeField] private LimitedScriptedDrops scriptedDrops;
 	[SerializeField] private Character mainChar;
 	private Character MainChar => mainChar != null ? mainChar
@@ -275,7 +274,7 @@ public class NarrativeManager : MonoBehaviour, IChatter
 		StartDialogue(rechargedTheShipConversation, false);
 		TakeItem(Item.GetItemByName("Corrupted Corvorite"), 1);
 		MainHatch.IsLocked = false;
-		ShipRecharged = true;
+		shipRechargedStat.SetValue(true);
 	}
 
 	public void ActivateScriptedDrops(bool activate)
@@ -284,7 +283,7 @@ public class NarrativeManager : MonoBehaviour, IChatter
 	public void SetShuttleRepaired(bool repaired)
 	{
 		DistanceUI.Hidden = !repaired;
-		ShuttleRepaired = repaired;
+		shuttleRepairedStat.SetValue(repaired);
 	}
 
 	public void TakeItem(ItemObject type, int amount) => MainChar.TakeItem(type, amount);

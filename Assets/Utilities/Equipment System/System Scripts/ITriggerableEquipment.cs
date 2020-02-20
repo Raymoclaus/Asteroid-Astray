@@ -11,6 +11,6 @@ namespace EquipmentSystem
 		bool ShouldAttack { get; }
 		float CooldownDuration { get; }
 		bool IsOnCooldown { get; }
-		InputAction TriggerAction { get; }
+		GameAction TriggerAction { get; }
 	} 
 }

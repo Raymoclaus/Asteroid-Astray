@@ -1,11 +1,13 @@
 ﻿using System;
 using DialogueSystem;
 using InputHandlerSystem;
+using StatisticsTracker;
 using TriggerSystem;
 using UnityEngine;
 
 public class MainHatchPrompt : MonoBehaviour, IActionMessageReceiver, IChatter
 {
+	[SerializeField] private BoolStatTracker shuttleRepairedStat, shipRechargedStat;
 	[SerializeField] private ConversationWithActions
 		interactBeforeRepairedShuttle,
 		interactBeforeRechargedShip,
@@ -21,11 +23,11 @@ public class MainHatchPrompt : MonoBehaviour, IActionMessageReceiver, IChatter
 
 	public void PlayDialogueResponse()
 	{
-		if (!NarrativeManager.ShuttleRepaired)
+		if (shuttleRepairedStat.IsFalse)
 		{
 			OnSendPassiveDialogue?.Invoke(interactBeforeRepairedShuttle, false);
 		}
-		else if (!NarrativeManager.ShipRecharged)
+		else if (shipRechargedStat.IsFalse)
 		{
 			OnSendPassiveDialogue?.Invoke(interactBeforeRechargedShip, false);
 		}
@@ -37,7 +39,7 @@ public class MainHatchPrompt : MonoBehaviour, IActionMessageReceiver, IChatter
 
 	public void Open() => anim.SetTrigger("Open");
 
-	public void Interacted(IInteractor interactor, InputAction action)
+	public void Interacted(IInteractor interactor, GameAction action)
 	{
 		if (IsLocked)
 		{

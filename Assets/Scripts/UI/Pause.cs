@@ -18,7 +18,7 @@ public class Pause : MonoBehaviour
 	public static float intendedTimeSpeed = 1f;
 	public static event Action OnPause, OnResume;
 	public const float SHIFT_DURATION = 0.5f;
-	[SerializeField] private InputAction pauseAction;
+	[SerializeField] private GameAction pauseAction;
 
 	private void Awake()
 	{

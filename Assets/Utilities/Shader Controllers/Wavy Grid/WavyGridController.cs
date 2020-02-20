@@ -32,6 +32,9 @@ public class WavyGridController : MonoBehaviour
 	{
 		Pause.OnPause -= TransitionVignetteToPausedState;
 		Pause.OnResume -= TransitionVignetteToUnpausedState;
+
+		SetWaveOffset(0f);
+		SetVignetteState(unpausedVignettePreset);
 	}
 
 	private void Update()
@@ -40,7 +43,7 @@ public class WavyGridController : MonoBehaviour
 
 		if (!pauseWave)
 		{
-			AddOffset(delta * waveSpeed);
+			AddWaveOffset(delta * waveSpeed);
 		}
 
 		transitionTimer += delta * transitionSpeed;
@@ -55,10 +58,15 @@ public class WavyGridController : MonoBehaviour
 			wavyGridMaterial.GetFloat(VIGNETTE_SIZE_VAR_NAME),
 			wavyGridMaterial.GetFloat(VIGNETTE_WIDTH_VAR_NAME));
 
-	private void AddOffset(float amount)
+	private void AddWaveOffset(float amount)
 	{
 		float currentOffset = wavyGridMaterial.GetFloat(OFFSET_VAR_NAME);
-		wavyGridMaterial.SetFloat(OFFSET_VAR_NAME, currentOffset + amount);
+		SetWaveOffset(currentOffset + amount);
+	}
+
+	private void SetWaveOffset(float amount)
+	{
+		wavyGridMaterial.SetFloat(OFFSET_VAR_NAME, amount);
 	}
 
 	public void TransitionVignette(Vector2 target, float? speed = null)

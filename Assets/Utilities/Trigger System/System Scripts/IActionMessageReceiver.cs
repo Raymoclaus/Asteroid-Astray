@@ -4,7 +4,7 @@ namespace TriggerSystem
 {
 	public interface IActionMessageReceiver
 	{
-		void Interacted(IInteractor interactor, InputAction action);
+		void Interacted(IInteractor interactor, GameAction action);
 	}
 
 }

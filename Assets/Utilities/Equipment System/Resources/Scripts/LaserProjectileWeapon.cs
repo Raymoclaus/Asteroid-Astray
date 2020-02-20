@@ -7,10 +7,10 @@ namespace EquipmentSystem
 {
 	public class LaserProjectileWeapon : BasicProjectileWeapon
 	{
-		[SerializeField] private InputAction triggerAction;
+		[SerializeField] private GameAction triggerAction;
 		[SerializeField] private Transform centrePivot;
 
-		public override InputAction TriggerAction => triggerAction;
+		public override GameAction TriggerAction => triggerAction;
 
 		public override AttackManager Attack(float damageMultiplier, List<IAttacker> owners)
 		{

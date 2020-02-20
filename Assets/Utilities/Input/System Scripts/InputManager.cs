@@ -69,20 +69,23 @@ namespace InputHandlerSystem
 		}
 
 		//returns the input status of a given command. 0f usually means no input.
-		public static float GetInput(InputAction action)
+		public static float GetInput(GameAction action)
 		{
+			if (action == null) return 0f;
 			CheckForModeUpdate();
 			return GetHandler()?.GetInput(action.ActionName, CurrentContext) ?? 0f;
 		}
 
-		public static bool GetInputDown(InputAction action)
+		public static bool GetInputDown(GameAction action)
 		{
+			if (action == null) return false;
 			CheckForModeUpdate();
 			return GetHandler()?.GetInputDown(action.ActionName, CurrentContext) ?? false;
 		}
 
-		public static bool GetInputUp(InputAction action)
+		public static bool GetInputUp(GameAction action)
 		{
+			if (action == null) return false;
 			CheckForModeUpdate();
 			return GetHandler()?.GetInputUp(action.ActionName, CurrentContext) ?? false;
 		}

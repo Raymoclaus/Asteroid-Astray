@@ -22,6 +22,12 @@ public class HUDMeterController : MonoBehaviour
 		UpdateMeter();
 	}
 
+	private void OnDestroy()
+	{
+		SetValue(fillAmountString, 1f);
+		SetValue(damageFillAmountString, 0f);
+	}
+
 	private void UpdateMeter()
 	{
 		secondaryBarWaitTimer += Time.deltaTime;

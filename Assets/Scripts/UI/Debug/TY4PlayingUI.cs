@@ -10,7 +10,7 @@ public class TY4PlayingUI : MonoBehaviour
 	public bool CanDisable = false;
 	private Character mainChar;
 	private Character MainChar => mainChar ?? (mainChar = FindObjectOfType<Shuttle>());
-	[SerializeField] private InputAction scrollDialogueAction;
+	[SerializeField] private GameAction scrollDialogueAction;
 
 	private void Awake() => CGroup.alpha = active ? 1f : 0f;
 

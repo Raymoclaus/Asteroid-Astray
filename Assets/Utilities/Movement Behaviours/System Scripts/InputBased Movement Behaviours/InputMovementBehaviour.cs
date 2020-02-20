@@ -5,7 +5,7 @@ namespace MovementBehaviours
 {
 	public class InputMovementBehaviour : MovementBehaviour
 	{
-		[SerializeField] private InputAction upAction, rightAction, downAction, leftAction;
+		[SerializeField] private GameAction upAction, rightAction, downAction, leftAction;
 
 		private void Awake()
 		{

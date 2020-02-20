@@ -68,7 +68,7 @@ namespace TriggerSystem
 			|| trigger.Equals(null);
 
 		public static InteractionWaypoint CreateWaypoint(IInteractor expectedInteractor,
-			Vector3 position, float radius, InputAction action)
+			Vector3 position, float radius, GameAction action)
 		{
 			InteractionTrigger trigger = new GameObject("New Trigger").AddComponent<InteractionTrigger>();
 			CircleCollider2D circleCol = trigger.gameObject.AddComponent<CircleCollider2D>();

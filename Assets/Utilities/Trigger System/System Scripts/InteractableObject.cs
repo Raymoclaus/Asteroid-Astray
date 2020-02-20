@@ -5,9 +5,9 @@ namespace TriggerSystem.MessageReceivers
 {
 	public abstract class InteractableObject : MonoBehaviour, IActionMessageReceiver
 	{
-		[SerializeField] private InputAction interactionAction;
+		[SerializeField] private GameAction interactionAction;
 
-		public void Interacted(IInteractor interactor, InputAction action)
+		public void Interacted(IInteractor interactor, GameAction action)
 		{
 			if (VerifyAction(action))
 			{
@@ -17,6 +17,6 @@ namespace TriggerSystem.MessageReceivers
 
 		protected abstract void PerformAction(IInteractor interactor);
 
-		private bool VerifyAction(InputAction action) => action == interactionAction;
+		private bool VerifyAction(GameAction action) => action == interactionAction;
 	}
 }

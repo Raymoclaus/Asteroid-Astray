@@ -20,7 +20,7 @@ namespace TriggerSystem.Actors.Interactors
 
 		public virtual void Interact(object interactableObject) { }
 
-		public virtual bool StartedPerformingAction(InputAction action) => false;
+		public virtual bool StartedPerformingAction(GameAction action) => false;
 
 		public virtual object ObjectOrderRequest(object order) => null;
 

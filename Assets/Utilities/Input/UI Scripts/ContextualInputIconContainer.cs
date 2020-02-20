@@ -13,7 +13,7 @@ namespace InputHandlerSystem.UI
 		public TMP_SpriteAssetContainer GetContainer(string action)
 		{
 			IEnumerable<TMP_SpriteAssetContainer> search
-				= containers.Where(t => string.Compare(t.inputAction.ActionName, action) == 0);
+				= containers.Where(t => string.Compare(t.gameAction.ActionName, action) == 0);
 			if (search.Count() == 0)
 			{
 				Debug.LogWarning($"No sprite container for {action} found.");

@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace InputHandlerSystem.CustomisedEditor
 {
-	[CustomPropertyDrawer(typeof(InputAction), true)]
+	[CustomPropertyDrawer(typeof(GameAction), true)]
 	public class InputActionPropertyDrawer : PropertyDrawer
 	{
 		private float height;
@@ -22,9 +22,9 @@ namespace InputHandlerSystem.CustomisedEditor
 			height = objectFieldHeight;
 
 			Object target = prop.serializedObject.targetObject;
-			if (fieldInfo.FieldType == typeof(InputAction))
+			if (fieldInfo.FieldType == typeof(GameAction))
 			{
-				InputAction action = (InputAction)fieldInfo.GetValue(target);
+				GameAction action = (GameAction)fieldInfo.GetValue(target);
 
 				if (action != null)
 				{

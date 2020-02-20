@@ -7,7 +7,7 @@ namespace InputHandlerSystem.UI
 	[CreateAssetMenu(menuName = "Scriptable Objects/Input System/TMP_SpriteAsset Container")]
 	public class TMP_SpriteAssetContainer : ScriptableObject
 	{
-		public InputAction inputAction;
+		public GameAction gameAction;
 		public List<TMP_SpriteAsset> spriteAssets;
 	}
 }

@@ -157,11 +157,11 @@ public class Shuttle : Character, IStunnable, ICombat
 	[SerializeField] public AudioSO collisionSounds;
 	private ContactPoint2D[] contacts = new ContactPoint2D[1];
 
-	[SerializeField] private InputAction goAction,
+	[SerializeField] private GameAction goAction,
 		boostAction,
 		cancelDrillingAction,
 		shootAction;
-	[SerializeField] private InputAction[] slotActions = new InputAction[8];
+	[SerializeField] private GameAction[] slotActions = new GameAction[8];
 
 	public delegate void GoInputEventHandler();
 
@@ -813,10 +813,10 @@ public class Shuttle : Character, IStunnable, ICombat
 		//open hatch
 	}
 
-	public override bool StartedPerformingAction(InputAction action)
+	public override bool StartedPerformingAction(GameAction action)
 		=> InputManager.GetInputDown(action);
 
-	public override bool IsPerformingAction(InputAction action)
+	public override bool IsPerformingAction(GameAction action)
 		=> InputManager.GetInput(action) > 0f;
 
 	public override void Interact(object interactableObject)
@@ -833,7 +833,7 @@ public class Shuttle : Character, IStunnable, ICombat
 		}
 	}
 
-	public override bool ShouldAttack(InputAction action)
+	public override bool ShouldAttack(GameAction action)
 		=> base.ShouldAttack(action)
 		   && IsPerformingAction(action);
 
