@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text;
 using SaveSystem;
 using UnityEditor;
 using UnityEngine;

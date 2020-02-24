@@ -32,7 +32,7 @@ namespace SaveSystem
 		/// Saves opened lines to a text file and then closes the file.
 		/// </summary>
 		/// <param name="filename"></param>
-		private static void SaveOpenedFile(string filename)
+		public static void SaveOpenedFile(string filename)
 		{
 			if (!openedFiles.ContainsKey(filename)) return;
 
@@ -52,7 +52,7 @@ namespace SaveSystem
 		/// Removes a filename from dictionary of opened files.
 		/// </summary>
 		/// <param name="filename"></param>
-		private static void CloseFile(string filename) => openedFiles.Remove(filename);
+		public static void CloseFile(string filename) => openedFiles.Remove(filename);
 
 		/// <summary>
 		/// Saves data to a file named after given key
@@ -578,19 +578,20 @@ namespace SaveSystem
 		}
 
 		/// <summary>
-		/// Adds the lines of a file to a dictionary for caching
+		/// Adds the lines of a file to a dictionary for caching.
+		/// If a file was already open but was somehow deleted unexpectedly, then the file is then closed.
 		/// </summary>
 		/// <param name="filename"></param>
 		/// <param name="createFileIfNotFound"></param>
 		/// <returns>Returns whether the file was opened and cached or not</returns>
-		private static bool OpenFile(string filename, bool createFileIfNotFound)
+		public static bool OpenFile(string filename, bool createFileIfNotFound)
 		{
+			//check if file exists
+			bool fileExists = SaveLoad.SaveExists(filename);
 			//check if file has been opened previously
 			bool fileOpened = FileOpened(filename);
 			if (!fileOpened)
 			{
-				//check if file exists
-				bool fileExists = SaveLoad.SaveExists(filename);
 				if (!fileExists)
 				{
 					if (createFileIfNotFound)
@@ -610,6 +611,10 @@ namespace SaveSystem
 				List<string> lines = text.Split('\n', '\r').ToList();
 				RemoveBlankLines(lines);
 				openedFiles.Add(filename, lines);
+			}
+			else if (!fileExists)
+			{
+				CloseFile(filename);
 			}
 
 			//return that the file was opened and cached

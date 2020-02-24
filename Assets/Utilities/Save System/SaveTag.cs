@@ -5,8 +5,8 @@ namespace SaveSystem
 {
 	public class SaveTag
 	{
-		public string Tag { get; private set; }
-		public SaveTag PriorTag { get; private set; }
+		public string Tag { get; set; }
+		public SaveTag PriorTag { get; set; }
 
 		/// <summary>
 		/// Used for indented tags with a parent tag

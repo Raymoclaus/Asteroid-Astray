@@ -39,5 +39,16 @@ namespace SaveSystem
 			directory.Delete(true);
 			Directory.CreateDirectory(path);
 		}
+
+		/// <summary>
+		/// Deletes file with name in the "saves" folder.
+		/// Note: If the file is in a subfolder, include the subfolder path.
+		/// An extension is automatically appended so don't include it.
+		/// </summary>
+		/// <param name="filename"></param>
+		public static void DeleteSaveFile(string filename)
+		{
+			FileInfo file = new FileInfo($"{path}/{filename}");
+		}
 	}
 }

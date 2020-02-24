@@ -7,8 +7,9 @@ using TriggerSystem;
 using AttackData;
 using AudioUtilities;
 using InputHandlerSystem;
+using SaveSystem;
 
-public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageReceiver
+public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageReceiver, ISaveable
 {
 	[Header("Entity Fields")]
 	[SerializeField] protected ChunkCoords coords;
@@ -504,6 +505,29 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 	public virtual bool CanReceiveAttackMessagesFromLayer(int layer)
 		=> layer == LayerSolid
 		   || layer == LayerShield;
+
+	[SerializeField] private bool shouldSave;
+	public bool ShouldSave => shouldSave;
+
+	private const string SAVE_TAG = "Entity";
+
+	public string GetTag()
+	{
+		return SAVE_TAG;
+	}
+
+	private const string POSITION_VAR_NAME = "Position",
+		ENTITY_TYPE_VAR_NAME = "EntityType";
+	
+	public virtual List<DataModule> GetData()
+	{
+		List<DataModule> data = new List<DataModule>();
+		
+		data.Add(new DataModule(POSITION_VAR_NAME, transform.position));
+		data.Add(new DataModule(ENTITY_TYPE_VAR_NAME, GetEntityType()));
+
+		return data;
+	}
 }
 
 public enum EntityType
