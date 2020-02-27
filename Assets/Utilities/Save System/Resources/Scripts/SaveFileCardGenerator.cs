@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class SaveFileCardGenerator : MonoBehaviour
 {
-	[SerializeField] private GameObject placecardPrefab;
+	[SerializeField] private SaveFileCardController placecardPrefab;
 
 	private void Awake()
 	{
@@ -18,7 +18,8 @@ public class SaveFileCardGenerator : MonoBehaviour
 		//read save files and create placecards for each one
 		foreach (SaveFile save in saves)
 		{
-			Instantiate(placecardPrefab, transform);
+			SaveFileCardController sfcc = Instantiate(placecardPrefab, transform);
+			sfcc.SetFileName(save.directoryName);
 		}
 	}
 }
