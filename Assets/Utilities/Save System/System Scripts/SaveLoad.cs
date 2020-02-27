@@ -6,7 +6,7 @@ namespace SaveSystem
 {
 	public static class SaveLoad
 	{
-		private static readonly string path = Application.persistentDataPath + "/saves/",
+		public static readonly string path = Application.persistentDataPath + "/saves/",
 			extension = ".txt";
 
 		public static void SaveText(string key, string textToSave)
@@ -48,7 +48,14 @@ namespace SaveSystem
 		/// <param name="filename"></param>
 		public static void DeleteSaveFile(string filename)
 		{
-			FileInfo file = new FileInfo($"{path}/{filename}");
+			//add the path behind the filename
+			string fullPath = $"{path}{filename}{extension}";
+			//check to see if file exists
+			if (!File.Exists(fullPath)) return;
+			//get the file info
+			FileInfo file = new FileInfo(fullPath);
+			//delete it
+			file.Delete();
 		}
 	}
 }

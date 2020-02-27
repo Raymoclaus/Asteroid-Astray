@@ -77,7 +77,6 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 		coords = new ChunkCoords(transform.position, EntityNetwork.CHUNK_SIZE);
 		EntityNetwork.AddEntity(this, coords);
 		RepositionInNetwork(true);
-		healthComponent.SetToUpperLimit();
 		enabled = true;
 	}
 
@@ -225,7 +224,7 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 
 	protected virtual bool CheckHealth(Entity destroyer, float dropModifier)
 	{
-		if (healthComponent.CurrentRatio > 0f) return false;
+		if (HealthRatio > 0f) return false;
 		DestroySelf(destroyer, dropModifier);
 		return true;
 	}
@@ -517,7 +516,9 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 	}
 
 	private const string POSITION_VAR_NAME = "Position",
-		ENTITY_TYPE_VAR_NAME = "EntityType";
+		ENTITY_TYPE_VAR_NAME = "EntityType",
+		MAX_HEALTH_VAR_NAME = "MaxHealth",
+		CURRENT_HEALTH_VAR_NAME = "CurrentHealth";
 	
 	public virtual List<DataModule> GetData()
 	{
@@ -525,6 +526,8 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 		
 		data.Add(new DataModule(POSITION_VAR_NAME, transform.position));
 		data.Add(new DataModule(ENTITY_TYPE_VAR_NAME, GetEntityType()));
+		data.Add(new DataModule(MAX_HEALTH_VAR_NAME, healthComponent.UpperLimit));
+		data.Add(new DataModule(CURRENT_HEALTH_VAR_NAME, healthComponent.CurrentValue));
 
 		return data;
 	}

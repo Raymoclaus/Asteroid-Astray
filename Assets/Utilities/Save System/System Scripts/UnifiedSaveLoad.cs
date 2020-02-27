@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -10,7 +11,7 @@ namespace SaveSystem
 {
 	public static class UnifiedSaveLoad
 	{
-		private const string SAVE_FILENAME = "Unified Save";
+		public const string SAVE_FILENAME = "Unified Save";
 		private const string TAG_FORMAT = "{2}[{0}]|{1}";
 		private const char SEPARATOR = '|';
 		private static Dictionary<string, List<string>> openedFiles = new Dictionary<string, List<string>>();
@@ -341,6 +342,20 @@ namespace SaveSystem
 			}
 		}
 
+		public static string GetLineOfParameter(string filename, SaveTag tag, string parameterName)
+		{
+			//get the line number of the parameter
+			int index = GetIndexOfParameter(filename, tag, parameterName);
+			//check if the parameter was found
+			if (index < 0)
+			{
+				return null;
+			}
+			//get line from opened file
+			string line = openedFiles[filename][index];
+			return line;
+		}
+
 		/// <summary>
 		/// Search a file for a parameter name under the given tag.
 		/// </summary>
@@ -634,6 +649,15 @@ namespace SaveSystem
 					lines.RemoveAt(i--);
 				}
 			}
+		}
+
+		public static DataModule ConvertLineToModule(string line)
+		{
+			line = line.Replace("\t", string.Empty);
+			string[] parts = line.Split(SEPARATOR);
+			if (parts.Length != 2) return DataModule.INVALID_DATA_MODULE;
+			DataModule module = new DataModule(parts[0], parts[1]);
+			return module;
 		}
 
 		/// <summary>

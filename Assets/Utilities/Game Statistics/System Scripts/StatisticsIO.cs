@@ -7,8 +7,8 @@ namespace StatisticsTracker
 {
 	public static class StatisticsIO
 	{
-		private const string SAVE_KEY = "statistics";
-		private static readonly SaveTag saveTag = new SaveTag("Statistics");
+		public const string SAVE_KEY = "statistics";
+		public static readonly SaveTag saveTag = new SaveTag("Statistics");
 
 		[SteamPunkConsoleCommand(command = "loadStats", info = "Loads the game data")]
 		public static void Load()

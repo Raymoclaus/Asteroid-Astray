@@ -10,6 +10,8 @@ namespace SaveSystem
 		public string parameterName;
 		public string data;
 
+		public static DataModule INVALID_DATA_MODULE = new DataModule(null, null);
+
 		public DataModule(string name, string data)
 		{
 			parameterName = name;
