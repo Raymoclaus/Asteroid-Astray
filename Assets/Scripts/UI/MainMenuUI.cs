@@ -1,5 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using SaveSystem;
 using SceneControllers;
 using UnityEngine;
@@ -63,6 +65,13 @@ public class MainMenuUI : MonoBehaviour
 	public void OpenLoadingMenu()
 	{
 		MoveAll(loadingMenu, false);
+	}
+
+	public void OpenSavesFolder()
+	{
+		Directory.CreateDirectory(SaveLoad.path);
+		if (!Directory.Exists(SaveLoad.path)) return;
+		Process.Start(SaveLoad.path);
 	}
 
 	[System.Serializable]

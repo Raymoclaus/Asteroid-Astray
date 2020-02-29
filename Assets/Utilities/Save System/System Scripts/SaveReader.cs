@@ -29,7 +29,7 @@ namespace SaveSystem
 				DataModule module = UnifiedSaveLoad.ConvertLineToModule(progressLine);
 				Debug.Log($"Name: {module.parameterName}, Value: {module.data}");
 				if (module.parameterName == null) continue;
-				saves.Add(new SaveFile(saveFileFullPath, di.Name));
+				saves.Add(new SaveFile(di));
 			}
 
 			return saves;

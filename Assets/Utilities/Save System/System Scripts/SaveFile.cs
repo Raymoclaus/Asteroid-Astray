@@ -1,13 +1,16 @@
-﻿namespace SaveSystem
+﻿using System.IO;
+
+namespace SaveSystem
 {
 	public class SaveFile
 	{
-		public string path, directoryName;
+		public DirectoryInfo dirInfo;
 
-		public SaveFile(string path, string directoryName)
+		public SaveFile(DirectoryInfo dirInfo)
 		{
-			this.path = path;
-			this.directoryName = directoryName;
+			this.dirInfo = dirInfo;
 		}
+
+		public string Name => dirInfo.Name;
 	} 
 }
