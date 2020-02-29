@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Diagnostics;
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -38,6 +39,13 @@ namespace SaveSystem
 			DirectoryInfo directory = new DirectoryInfo(path);
 			directory.Delete(true);
 			Directory.CreateDirectory(path);
+		}
+
+		[MenuItem("Save System/Open Save File Folder")]
+		public static void OpenSaveFileFolder()
+		{
+			if (!Directory.Exists(path)) return;
+			Process.Start(path);
 		}
 
 		/// <summary>
