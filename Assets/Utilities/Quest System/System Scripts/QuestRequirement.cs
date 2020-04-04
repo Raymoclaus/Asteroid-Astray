@@ -1,14 +1,18 @@
-﻿namespace QuestSystem
+﻿using SaveSystem;
+
+namespace QuestSystem
 {
 	public abstract class QuestRequirement
 	{
 		protected string description;
 		protected IWaypoint waypoint;
+		protected string WaypointID { get; set; }
 
 		public QuestRequirement(string description, IWaypoint waypoint)
 		{
 			this.description = description;
 			this.waypoint = waypoint;
+			WaypointID = waypoint?.UniqueID;
 		}
 
 		public bool Completed { get; private set; }
@@ -32,8 +36,10 @@
 
 		public virtual string GetDescription => description;
 
-		public virtual IWaypoint GetWaypoint => waypoint;
+		public virtual string GetWaypointID => WaypointID;
 
 		public virtual void Activate() => active = true;
+
+		public abstract void Save(SaveTag parentTag);
 	}
 }

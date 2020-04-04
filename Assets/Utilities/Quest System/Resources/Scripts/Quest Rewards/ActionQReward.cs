@@ -1,4 +1,6 @@
-﻿namespace QuestSystem
+﻿using SaveSystem;
+
+namespace QuestSystem
 {
 	public class ActionQReward : QuestReward
 	{
@@ -23,6 +25,14 @@
 		{
 			ActionReward(c);
 		}
-	}
 
+		private const string SAVE_TAG_NAME = "Action Reward";
+		public override void Save(SaveTag parentTag)
+		{
+			//create main tag
+			SaveTag mainTag = new SaveTag(SAVE_TAG_NAME, parentTag);
+			//save description
+			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, description);
+		}
+	}
 }

@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 namespace InventorySystem
 {
-	public interface IInventoryHolder
+	public interface IInventoryHolder : IUnique
 	{
-		event Action<ItemObject, int> OnItemCollected, OnItemUsed;
+		event Action<ItemObject, int> OnItemsCollected, OnItemUsed;
 		int GiveItem(ItemObject itemType);
 		int GiveItem(ItemStack stack);
 		Storage DefaultInventory { get; }

@@ -1,4 +1,6 @@
-﻿namespace QuestSystem
+﻿using SaveSystem;
+
+namespace QuestSystem
 {
 	public abstract class QuestReward
 	{
@@ -13,6 +15,7 @@
 		{
 
 		}
+		
+		public abstract void Save(SaveTag parentTag);
 	}
-
 }

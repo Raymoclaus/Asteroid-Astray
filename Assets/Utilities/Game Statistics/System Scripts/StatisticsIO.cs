@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using SaveSystem;
 using UnityEditor;
 using UnityEngine;
@@ -7,60 +9,45 @@ namespace StatisticsTracker
 {
 	public static class StatisticsIO
 	{
-		public const string SAVE_KEY = "statistics";
 		public static readonly SaveTag saveTag = new SaveTag("Statistics");
+
+		private static Dictionary<string, StatTracker> trackers = new Dictionary<string, StatTracker>();
 
 		[SteamPunkConsoleCommand(command = "loadStats", info = "Loads the game data")]
 		public static void Load()
 		{
-			//get saved text from file with key, default null if no file exists
-			string text = SaveLoad.LoadText(SAVE_KEY);
-			if (text == null) return;
+			SteamPunkConsole.WriteLine("Loading StatTrackers");
 
-			//split text up into lines
-			string[] lines = text.Split('\n');
-
-			//iterate over lines
-			for (int i = 0; i < lines.Length; i++)
+			//get file name
+			string fileName = UnifiedSaveLoad.SAVE_FILENAME;
+			//Get all StatTrackers
+			StatTracker[] stats = GetAllStatTrackers();
+			//Query UnifiedSaveLoad for each stat tracker name
+			for (int i = 0; i < stats.Length; i++)
 			{
-				string line = lines[i];
-				//split line up into separate strings
-				string[] entry = line.Split('|');
-				//ignore line if not correct format
-				if (entry.Length != 3) continue;
-
-				//get information about the data entry
-				string parameterName = entry[0].ToLower();
-				string parameterTypeName = entry[1];
-				Type parameterType = Type.GetType(parameterTypeName);
-				string valueString = entry[2];
-
-				//check and make sure a parameter with that name exists
-				StatTracker stat = GetTracker(parameterName);
-				if (stat == null)
+				//get parameter name
+				string pName = stats[i].name;
+				Debug.Log(pName);
+				//query UnifiedSaveLoad
+				string line = UnifiedSaveLoad.GetLineOfParameter(fileName, saveTag, pName);
+				if (line == null)
 				{
-					SteamPunkConsole.WriteLine($"Error on line {i + 1} \"{line}\": no parameter with name \"{parameterName}\" found.");
-					continue;
+					stats[i].ResetToDefault();
 				}
-
-				//check and make sure field type matches given type
-				if (stat.FieldType != parameterType)
+				else
 				{
-					SteamPunkConsole.WriteLine($"Error on line {i + 1} \"{line}\": parameter type \"{parameterTypeName}\" does not match the expected type \"{stat.FieldType}\".");
-					continue;
-				}
-
-				//set value of matching field
-				bool parsedSuccessfully = stat.Parse(valueString);
-
-				if (!parsedSuccessfully)
-				{
-					SteamPunkConsole.WriteLine($"Error on line {i + 1} \"{line}\": value \"{valueString}\" could not be parsed as a \"{parameterType}\".");
-					continue;
+					//convert line to a data module
+					DataModule module = UnifiedSaveLoad.ConvertLineToModule(line);
+					//send the data to the stat tracker
+					bool successful = stats[i].Parse(module.data);
+					if (!successful)
+					{
+						stats[i].ResetToDefault();
+					}
 				}
 			}
 
-			SteamPunkConsole.WriteLine("Load Successful");
+			SteamPunkConsole.WriteLine("StatTracker Loading Successful");
 		}
 
 		[SteamPunkConsoleCommand(command = "saveStats", info = "Saves the game data")]
@@ -68,14 +55,15 @@ namespace StatisticsTracker
 		public static void SaveAll()
 		{
 			//get all statistics scriptable objects
-			StatTracker[] stats = Resources.LoadAll<StatTracker>("StatTrackers");
+			StatTracker[] stats = GetAllStatTrackers();
 
 			//iterate over the statistics
 			for (int i = 0; i < stats.Length; i++)
 			{
 				StatTracker stat = stats[i];
 				DataModule module = new DataModule(
-					stat.name.ToLower(),
+					stat.name,
+					stat.FieldType.ToString(),
 					stat.ValueString);
 				UnifiedSaveLoad.UpdateUnifiedSaveFile(saveTag, module);
 				string entry = module.ToString();
@@ -89,7 +77,7 @@ namespace StatisticsTracker
 		[SteamPunkConsoleCommand(command = "resetStats", info = "Resets all stats to default values and saves.")]
 		public static void ResetAllStats()
 		{
-			StatTracker[] stats = Resources.LoadAll<StatTracker>("StatTrackers");
+			StatTracker[] stats = GetAllStatTrackers();
 			for (int i = 0; i < stats.Length; i++)
 			{
 				stats[i].ResetToDefault();
@@ -100,6 +88,16 @@ namespace StatisticsTracker
 				SteamPunkConsole.WriteLine("Stats have been reset to default values.");
 				SaveAll();
 			}
+		}
+
+		private static StatTracker[] GetAllStatTrackers()
+		{
+			StatTracker[] t = Resources.LoadAll<StatTracker>("StatTrackers");
+			for (int i = 0; i < t.Length; i++)
+			{
+				AddToDictionary(t[i]);
+			}
+			return t;
 		}
 
 		[SteamPunkConsoleCommand(command = "resetStat", info = "Resets a specific stat.")]
@@ -118,7 +116,7 @@ namespace StatisticsTracker
 			SteamPunkConsole.WriteLine($"============================");
 			for (int i = 0; i < stats.Length; i++)
 			{
-				SteamPunkConsole.WriteLine(stats[i].name.ToLower().Replace(' ', '_'));
+				SteamPunkConsole.WriteLine(stats[i].name.Replace(' ', '_'));
 			}
 		}
 
@@ -134,15 +132,31 @@ namespace StatisticsTracker
 			}
 		}
 
-		private static StatTracker GetTracker(string parameterName)
+		public static StatTracker GetTracker(string parameterName)
 		{
-			StatTracker stat = Resources.Load<StatTracker>($"StatTrackers/{parameterName.ToLower().Replace('_', ' ')}");
+			parameterName = parameterName.Replace('_', ' ');
+			if (trackers.ContainsKey(parameterName))
+			{
+				return trackers[parameterName];
+			}
+			StatTracker stat = Resources.LoadAll<StatTracker>(string.Empty).FirstOrDefault(t => t.name == parameterName);
 			if (stat == null)
 			{
-				SteamPunkConsole.WriteLine($"No stat with name \"{parameterName}\" found. Use statList to get a list of available stat names.");
+				SteamPunkConsole.WriteLine($"No tracker with the name, \"{parameterName}\" exists.");
+			}
+			else
+			{
+				AddToDictionary(stat);
 			}
 
 			return stat;
+		}
+
+		private static void AddToDictionary(StatTracker tracker)
+		{
+			if (tracker == null) return;
+			if (trackers.ContainsKey(tracker.name)) return;
+			trackers.Add(tracker.name, tracker);
 		}
 	}
 }

@@ -49,5 +49,5 @@ public class DistanceUI : MonoBehaviour
 	private Vector3 CurrentPosition
 		=> mainChar.transform.position;
 
-	private Vector3 CharacterTargetWaypoint => mainChar.GetWaypoint.WaypointPosition;
+	private Vector3 CharacterTargetWaypoint => mainChar.GetWaypoint.Position;
 }

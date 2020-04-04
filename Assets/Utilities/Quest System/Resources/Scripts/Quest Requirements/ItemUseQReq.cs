@@ -4,6 +4,7 @@ using System;
 namespace QuestSystem.Requirements
 {
 	using InventorySystem;
+	using SaveSystem;
 
 	public class ItemUseQReq : QuestRequirement
 	{
@@ -11,6 +12,7 @@ namespace QuestSystem.Requirements
 		public int amountNeeded = 1;
 		private int currentAmount = 0;
 		private IInventoryHolder inventoryHolder;
+		private string InventoryHolderID { get; set; }
 
 		public ItemUseQReq(ItemObject typeNeeded, int amountNeeded,
 			IInventoryHolder inventoryHolder, string description = null)
@@ -19,6 +21,7 @@ namespace QuestSystem.Requirements
 			this.typeNeeded = typeNeeded;
 			this.amountNeeded = amountNeeded;
 			this.inventoryHolder = inventoryHolder;
+			InventoryHolderID = inventoryHolder.UniqueID;
 		}
 
 		public ItemUseQReq(ItemObject typeNeeded,
@@ -44,6 +47,8 @@ namespace QuestSystem.Requirements
 		{
 			if (Completed || !active) return;
 
+			if (inventoryHolder.UniqueID == InventoryHolderID)
+
 			if (type == typeNeeded)
 			{
 				currentAmount++;
@@ -57,5 +62,24 @@ namespace QuestSystem.Requirements
 
 		public override string GetDescription
 			=> string.Format(description, amountNeeded, Item.TypeName(typeNeeded), currentAmount);
+
+		private const string SAVE_TAG_NAME = "Item Use Requirement";
+		public override void Save(SaveTag parentTag)
+		{
+			//create main tag
+			SaveTag mainTag = new SaveTag(SAVE_TAG_NAME, parentTag);
+			//save description
+			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, description);
+			//save waypoint ID
+			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, WaypointID);
+			//save item type
+			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, typeNeeded);
+			//save amount needed
+			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, amountNeeded);
+			//save current progress
+			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, currentAmount);
+			//save crafter ID
+			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, InventoryHolderID);
+		}
 	}
 }

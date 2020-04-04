@@ -1,9 +1,9 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using SaveSystem;
 using SceneControllers;
+using StatisticsTracker;
 using UnityEngine;
 
 public class MainMenuUI : MonoBehaviour
@@ -54,7 +54,14 @@ public class MainMenuUI : MonoBehaviour
 
 	public void StartNewGame()
 	{
-		sceneChanger.LoadScene("WormholeScene");
+		StatisticsIO.ResetAllStats();
+		string uniqueName = SaveLoad.GenerateUniqueSaveName();
+		SaveLoad.CurrentSave = uniqueName;
+		StatisticsIO.SaveAll();
+
+		StatTracker currentScene = StatisticsIO.GetTracker("Current Scene");
+		SceneTracker.AttachToSceneLoader();
+		sceneChanger.LoadScene(currentScene.ValueString);
 	}
 
 	public void OpenMainMenu()
@@ -69,9 +76,10 @@ public class MainMenuUI : MonoBehaviour
 
 	public void OpenSavesFolder()
 	{
-		Directory.CreateDirectory(SaveLoad.path);
-		if (!Directory.Exists(SaveLoad.path)) return;
-		Process.Start(SaveLoad.path);
+		string path = SaveLoad.path;
+		Directory.CreateDirectory(path);
+		if (!Directory.Exists(path)) return;
+		Process.Start(path);
 	}
 
 	[System.Serializable]

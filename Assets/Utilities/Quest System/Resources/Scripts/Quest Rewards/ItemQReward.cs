@@ -1,4 +1,5 @@
 ﻿using InventorySystem;
+using SaveSystem;
 
 namespace QuestSystem
 {
@@ -13,6 +14,15 @@ namespace QuestSystem
 			=> string.Format(formattedString, Item.TypeName(stack.ItemType), stack.Amount);
 
 		public override void GiveReward(Quester quester) => quester.ReceiveReward(stack);
+
+		private const string SAVE_TAG_NAME = "Item Reward";
+		public override void Save(SaveTag parentTag)
+		{
+			//create main tag
+			SaveTag mainTag = new SaveTag(SAVE_TAG_NAME, parentTag);
+			//save item
+			stack.Save(mainTag);
+		}
 	}
 
 }

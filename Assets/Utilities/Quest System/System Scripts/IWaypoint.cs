@@ -3,9 +3,10 @@ using UnityEngine;
 
 namespace QuestSystem
 {
-	public interface IWaypoint
+	public interface IWaypoint : IUnique
 	{
 		event Action OnWaypointReached;
-		Vector3 WaypointPosition { get; }
+		string ExpectedActorID { get; }
+		Vector3 Position { get; }
 	}
 }

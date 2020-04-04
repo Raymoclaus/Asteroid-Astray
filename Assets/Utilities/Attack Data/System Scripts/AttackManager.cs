@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Security.Cryptography;
 using TriggerSystem;
 using UnityEngine;
 
@@ -10,6 +9,7 @@ namespace AttackData
 	public class AttackManager : MonoBehaviour, IAttackActor, IPoolable
 	{
 		private HashSet<AttackComponent> attackComponents = new HashSet<AttackComponent>();
+		public string UniqueID { get; set; }
 
 		public event Action<IActor> OnDisabled;
 		public event Action<IPoolable> OnReturnToPool;

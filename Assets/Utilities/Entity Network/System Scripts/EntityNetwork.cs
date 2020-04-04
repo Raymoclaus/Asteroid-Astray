@@ -24,6 +24,8 @@ public class EntityNetwork : MonoBehaviour
 	private bool gridIsSetUp = false;
 	//entities to query when saving
 	private HashSet<Entity> toSave = new HashSet<Entity>();
+	//list of entities sorted by type
+	private Dictionary<Type, HashSet<Entity>> entitiesByType = new Dictionary<Type, HashSet<Entity>>();
 
 	private static event Action OnLoaded;
 
@@ -151,6 +153,8 @@ public class EntityNetwork : MonoBehaviour
 		instance.EnsureChunkExists(cc);
 		//add entity to that chunk
 		Chunk(cc).Add(e);
+		//add entity to type-sorted list
+		instance.AddEntityToTypeSortedList(e);
 		//update list of occupied coordinates
 		if (Chunk(cc).Count == 1)
 		{
@@ -178,6 +182,7 @@ public class EntityNetwork : MonoBehaviour
 			if (chunk[i] == e)
 			{
 				chunk.RemoveAt(i);
+				instance.RemoveEntityFromTypeSortedList(e);
 				if (e.ShouldSave)
 				{
 					instance.toSave.Remove(e);
@@ -191,6 +196,29 @@ public class EntityNetwork : MonoBehaviour
 		}
 
 		return false;
+	}
+
+	private void AddEntityToTypeSortedList(Entity e)
+	{
+		Type t = e.GetType();
+
+		if (!entitiesByType.ContainsKey(t))
+		{
+			entitiesByType.Add(t, new HashSet<Entity>());
+		}
+
+		HashSet<Entity> set = entitiesByType[t];
+		set.Add(e);
+	}
+
+	private void RemoveEntityFromTypeSortedList(Entity e)
+	{
+		Type t = e.GetType();
+
+		if (!entitiesByType.ContainsKey(t)) return;
+
+		HashSet<Entity> set = entitiesByType[t];
+		set.Remove(e);
 	}
 
 	/// Iterates through all entities and performs the action once for each entity
@@ -318,7 +346,7 @@ public class EntityNetwork : MonoBehaviour
 	public static void PermanentSave()
 	{
 		//check if a temporary save file exists
-		if (!SaveLoad.SaveExists(TEMP_SAVE_FILE_NAME))
+		if (!SaveLoad.RelativeSaveFileExists(TEMP_SAVE_FILE_NAME))
 		{
 			Debug.LogWarning("No temporary save file exists for the entity network");
 			return;
@@ -370,6 +398,24 @@ public class EntityNetwork : MonoBehaviour
 			}
 			//increment counter
 			count++;
+		}
+
+		foreach (Type t in instance.entitiesByType.Keys)
+		{
+			HashSet<Entity> set = instance.entitiesByType[t];
+
+			foreach (Entity e in set)
+			{
+				//ignore if entity is null, remove it from the list too
+				if (e == null)
+				{
+					set.Remove(e);
+					continue;
+				}
+				e.Save(TEMP_SAVE_FILE_NAME, mainTag);
+				//increment counter
+				count++;
+			}
 		}
 		//save the data now in temp memory into a file
 		UnifiedSaveLoad.SaveOpenedFile(TEMP_SAVE_FILE_NAME);

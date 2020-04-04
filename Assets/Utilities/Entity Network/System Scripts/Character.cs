@@ -17,9 +17,6 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 
 	[SerializeField] private Storage defaultInventory;
 	[SerializeField] private List<Storage> inventories;
-	public event Action<ItemObject, int> OnItemCollected;
-	public event Action<List<ItemStack>> OnItemsCrafted;
-	public event Action<ItemObject, int> OnItemUsed;
 	public event Action<ConversationWithActions, bool> OnSendActiveDialogue;
 	public event Action<ConversationWithActions, bool> OnSendPassiveDialogue;
 	public event Action<IActor> OnDisabled;
@@ -42,9 +39,11 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 	[SerializeField] private LaunchTrailController launchTrailEffect;
 	[SerializeField] private GameObject drillLaunchImpactEffect;
 
-	[SerializeField] private Waypoint defaultWaypoint, currentWaypoint;
+	[SerializeField] private VicinityWaypoint defaultWaypoint, currentWaypoint;
 
 	public Action<Entity> OnEntityDestroyed;
+	public event Action<ItemObject, int> OnItemsCollected, OnItemUsed;
+	public event Action<List<ItemStack>> OnItemsCrafted;
 
 	protected override void Awake()
 	{
@@ -120,7 +119,7 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 		if (stacks[itemIndex].Amount<= 0) return false;
 		ItemObject type = stacks[itemIndex].ItemType;
 		if (!UseItem(type)) return false;
-		stacks[itemIndex].RemoveAmount(1);
+		DefaultInventory.RemoveItemAtIndex(itemIndex, 1);
 		return true;
 	}
 
@@ -139,12 +138,10 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 		if (used)
 		{
 			TimerTracker.SetTimer(itemUseCooldownTimerID, itemUseCooldownDuration);
-			OnItemUsed?.Invoke(type, amountUsed);
+			OnItemUsed(type, amountUsed);
 		}
 		return used;
 	}
-
-	public ref Action<ItemObject, int> GetOnItemUsedEvent => ref OnItemUsed;
 
 	public virtual Storage GetAppropriateInventory(ItemObject itemType) => defaultInventory;
 
@@ -262,7 +259,7 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 		int remainingItems = inv.AddItem(itemType);
 		if (remainingItems == 0)
 		{
-			OnItemCollected?.Invoke(itemType, 1);
+			OnItemsCollected?.Invoke(itemType, 1);
 		}
 		else
 		{
@@ -280,7 +277,7 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 		int difference = amount - remainingItems;
 		if (difference != 0)
 		{
-			OnItemCollected?.Invoke(itemType, difference);
+			OnItemsCollected?.Invoke(itemType, difference);
 		}
 		return remainingItems;
 	}
@@ -418,7 +415,7 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 		return true;
 	}
 
-	public Waypoint GetWaypoint => currentWaypoint != null ? currentWaypoint
+	public VicinityWaypoint GetWaypoint => currentWaypoint != null ? currentWaypoint
 		: defaultWaypoint;
 
 	public Vector3 Position => transform.position;

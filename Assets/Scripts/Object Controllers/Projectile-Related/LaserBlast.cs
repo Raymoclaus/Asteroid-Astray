@@ -45,6 +45,7 @@ public class LaserBlast : MonoBehaviour, IProjectile, IAttackActor
 	[SerializeField]
 	private AudioClip weakHitSound;
 	protected static AudioManager audioMngr;
+	public string UniqueID { get; set; }
 
 	public event Action<IActor> OnDisabled;
 

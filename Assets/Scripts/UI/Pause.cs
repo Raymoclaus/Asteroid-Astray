@@ -69,7 +69,7 @@ public class Pause : MonoBehaviour
 			}
 		}
 
-		Time.fixedDeltaTime = IsStopped ? 1f : 0.01666666f / Time.timeScale;
+		Time.fixedDeltaTime = IsStopped ? 1f : (Time.timeScale / 60f);
 	}
 
 	private static bool CanToggle => !isShifting && canPause;
@@ -154,5 +154,12 @@ public class Pause : MonoBehaviour
 			yield return null;
 		}
 		a();
+	}
+
+	[SteamPunkConsoleCommand(command = "timescale", info = "Sets the speed of the game.")]
+	public static void SetTimescale(float speed)
+	{
+		intendedTimeSpeed = speed;
+		Time.timeScale = speed;
 	}
 }

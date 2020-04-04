@@ -6,8 +6,8 @@ using InventorySystem;
 
 public class TutorialPrompts : MonoBehaviour
 {
-	private Shuttle mainChar;
-	private Shuttle MainChar => mainChar ?? (mainChar = FindObjectOfType<Shuttle>());
+	private Shuttle m_mainChar;
+	private Shuttle MainChar => m_mainChar ?? (m_mainChar = FindObjectOfType<Shuttle>());
 
 	public PromptInfo goInputPromptInfo;
 	public PromptInfo launchInputPromptInfo;
@@ -77,7 +77,7 @@ public class TutorialPrompts : MonoBehaviour
 
 		launchInputPromptInfo.SetCondition(() =>
 		{
-			return mainChar.IsDrilling && mainChar.CanDrillLaunch;
+			return MainChar.IsDrilling && MainChar.CanDrillLaunch;
 		});
 	}
 
@@ -127,15 +127,15 @@ public class TutorialPrompts : MonoBehaviour
 		};
 		repairKitInputPromptInfo.SetListeners(() =>
 		{
-			mainChar.OnItemUsed += action;
+			MainChar.OnItemUsed += action;
 		}, () =>
 		{
-			mainChar.OnItemUsed -= action;
+			MainChar.OnItemUsed -= action;
 		});
 
 		repairKitInputPromptInfo.SetCondition(() =>
 		{
-			int id = mainChar.DefaultInventory.FirstInstanceId(repairKit);
+			int id = MainChar.DefaultInventory.FirstInstanceId(repairKit);
 			if (id < 0 || Pause.IsStopped) return false;
 			string typeName = Item.TypeName(repairKit);
 			string text = id < 8 ? $"Press [Slot {id + 1}:] to use the {typeName}"

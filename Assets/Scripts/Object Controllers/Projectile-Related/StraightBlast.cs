@@ -19,6 +19,7 @@ public class StraightBlast : MonoBehaviour, IProjectile, IAttackActor
 	private Entity parent;
 	private GameObject impactEffect;
 	private Vector3 rotation;
+	public string UniqueID { get; set; }
 
 	public event Action<IActor> OnDisabled;
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using SaveSystem;
 
 namespace QuestSystem
 {
@@ -49,5 +50,28 @@ namespace QuestSystem
 
 		public void ForceComplete()
 			=> Requirements.ForEach(t => t.QuestRequirementCompleted());
+
+		public bool CompareName(Quest other) => Name == other.Name;
+
+		private const string SAVE_TAG_NAME = "Quest";
+		public void Save(SaveTag parentTag)
+		{
+			//create main tag
+			SaveTag mainTag = new SaveTag(SAVE_TAG_NAME, parentTag);
+			//save name
+			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, Name);
+			//save description
+			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, Description);
+			//save rewards
+			foreach (QuestReward reward in Rewards)
+			{
+				reward.Save(mainTag);
+			}
+			//save requirements
+			foreach (QuestRequirement requirement in Requirements)
+			{
+				requirement.Save(mainTag);
+			}
+		}
 	}
 }

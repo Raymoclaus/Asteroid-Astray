@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Collections.Generic;
+using SaveSystem;
 
 namespace QuestSystem
 {
@@ -32,6 +33,23 @@ namespace QuestSystem
 
 		public Quest GetNextAvailableQuest()
 			=> activeQuests.FirstOrDefault(t => !t.IsComplete);
+
+		private const string SAVE_TAG_NAME = "Quest Log";
+		public void Save(SaveTag parentTag)
+		{
+			//create main tag
+			SaveTag mainTag = new SaveTag(SAVE_TAG_NAME, parentTag);
+			//iterate over all completed quests
+			foreach (Quest q in completedQuests)
+			{
+				q.Save(mainTag);
+			}
+			//iterate over all active quests
+			foreach (Quest q in activeQuests)
+			{
+				q.Save(mainTag);
+			}
+		}
 	}
 
 }

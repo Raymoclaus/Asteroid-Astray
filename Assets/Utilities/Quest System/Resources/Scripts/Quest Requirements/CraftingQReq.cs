@@ -1,6 +1,5 @@
-﻿using UnityEngine;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using SaveSystem;
 
 namespace QuestSystem.Requirements
 {
@@ -12,6 +11,7 @@ namespace QuestSystem.Requirements
 		public int amountNeeded = 1;
 		private int currentAmount = 0;
 		private ICrafter crafter;
+		private string CrafterID { get; set; }
 
 		public CraftingQReq(ItemObject typeNeeded, int amountNeeded,
 			ICrafter crafter, string description = null)
@@ -21,6 +21,7 @@ namespace QuestSystem.Requirements
 			this.typeNeeded = typeNeeded;
 			this.amountNeeded = amountNeeded;
 			this.crafter = crafter;
+			CrafterID = crafter.UniqueID;
 		}
 
 		public CraftingQReq(ItemObject typeNeeded, ICrafter crafter,
@@ -46,6 +47,8 @@ namespace QuestSystem.Requirements
 		{
 			if (Completed || !active) return;
 
+			if (CrafterID != crafter.UniqueID) return;
+
 			bool updateRequirement = false;
 			for (int i = 0; i < stacks.Count; i++)
 			{
@@ -69,5 +72,24 @@ namespace QuestSystem.Requirements
 
 		public override string GetDescription
 			=> string.Format(description, amountNeeded, Item.TypeName(typeNeeded), currentAmount);
+
+		private const string SAVE_TAG_NAME = "Crafting Requirement";
+		public override void Save(SaveTag parentTag)
+		{
+			//create main tag
+			SaveTag mainTag = new SaveTag(SAVE_TAG_NAME, parentTag);
+			//save description
+			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, description);
+			//save waypoint ID
+			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, WaypointID);
+			//save item type
+			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, typeNeeded);
+			//save amount needed
+			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, amountNeeded);
+			//save current progress
+			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, currentAmount);
+			//save crafter ID
+			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, CrafterID);
+		}
 	}
 }

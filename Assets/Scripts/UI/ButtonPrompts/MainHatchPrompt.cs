@@ -1,13 +1,13 @@
 ﻿using System;
 using DialogueSystem;
 using InputHandlerSystem;
+using QuestSystem;
 using StatisticsTracker;
 using TriggerSystem;
 using UnityEngine;
 
-public class MainHatchPrompt : MonoBehaviour, IActionMessageReceiver, IChatter
+public class MainHatchPrompt : MonoBehaviour, IActionMessageReceiver, IChatter, IWaypointable, IInteractable
 {
-	[SerializeField] private BoolStatTracker shuttleRepairedStat, shipRechargedStat;
 	[SerializeField] private ConversationWithActions
 		interactBeforeRepairedShuttle,
 		interactBeforeRechargedShip,
@@ -20,9 +20,20 @@ public class MainHatchPrompt : MonoBehaviour, IActionMessageReceiver, IChatter
 
 	public event Action<ConversationWithActions, bool> OnSendActiveDialogue;
 	public event Action<ConversationWithActions, bool> OnSendPassiveDialogue;
+	public event Action<IInteractor> OnInteracted;
+
+	public string UniqueID { get; set; }
+
+	public Vector3 Position
+	{
+		get => transform.position;
+		set => Debug.Log("The position of this object cannot be changed in this way.", gameObject);
+	}
 
 	public void PlayDialogueResponse()
 	{
+		BoolStatTracker shuttleRepairedStat = (BoolStatTracker)StatisticsIO.GetTracker("Shuttle Repaired");
+		BoolStatTracker shipRechargedStat = (BoolStatTracker)StatisticsIO.GetTracker("Ship Recharged");
 		if (shuttleRepairedStat.IsFalse)
 		{
 			OnSendPassiveDialogue?.Invoke(interactBeforeRepairedShuttle, false);
@@ -50,6 +61,8 @@ public class MainHatchPrompt : MonoBehaviour, IActionMessageReceiver, IChatter
 			Open();
 			interactor.Interact(this);
 		}
+
+		OnInteracted?.Invoke(interactor);
 	}
 
 	public void AllowSendingDialogue(bool allow)

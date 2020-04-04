@@ -157,7 +157,7 @@ public class Shuttle : Character, IStunnable, ICombat
 		QuestPopupUI.SetQuester(GetComponent<Quester>());
 		AttachToInventoryUI();
 
-		OnItemCollected += ReceiveItem;
+		OnItemsCollected += ReceiveItem;
 		FindObjectOfType<ItemPopupUI>()?.SetInventoryHolder(this);
 
 		//start repair shuttle questline if shuttle is damaged
@@ -779,7 +779,7 @@ public class Shuttle : Character, IStunnable, ICombat
 		&& drillIsActive
 		&& InputManager.GetInput(cancelDrillingAction) == 0f;
 
-	public void EnterShip(Transform shipHatch)
+	public void EnterShip()
 	{
 		EnteringShip?.Invoke();
 		//GameEvents.Save();
@@ -803,7 +803,7 @@ public class Shuttle : Character, IStunnable, ICombat
 		{
 			float evaluation = easeInEaseOut.Evaluate(delta);
 			rot.z = Mathf.LerpAngle(currentAngle, 0f, evaluation);
-			transform.position = Vector3.Lerp(currentPos, shipHatch.position, evaluation);
+			transform.position = Vector3.Lerp(currentPos, mainHatch.transform.position, evaluation);
 			CameraControl.SetLookAheadDistance(true, 1f - delta);
 		}, () =>
 		{
@@ -828,7 +828,7 @@ public class Shuttle : Character, IStunnable, ICombat
 	{
 		if (interactableObject is MainHatchPrompt mainHatch)
 		{
-			EnterShip(mainHatch.transform);
+			EnterShip();
 			return;
 		}
 

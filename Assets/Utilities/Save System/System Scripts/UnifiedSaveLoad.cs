@@ -101,6 +101,11 @@ namespace SaveSystem
 			}
 		}
 
+		public static void UpdateOpenedFile(string filename, SaveTag tag, object obj)
+		{
+			obj.IterateModules(module => UpdateOpenedFile(filename, tag, module));
+		}
+
 		/// <summary>
 		/// Adds a tag to the file.
 		/// </summary>
@@ -344,6 +349,8 @@ namespace SaveSystem
 
 		public static string GetLineOfParameter(string filename, SaveTag tag, string parameterName)
 		{
+			//remove case sensitivity
+			parameterName = parameterName.ToLower();
 			//get the line number of the parameter
 			int index = GetIndexOfParameter(filename, tag, parameterName);
 			//check if the parameter was found
@@ -365,6 +372,9 @@ namespace SaveSystem
 		/// <returns>Returns index of line containing parameterName. -1 if not found.</returns>
 		private static int GetIndexOfParameter(string filename, SaveTag tag, string parameterName)
 		{
+			//remove case sensitivity
+			parameterName = parameterName.ToLower();
+			
 			//tag cannot be null
 			if (tag == null) return -1;
 
@@ -407,7 +417,7 @@ namespace SaveSystem
 				//if current line contains a parameter, check to see if the name matches and then return current index
 				if (IsParameter(line))
 				{
-					string otherParamName = GetParameterName(line);
+					string otherParamName = GetParameterName(line).ToLower();
 					if (otherParamName == parameterName) return i;
 				}
 			}
@@ -493,11 +503,19 @@ namespace SaveSystem
 		/// <param name="obj"></param>
 		public static void UpdateUnifiedSaveFile(SaveTag tag, object obj)
 		{
-			FieldInfo[] fields = obj.GetType().GetFields();
+			obj.IterateModules(module => UpdateUnifiedSaveFile(tag, module));
+		}
+
+		public static void IterateModules(this object source, Action<DataModule> action)
+		{
+			if (action == null) return;
+
+			FieldInfo[] fields = source.GetType().GetFields();
+
 			for (int i = 0; i < fields.Length; i++)
 			{
-				FieldInfo field = fields[i];
-				UpdateUnifiedSaveFile(tag, new DataModule(field, obj));
+				DataModule module = new DataModule(fields[i], source);
+				action?.Invoke(module);
 			}
 		}
 
@@ -602,7 +620,7 @@ namespace SaveSystem
 		public static bool OpenFile(string filename, bool createFileIfNotFound)
 		{
 			//check if file exists
-			bool fileExists = SaveLoad.SaveExists(filename);
+			bool fileExists = SaveLoad.RelativeSaveFileExists(filename);
 			//check if file has been opened previously
 			bool fileOpened = FileOpened(filename);
 			if (!fileOpened)
@@ -655,8 +673,8 @@ namespace SaveSystem
 		{
 			line = line.Replace("\t", string.Empty);
 			string[] parts = line.Split(SEPARATOR);
-			if (parts.Length != 2) return DataModule.INVALID_DATA_MODULE;
-			DataModule module = new DataModule(parts[0], parts[1]);
+			if (parts.Length != 3) return DataModule.INVALID_DATA_MODULE;
+			DataModule module = new DataModule(parts[0], parts[1], parts[2]);
 			return module;
 		}
 

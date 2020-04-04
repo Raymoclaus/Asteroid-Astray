@@ -17,7 +17,8 @@ namespace QuestSystem.UI
 
 		private void LateUpdate()
 		{
-			IWaypoint targetWaypoint = requirement.GetWaypoint;
+			string targetWaypointID = requirement.GetWaypointID;
+			IWaypoint targetWaypoint = WaypointManager.GetWaypointByID(targetWaypointID);
 			if (requirement.Completed || targetWaypoint == null)
 			{
 				waypointUIHolder.SetActive(false);
@@ -25,7 +26,7 @@ namespace QuestSystem.UI
 			}
 			waypointUIHolder.SetActive(true);
 
-			Vector3 waypointPos = targetWaypoint.WaypointPosition;
+			Vector3 waypointPos = targetWaypoint.Position;
 			Vector3 questerPos = quester.transform.position;
 			waypointUI.Setup(questerPos, waypointPos);
 		}

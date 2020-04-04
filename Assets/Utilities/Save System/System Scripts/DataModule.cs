@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 
 namespace SaveSystem
@@ -6,62 +7,62 @@ namespace SaveSystem
 	public struct DataModule
 	{
 		private const char separator = '|';
-		private const string formattedEntry = "{1}{0}{2}";
-		public string parameterName;
-		public string data;
+		private const string formattedEntry = "{1}{0}{2}{0}{3}";
+		public string parameterName, parameterType, data;
 
-		public static DataModule INVALID_DATA_MODULE = new DataModule(null, null);
+		public static DataModule INVALID_DATA_MODULE = new DataModule(null, null, null);
 
-		public DataModule(string name, string data)
+		public DataModule(string pName, string pType, string data)
 		{
-			parameterName = name;
+			parameterName = pName;
+			parameterType = pType;
 			this.data = data;
 		}
 
 		public DataModule(FieldInfo field, object fieldSupportObject)
-			: this(field.Name, field.GetValue(fieldSupportObject)?.ToString())
+			: this(field.Name, field.FieldType.ToString(), field.GetValue(fieldSupportObject)?.ToString())
 		{
 
 		}
 
-		public DataModule(string name, int data)
-			: this(name, data.ToString())
+		public DataModule(string pName, int data)
+			: this(pName, data.GetType().ToString(), data.ToString())
 		{
 
 		}
 
-		public DataModule(string name, float data)
-			: this(name, data.ToString())
+		public DataModule(string pName, float data)
+			: this(pName, data.GetType().ToString(), data.ToString())
 		{
 
 		}
 
-		public DataModule(string name, bool data)
-			: this(name, data.ToString())
+		public DataModule(string pName, bool data)
+			: this(pName, data.GetType().ToString(), data.ToString())
 		{
 
 		}
 
-		public DataModule(string name, char data)
-			: this(name, data.ToString())
+		public DataModule(string pName, char data)
+			: this(pName, data.GetType().ToString(), data.ToString())
 		{
 
 		}
 
-		public DataModule(string name, short data)
-			: this(name, data.ToString())
+		public DataModule(string pName, short data)
+			: this(pName, data.GetType().ToString(), data.ToString())
 		{
 
 		}
 
-		public DataModule(string name, double data)
-			: this(name, data.ToString())
+		public DataModule(string pName, double data)
+			: this(pName, data.GetType().ToString(), data.ToString())
 		{
 
 		}
 
-		public DataModule(string name, object data)
-			: this(name, data.ToString())
+		public DataModule(string pName, object data)
+			: this(pName, data.GetType().ToString(), data.ToString())
 		{
 
 		}
@@ -70,6 +71,7 @@ namespace SaveSystem
 			=> string.Format(formattedEntry,
 				separator,
 				parameterName,
+				parameterType,
 				data);
 	}
 }

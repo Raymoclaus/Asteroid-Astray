@@ -115,6 +115,10 @@ namespace InventorySystem
 			=> ItemStack.RemoveItem(ItemStacks, stack.ItemType,
 				stack.Amount, GetStackUpdatedInvoker);
 
+		public void RemoveItemAtIndex(int index, int num = 1)
+			=> ItemStack.RemoveItemAtIndex(ItemStacks, index, num,
+				GetStackUpdatedInvoker);
+
 		public void RemoveItems(List<ItemStack> items)
 			=> ItemStack.RemoveItems(ItemStacks, items, GetStackUpdatedInvoker);
 

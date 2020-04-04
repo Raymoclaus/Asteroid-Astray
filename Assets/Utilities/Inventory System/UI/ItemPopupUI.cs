@@ -15,17 +15,34 @@ namespace InventorySystem.UI
 		public Color textColor;
 		[SerializeField] private float textFadeSpeed = 0.17f;
 
+		private void OnEnable()
+		{
+			if (inventoryHolder == null) return;
+			inventoryHolder.OnItemsCollected += GeneratePopup;
+		}
+
+		private void OnDisable()
+		{
+			if (inventoryHolder == null) return;
+			inventoryHolder.OnItemsCollected -= GeneratePopup;
+		}
+
 		public void SetInventoryHolder(IInventoryHolder newInventoryHolder)
 		{
 			if (newInventoryHolder == null
 			    || newInventoryHolder == inventoryHolder) return;
+
 			if (inventoryHolder != null)
 			{
-				inventoryHolder.OnItemCollected -= GeneratePopup;
+				inventoryHolder.OnItemsCollected -= GeneratePopup;
 			}
 
 			inventoryHolder = newInventoryHolder;
-			inventoryHolder.OnItemCollected += GeneratePopup;
+
+			if (gameObject.activeSelf)
+			{
+				inventoryHolder.OnItemsCollected += GeneratePopup;
+			}
 		}
 
 		private new ItemPopupObject GetAnInactivePopup

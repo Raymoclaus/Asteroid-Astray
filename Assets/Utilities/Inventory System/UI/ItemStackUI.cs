@@ -29,6 +29,10 @@ namespace InventorySystem.UI
 			{
 				stack.Amount = value;
 				UpdateText();
+				if (value == 0)
+				{
+					ItemType = ItemObject.Blank;
+				}
 			}
 		}
 

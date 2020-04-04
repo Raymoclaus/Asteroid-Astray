@@ -1,31 +1,53 @@
-﻿using UnityEngine;
+﻿using SaveSystem;
+using TriggerSystem;
 
 namespace QuestSystem.Requirements
 {
 	public class InteractionQReq : QuestRequirement
 	{
-		public InteractionQReq(IInteractionWaypoint waypoint,
-			string description)
+		private IInteractable interactable;
+		private string InteractableID { get; set; }
+		private IInteractor expectedInteractor;
+		private string ExpectedInteractorID { get; set; }
+
+		public InteractionQReq(IInteractable interactable,
+			IInteractor expectedInteractor, string description, IWaypoint waypoint)
 			: base(description, waypoint)
 		{
-			this.waypoint = waypoint;
+			this.interactable = interactable;
+			InteractableID = interactable.UniqueID;
+			this.expectedInteractor = expectedInteractor;
+			ExpectedInteractorID = expectedInteractor.UniqueID;
 		}
 
 		public override void Activate()
 		{
 			base.Activate();
-			waypoint.OnWaypointReached += EvaluateEvent;
+			interactable.OnInteracted += EvaluateEvent;
 		}
 
 		public override void QuestRequirementCompleted()
 		{
 			base.QuestRequirementCompleted();
-			waypoint.OnWaypointReached -= EvaluateEvent;
+			interactable.OnInteracted -= EvaluateEvent;
 		}
 
-		private void EvaluateEvent()
+		private void EvaluateEvent(IInteractor interactor)
 		{
+			if (Completed || !active) return;
+
+			if (expectedInteractor != interactor) return;
+
 			QuestRequirementCompleted();
+		}
+
+		private const string SAVE_TAG_NAME = "Interaction Requirement";
+		public override void Save(SaveTag parentTag)
+		{
+			//create main tag
+			SaveTag mainTag = new SaveTag(SAVE_TAG_NAME, parentTag);
+			//save waypoint ID
+			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, WaypointID);
 		}
 	}
 }

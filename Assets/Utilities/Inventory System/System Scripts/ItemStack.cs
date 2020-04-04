@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using SaveSystem;
 using UnityEngine;
 
 namespace InventorySystem
@@ -188,6 +189,23 @@ namespace InventorySystem
 			return num;
 		}
 
+		public static bool RemoveItemAtIndex(List<ItemStack> stacks, int index, int num = 1,
+			Action<int, ItemObject, int> callback = null)
+		{
+			if (num <= 0) return true;
+			if (index < 0 && index >= stacks.Count) return false;
+
+			ItemStack stack = stacks[index];
+			if (stack.ItemType == ItemObject.Blank) return false;
+			if (stack.Amount == 0) return false;
+
+			int expectedValue = stack.Amount - num;
+			int result = stack.RemoveAmount(num);
+			callback?.Invoke(index, stack.ItemType, result);
+
+			return expectedValue == result;
+		}
+
 		public static bool RemoveItem(List<ItemStack> stacks, ItemObject type, int num = 1, Action<int, ItemObject, int> callback = null)
 		{
 			if (num <= 0) return true;
@@ -198,8 +216,8 @@ namespace InventorySystem
 				if (stackType == type)
 				{
 					int amount = stacks[i].Amount;
-					int leftover = stacks[i].RemoveAmount(num);
-					callback?.Invoke(i, stackType, stacks[i].Amount);
+					RemoveItemAtIndex(stacks, i, num, callback);
+					int leftover = stacks[i].Amount;
 					num -= amount - leftover;
 				}
 				if (num <= 0) return true;
@@ -469,6 +487,17 @@ namespace InventorySystem
 				result = new ItemStack();
 				return false;
 			}
+		}
+
+		private const string SAVE_TAG_NAME = "Item Stack";
+		public void Save(SaveTag parentTag)
+		{
+			//create main tag
+			SaveTag mainTag = new SaveTag(SAVE_TAG_NAME, parentTag);
+			//save item name
+			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, ItemType);
+			//save item amount
+			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, Amount);
 		}
 	}
 }

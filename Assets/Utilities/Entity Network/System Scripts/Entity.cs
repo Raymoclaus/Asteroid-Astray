@@ -7,9 +7,11 @@ using TriggerSystem;
 using AttackData;
 using AudioUtilities;
 using InputHandlerSystem;
+using QuestSystem;
 using SaveSystem;
+using TriggerSystem.Triggers;
 
-public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageReceiver, ISaveable
+public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageReceiver, ISaveable, IWaypointable
 {
 	[Header("Entity Fields")]
 	[SerializeField] protected ChunkCoords coords;
@@ -66,6 +68,10 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 	//components to disable/enable
 	public Renderer[] rends;
 
+	public string UniqueID { get; set; }
+
+	public Vector3 Position => transform.position;
+
 	protected virtual void Awake()
 	{
 		enabled = false;
@@ -78,6 +84,11 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 		EntityNetwork.AddEntity(this, coords);
 		RepositionInNetwork(true);
 		enabled = true;
+
+		if (UniqueID == null)
+		{
+			UniqueIDGenerator.AddObject(this);
+		}
 	}
 
 	protected void LateUpdate() => RepositionInNetwork(false);
@@ -530,6 +541,24 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 		data.Add(new DataModule(CURRENT_HEALTH_VAR_NAME, healthComponent.CurrentValue));
 
 		return data;
+	}
+
+	private string SaveTagName => $"{GetType()}:{UniqueID}";
+
+	public virtual void Save(string filename, SaveTag parentTag)
+	{
+		//create save tag
+		SaveTag mainTag = new SaveTag(SaveTagName, parentTag);
+		//save position
+		UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, Position);
+		//save entity type
+		UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, GetEntityType());
+		//save unique ID
+		UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, UniqueID);
+		//save max health
+		UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, healthComponent.UpperLimit);
+		//save current health
+		UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, healthComponent.CurrentValue);
 	}
 }
 

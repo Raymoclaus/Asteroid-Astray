@@ -7,6 +7,7 @@ namespace TriggerSystem.Actors.Interactors
 	public class BasicInteractor : MonoBehaviour, IInteractor
 	{
 		[SerializeField] private bool canTriggerPrompts;
+		public string UniqueID { get; set; }
 
 		public event Action<IActor> OnDisabled;
 

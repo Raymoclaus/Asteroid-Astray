@@ -10,5 +10,6 @@ namespace TriggerSystem
 		bool CanTriggerPrompts { get; }
 		Vector3 Position { get; }
 		event Action<IActor> OnDisabled;
+		string UniqueID { get; set; }
 	}
 }

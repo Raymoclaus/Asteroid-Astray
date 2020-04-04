@@ -42,9 +42,9 @@ public class NarrativeManager : MonoBehaviour, IChatter
 		findShipConversation,
 		foundShipConversation,
 		foundDerangedBotConversation,
-		questionHowToObtainEnergySourceConversation,
 		acquiredEnergySourceConversation,
-		rechargedTheShipConversation;
+		rechargedTheShipConversation,
+		questionHowToObtainEnergySourceConversation;
 
 	private List<ConversationWithActions> conversations;
 
@@ -66,40 +66,92 @@ public class NarrativeManager : MonoBehaviour, IChatter
 			findShipConversation,
 			foundShipConversation,
 			foundDerangedBotConversation,
-			questionHowToObtainEnergySourceConversation,
 			acquiredEnergySourceConversation,
-			rechargedTheShipConversation
+			rechargedTheShipConversation,
+			questionHowToObtainEnergySourceConversation
 		};
+	}
+
+	private void OnEnable()
+	{
+		Quester quester = MainQuester;
+		if (quester == null) return;
+		quester.OnQuestCompleted += EvaluateQuest;
+	}
+
+	private void OnDisable()
+	{
+		Quester quester = MainQuester;
+		if (quester == null) return;
+		quester.OnQuestCompleted -= EvaluateQuest;
+	}
+
+	private void EvaluateQuest(Quest completedQuest)
+	{
+		if (completedQuest.CompareName(FirstGatheringQuest))
+		{
+			CompletedFirstGatheringQuest();
+		}
+		else if (completedQuest.CompareName(CraftYourFirstRepairKitQuest))
+		{
+			CompletedCraftYourFirstRepairKitQuest();
+		}
+		else if (completedQuest.CompareName(RepairTheShuttleQuest))
+		{
+			CompletedRepairTheShuttleQuest();
+		}
+		else if (completedQuest.CompareName(ReturnToTheShipQuest))
+		{
+			CompletedReturnToTheShipQuest();
+		}
+		else if (completedQuest.CompareName(FindEnergySourceQuest))
+		{
+			CompletedFindEnergySourceQuest();
+		}
+		else if (completedQuest.CompareName(RechargeTheShipQuest))
+		{
+			CompletedRechargeTheShipQuest();
+		}
 	}
 
 	public void StartFirstGatheringQuest()
 	{
 		if (MainQuester == null) return;
 
-		List<QuestReward> qRewards = new List<QuestReward>();
-
-		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-		
-		qReqs.Add(new GatheringQReq(Item.GetItemByName("Copper"), 2,
-			MainChar, "Obtain {0} {1} from asteroids: {2} / {0}"));
-		
-		qReqs.Add(new GatheringQReq(Item.GetItemByName("Iron"),
-			MainChar, "Obtain {0} {1} from asteroids: {2} / {0}"));
-
-		Quest q = new Quest(
-			"Gather materials",
-			"We need some materials so that we can repair our communications system. Once that" +
-			" is done, we should be able to find our way back to Dendro and the ship.",
-			MainQuester, qRewards, qReqs);
-		q.OnQuestComplete += CompletedFirstGatheringQuest;
-
-		GiveQuest(MainQuester, q);
+		GiveQuest(MainQuester, FirstGatheringQuest);
 		ActivateScriptedDrops(true);
 		StartDialogue(useThrustersConversation, true);
 		TutPrompts?.drillInputPromptInfo.SetIgnore(false);
 	}
 
-	private void CompletedFirstGatheringQuest(Quest quest)
+	private Quest m_firstGatheringQuest;
+	private Quest FirstGatheringQuest
+	{
+		get
+		{
+			if (m_firstGatheringQuest != null) return m_firstGatheringQuest;
+
+			List<QuestReward> qRewards = new List<QuestReward>();
+
+			List<QuestRequirement> qReqs = new List<QuestRequirement>();
+
+			qReqs.Add(new GatheringQReq(Item.GetItemByName("Copper"), 2,
+				MainChar, "Obtain {0} {1} from asteroids: {2} / {0}"));
+
+			qReqs.Add(new GatheringQReq(Item.GetItemByName("Iron"),
+				MainChar, "Obtain {0} {1} from asteroids: {2} / {0}"));
+
+			m_firstGatheringQuest = new Quest(
+				"Gather materials",
+				"We need some materials so that we can repair our communications system. Once that" +
+				" is done, we should be able to find our way back to Dendro and the ship.",
+				MainQuester, qRewards, qReqs);
+
+			return m_firstGatheringQuest;
+		}
+	}
+
+	private void CompletedFirstGatheringQuest()
 	{
 		ActivateScriptedDrops(false);
 		StartCraftYourFirstRepairKitQuest();
@@ -111,23 +163,33 @@ public class NarrativeManager : MonoBehaviour, IChatter
 	{
 		if (MainChar == null) return;
 
-		List<QuestReward> qRewards = new List<QuestReward>();
-
-		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-		qReqs.Add(new CraftingQReq(Item.GetItemByName("Repair Kit"),
-			MainChar, "Construct {0} {1} using 2 copper and 1 iron"));
-
-		Quest q = new Quest(
-			"Construct a Repair Kit",
-			"Now that we have the necessary materials, we should try constructing a repair kit.",
-			MainQuester, qRewards, qReqs);
-		q.OnQuestComplete += CompletedCraftYourFirstRepairKitQuest;
-
-		GiveQuest(MainQuester, q);
+		GiveQuest(MainQuester, CraftYourFirstRepairKitQuest);
 		TutPrompts?.pauseInputPromptInfo.SetIgnore(false);
 	}
 
-	private void CompletedCraftYourFirstRepairKitQuest(Quest quest)
+	private Quest m_craftYourFirstRepairKitQuest;
+	private Quest CraftYourFirstRepairKitQuest
+	{
+		get
+		{
+			if (m_craftYourFirstRepairKitQuest != null) return m_craftYourFirstRepairKitQuest;
+
+			List<QuestReward> qRewards = new List<QuestReward>();
+
+			List<QuestRequirement> qReqs = new List<QuestRequirement>();
+			qReqs.Add(new CraftingQReq(Item.GetItemByName("Repair Kit"),
+				MainChar, "Construct {0} {1} using 2 copper and 1 iron"));
+
+			m_craftYourFirstRepairKitQuest = new Quest(
+				"Construct a Repair Kit",
+				"Now that we have the necessary materials, we should try constructing a repair kit.",
+				MainQuester, qRewards, qReqs);
+
+			return m_craftYourFirstRepairKitQuest;
+		}
+	}
+
+	private void CompletedCraftYourFirstRepairKitQuest()
 	{
 		StartRepairTheShuttleQuest();
 		StartDialogue(useRepairKitConversation, true);
@@ -138,22 +200,32 @@ public class NarrativeManager : MonoBehaviour, IChatter
 	{
 		if (MainChar == null) return;
 
-		List<QuestReward> qRewards = new List<QuestReward>();
-
-		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-		qReqs.Add(new ItemUseQReq(Item.GetItemByName("Repair Kit"), MainChar));
-
-		Quest q = new Quest(
-			"Repair the Shuttle",
-			"Using this repair kit should be enough to fix the communications system. Then we can finally get back to the ship.",
-			MainQuester, qRewards, qReqs);
-		q.OnQuestComplete += CompletedRepairTheShuttleQuest;
-
-		GiveQuest(MainQuester, q);
+		GiveQuest(MainQuester, RepairTheShuttleQuest);
 		TutPrompts?.repairKitInputPromptInfo.SetIgnore(false);
 	}
 
-	private void CompletedRepairTheShuttleQuest(Quest quest)
+	private Quest m_repairTheShuttleQuest;
+	private Quest RepairTheShuttleQuest
+	{
+		get
+		{
+			if (m_repairTheShuttleQuest != null) return m_repairTheShuttleQuest;
+
+			List<QuestReward> qRewards = new List<QuestReward>();
+
+			List<QuestRequirement> qReqs = new List<QuestRequirement>();
+			qReqs.Add(new ItemUseQReq(Item.GetItemByName("Repair Kit"), MainChar));
+
+			m_repairTheShuttleQuest = new Quest(
+				"Repair the Shuttle",
+				"Using this repair kit should be enough to fix the communications system. Then we can finally get back to the ship.",
+				MainQuester, qRewards, qReqs);
+
+			return m_repairTheShuttleQuest;
+		}
+	}
+
+	private void CompletedRepairTheShuttleQuest()
 	{
 		StartReturnToTheShipQuest();
 		StartDialogue(findShipConversation, true);
@@ -164,25 +236,34 @@ public class NarrativeManager : MonoBehaviour, IChatter
 	{
 		if (MainChar == null) return;
 
-		List<QuestReward> qRewards = new List<QuestReward>();
-
-		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-		InteractionWaypoint wp = InteractionWaypoint.CreateWaypoint(MainChar,
-			MainHatchTrigger, MainHatchTrigger.PivotPosition);
-		qReqs.Add(new InteractionQReq(wp, "Return to the ship."));
-
-		Quest q = new Quest(
-			"Find the ship",
-			"Communication and Navigation systems on the shuttle have been restored," +
-			" but we still can't contact Dendro. Find your way back to the ship and" +
-			" check if Dendro is still alright.",
-			MainQuester, qRewards, qReqs);
-		q.OnQuestComplete += CompletedReturnToTheShipQuest;
-
-		GiveQuest(MainQuester, q);
+		GiveQuest(MainQuester, ReturnToTheShipQuest);
 	}
 
-	private void CompletedReturnToTheShipQuest(Quest quest)
+	private Quest m_returnToTheShipQuest;
+	private Quest ReturnToTheShipQuest
+	{
+		get
+		{
+			if (m_returnToTheShipQuest != null) return m_returnToTheShipQuest;
+
+			List<QuestReward> qRewards = new List<QuestReward>();
+
+			List<QuestRequirement> qReqs = new List<QuestRequirement>();
+			AttachableWaypoint wp = WaypointManager.CreateAttachableWaypoint(MainHatch, 1f, MainChar);
+			qReqs.Add(new WaypointQReq(wp, "Return to the ship."));
+
+			m_returnToTheShipQuest = new Quest(
+				"Find the ship",
+				"Communication and Navigation systems on the shuttle have been restored," +
+				" but we still can't contact Dendro. Find your way back to the ship and" +
+				" check if Dendro is still alright.",
+				MainQuester, qRewards, qReqs);
+
+			return m_returnToTheShipQuest;
+		}
+	}
+
+	private void CompletedReturnToTheShipQuest()
 	{
 		StartDialogue(foundShipConversation, false);
 	}
@@ -191,41 +272,49 @@ public class NarrativeManager : MonoBehaviour, IChatter
 	{
 		if (MainChar == null) return;
 
-		//create a deranged bot
-		ChunkCoords emptyChunk = EntityGenerator.GetNearbyEmptyChunk();
-		SpawnableEntity se = EntityGenerator.GetSpawnableEntity("deranged bot");
-		Entity newEntity = EntityGenerator.SpawnOneEntityInChunk(se, null, emptyChunk);
-		//set waypoint to new bot
-		//attach dialogue prompt when player approaches bot
-		VicinityTrigger entityPrompt = newEntity.GetComponentsInChildren<VicinityTrigger>()
-			.Where(t => t.gameObject.layer == LayerMask.NameToLayer("VicinityTrigger")).FirstOrDefault();
-		Action<IActor> triggerEnterAction = null;
-		triggerEnterAction = (IActor actor) =>
-		{
-			if (!(actor is Shuttle)) return;
-			StartDialogue(foundDerangedBotConversation, false);
-			entityPrompt.OnEnteredTrigger -= triggerEnterAction;
-		};
-		entityPrompt.OnEnteredTrigger += triggerEnterAction;
-
-		List<QuestReward> qRewards = new List<QuestReward>();
-
-		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-		Waypoint wp = Waypoint.CreateWaypoint(MainChar, entityPrompt,
-			entityPrompt.PivotPosition);
-		qReqs.Add(new GatheringQReq(Item.GetItemByName("Corrupted Corvorite"),
-			MainChar, "Find the nearby energy source.", wp));
-
-		Quest q = new Quest(
-			"Acquire an Energy Source",
-			"The ship appears intact, however it is in a powered-down state. We need to find an energy source.",
-			MainQuester, qRewards, qReqs);
-		q.OnQuestComplete += CompletedFindEnergySourceQuest;
-
-		GiveQuest(MainQuester, q);
+		GiveQuest(MainQuester, FindEnergySourceQuest);
 	}
 
-	private void CompletedFindEnergySourceQuest(Quest quest)
+	private Quest m_findEnergySourceQuest;
+	private Quest FindEnergySourceQuest
+	{
+		get
+		{
+			if (m_findEnergySourceQuest != null) return m_findEnergySourceQuest;
+
+			//TODO: This can potentially be exploited if the game is saved and quit during quest.
+			//Restarting the quest will cause another bot to be created.
+			//Check if a deranged bot already exists.
+
+			//create a deranged bot
+			ChunkCoords emptyChunk = EntityGenerator.GetNearbyEmptyChunk();
+			SpawnableEntity se = EntityGenerator.GetSpawnableEntity("deranged bot");
+			Entity newEntity = EntityGenerator.SpawnOneEntityInChunk(se, null, emptyChunk);
+
+			List<QuestReward> qRewards = new List<QuestReward>();
+
+			List<QuestRequirement> qReqs = new List<QuestRequirement>();
+			AttachableWaypoint wp = WaypointManager.CreateAttachableWaypoint(newEntity, 1f, MainChar);
+			Action waypointReachedAction = null;
+			waypointReachedAction = () =>
+			{
+				StartDialogue(foundDerangedBotConversation, false);
+				wp.OnWaypointReached -= waypointReachedAction;
+			};
+			wp.OnWaypointReached += waypointReachedAction;
+			qReqs.Add(new GatheringQReq(Item.GetItemByName("Corrupted Corvorite"),
+				MainChar, "Find the nearby energy source.", wp));
+
+			m_findEnergySourceQuest = new Quest(
+				"Acquire an Energy Source",
+				"The ship appears intact, however it is in a powered-down state. We need to find an energy source.",
+				MainQuester, qRewards, qReqs);
+
+			return m_findEnergySourceQuest;
+		}
+	}
+
+	private void CompletedFindEnergySourceQuest()
 	{
 		StartRechargeTheShipQuest();
 		StartDialogue(acquiredEnergySourceConversation, true);
@@ -235,23 +324,33 @@ public class NarrativeManager : MonoBehaviour, IChatter
 	{
 		if (MainChar == null) return;
 
-		List<QuestReward> qRewards = new List<QuestReward>();
-
-		List<QuestRequirement> qReqs = new List<QuestRequirement>();
-
-		Waypoint wp = Waypoint.CreateWaypoint(MainChar, MainHatchTrigger, MainHatchTrigger.PivotPosition);
-		qReqs.Add(new WaypointQReq(wp, "Return to the ship."));
-
-		Quest q = new Quest(
-			"Recharge the Ship",
-			"Now that we have an energy source, we should take it back to the ship and restore power so that we can finally get back inside.",
-			MainQuester, qRewards, qReqs);
-		q.OnQuestComplete += CompletedRechargeTheShipQuest;
-
-		GiveQuest(MainQuester, q);
+		GiveQuest(MainQuester, RechargeTheShipQuest);
 	}
 
-	private void CompletedRechargeTheShipQuest(Quest quest)
+	private Quest m_rechargeTheShipQuest;
+	private Quest RechargeTheShipQuest
+	{
+		get
+		{
+			if (m_rechargeTheShipQuest != null) return m_rechargeTheShipQuest;
+
+			List<QuestReward> qRewards = new List<QuestReward>();
+
+			List<QuestRequirement> qReqs = new List<QuestRequirement>();
+
+			AttachableWaypoint wp = WaypointManager.CreateAttachableWaypoint(MainHatch, 1f, MainChar);
+			qReqs.Add(new InteractionQReq(MainHatch, MainChar, "Return to the ship.", wp));
+
+			m_rechargeTheShipQuest = new Quest(
+				"Recharge the Ship",
+				"Now that we have an energy source, we should take it back to the ship and restore power so that we can finally get back inside.",
+				MainQuester, qRewards, qReqs);
+
+			return m_rechargeTheShipQuest;
+		}
+	}
+
+	private void CompletedRechargeTheShipQuest()
 	{
 		StartDialogue(rechargedTheShipConversation, false);
 		TakeItem(Item.GetItemByName("Corrupted Corvorite"), 1);

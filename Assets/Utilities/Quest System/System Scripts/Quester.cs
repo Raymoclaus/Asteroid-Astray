@@ -1,4 +1,5 @@
 ﻿using System;
+using SaveSystem;
 using UnityEngine;
 
 namespace QuestSystem
@@ -46,5 +47,17 @@ namespace QuestSystem
 		}
 
 		public void ReceiveReward(object reward) => OnRewardReceived?.Invoke(reward);
+
+		private const string SAVE_TAG_NAME = "Quester";
+
+		public void Save(SaveTag parentTag)
+		{
+			//create main tag
+			SaveTag mainTag = new SaveTag(SAVE_TAG_NAME, parentTag);
+			//save quest log
+			questLog.Save(mainTag);
+			//save name of top priority quest
+			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, TopPriorityQuest.Name);
+		}
 	}
 }

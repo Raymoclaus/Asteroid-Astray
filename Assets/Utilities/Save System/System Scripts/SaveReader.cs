@@ -14,6 +14,8 @@ namespace SaveSystem
 			List<SaveFile> saves = new List<SaveFile>();
 			DirectoryInfo directory = new DirectoryInfo(SaveLoad.path);
 			string parameterName = "story progression";
+			string originalSaveName = SaveLoad.CurrentSave;
+			SaveLoad.CurrentSave = null;
 
 			foreach (DirectoryInfo di in directory.EnumerateDirectories())
 			{
@@ -22,7 +24,7 @@ namespace SaveSystem
 				bool fileExists = File.Exists(saveFileFullPath);
 				if (!fileExists) continue;
 				Debug.Log(saveFilePath);
-				bool saveExists = SaveLoad.SaveExists(saveFilePath);
+				bool saveExists = SaveLoad.RelativeSaveFileExists(saveFilePath);
 				if (!saveExists) continue;
 				string progressLine = UnifiedSaveLoad.GetLineOfParameter(
 					saveFilePath, StatisticsIO.saveTag, parameterName);
@@ -32,13 +34,17 @@ namespace SaveSystem
 				saves.Add(new SaveFile(di));
 			}
 
+			SaveLoad.CurrentSave = originalSaveName;
 			return saves;
 		}
 
+		[MenuItem("Save System/Get Save File Count")]
 		public static int GetSaveFileCount()
 		{
 			DirectoryInfo directory = new DirectoryInfo(SaveLoad.path);
 			string parameterName = "story progression";
+			string originalSaveName = SaveLoad.CurrentSave;
+			SaveLoad.CurrentSave = null;
 
 			int count = 0;
 			foreach (DirectoryInfo di in directory.EnumerateDirectories())
@@ -47,9 +53,6 @@ namespace SaveSystem
 				string saveFileFullPath = $"{di.FullName}/{UnifiedSaveLoad.SAVE_FILENAME}{SaveLoad.extension}";
 				bool fileExists = File.Exists(saveFileFullPath);
 				if (!fileExists) continue;
-				Debug.Log(saveFilePath);
-				bool saveExists = SaveLoad.SaveExists(saveFilePath);
-				if (!saveExists) continue;
 				string progressLine = UnifiedSaveLoad.GetLineOfParameter(
 					saveFilePath, StatisticsIO.saveTag, parameterName);
 				DataModule module = UnifiedSaveLoad.ConvertLineToModule(progressLine);
@@ -58,6 +61,8 @@ namespace SaveSystem
 				count++;
 			}
 
+			SaveLoad.CurrentSave = originalSaveName;
+			SteamPunkConsole.WriteLine($"{count} save files found.");
 			return count;
 		}
 	} 

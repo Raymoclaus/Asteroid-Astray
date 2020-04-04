@@ -108,11 +108,6 @@ namespace SceneControllers
 				this.ao = ao;
 				this.name = name;
 			}
-
-			public void LoadSceneWhenReady()
-			{
-				ao.allowSceneActivation = true;
-			}
 		}
 	}
 }

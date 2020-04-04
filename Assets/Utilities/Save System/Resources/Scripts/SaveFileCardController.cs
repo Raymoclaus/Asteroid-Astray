@@ -2,6 +2,8 @@
 using TMPro;
 using UnityEngine;
 using System.IO;
+using SceneControllers;
+using StatisticsTracker;
 
 public class SaveFileCardController : MonoBehaviour
 {
@@ -9,6 +11,7 @@ public class SaveFileCardController : MonoBehaviour
 	[SerializeField] private string fileNamePrefix = "File: ";
 	private SaveFile file;
 	private SaveFileCardGenerator generator;
+	[SerializeField] private SceneChanger sceneChanger;
 
 	public string FileName => file.Name;
 
@@ -69,5 +72,15 @@ public class SaveFileCardController : MonoBehaviour
 	public void CopyFile()
 	{
 		generator.CreateCopy(file);
+	}
+
+	public void LoadFileButton()
+	{
+		SaveLoad.CurrentSave = FileName;
+		StatisticsIO.Load();
+
+		StatTracker currentScene = StatisticsIO.GetTracker("Current Scene");
+		SceneTracker.AttachToSceneLoader();
+		sceneChanger.LoadScene(currentScene.ValueString);
 	}
 }
