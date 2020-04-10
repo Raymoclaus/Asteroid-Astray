@@ -28,7 +28,7 @@ namespace SaveSystem
 				if (!saveExists) continue;
 				string progressLine = UnifiedSaveLoad.GetLineOfParameter(
 					saveFilePath, StatisticsIO.saveTag, parameterName);
-				DataModule module = UnifiedSaveLoad.ConvertLineToModule(progressLine);
+				DataModule module = UnifiedSaveLoad.ConvertParameterLineToModule(progressLine);
 				Debug.Log($"Name: {module.parameterName}, Value: {module.data}");
 				if (module.parameterName == null) continue;
 				saves.Add(new SaveFile(di));
@@ -55,7 +55,7 @@ namespace SaveSystem
 				if (!fileExists) continue;
 				string progressLine = UnifiedSaveLoad.GetLineOfParameter(
 					saveFilePath, StatisticsIO.saveTag, parameterName);
-				DataModule module = UnifiedSaveLoad.ConvertLineToModule(progressLine);
+				DataModule module = UnifiedSaveLoad.ConvertParameterLineToModule(progressLine);
 				Debug.Log($"Name: {module.parameterName}, Value: {module.data}");
 				if (module.parameterName == null) continue;
 				count++;
@@ -64,6 +64,34 @@ namespace SaveSystem
 			SaveLoad.CurrentSave = originalSaveName;
 			SteamPunkConsole.WriteLine($"{count} save files found.");
 			return count;
+		}
+
+		public static SaveFile GetFirstSaveFile()
+		{
+			DirectoryInfo directory = new DirectoryInfo(SaveLoad.path);
+			string parameterName = "story progression";
+			string originalSaveName = SaveLoad.CurrentSave;
+			SaveLoad.CurrentSave = null;
+
+			foreach (DirectoryInfo di in directory.EnumerateDirectories())
+			{
+				string saveFilePath = $"{di.Name}/{UnifiedSaveLoad.SAVE_FILENAME}";
+				string saveFileFullPath = $"{di.FullName}/{UnifiedSaveLoad.SAVE_FILENAME}{SaveLoad.extension}";
+				bool fileExists = File.Exists(saveFileFullPath);
+				if (!fileExists) continue;
+				Debug.Log(saveFilePath);
+				bool saveExists = SaveLoad.RelativeSaveFileExists(saveFilePath);
+				if (!saveExists) continue;
+				string progressLine = UnifiedSaveLoad.GetLineOfParameter(
+					saveFilePath, StatisticsIO.saveTag, parameterName);
+				DataModule module = UnifiedSaveLoad.ConvertParameterLineToModule(progressLine);
+				Debug.Log($"Name: {module.parameterName}, Value: {module.data}");
+				if (module.parameterName == null) continue;
+				SaveLoad.CurrentSave = originalSaveName;
+				return new SaveFile(di);
+			}
+
+			return null;
 		}
 	} 
 }

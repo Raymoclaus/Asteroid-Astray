@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
+using SaveSystem;
 using UnityEngine;
 
 namespace InventorySystem
@@ -327,6 +329,55 @@ namespace InventorySystem
 
 		public Action<int, int> GetSizeChangedInvoker
 			=> (int oldSize, int newSize) => OnSizeChanged?.Invoke(oldSize, newSize);
+
+		private string SaveTagName => $"Inventory:{InventoryName}";
+
+		private const string NAME_VAR_NAME = "InventoryName",
+			SIZE_VAR_NAME = "Size",
+			NO_LIMIT_VAR_NAME = "NoLimit",
+			STACKS_VAR_NAME = "Stacks";
+
+		public void Save(string filename, SaveTag parentTag)
+		{
+			//create save tag
+			SaveTag mainTag = new SaveTag(SaveTagName, parentTag);
+			//save inventory name
+			DataModule module = new DataModule(NAME_VAR_NAME, InventoryName);
+			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
+			//save size
+			module = new DataModule(SIZE_VAR_NAME, Size);
+			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
+			//save noLimit
+			module = new DataModule(NO_LIMIT_VAR_NAME, noLimit);
+			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
+			//save stacks
+			module = new DataModule(STACKS_VAR_NAME, GetStacksString());
+			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
+		}
+
+		private const char STACK_SEPARATOR = ',',
+			AMOUNT_SEPARATOR = ':';
+
+		private string GetStacksString()
+		{
+			StringBuilder builder = new StringBuilder();
+
+			for (int i = 0; i < ItemStacks.Count; i++)
+			{
+				ItemStack stack = ItemStacks[i];
+				if (stack.Amount != 0)
+				{
+					builder.Append($"{stack.Amount}{AMOUNT_SEPARATOR}{stack.ItemType}");
+				}
+
+				if (i < ItemStacks.Count - 1)
+				{
+					builder.Append(STACK_SEPARATOR);
+				}
+			}
+
+			return builder.ToString();
+		}
 
 		public InventoryData GetInventoryData() => new InventoryData(ItemStacks, size);
 

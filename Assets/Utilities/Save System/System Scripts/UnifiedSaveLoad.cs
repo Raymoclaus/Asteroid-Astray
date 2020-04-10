@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using UnityEditor;
 using UnityEngine;
 
 namespace SaveSystem
@@ -12,8 +10,10 @@ namespace SaveSystem
 	public static class UnifiedSaveLoad
 	{
 		public const string SAVE_FILENAME = "Unified Save";
-		private const string TAG_FORMAT = "{2}[{0}]|{1}";
-		private const char SEPARATOR = '|';
+		private const string TAG_FORMAT = "{2}{3}{0}{4}{5}{1}";
+		private const char SEPARATOR = '|',
+			TAG_CONTAINER_LEFT = '[',
+			TAG_CONTAINER_RIGHT = ']';
 		private static Dictionary<string, List<string>> openedFiles = new Dictionary<string, List<string>>();
 
 		/// <summary>
@@ -64,7 +64,7 @@ namespace SaveSystem
 		public static void UpdateOpenedFile(string filename, SaveTag tag, DataModule data)
 		{
 			//check if tag already exists
-			int tagLine = TagLine(filename, tag);
+			int tagLine = GetIndexOfTag(filename, tag);
 
 			//no error found, adding data to tag in file
 			if (tagLine >= 0)
@@ -101,11 +101,6 @@ namespace SaveSystem
 			}
 		}
 
-		public static void UpdateOpenedFile(string filename, SaveTag tag, object obj)
-		{
-			obj.IterateModules(module => UpdateOpenedFile(filename, tag, module));
-		}
-
 		/// <summary>
 		/// Adds a tag to the file.
 		/// </summary>
@@ -124,7 +119,7 @@ namespace SaveSystem
 			while (check != null)
 			{
 				//get the line ID of where the tag exists
-				int tagLine = TagLine(filename, check);
+				int tagLine = GetIndexOfTag(filename, check);
 				//if tag exists, tagLine should be >= 0
 				if (tagLine >= 0)
 				{
@@ -177,7 +172,10 @@ namespace SaveSystem
 				string tagString = string.Format(TAG_FORMAT,
 					currentTag.Tag,
 					linesBeingAdded - 1,
-					new string('\t', currentTag.IndentCount));
+					new string('\t', currentTag.IndentCount),
+					TAG_CONTAINER_LEFT,
+					TAG_CONTAINER_RIGHT,
+					SEPARATOR);
 
 				//get the position in the file to add the tag
 				int position = GetIndexOfEndOfTagContents(filename, currentTag.PriorTag);
@@ -195,7 +193,44 @@ namespace SaveSystem
 		}
 
 		private static bool TagExists(string filename, SaveTag tag)
-			=> TagLine(filename, tag) >= 0;
+			=> GetIndexOfTag(filename, tag) >= 0;
+
+		public static void IterateTagContents(string filename, SaveTag tag, Action<DataModule> parameterCallBack,
+			Action<SaveTag> tagCallBack)
+		{
+			//ensure tag is valid
+			if (tag == null) return;
+			//open the file
+			bool fileOpened = OpenFile(filename, false);
+			if (!fileOpened) return;
+			//get index of tag
+			int tagIndex = GetIndexOfTag(filename, tag);
+			if (tagIndex < 0) return;
+			int tagEndIndex = GetIndexOfEndOfTagContents(filename, tag);
+			//loop over contents of tag
+			for (int i = tagIndex + 1; i < tagEndIndex; i++)
+			{
+				//get current line
+				string line = openedFiles[filename][i];
+				//invoke parameter callback if line is a parameter
+				if (parameterCallBack != null && IsParameter(line))
+				{
+					DataModule module = ConvertParameterLineToModule(line);
+					parameterCallBack?.Invoke(module);
+					continue;
+				}
+				//invoke tag callback if line is a tag
+				if (tagCallBack != null && IsTag(line))
+				{
+					string tagName = GetNameOfTagLine(line);
+					SaveTag st = new SaveTag(tagName, tag);
+					tagCallBack?.Invoke(st);
+					int tagContentLength = GetLineCountFromTag(line);
+					i += tagContentLength;
+					continue;
+				}
+			}
+		}
 
 		/// <summary>
 		/// Searches a file for specified tag and gets the position of the tag + the line count of the tag + 1.
@@ -206,7 +241,7 @@ namespace SaveSystem
 		private static int GetIndexOfEndOfTagContents(string filename, SaveTag tag)
 		{
 			//check if tag exists
-			int tagLine = TagLine(filename, tag);
+			int tagLine = GetIndexOfTag(filename, tag);
 
 			//if tag doesn't exist, exit with -1
 			if (tagLine < 0) return -1;
@@ -244,7 +279,7 @@ namespace SaveSystem
 			if (!fileOpened) return;
 
 			//find the lineID of the tag
-			int tagLine = TagLine(filename, tag);
+			int tagLine = GetIndexOfTag(filename, tag);
 
 			//ignore if tag not found
 			if (tagLine < 0) return;
@@ -311,7 +346,7 @@ namespace SaveSystem
 			if (!fileOpened) return;
 
 			//find the lineID of the tag
-			int tagLine = TagLine(filename, tag);
+			int tagLine = GetIndexOfTag(filename, tag);
 
 			//ignore if tag not found
 			if (tagLine < 0) return;
@@ -345,6 +380,39 @@ namespace SaveSystem
 			{
 				OverwriteLine(filename, index, text);
 			}
+		}
+
+		public static void RemoveParameter(string filename, SaveTag tag, string parameterName)
+		{
+			//remove case sensitivity
+			parameterName = parameterName.ToLower();
+			//get the line number of the parameter
+			int index = GetIndexOfParameter(filename, tag, parameterName);
+			//check if the parameter was found
+			if (index < 0)
+			{
+				return;
+			}
+			//remove line from opened file
+			openedFiles[filename].RemoveAt(index);
+			//update the line count on the tag line
+			IncreaseLineCountUnderTag(filename, tag, -1);
+		}
+
+		public static void RemoveTagAndContents(string filename, SaveTag tag)
+		{
+			//get index of line tag appears on
+			int index = GetIndexOfTag(filename, tag);
+			//exit if index is not valid
+			if (index < 0) return;
+			//get number of lines under tag, +1 to include tag line itself
+			int lineCount = GetLineCountFromTag(openedFiles[filename][index]) + 1;
+			//remove lines containing tag and its contents
+			openedFiles[filename].RemoveRange(index, lineCount);
+			//get parent of tag
+			SaveTag parentTag = tag.PriorTag;
+			//reduce lineCount under parent tag
+			IncreaseLineCountUnderTag(filename, parentTag, -lineCount);
 		}
 
 		public static string GetLineOfParameter(string filename, SaveTag tag, string parameterName)
@@ -384,7 +452,7 @@ namespace SaveSystem
 			if (!fileOpened) return -1;
 
 			//find the lineID of the tag
-			int tagLine = TagLine(filename, tag);
+			int tagLine = GetIndexOfTag(filename, tag);
 
 			//ignore if tag not found
 			if (tagLine < 0) return -1;
@@ -464,28 +532,6 @@ namespace SaveSystem
 		}
 
 		/// <summary>
-		/// Parses the line count from a tag.
-		/// </summary>
-		/// <param name="line"></param>
-		/// <returns>Returns an integer. -1 if given line is not a valid or integer could not be parsed.</returns>
-		private static int GetLineCountFromTag(string line)
-		{
-			//check to see if line is a valid tag
-			if (!IsTag(line)) return -1;
-
-			//split the line into its different parts
-			string[] parts = line.Split(SEPARATOR);
-			if (parts.Length < 2) return -1;
-
-			//parse the line count integer
-			bool parseLineCountSuccessful = int.TryParse(parts[1], out int lineCount);
-			if (!parseLineCountSuccessful) return -1;
-
-			//return line count
-			return lineCount;
-		}
-
-		/// <summary>
 		/// Saves data to a universal file name
 		/// </summary>
 		/// <param name="tag"></param>
@@ -525,7 +571,7 @@ namespace SaveSystem
 		/// <param name="filename"></param>
 		/// <param name="tag"></param>
 		/// <returns>Returns line number of tag. -1 if file not found. -2 if tag not found in file. -3 if tag is not valid. -4 if file contained errors.</returns>
-		private static int TagLine(string filename, SaveTag tag)
+		private static int GetIndexOfTag(string filename, SaveTag tag)
 		{
 			//null check
 			if (tag == null) return -3;
@@ -583,6 +629,41 @@ namespace SaveSystem
 			return -2;
 		}
 
+		private static string GetNameOfTagLine(string line)
+		{
+			//verify that the formatting is correct
+			if (!IsTag(line)) return null;
+			//remove potential tab spaces
+			line = line.Replace("\t", string.Empty);
+			//split tag name from line count
+			string[] parts = line.Split(SEPARATOR);
+			string tagPart = parts[0];
+			//remove tag container characters
+			string tagName = tagPart.Replace(TAG_CONTAINER_LEFT.ToString(), string.Empty)
+				.Replace(TAG_CONTAINER_RIGHT.ToString(), string.Empty);
+			return tagName;
+		}
+
+		/// <summary>
+		/// Parses the line count from a tag.
+		/// </summary>
+		/// <param name="line"></param>
+		/// <returns>Returns an integer. -1 if given line is not valid or integer could not be parsed.</returns>
+		private static int GetLineCountFromTag(string line)
+		{
+			//check to see if line is a valid tag
+			if (!IsTag(line)) return -1;
+
+			//split the line into its different parts
+			string[] parts = line.Split(SEPARATOR);
+
+			//parse the line count integer
+			bool parseLineCountSuccessful = int.TryParse(parts[1], out int lineCount);
+
+			//return line count
+			return lineCount;
+		}
+
 		/// <summary>
 		/// Checks to see if a string contains a tag with expected formatting. (i.e. contains a left square bracket followed by a right bracket with any number of characters in between).
 		/// </summary>
@@ -590,24 +671,26 @@ namespace SaveSystem
 		/// <returns></returns>
 		private static bool IsTag(string s)
 		{
-			bool foundLeftBracket = false;
-			
-			//iterate over string
-			for (int i = 0; i < s.Length; i++)
-			{
-				//look for left bracket if not yet found
-				if (!foundLeftBracket && s[i] == '[')
-				{
-					foundLeftBracket = true;
-					continue;
-				}
+			//remove tab spaces
+			s = s.Replace("\t", string.Empty);
+			//split into the 2 expected parts of a tag format
+			string[] parts = s.Split(SEPARATOR);
+			//should contain 2 parts
+			if (parts.Length != 2) return false;
 
-				//look for right bracket if left bracket has been found
-				if (s[i] == ']' && foundLeftBracket) return true;
-			}
+			//first part should start and end with opposing square brackets
+			string firstPart = parts[0];
+			if (firstPart[0] != '[') return false;
+			if (firstPart[firstPart.Length - 1] != ']') return false;
+			//first part should also contain at least one character between those square brackets
+			if (firstPart.Length < 3) return false;
 
-			//criteria not met
-			return false;
+			//second part should just be a number
+			string secondPart = parts[1];
+			if (!int.TryParse(secondPart, out int number)) return false;
+
+			//passed all checks
+			return true;
 		}
 
 		/// <summary>
@@ -669,7 +752,7 @@ namespace SaveSystem
 			}
 		}
 
-		public static DataModule ConvertLineToModule(string line)
+		public static DataModule ConvertParameterLineToModule(string line)
 		{
 			line = line.Replace("\t", string.Empty);
 			string[] parts = line.Split(SEPARATOR);
@@ -685,29 +768,5 @@ namespace SaveSystem
 		/// <returns></returns>
 		private static bool FileOpened(string filename)
 			=> openedFiles.ContainsKey(filename);
-
-		[MenuItem("Save System/Save Example Data")]
-		private static void SaveTest()
-		{
-			blah a = new blah();
-			a.blahName = "asdrfgadfv";
-			a.position = Vector3.left;
-
-			blah b = new blah();
-			b.blahName = "adfhdghj";
-			b.position = Vector3.right;
-
-			SaveTag tag = new SaveTag("blah1");
-			SaveTag tag2 = new SaveTag("blah2", tag);
-			UpdateUnifiedSaveFile(tag, a);
-			UpdateUnifiedSaveFile(tag2, b);
-			SaveUnifiedSaveFile();
-		}
-
-		private struct blah
-		{
-			public string blahName;
-			public Vector3 position;
-		}
 	} 
 }

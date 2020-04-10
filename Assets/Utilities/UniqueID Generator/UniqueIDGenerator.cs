@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using SaveSystem;
 
 public static class UniqueIDGenerator
@@ -122,14 +123,14 @@ public static class UniqueIDGenerator
 	/// <returns>Returns an ID as a string.</returns>
 	private static string GenerateUniqueID()
 	{
-		string ID = string.Empty;
+		StringBuilder builder = new StringBuilder();
 
 		do
 		{
-			ID += (char)r.Next(char.MinValue, char.MaxValue);
-		} while (!MeetsMinimumRequirements(ID));
+			builder.Append(RandomAsciiGenerator.GetRandomChar(true, true, true, false, false, false));
+		} while (!MeetsMinimumRequirements(builder.ToString()));
 
-		return ID;
+		return builder.ToString();
 	}
 
 	public static bool MeetsMinimumRequirements(string ID)

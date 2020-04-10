@@ -10,6 +10,7 @@ using DialogueSystem;
 using AttackData;
 using EquipmentSystem;
 using InputHandlerSystem;
+using SaveSystem;
 
 public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 {
@@ -463,4 +464,30 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 	public float DamageMultiplier => damageMultiplier;
 
 	public bool CanSendDialogue { get; set; } = true;
+
+	private const string MAX_SHIELD_VAR_NAME = "MaxShield",
+		CURRENT_SHIELD_VAR_NAME = "CurrentShield";
+
+	public override void Save(string filename, SaveTag parentTag)
+	{
+		base.Save(filename, parentTag);
+
+		//create save tag
+		SaveTag mainTag = new SaveTag(SaveTagName, parentTag);
+		//save inventories
+		foreach (Storage storage in inventories)
+		{
+			storage.Save(filename, mainTag);
+		}
+
+		if (shieldValue != null && ShieldIsEquipped)
+		{
+			//save shield max value
+			DataModule module = new DataModule(MAX_SHIELD_VAR_NAME, shieldValue.UpperLimit);
+			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
+			//save shield current value
+			module = new DataModule(CURRENT_SHIELD_VAR_NAME, shieldValue.CurrentValue);
+			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
+		}
+	}
 }

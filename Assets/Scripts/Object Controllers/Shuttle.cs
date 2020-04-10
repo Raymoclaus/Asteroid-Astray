@@ -11,6 +11,7 @@ using SceneControllers;
 using AudioUtilities;
 using DialogueSystem;
 using StatisticsTracker;
+using SaveSystem;
 
 public class Shuttle : Character, IStunnable, ICombat
 {
@@ -846,4 +847,6 @@ public class Shuttle : Character, IStunnable, ICombat
 	{
 		rb.AddForce(recoilVector);
 	}
+
+	public override SaveType SaveType => SaveType.FullSave;
 }

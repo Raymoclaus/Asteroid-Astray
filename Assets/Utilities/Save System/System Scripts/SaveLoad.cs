@@ -12,7 +12,25 @@ namespace SaveSystem
 
 		public static string CurrentSave { get; set; }
 
-		public static string PathToCurrentSave => $"{path}{CurrentSave}/";
+		public static string PathToCurrentSave
+		{
+			get
+			{
+				if (CurrentSave == null)
+				{
+					SaveFile firstSave = SaveReader.GetFirstSaveFile();
+					if (firstSave == null)
+					{
+						CurrentSave = GenerateUniqueSaveName();
+					}
+					else
+					{
+						CurrentSave = firstSave.Name;
+					}
+				}
+				return $"{path}{CurrentSave}/";
+			}
+		}
 
 		public static void SaveText(string key, string textToSave)
 		{

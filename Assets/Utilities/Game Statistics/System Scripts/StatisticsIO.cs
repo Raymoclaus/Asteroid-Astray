@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using SaveSystem;
 using UnityEditor;
@@ -37,7 +36,7 @@ namespace StatisticsTracker
 				else
 				{
 					//convert line to a data module
-					DataModule module = UnifiedSaveLoad.ConvertLineToModule(line);
+					DataModule module = UnifiedSaveLoad.ConvertParameterLineToModule(line);
 					//send the data to the stat tracker
 					bool successful = stats[i].Parse(module.data);
 					if (!successful)

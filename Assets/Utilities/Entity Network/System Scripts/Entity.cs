@@ -9,9 +9,8 @@ using AudioUtilities;
 using InputHandlerSystem;
 using QuestSystem;
 using SaveSystem;
-using TriggerSystem.Triggers;
 
-public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageReceiver, ISaveable, IWaypointable
+public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageReceiver, IWaypointable
 {
 	[Header("Entity Fields")]
 	[SerializeField] protected ChunkCoords coords;
@@ -328,10 +327,6 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 	{
 		Teleport(new Vector2(x, y));
 	}
-
-	protected virtual object CreateDataObject() => null;
-
-	public virtual void ApplyData(EntityData? data) { }
 	
 	[Header("Launch related variables")]
 	private Character launcher;
@@ -489,6 +484,7 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 	public virtual bool ReceiveAttack(AttackManager atkMngr)
 	{
 		if (atkMngr == null || IsDead) return false;
+
 		OwnerComponent ownerComponent = atkMngr.GetAttackComponent<OwnerComponent>();
 		List<IAttacker> owners = ownerComponent.owners;
 		IAttacker thisAttacker = (this as IAttacker);
@@ -501,7 +497,9 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 				break;
 			}
 		}
+
 		if (thisAttacker != null && owners.Contains(thisAttacker)) return false;
+
 		DamageComponent damageComponent = atkMngr.GetAttackComponent<DamageComponent>();
 		if (damageComponent != null)
 		{
@@ -516,49 +514,34 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 		=> layer == LayerSolid
 		   || layer == LayerShield;
 
-	[SerializeField] private bool shouldSave;
-	public bool ShouldSave => shouldSave;
+	public virtual SaveType SaveType => SaveType.NoSave;
 
-	private const string SAVE_TAG = "Entity";
-
-	public string GetTag()
-	{
-		return SAVE_TAG;
-	}
-
+	protected string SaveTagName => $"{GetType()}:{UniqueID}";
 	private const string POSITION_VAR_NAME = "Position",
 		ENTITY_TYPE_VAR_NAME = "EntityType",
+		UNIQUE_ID_VAR_NAME = "UniqueID",
 		MAX_HEALTH_VAR_NAME = "MaxHealth",
 		CURRENT_HEALTH_VAR_NAME = "CurrentHealth";
-	
-	public virtual List<DataModule> GetData()
-	{
-		List<DataModule> data = new List<DataModule>();
-		
-		data.Add(new DataModule(POSITION_VAR_NAME, transform.position));
-		data.Add(new DataModule(ENTITY_TYPE_VAR_NAME, GetEntityType()));
-		data.Add(new DataModule(MAX_HEALTH_VAR_NAME, healthComponent.UpperLimit));
-		data.Add(new DataModule(CURRENT_HEALTH_VAR_NAME, healthComponent.CurrentValue));
-
-		return data;
-	}
-
-	private string SaveTagName => $"{GetType()}:{UniqueID}";
 
 	public virtual void Save(string filename, SaveTag parentTag)
 	{
 		//create save tag
 		SaveTag mainTag = new SaveTag(SaveTagName, parentTag);
 		//save position
-		UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, Position);
+		DataModule module = new DataModule(POSITION_VAR_NAME, Position);
+		UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
 		//save entity type
-		UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, GetEntityType());
+		module = new DataModule(ENTITY_TYPE_VAR_NAME, GetEntityType());
+		UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
 		//save unique ID
-		UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, UniqueID);
+		module = new DataModule(UNIQUE_ID_VAR_NAME, UniqueID);
+		UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
 		//save max health
-		UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, healthComponent.UpperLimit);
+		module = new DataModule(MAX_HEALTH_VAR_NAME, healthComponent.UpperLimit);
+		UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
 		//save current health
-		UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, healthComponent.CurrentValue);
+		module = new DataModule(CURRENT_HEALTH_VAR_NAME, healthComponent.CurrentValue);
+		UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
 	}
 }
 
@@ -571,22 +554,4 @@ public enum EntityType
 	BotHive,
 	GatherBot,
 	Planet
-}
-
-[System.Serializable]
-public struct EntityData
-{
-	public System.Type type;
-	public object data;
-
-	public EntityData(System.Type type, object data)
-	{
-		this.type = type;
-		this.data = data;
-	}
-
-	public override string ToString()
-	{
-		return type.ToString();
-	}
 }

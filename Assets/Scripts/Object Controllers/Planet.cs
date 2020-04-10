@@ -1,4 +1,5 @@
-﻿using SceneControllers;
+﻿using SaveSystem;
+using SceneControllers;
 using TriggerSystem;
 using TriggerSystem.Triggers;
 using UnityEngine;
@@ -30,4 +31,6 @@ public class Planet : Entity
 		//PlanetData data = generator.Generate((exploredCount + 1) * Difficulty.DistanceBasedDifficulty(DistanceFromCenter) * difficultyModifier);
 		SceneLoader.LoadScene("PlanetScene");
 	}
+
+	public override SaveType SaveType => SaveType.FullSave;
 }

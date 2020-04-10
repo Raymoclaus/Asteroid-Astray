@@ -4,6 +4,7 @@ using UnityEngine;
 using CustomDataTypes;
 using SaveSystem;
 using UnityEditor;
+using SaveType = SaveSystem.SaveType;
 
 /// Keeps track of all entities in an organised network based on their position.
 /// Allows entities to be placed pseudo-infinitely in any 2D direction, although it can be upgraded to include 3D.
@@ -20,12 +21,10 @@ public class EntityNetwork : MonoBehaviour
 	private List<List<List<List<Entity>>>> grid = new List<List<List<List<Entity>>>>(QuadrantCount);
 	//list of coordinates that contain any entities
 	private HashSet<ChunkCoords> occupiedCoords = new HashSet<ChunkCoords>();
+	//dictionary by type, containing dictionary by coordinates
+	private Dictionary<Type, Dictionary<ChunkCoords, HashSet<Entity>>> entitiesByTypePerCoordinates = new Dictionary<Type, Dictionary<ChunkCoords, HashSet<Entity>>>();
 	//check if grid has already been created
 	private bool gridIsSetUp = false;
-	//entities to query when saving
-	private HashSet<Entity> toSave = new HashSet<Entity>();
-	//list of entities sorted by type
-	private Dictionary<Type, HashSet<Entity>> entitiesByType = new Dictionary<Type, HashSet<Entity>>();
 
 	private static event Action OnLoaded;
 
@@ -40,6 +39,7 @@ public class EntityNetwork : MonoBehaviour
 
 		Debug.Log("Loading Entity Network");
 		gridIsSetUp = true;
+		Load();
 		Debug.Log("Entity Network Loaded");
 		OnLoaded?.Invoke();
 		OnLoaded = null;
@@ -153,19 +153,14 @@ public class EntityNetwork : MonoBehaviour
 		instance.EnsureChunkExists(cc);
 		//add entity to that chunk
 		Chunk(cc).Add(e);
+		//set entity's coordinates to be equal to the given coordinates
+		e.SetCoordinates(cc);
 		//add entity to type-sorted list
 		instance.AddEntityToTypeSortedList(e);
 		//update list of occupied coordinates
 		if (Chunk(cc).Count == 1)
 		{
 			instance.occupiedCoords.Add(cc);
-		}
-		//set entity's coordinates to be equal to the given coordinates
-		e.SetCoordinates(cc);
-		//add entity to save list of they need to be saved
-		if (e.ShouldSave)
-		{
-			instance.toSave.Add(e);
 		}
 		return true;
 	}
@@ -183,10 +178,6 @@ public class EntityNetwork : MonoBehaviour
 			{
 				chunk.RemoveAt(i);
 				instance.RemoveEntityFromTypeSortedList(e);
-				if (e.ShouldSave)
-				{
-					instance.toSave.Remove(e);
-				}
 				if (chunk.Count == 0)
 				{
 					instance.occupiedCoords.Remove(cc);
@@ -201,24 +192,34 @@ public class EntityNetwork : MonoBehaviour
 	private void AddEntityToTypeSortedList(Entity e)
 	{
 		Type t = e.GetType();
+		ChunkCoords cc = e.GetCoords();
 
-		if (!entitiesByType.ContainsKey(t))
+		if (!entitiesByTypePerCoordinates.ContainsKey(t))
 		{
-			entitiesByType.Add(t, new HashSet<Entity>());
+			entitiesByTypePerCoordinates.Add(t, new Dictionary<ChunkCoords, HashSet<Entity>>());
 		}
 
-		HashSet<Entity> set = entitiesByType[t];
+		if (!entitiesByTypePerCoordinates[t].ContainsKey(cc))
+		{
+			entitiesByTypePerCoordinates[t].Add(cc, new HashSet<Entity>());
+		}
+
+		HashSet<Entity> set = entitiesByTypePerCoordinates[t][cc];
 		set.Add(e);
 	}
 
 	private void RemoveEntityFromTypeSortedList(Entity e)
 	{
 		Type t = e.GetType();
+		ChunkCoords cc = e.GetCoords();
 
-		if (!entitiesByType.ContainsKey(t)) return;
+		if (!entitiesByTypePerCoordinates.ContainsKey(t)) return;
+		if (!entitiesByTypePerCoordinates[t].ContainsKey(cc)) return;
 
-		HashSet<Entity> set = entitiesByType[t];
+		HashSet<Entity> set = entitiesByTypePerCoordinates[t][cc];
 		set.Remove(e);
+
+		if (set.Count == 0) entitiesByTypePerCoordinates[t].Remove(cc);
 	}
 
 	/// Iterates through all entities and performs the action once for each entity
@@ -337,7 +338,8 @@ public class EntityNetwork : MonoBehaviour
 
 	private const string TEMP_SAVE_FILE_NAME = "EntityNetwork_tmp",
 		PERMANENT_SAVE_FILE_NAME = "EntityNetwork",
-		SAVE_TAG = "EntityNetwork";
+		SAVE_TAG = "EntityNetwork",
+		ENTITY_SAVE_TAG = "Entities";
 
 	/// <summary>
 	/// Grabs all data from a temporary save file and places it into a permanent one.
@@ -365,7 +367,7 @@ public class EntityNetwork : MonoBehaviour
 	/// Grabs data from all saveable entities and puts it all into a temporary file.
 	/// </summary>
 	[MenuItem("Temp/Temporary Save Entity Network")]
-	public static void TempSave()
+	public static void TemporarySave()
 	{
 		//delete existing temporary file
 		SaveLoad.DeleteSaveFile(TEMP_SAVE_FILE_NAME);
@@ -373,51 +375,92 @@ public class EntityNetwork : MonoBehaviour
 		UnifiedSaveLoad.CloseFile(TEMP_SAVE_FILE_NAME);
 		//reopen the file (which will recreate the file if second argument is true)
 		UnifiedSaveLoad.OpenFile(TEMP_SAVE_FILE_NAME, true);
-		//create a main tag to put all entities under
+		//create a main tag
 		SaveTag mainTag = new SaveTag(SAVE_TAG);
-		//loop over entities to save
-		int count = 0;
-		foreach (Entity e in instance.toSave)
+		//create a tag to put all entities under
+		SaveTag entityTag = new SaveTag(ENTITY_SAVE_TAG, mainTag);
+		//loop over entities to save fully
+		foreach (Type t in instance.entitiesByTypePerCoordinates.Keys)
 		{
-			//ignore if entity is null, remove it from the list too
-			if (e == null)
+			Dictionary<ChunkCoords, HashSet<Entity>> chunkSet = instance.entitiesByTypePerCoordinates[t];
+			bool skip = false;
+			bool amountOnly = false;
+			foreach (ChunkCoords cc in chunkSet.Keys)
 			{
-				instance.toSave.Remove(e);
-				continue;
-			}
-			//get the tag string from the entity, the counter ensures each tag is unique
-			string tag = $"{e.GetTag()}:{count}";
-			//create a nested tag using the main tag as the base
-			SaveTag entityTag = new SaveTag(tag, mainTag);
-			//get all the data from the entity
-			List<DataModule> data = e.GetData();
-			//loop over each data module and save it to the temp memory
-			foreach (DataModule module in data)
-			{
-				UnifiedSaveLoad.UpdateOpenedFile(TEMP_SAVE_FILE_NAME, entityTag, module);
-			}
-			//increment counter
-			count++;
-		}
-
-		foreach (Type t in instance.entitiesByType.Keys)
-		{
-			HashSet<Entity> set = instance.entitiesByType[t];
-
-			foreach (Entity e in set)
-			{
-				//ignore if entity is null, remove it from the list too
-				if (e == null)
+				HashSet<Entity> entitySet = chunkSet[cc];
+				if (!amountOnly) //full save
 				{
-					set.Remove(e);
-					continue;
+					foreach (Entity e in entitySet)
+					{
+						if (e.SaveType == SaveType.OnlyAmount)
+						{
+							amountOnly = true;
+							break;
+						}
+						else if (e.SaveType == SaveType.NoSave)
+						{
+							skip = true;
+							break;
+						}
+						//ignore if entity is null, remove it from the list too
+						if (e == null)
+						{
+							entitySet.Remove(e);
+							continue;
+						}
+						//tell the entity to save itself to the given file under the given tag
+						e.Save(TEMP_SAVE_FILE_NAME, entityTag);
+					}
 				}
-				e.Save(TEMP_SAVE_FILE_NAME, mainTag);
-				//increment counter
-				count++;
+
+				if (amountOnly)
+				{
+					SaveTag chunkTag = new SaveTag($"Chunk:{cc}", entityTag);
+					DataModule module = new DataModule($"{t.Name}:Count", entitySet.Count);
+					UnifiedSaveLoad.UpdateOpenedFile(TEMP_SAVE_FILE_NAME, chunkTag, module);
+				}
+
+				if (skip) break;
 			}
 		}
+		//loop over entities to only save amounts of per chunk
+
 		//save the data now in temp memory into a file
 		UnifiedSaveLoad.SaveOpenedFile(TEMP_SAVE_FILE_NAME);
+	}
+
+	public static void Load()
+	{
+		//check if save file exists
+		bool tempSaveExists = SaveLoad.RelativeSaveFileExists(TEMP_SAVE_FILE_NAME);
+		bool permanentSaveExists = SaveLoad.RelativeSaveFileExists(PERMANENT_SAVE_FILE_NAME);
+		string filename = null;
+		if (tempSaveExists)
+		{
+			filename = TEMP_SAVE_FILE_NAME;
+		}
+		else if (permanentSaveExists)
+		{
+			filename = PERMANENT_SAVE_FILE_NAME;
+		}
+		else
+		{
+			return;
+		}
+
+		//open the save file
+		UnifiedSaveLoad.OpenFile(filename, false);
+		//create save tag
+		SaveTag mainTag = new SaveTag(SAVE_TAG);
+		//create sub-tag that entities are placed under
+		SaveTag entityTag = new SaveTag(ENTITY_SAVE_TAG, mainTag);
+		//create callbacks
+		Action<DataModule> parameterCallBack = null;
+		Action<SaveTag> tagCallBack = tag =>
+		{
+
+		};
+		//iterate over entity tag
+		UnifiedSaveLoad.IterateTagContents(filename, entityTag, parameterCallBack, tagCallBack);
 	}
 }

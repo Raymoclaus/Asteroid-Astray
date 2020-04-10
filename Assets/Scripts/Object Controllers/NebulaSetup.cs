@@ -1,4 +1,5 @@
 ﻿using CustomDataTypes;
+using SaveSystem;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -173,4 +174,6 @@ public class NebulaSetup : Entity
 	{
 		return EntityType.Nebula;
 	}
+
+	public override SaveType SaveType => SaveType.FullSave;
 }

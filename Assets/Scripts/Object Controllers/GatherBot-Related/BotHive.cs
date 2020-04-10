@@ -5,6 +5,7 @@ using InventorySystem;
 using CustomDataTypes;
 using AudioUtilities;
 using Random = UnityEngine.Random;
+using SaveSystem;
 
 [RequireComponent(typeof(HiveInventory))]
 public class BotHive : Character, ICombat
@@ -436,41 +437,5 @@ public class BotHive : Character, ICombat
 
 	public ItemObject PreciousResource => preciousResource;
 
-	protected override object CreateDataObject()
-	{
-		List<GatherBot.GatherBotData> botData = new List<GatherBot.GatherBotData>();
-		for (int i = 0; i < childBots.Count; i++)
-		{
-			botData.Add(childBots[i].GetData());
-		}
-		return new HiveSaveData(transform.position, DefaultInventory.GetInventoryData(), botData);
-	}
-
-	public override void ApplyData(EntityData? data)
-	{
-		if (data == null) return;
-		HiveSaveData d = (HiveSaveData)((EntityData)data).data;
-		transform.position = d.position;
-		DefaultInventory.SetData(d.inventory);
-		for (int i = 0; i < d.botData.Count; i++)
-		{
-			CreateBot(GetAvailableDockID(), true).ApplyData(d.botData[i]);
-		}
-	}
-
-	[Serializable]
-	private struct HiveSaveData
-	{
-		public SerializableVector3 position;
-		public Storage.InventoryData inventory;
-		public List<GatherBot.GatherBotData> botData;
-
-		public HiveSaveData(SerializableVector3 position, Storage.InventoryData inventory,
-			List<GatherBot.GatherBotData> botData)
-		{
-			this.position = position;
-			this.inventory = inventory;
-			this.botData = botData;
-		}
-	}
+	public override SaveType SaveType => SaveType.FullSave;
 }

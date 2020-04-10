@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using DialogueSystem;
 using DialogueSystem.UI;
+using SaveSystem;
 using UnityEngine;
 
 public class DerangedSoloBot : SoloBot
@@ -88,4 +89,6 @@ public class DerangedSoloBot : SoloBot
 	}
 
 	protected override IEnumerator ChargeForcePulse() { yield break; }
+
+	public override SaveType SaveType => SaveType.FullSave;
 }

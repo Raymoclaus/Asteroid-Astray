@@ -289,7 +289,7 @@ public class NarrativeManager : MonoBehaviour, IChatter
 			//create a deranged bot
 			ChunkCoords emptyChunk = EntityGenerator.GetNearbyEmptyChunk();
 			SpawnableEntity se = EntityGenerator.GetSpawnableEntity("deranged bot");
-			Entity newEntity = EntityGenerator.SpawnOneEntityInChunk(se, null, emptyChunk);
+			Entity newEntity = EntityGenerator.SpawnOneEntityInChunk(se, emptyChunk);
 
 			List<QuestReward> qRewards = new List<QuestReward>();
 

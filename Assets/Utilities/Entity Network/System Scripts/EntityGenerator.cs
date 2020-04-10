@@ -48,7 +48,7 @@ public class EntityGenerator : MonoBehaviour
 		}
 	}
 
-	public static List<Entity> SpawnEntity(SpawnableEntity se, EntityData? data = null)
+	public static List<Entity> SpawnEntity(SpawnableEntity se)
 	{
 		if (se == null) return null;
 
@@ -56,7 +56,7 @@ public class EntityGenerator : MonoBehaviour
 		if (cc == ChunkCoords.Invalid) return null;
 
 		ChunkCoords emptyChunk = GetNearbyEmptyChunk();
-		return SpawnEntityInChunk(se, data, emptyChunk);
+		return SpawnEntityInChunk(se, emptyChunk);
 	}
 
 	public static List<Entity> SpawnEntity(Entity e)
@@ -65,14 +65,6 @@ public class EntityGenerator : MonoBehaviour
 
 		SpawnableEntity se = GetSpawnableEntity(e);
 		return SpawnEntity(se);
-	}
-
-	public static List<Entity> SpawnEntity(EntityData data)
-	{
-		if (data.type == null) return null;
-
-		SpawnableEntity se = GetSpawnableEntity(data.type);
-		return SpawnEntity(se, data);
 	}
 
 	public static List<Entity> SpawnEntity(string entityName)
@@ -127,10 +119,10 @@ public class EntityGenerator : MonoBehaviour
 		//look through the space priority entities and check if one may spawn
 		SpawnableEntity se = instance.ChooseEntityToSpawn(
 			ChunkCoords.GetCenterCell(cc, EntityNetwork.CHUNK_SIZE).magnitude);
-		SpawnEntityInChunkNonAlloc(se, null, cc);
+		SpawnEntityInChunkNonAlloc(se, cc);
 	}
 
-	public static List<Entity> SpawnEntityInChunk(SpawnableEntity se, EntityData? data, ChunkCoords cc)
+	public static List<Entity> SpawnEntityInChunk(SpawnableEntity se, ChunkCoords cc)
 	{
 		if (se == null) return null;
 		//determine how many to spawn
@@ -138,23 +130,23 @@ public class EntityGenerator : MonoBehaviour
 		List<Entity> spawnedEntities = new List<Entity>(numToSpawn);
 		for (int j = 0; j < numToSpawn; j++)
 		{
-			spawnedEntities.Add(SpawnOneEntityInChunk(se, data, cc));
+			spawnedEntities.Add(SpawnOneEntityInChunk(se, cc));
 		}
 		return spawnedEntities;
 	}
 
-	public static void SpawnEntityInChunkNonAlloc(SpawnableEntity se, EntityData? data, ChunkCoords cc)
+	public static void SpawnEntityInChunkNonAlloc(SpawnableEntity se, ChunkCoords cc)
 	{
 		if (se == null) return;
 		//determine how many to spawn
 		int numToSpawn = Random.Range(se.minSpawnCountInChunk, se.maxSpawnCountInChunk + 1);
 		for (int j = 0; j < numToSpawn; j++)
 		{
-			SpawnOneEntityInChunkNonAlloc(se, data, cc);
+			SpawnOneEntityInChunkNonAlloc(se, cc);
 		}
 	}
 
-	public static Entity SpawnOneEntityInChunk(SpawnableEntity se, EntityData? data, ChunkCoords cc)
+	public static Entity SpawnOneEntityInChunk(SpawnableEntity se, ChunkCoords cc)
 	{
 		//pick a position within the chunk coordinates
 		Vector2 spawnPos = Vector2.zero;
@@ -175,11 +167,10 @@ public class EntityGenerator : MonoBehaviour
 			spawnPos,
 			Quaternion.identity,
 			instance.holders[se.entityName].transform);
-		newEntity.ApplyData(data);
 		return newEntity;
 	}
 
-	public static void SpawnOneEntityInChunkNonAlloc(SpawnableEntity se, EntityData? data, ChunkCoords cc)
+	public static void SpawnOneEntityInChunkNonAlloc(SpawnableEntity se, ChunkCoords cc)
 	{
 		//pick a position within the chunk coordinates
 		Vector2 spawnPos = Vector2.zero;
@@ -200,7 +191,6 @@ public class EntityGenerator : MonoBehaviour
 			spawnPos,
 			Quaternion.identity,
 			instance.holders[se.entityName].transform);
-		newEntity.ApplyData(data);
 	}
 
 	public static ChunkCoords GetNearbyEmptyChunk()
@@ -226,13 +216,13 @@ public class EntityGenerator : MonoBehaviour
 		return ChunkCoords.Invalid;
 	}
 
-	public static List<Entity> SpawnEntityInChunkNorthOfCamera(SpawnableEntity se, EntityData? data = null)
+	public static List<Entity> SpawnEntityInChunkNorthOfCamera(SpawnableEntity se)
 	{
 		Vector3 cameraPos = Camera.main.transform.position;
 		ChunkCoords cc = new ChunkCoords(cameraPos, EntityNetwork.CHUNK_SIZE);
 		cc.y++;
 		cc = cc.Validate();
-		return SpawnEntityInChunk(se, data, cc);
+		return SpawnEntityInChunk(se, cc);
 	}
 
 	[SteamPunkConsoleCommand(command = "Spawn", info = "Spawns named entity in chunk north of the camera.")]
@@ -243,7 +233,7 @@ public class EntityGenerator : MonoBehaviour
 		cc.y++;
 		cc = cc.Validate();
 		SpawnableEntity se = GetSpawnableEntity(entityName);
-		return SpawnEntityInChunk(se, null, cc);
+		return SpawnEntityInChunk(se, cc);
 	}
 
 	private SpawnableEntity ChooseEntityToSpawn(float distance)
