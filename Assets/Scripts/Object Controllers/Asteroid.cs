@@ -1,7 +1,6 @@
 ﻿using AudioUtilities;
 using CustomDataTypes;
 using InventorySystem;
-using SaveSystem;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -99,7 +98,7 @@ public class Asteroid : Entity
 
 	private void CreateDebris(Vector2 pos)
 	{
-		if (!IsInViewRange || Pause.IsStopped) return;
+		if (!IsInViewRange || TimeController.IsStopped) return;
 
 		if (!PartGen) return;
 
@@ -112,7 +111,7 @@ public class Asteroid : Entity
 
 	private void CreateDust(Vector2 pos, float alpha = 0.1f)
 	{
-		if (!IsInViewRange || Pause.IsStopped) return;
+		if (!IsInViewRange || TimeController.IsStopped) return;
 		
 		if (PartGen == null) return;
 
@@ -198,7 +197,7 @@ public class Asteroid : Entity
 	}
 
 	//If queried, this object will say that it is an asteroid-type Entity
-	public override EntityType GetEntityType() => EntityType.Asteroid;
+	public override EntityType EntityType => EntityType.Asteroid;
 
 	protected override void OnCollisionEnter2D(Collision2D collision)
 	{

@@ -59,5 +59,15 @@ namespace QuestSystem
 			//save name of top priority quest
 			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, TopPriorityQuest.Name);
 		}
+
+		public bool IsNameOfCompletedQuest(string questName)
+		{
+			return questLog.CompletedListContains(t => t.Name == questName);
+		}
+
+		public bool IsNameOfActiveQuest(string questName)
+		{
+			return questLog.ActiveListContains(t => t.Name == questName);
+		}
 	}
 }

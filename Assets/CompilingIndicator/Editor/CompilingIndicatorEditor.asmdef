@@ -1,8 +1,0 @@
-{
-    "name": "CompilingIndicatorEditor",
-    "references": [],
-    "includePlatforms": [
-        "Editor"
-    ],
-    "excludePlatforms": []
-}

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using InputHandlerSystem;
 
 [RequireComponent(typeof(CanvasGroup))]
@@ -8,11 +9,31 @@ public class TY4PlayingUI : MonoBehaviour
 	private CanvasGroup CGroup => cGroup ?? (cGroup = GetComponent<CanvasGroup>());
 	public bool active = false;
 	public bool CanDisable = false;
-	private Character mainChar;
-	private Character MainChar => mainChar ?? (mainChar = FindObjectOfType<Shuttle>());
 	[SerializeField] private GameAction scrollDialogueAction;
 
 	private void Awake() => CGroup.alpha = active ? 1f : 0f;
+
+	private void OnEnable()
+	{
+		if (NarrativeManager.MainCharacter == null)
+		{
+			//subscribe so we know when a main character is selected
+			Action callback = null;
+			callback = () =>
+			{
+				Character c = NarrativeManager.MainCharacter;
+				if (c == null) return;
+				c.OnDestroyed += e => SetActive(true);
+				NarrativeManager.OnMainCharacterUpdated -= callback;
+			};
+			NarrativeManager.OnMainCharacterUpdated += callback;
+		}
+	}
+
+	private void OnDisable()
+	{
+
+	}
 
 	private void Update()
 	{
@@ -37,10 +58,10 @@ public class TY4PlayingUI : MonoBehaviour
 		if (active == this.active) return;
 
 		this.active = active;
-		Pause.InstantPause(this.active);
+		TimeController.SetTimeScale(this, this.active ? 0f : 1f);
 		if (active)
 		{
-			MainChar.CanAttack = true;
+			NarrativeManager.MainCharacter.CanAttack = true;
 		}
 	}
 }

@@ -403,7 +403,7 @@ public class BotHive : Character, ICombat
 		return false;
 	}
 
-	public override EntityType GetEntityType() => EntityType.BotHive;
+	public override EntityType EntityType => EntityType.BotHive;
 
 	public bool EngageInCombat(ICombat hostile)
 	{

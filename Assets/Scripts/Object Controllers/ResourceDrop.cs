@@ -27,14 +27,14 @@ public class ResourceDrop : MonoBehaviour
 		startVelocity *= startSpeed;
 		velocity = startVelocity;
 
-		spawnTime = Pause.timeSinceOpen;
+		spawnTime = TimeController.TimeSinceOpen;
 	}
 
 	private void Update()
 	{
 		if (follow == null) return;
 
-		float aliveTime = Pause.timeSinceOpen - spawnTime;
+		float aliveTime = TimeController.TimeSinceOpen - spawnTime;
 
 		if (aliveTime < delay || follow == null)
 		{

@@ -71,6 +71,19 @@ public class LoadingController : MonoBehaviour
 				Ready(ID);
 			});
 		}
+
+		if (FindObjectOfType<NarrativeManager>())
+		{
+			int ID = loadingReady.Count;
+			loadingReady.Add(false);
+			Action action = null;
+			action = () =>
+			{
+				Ready(ID);
+				NarrativeManager.OnMainCharacterUpdated -= action;
+			};
+			NarrativeManager.AddListener(action);
+		}
 	}
 
 	public static void AddListener(Action action)

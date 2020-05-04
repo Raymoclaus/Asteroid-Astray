@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.PostProcessing;
 
 [RequireComponent(typeof(Camera))]
 public class CameraCtrl : MonoBehaviour
@@ -46,8 +45,6 @@ public class CameraCtrl : MonoBehaviour
 		coords = new ChunkCoords(transform.position, EntityNetwork.CHUNK_SIZE);
 		//start camera size at minimum size
 		CamSize = minCamSize;
-		//default follow target to shuttle if no target is set
-		followTarget = followTarget ?? FindObjectOfType<Shuttle>();
 		
 		LoadingController.AddListener(Initialise);
 	}
@@ -56,6 +53,8 @@ public class CameraCtrl : MonoBehaviour
 	{
 		//get list of entities that are within the camera's view range
 		UpdateEntitiesInView(coords, ChunkCoords.Invalid);
+		//default follow target to main character if no target is set
+		followTarget = followTarget ?? NarrativeManager.MainCharacter;
 	}
 
 	private void Update()
@@ -115,7 +114,7 @@ public class CameraCtrl : MonoBehaviour
 		}
 	}
 
-	/// Zooms out based on the shuttles speed.
+	/// Zooms out based on the target's speed.
 	private void AdjustSize()
 	{
 		if (followTarget.IsDrilling && !useConstantSize)

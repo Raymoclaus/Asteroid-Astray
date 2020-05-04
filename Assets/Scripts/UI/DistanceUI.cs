@@ -12,8 +12,8 @@ public class DistanceUI : MonoBehaviour
 	[SerializeField] private GameObject holder;
 	[SerializeField] private TextMeshProUGUI zoneTextComponent;
 	[SerializeField] private WaypointUIController waypointUI;
-	[SerializeField] private Character mainChar;
 	public static bool Hidden { get; set; }
+
 
 	private void Update()
 	{
@@ -46,8 +46,10 @@ public class DistanceUI : MonoBehaviour
 	private ChunkCoords CharacterCoordinates
 		=> new ChunkCoords(CurrentPosition, EntityNetwork.CHUNK_SIZE);
 
-	private Vector3 CurrentPosition
-		=> mainChar.transform.position;
+	private Character MainCharacter => NarrativeManager.MainCharacter;
 
-	private Vector3 CharacterTargetWaypoint => mainChar.GetWaypoint.Position;
+	private Vector3 CurrentPosition => MainCharacter?.Position ?? Vector3.zero;
+
+	private Vector3 CharacterTargetWaypoint
+		=> MainCharacter?.GetTargetWaypoint?.Position ?? Vector3.zero;
 }

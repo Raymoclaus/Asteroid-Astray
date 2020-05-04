@@ -14,11 +14,6 @@ public class DrillBit : MonoBehaviour, IEquipment
 	public List<ParticleSystem> DrillSparks;
 	public float sparkSizeModifier = 20f;
 	public Animator drillAnim;
-	[SerializeField]
-	private CameraCtrl cameraCtrl;
-	protected static Pause pause;
-	[SerializeField]
-	protected ScreenRippleEffectController screenRippleSO;
 
 	public AudioSource drillSoundSource;
 	public Vector2 drillPitchRange;
@@ -26,22 +21,15 @@ public class DrillBit : MonoBehaviour, IEquipment
 	public float maxVolume = 1f;
 	public float volumeIncrease = 0.1f;
 	private float currentVolume;
-	[SerializeField]
-	private GameObject[] drillSparkObjects;
-	[SerializeField]
-	private float[] drillSparkObjectThresholds = { 0f, 0.5f };
-	[SerializeField]
-	private GameObject drillLaunchSparkEffect;
-	[SerializeField]
-	private float drillLaunchPauseTime = 0.375f;
-	[SerializeField]
-	private GameObject[] drillLaunchBurstAnimations;
+	[SerializeField] private GameObject[] drillSparkObjects;
+	[SerializeField] private float[] drillSparkObjectThresholds = { 0f, 0.5f };
+	[SerializeField] private GameObject drillLaunchSparkEffect;
+	[SerializeField] private GameObject[] drillLaunchBurstAnimations;
 
 	void Start ()
 	{
 		drillCol = drillCol ?? GetComponentInChildren<Collider2D>();
 		parent.AttachDrill(this);
-		cameraCtrl = cameraCtrl ?? Camera.main.GetComponent<CameraCtrl>();
 	}
 
 	private void Update()
@@ -72,7 +60,7 @@ public class DrillBit : MonoBehaviour, IEquipment
 		}
 		firstHit = false;
 		//if damage is 0 then stop drilling
-		if (damage <= 0f && !Pause.IsStopped && !Pause.isShifting)
+		if (damage <= 0f && !TimeController.IsStopped)
 		{
 			bool launch = parent.ShouldLaunch() && drillTarget.CanBeLaunched();
 			Vector2 launchDirection = Vector2.up;
@@ -84,17 +72,10 @@ public class DrillBit : MonoBehaviour, IEquipment
 				eff.position = transform.position;
 				float angle = -Vector2.SignedAngle(Vector2.up, launchDirection);
 				eff.eulerAngles = Vector3.forward * -angle;
-				Pause.TemporaryPause(drillLaunchPauseTime);
-				if (cameraCtrl)
-				{
-					cameraCtrl.CamShake();
-					cameraCtrl.QuickZoom(0.8f, drillLaunchPauseTime, true);
-				}
-				screenRippleSO.StartRipple(this, wait: drillLaunchPauseTime);
 				parent.Launching();
 				if (drillLaunchBurstAnimations.Length > 0)
 				{
-					Pause.DelayedAction(() =>
+					TimeController.DelayedAction(() =>
 					{
 						int chooseLaunchBurstAnimation = Random.Range(0, drillLaunchBurstAnimations.Length);
 						Transform burst = Instantiate(drillLaunchBurstAnimations[chooseLaunchBurstAnimation]).transform;
@@ -116,11 +97,11 @@ public class DrillBit : MonoBehaviour, IEquipment
 		}
 
 		//adjust sound
-		if (!Pause.IsStopped)
+		if (!TimeController.IsStopped)
 		{
 			currentVolume = Mathf.MoveTowards(currentVolume, maxVolume, maxVolume * volumeIncrease);
 		}
-		drillSoundSource.volume = Pause.IsStopped ? 0f : currentVolume;
+		drillSoundSource.volume = TimeController.IsStopped ? 0f : currentVolume;
 		drillSoundSource.pitch = Mathf.MoveTowards(drillPitchRange.x, drillPitchRange.y, damage * pitchModifier);
 	}
 

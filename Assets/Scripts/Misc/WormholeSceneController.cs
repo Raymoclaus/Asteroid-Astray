@@ -42,7 +42,7 @@ public class WormholeSceneController : MonoBehaviour
 
 	private void StartDialogue(ConversationWithActions dialogue)
 	{
-		activeDialogue.StartDialogue(dialogue, true);
+		activeDialogue.StartDialogue(dialogue);
 	}
 
 	private void OpenWormhole()

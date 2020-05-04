@@ -3,30 +3,24 @@
 [RequireComponent(typeof(AudioSource))]
 public class DynamicEngineNoise : MonoBehaviour
 {
-	public AudioSource source;
-	public Vector2 pitchRange;
-	public float pitchMultiplier = 0.1f;
-	public float volume = 0.15f;
-	private Shuttle mainChar;
-	private Shuttle MainChar
-	{
-		get { return mainChar ?? (mainChar = FindObjectOfType<Shuttle>()); }
-	}
+	private AudioSource _source;
+	private AudioSource Source => _source != null ? _source : (_source = GetComponent<AudioSource>());
+	[SerializeField] private Vector2 pitchRange;
+	[SerializeField] private float pitchMultiplier = 0.1f;
+	[SerializeField] private float volume = 0.15f;
 
 	private void Awake()
 	{
-		source = source ?? GetComponent<AudioSource>();
-		source.playOnAwake = true;
-		source.loop = true;
-		source.spatialBlend = 1;
+		Source.playOnAwake = true;
+		Source.loop = true;
+		Source.spatialBlend = 1;
 	}
 
 	private void Update()
 	{
-		source.enabled = MainChar != null;
-		if (!source.enabled) return;
-
-		source.volume = Pause.IsStopped ? 0f : volume;
-		source.pitch = Mathf.Lerp(pitchRange.x, pitchRange.y, MainChar.velocity.magnitude * pitchMultiplier);
+		Source.volume = TimeController.IsStopped ? 0f : volume;
+		Source.pitch = Mathf.Lerp(pitchRange.x, pitchRange.y, Speed * pitchMultiplier);
 	}
+
+	public float Speed { get; set; }
 }

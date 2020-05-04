@@ -2,18 +2,32 @@
 
 public class ChoiceWindowGenerator : MonoBehaviour
 {
+	private static ChoiceWindowGenerator _instance;
+
 	[SerializeField] private ChoiceWindowUI choiceWindowPrefab;
 	[SerializeField] private TextEntryWindowUI textEntryWindowPrefab;
 
-	public ChoiceWindowUI CreateChoiceWindow()
+	private void Awake()
 	{
-		ChoiceWindowUI newWindow = Instantiate(choiceWindowPrefab, transform);
+		if (_instance == null)
+		{
+			_instance = this;
+		}
+		else
+		{
+			Destroy(gameObject);
+		}
+	}
+
+	public static ChoiceWindowUI CreateChoiceWindow()
+	{
+		ChoiceWindowUI newWindow = Instantiate(_instance.choiceWindowPrefab, _instance.transform);
 		return newWindow;
 	}
 
-	public TextEntryWindowUI CreateTextEntryWindow()
+	public static TextEntryWindowUI CreateTextEntryWindow()
 	{
-		TextEntryWindowUI newWindow = Instantiate(textEntryWindowPrefab, transform);
+		TextEntryWindowUI newWindow = Instantiate(_instance.textEntryWindowPrefab, _instance.transform);
 		return newWindow;
 	}
 }

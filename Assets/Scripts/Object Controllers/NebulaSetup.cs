@@ -1,62 +1,49 @@
 ﻿using CustomDataTypes;
 using SaveSystem;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class NebulaSetup : Entity
 {
 	[Header("Nebula Fields")]
-	public ParticleSystem[] systems;
+	[SerializeField] private ParticleSystem[] systems;
 
 	[Range(0f, 1f)]
-	public float color1Min = 0f;
+	[SerializeField] private float color1Min = 0f;
 	[Range(0f, 1f)]
-	public float color1Max = 0.25f;
+	[SerializeField] private float color1Max = 0.25f;
 	[Range(0f, 1f)]
-	public float color2Min = 0.5f;
+	[SerializeField] private float color2Min = 0.5f;
 	[Range(0f, 1f)]
-	public float color2Max = 0.75f;
+	[SerializeField] private float color2Max = 0.75f;
 	[Range(0f, 1f)]
-	public float alpha = 0.5f;
+	[SerializeField] private float alpha = 0.5f;
 	private Color col1, col2;
 	private bool colorSet = false;
 	
-	public bool shouldExpand = false;
-	public int minSystemSize = 4;
-	public int maxSystemSize = 8;
+	public bool ShouldExpand { get; set; }
+	[SerializeField] private int minSystemSize = 4;
+	[SerializeField] private int maxSystemSize = 8;
 	//when expanding, it won't expand into space that already contains nebula. This will prevent accidental infinite loops
 	private const int FAIL_LIMIT = 20;
 	private List<NebulaSetup> cluster;
 
-	[HideInInspector]
-	public Component thrusterRef;
-
 	private void Start()
 	{
-		//get references
-		systems = systems.Length == 0 ? GetComponentsInChildren<ParticleSystem>() : systems;
-		thrusterRef = thrusterRef == null ? FindObjectOfType<ThrusterController>().thrusterCol : thrusterRef;
-		//make sure particle systems have references to thruster force collider
-		for (int i = 0; i < systems.Length; i++)
-		{
-			ParticleSystem ps = systems[i];
-			ps.trigger.SetCollider(0, thrusterRef);
-		}
 		//pick a color
 		if (!colorSet)
 		{
 			SetColors();
 		}
 		//create more clouds
-		if (shouldExpand)
+		if (ShouldExpand)
 		{
 			//parent this object to a group holder
 			Transform t = new GameObject("Nebula Group").transform;
 			t.parent = transform.parent;
 			transform.parent = t;
 			Expansion();
-			shouldExpand = false;
+			ShouldExpand = false;
 		}
 	}
 
@@ -110,9 +97,8 @@ public class NebulaSetup : Entity
 			cluster.Add(newNebula);
 			newNebula.cluster = cluster;
 			newNebula.SetColors(col1, col2);
-			newNebula.SetThrusterReference(thrusterRef);
 			newNebula.transform.position = ChunkCoords.GetCenterCell(c, EntityNetwork.CHUNK_SIZE);
-			newNebula.shouldExpand = false;
+			newNebula.ShouldExpand = false;
 			EntityGenerator.FillChunk(c, true);
 		}
 	}
@@ -165,15 +151,7 @@ public class NebulaSetup : Entity
 		colorSet = true;
 	}
 
-	public void SetThrusterReference(Component col)
-	{
-		thrusterRef = col;
-	}
-
-	public override EntityType GetEntityType()
-	{
-		return EntityType.Nebula;
-	}
+	public override EntityType EntityType => EntityType.Nebula;
 
 	public override SaveType SaveType => SaveType.FullSave;
 }

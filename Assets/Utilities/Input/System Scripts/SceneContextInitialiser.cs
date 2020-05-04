@@ -4,11 +4,16 @@ namespace InputHandlerSystem
 {
 	public class SceneContextInitialiser : MonoBehaviour
 	{
-		[SerializeField] private string defaultContext = "Menu";
+		[SerializeField] private InputContext _defaultContext;
 
 		private void Awake()
 		{
-			InputManager.SetContext(defaultContext);
+			SetContext();
+		}
+
+		public void SetContext()
+		{
+			InputManager.SetCurrentContext(_defaultContext);
 		}
 	} 
 }

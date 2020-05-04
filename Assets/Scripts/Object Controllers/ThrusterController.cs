@@ -2,47 +2,47 @@
 
 public class ThrusterController : MonoBehaviour
 {
-	public ParticleSystem[] thrusterFire;
-	public ParticleSystem[] smokeTrails;
-	public Shuttle shuttle;
-	public float baseSpeed = 1f;
-	public float baseTrailWidth = 0.04f;
-	public float speedMod = 0.3f;
-	public Transform thrusterForceHolder;
-	public AreaEffector2D thrusterArea;
-	public Component thrusterCol;
-	public float thrusterStrengthMod = 0.5f;
-	private float shuttleMag;
-	public Vector3 ThrusterDirection
-	{
-		get
-		{
-			return -new Vector3(Mathf.Sin(Mathf.Deg2Rad * -shuttle.rot.z), Mathf.Cos(Mathf.Deg2Rad * -shuttle.rot.z), 0f) * thrusterStrengthMod * shuttleMag;
-		}
-	}
+	[SerializeField] private ParticleSystem[] thrusterFire;
+	[SerializeField] private ParticleSystem[] smokeTrails;
+	[SerializeField] private float baseSpeed = 1f;
+	[SerializeField] private float baseTrailWidth = 0.04f;
+	[SerializeField] private float speedMod = 0.3f;
+	[SerializeField] private Transform thrusterForceHolder;
+	[SerializeField] private AreaEffector2D ThrusterAreaEffector;
+	[SerializeField] private Collider2D _thrusterCollider;
+	[SerializeField] private float thrusterStrengthMod = 0.5f;
 
 	private void Awake()
 	{
-		//get required references
-		shuttle = shuttle == null ? GetComponentInParent<Shuttle>() : shuttle;
-		thrusterArea = thrusterArea == null ? GetComponentInChildren<AreaEffector2D>() : thrusterArea;
-		thrusterCol = thrusterCol == null ? thrusterArea.GetComponent<Component>() : thrusterCol;
+		ParticleReactToThrusters.SetThrusterController(this);
 	}
 
 	private void Update()
 	{
-		if (!Pause.IsStopped)
-		{
-			shuttleMag = shuttle.velocity.magnitude;
-			SetThrusterFireValues();
-			SetThrusterForceValues();
-			SetSmokeTrailState();
-		}
+		if (TimeController.IsStopped) return;
+
+		SetThrusterFireValues();
+		SetThrusterForceValues();
+		SetSmokeTrailState();
 	}
+
+	public float Speed { get; set; }
+
+	public bool IsAccelerating { get; set; }
+
+	public float ZRotation { get; set; }
+
+	public Collider2D ThrusterCollider => _thrusterCollider;
+
+	public Vector3 ThrusterDirection
+		=> -new Vector3(Mathf.Sin(Mathf.Deg2Rad * -ZRotation),
+			   Mathf.Cos(Mathf.Deg2Rad * -ZRotation),
+			   0f)
+		   * thrusterStrengthMod * Speed;
 
 	private void SetThrusterFireValues()
 	{
-		float speed = baseSpeed * shuttleMag * speedMod;
+		float speed = baseSpeed * Speed * speedMod;
 		float trailWidth = baseTrailWidth * speed / baseSpeed;
 
 		for (int i = 0; i < thrusterFire.Length; i++)
@@ -58,21 +58,19 @@ public class ThrusterController : MonoBehaviour
 
 	private void SetThrusterForceValues()
 	{
-		thrusterForceHolder.localScale = Vector3.one * shuttleMag * speedMod;
-		if (thrusterArea != null)
+		thrusterForceHolder.localScale = Vector3.one * Speed * speedMod;
+		if (ThrusterAreaEffector != null)
 		{
-			thrusterArea.forceMagnitude = shuttleMag * thrusterStrengthMod;
+			ThrusterAreaEffector.forceMagnitude = Speed * thrusterStrengthMod;
 		}
 	}
 
 	private void SetSmokeTrailState()
 	{
-		bool active = shuttle.accel != Vector2.zero;
-
 		for (int i = 0; i < smokeTrails.Length; i++)
 		{
 			ParticleSystem ps = smokeTrails[i];
-			if (active)
+			if (IsAccelerating)
 			{
 				if (!ps.isEmitting)
 				{

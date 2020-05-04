@@ -402,6 +402,25 @@ namespace InventorySystem
 		}
 
 		/// <summary>
+		/// Counts the number of unique items in a list.
+		/// </summary>
+		/// <param name="stacks"></param>
+		/// <returns></returns>
+		public static int GetNumberOfUniqueItems(List<ItemStack> stacks)
+		{
+			HashSet<ItemObject> set = new HashSet<ItemObject>();
+
+			foreach (ItemStack stack in stacks)
+			{
+				ItemObject itemType = stack.ItemType;
+				if (itemType == ItemObject.Blank) continue;
+				set.Add(stack.ItemType);
+			}
+
+			return set.Count;
+		}
+
+		/// <summary>
 		/// Counts the number of items in a list with the same type as given type.
 		/// </summary>
 		/// <param name="stacks"></param>

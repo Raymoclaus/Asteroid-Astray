@@ -1,13 +1,14 @@
-﻿using UnityEngine;
-
-public class CancelDrillingPassivePrompt : PassivePromptController
+﻿public class CancelDrillingPassivePrompt : PassivePromptController
 {
-	[SerializeField] private Shuttle mainChar;
+	private Character MainCharacter => NarrativeManager.MainCharacter;
+
+	private IPlayableCharacter PlayableCharacter => (IPlayableCharacter)MainCharacter;
 
 	private void Update()
 	{
-		if (mainChar == null) return;
+		if (PlayableCharacter == null) return;
 
-		SetActive(!Pause.IsStopped && mainChar.hasControl && mainChar.IsDrilling && !mainChar.CanLaunch);
+		SetActive(!TimeController.IsStopped && PlayableCharacter.HasControl && PlayableCharacter.IsDrilling &&
+		          !PlayableCharacter.CanDrillLaunch);
 	}
 }

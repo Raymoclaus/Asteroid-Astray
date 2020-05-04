@@ -244,7 +244,7 @@ public class EntityNetwork : MonoBehaviour
 					{
 						Entity e = Chunk(check)[i];
 						//only access entities with the given type (any if no type is given)
-						if ((limitCheck && e.GetEntityType() == (EntityType) onlyType) || !limitCheck)
+						if ((limitCheck && e.EntityType== (EntityType) onlyType) || !limitCheck)
 						{
 							act(e);
 						}
@@ -331,7 +331,7 @@ public class EntityNetwork : MonoBehaviour
 		for (int i = 0; i < Chunk(c).Count; i++)
 		{
 			Entity e = Chunk(c)[i];
-			if (e.GetEntityType() == type && e != entToExclude) return true;
+			if (e.EntityType== type && e != entToExclude) return true;
 		}
 		return false;
 	}

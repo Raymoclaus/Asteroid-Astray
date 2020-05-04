@@ -46,7 +46,7 @@ public class LaserWeapon : MonoBehaviour
 			timer = Mathf.MoveTowards(timer, 0f, Time.deltaTime);
 		}
 
-		if (parent.CanFireLaser() && !Pause.IsStopped)
+		if (parent.CanFireLaser() && !TimeController.IsStopped)
 		{
 			Fire();
 		}
@@ -81,7 +81,7 @@ public class LaserWeapon : MonoBehaviour
 			LaserBlast blast = pool[pool.Count - 1];
 			pool.RemoveAt(pool.Count - 1);
 			blast.Shoot(weapon.position, transform.rotation, weapon.GetChild(0).position - weapon.position,
-				laserTarget.position - weapon.position, pool, weapon, parent, (double)Pause.timeSinceOpen, this);
+				laserTarget.position - weapon.position, pool, weapon, parent, (double)TimeController.TimeSinceOpen, this);
 			//muzzle flash
 			GameObject muzFlash = Instantiate(muzzleFlash);
 			muzFlash.transform.position = weapon.position;

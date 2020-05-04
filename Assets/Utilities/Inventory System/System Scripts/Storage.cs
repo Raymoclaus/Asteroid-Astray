@@ -13,7 +13,7 @@ namespace InventorySystem
 		//old size, new size
 		public event Action<int, int> OnSizeChanged;
 
-		[SerializeField] private string inventoryName;
+		[SerializeField] private string inventoryName = "Items";
 		[SerializeField] private int size = 10;
 		[SerializeField] private bool noLimit = false;
 		[SerializeField] private List<ItemStack> itemStacks = new List<ItemStack>();

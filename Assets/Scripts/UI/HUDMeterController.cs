@@ -1,9 +1,11 @@
-﻿using UnityEngine;
+﻿using System.Linq;
+using UnityEngine;
 using ValueComponents;
 
 public class HUDMeterController : MonoBehaviour
 {
-	[SerializeField] private RangedFloatComponent floatComponent;
+	[SerializeField] private string _floatComponentName;
+	private RangedFloatComponent floatComponent;
 	[SerializeField] private Material mat;
 	[SerializeField] private float secondaryBarWaitDuration;
 	[SerializeField] private string fillAmountString = "_FillAmount",
@@ -13,8 +15,7 @@ public class HUDMeterController : MonoBehaviour
 
 	private void Awake()
 	{
-		UpdateValues(floatComponent.CurrentRatio, floatComponent.CurrentRatio);
-		floatComponent.OnValueChanged += UpdateValues;
+		NarrativeManager.AddListener(Initialise);
 	}
 
 	private void Update()
@@ -26,6 +27,15 @@ public class HUDMeterController : MonoBehaviour
 	{
 		SetValue(fillAmountString, 1f);
 		SetValue(damageFillAmountString, 0f);
+		NarrativeManager.OnMainCharacterUpdated -= Initialise;
+	}
+
+	private void Initialise()
+	{
+		floatComponent = NarrativeManager.MainCharacter.GetComponentsInChildren<RangedFloatComponent>()
+			.FirstOrDefault(t => t.valueName == _floatComponentName);
+		UpdateValues(floatComponent.CurrentRatio, floatComponent.CurrentRatio);
+		floatComponent.OnValueChanged += UpdateValues;
 	}
 
 	private void UpdateMeter()

@@ -5,11 +5,23 @@ namespace DialogueSystem
 {
 	public class PassiveDialogueController : GameDialogueController
 	{
+		public static PassiveDialogueController _instance;
+
 		[SerializeField] private float autoScrollTime = 1.5f;
 		private float autoScrollTimer;
 
 		protected override void Awake()
 		{
+			if (_instance == null)
+			{
+				_instance = this;
+			}
+			else
+			{
+				Destroy(gameObject);
+				return;
+			}
+
 			base.Awake();
 			FindObjectOfType<PassiveDialoguePopupUI>()?.SetDialogueController(this);
 		}
@@ -31,6 +43,11 @@ namespace DialogueSystem
 					autoScrollTimer = 0f;
 				}
 			}
+		}
+
+		public static void StartConversation(ConversationWithActions newConversation)
+		{
+			_instance.StartDialogue(newConversation);
 		}
 	}
 }

@@ -6,7 +6,8 @@ using InventorySystem.UI;
 
 public class HotBarUI : MonoBehaviour
 {
-	[SerializeField] private Storage inventory;
+	[SerializeField] private string _inventoryName;
+	private Storage inventory;
 	[SerializeField] private Transform[] slots;
 	private Image[] images;
 	private Text[] texts;
@@ -20,11 +21,24 @@ public class HotBarUI : MonoBehaviour
 			images[i] = slots[i].GetChild(0).GetComponentInChildren<Image>();
 			texts[i] = slots[i].GetChild(1).GetComponentInChildren<Text>();
 		}
-		UpdateSlots();
+
+		NarrativeManager.AddListener(Initialise);
 	}
 
 	private void Update()
 	{
+		UpdateSlots();
+	}
+
+	private void OnDestroy()
+	{
+		NarrativeManager.OnMainCharacterUpdated -= Initialise;
+	}
+
+	private void Initialise()
+	{
+		inventory = NarrativeManager.MainCharacter.GetComponentsInChildren<Storage>()
+			.FirstOrDefault(t => t.InventoryName == _inventoryName);
 		UpdateSlots();
 	}
 

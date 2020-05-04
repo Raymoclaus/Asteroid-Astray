@@ -1,7 +1,12 @@
-﻿public class PausePassivePrompt : PassivePromptController
+﻿using InputHandlerSystem;
+using UnityEngine;
+
+public class PausePassivePrompt : PassivePromptController
 {
+	[SerializeField] private GameAction _pauseAction;
+
 	private void Update()
 	{
-		SetActive(Pause.CanPause);
+		SetActive(InputManager.CurrentContextContainsAction(_pauseAction));
 	}
 }

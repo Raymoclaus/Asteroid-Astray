@@ -13,6 +13,5 @@ namespace InventorySystem
 		List<string> GetInventoryNames { get; }
 		Storage GetInventoryByName(string inventoryName);
 		Storage GetAppropriateInventory(ItemObject itemType);
-		void AttachToInventoryUI();
 	}
 }

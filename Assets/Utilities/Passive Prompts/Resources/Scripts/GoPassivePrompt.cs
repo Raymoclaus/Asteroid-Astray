@@ -2,12 +2,14 @@
 
 public class GoPassivePrompt : PassivePromptController
 {
-	[SerializeField] private Shuttle mainChar;
+	private Character MainCharacter => NarrativeManager.MainCharacter;
+
+	private IPlayableCharacter PlayableCharacter => (IPlayableCharacter)MainCharacter;
 
 	private void Update()
 	{
-		if (mainChar == null) return;
+		if (PlayableCharacter == null) return;
 
-		SetActive(!Pause.IsStopped && mainChar.hasControl);
+		SetActive(!TimeController.IsStopped && PlayableCharacter.HasControl);
 	}
 }

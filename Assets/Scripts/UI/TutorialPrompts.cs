@@ -6,9 +6,6 @@ using InventorySystem;
 
 public class TutorialPrompts : MonoBehaviour
 {
-	private Shuttle m_mainChar;
-	private Shuttle MainChar => m_mainChar ?? (m_mainChar = FindObjectOfType<Shuttle>());
-
 	public PromptInfo goInputPromptInfo;
 	public PromptInfo launchInputPromptInfo;
 	public PromptInfo drillInputPromptInfo;
@@ -43,57 +40,61 @@ public class TutorialPrompts : MonoBehaviour
 		prompts.ForEach(t => t.SetIgnore(true));
 	}
 
+	private Character MainCharacter => NarrativeManager.MainCharacter;
+
+	private IPlayableCharacter PlayableCharacter => (IPlayableCharacter)MainCharacter;
+
 	private void SetUpGoInputPrompt()
 	{
 		goInputPromptInfo.SetListeners(() =>
 		{
-			MainChar.OnGoInput += goInputPromptInfo.Deactivate;
+			PlayableCharacter.OnGoInput += goInputPromptInfo.Deactivate;
 		}, () =>
 		{
-			MainChar.OnGoInput -= goInputPromptInfo.Deactivate;
+			PlayableCharacter.OnGoInput -= goInputPromptInfo.Deactivate;
 		});
 
 		goInputPromptInfo.SetCondition(() =>
 		{
-			return !Pause.IsStopped && MainChar.hasControl;
+			return !TimeController.IsStopped && PlayableCharacter.HasControl;
 		});
 	}
 
 	private void SetUpLaunchInputPrompt()
 	{
-		Shuttle.DrillCompleteEventHandler action = (bool successful) =>
+		Action<bool> action = successful =>
 		{
 			launchInputPromptInfo.Deactivate();
 		};
 		launchInputPromptInfo.SetListeners(() =>
 		{
-			MainChar.OnLaunchInput += launchInputPromptInfo.Deactivate;
-			MainChar.OnDrillComplete += action;
+			PlayableCharacter.OnLaunchInput += launchInputPromptInfo.Deactivate;
+			PlayableCharacter.OnDrillComplete += action;
 		}, () =>
 		{
-			MainChar.OnLaunchInput -= launchInputPromptInfo.Deactivate;
-			MainChar.OnDrillComplete -= action;
+			PlayableCharacter.OnLaunchInput -= launchInputPromptInfo.Deactivate;
+			PlayableCharacter.OnDrillComplete -= action;
 		});
 
 		launchInputPromptInfo.SetCondition(() =>
 		{
-			return MainChar.IsDrilling && MainChar.CanDrillLaunch;
+			return PlayableCharacter.IsDrilling && PlayableCharacter.CanDrillLaunch;
 		});
 	}
 
 	private void SetUpDrillInputPrompt()
 	{
-		Shuttle.DrillCompleteEventHandler action = (bool successful) =>
+		Action<bool> action = successful =>
 		{
 			if (successful) return;
 			drillInputPromptInfo.Activate();
 		};
 		drillInputPromptInfo.SetListeners(() =>
 		{
-			MainChar.OnDrillComplete += action;
+			PlayableCharacter.OnDrillComplete += action;
 		}, () =>
 		{
-			MainChar.OnDrillComplete -= action;
+			PlayableCharacter.OnDrillComplete -= action;
 		});
 	}
 
@@ -106,10 +107,10 @@ public class TutorialPrompts : MonoBehaviour
 
 		pauseInputPromptInfo.SetListeners(() =>
 		{
-			Pause.OnPause += action;
+			PauseMenu.OnStartedOpening += action;
 		}, () =>
 		{
-			Pause.OnPause -= action;
+			PauseMenu.OnStartedOpening -= action;
 		});
 
 		pauseInputPromptInfo.SetCondition(() =>
@@ -127,16 +128,16 @@ public class TutorialPrompts : MonoBehaviour
 		};
 		repairKitInputPromptInfo.SetListeners(() =>
 		{
-			MainChar.OnItemUsed += action;
+			MainCharacter.OnItemUsed += action;
 		}, () =>
 		{
-			MainChar.OnItemUsed -= action;
+			MainCharacter.OnItemUsed -= action;
 		});
 
 		repairKitInputPromptInfo.SetCondition(() =>
 		{
-			int id = MainChar.DefaultInventory.FirstInstanceId(repairKit);
-			if (id < 0 || Pause.IsStopped) return false;
+			int id = MainCharacter.DefaultInventory.FirstInstanceId(repairKit);
+			if (id < 0 || TimeController.IsStopped) return false;
 			string typeName = Item.TypeName(repairKit);
 			string text = id < 8 ? $"Press [Slot {id + 1}:] to use the {typeName}"
 			: $"Place the {typeName} in one of the first 8 inventory slots";

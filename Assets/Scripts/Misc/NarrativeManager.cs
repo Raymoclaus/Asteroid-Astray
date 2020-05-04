@@ -6,22 +6,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using DialogueSystem;
-using StatisticsTracker;
+using GenericExtensions;
 using TriggerSystem;
-using TriggerSystem.Triggers;
 using UnityEngine;
 
-public class NarrativeManager : MonoBehaviour, IChatter
+public class NarrativeManager : MonoBehaviour
 {
-	[SerializeField] private BoolStatTracker shipRechargedStat;
 	[SerializeField] private LimitedScriptedDrops scriptedDrops;
-	[SerializeField] private Character mainChar;
-	private Character MainChar => mainChar != null ? mainChar
-		: (mainChar = FindObjectOfType<Character>());
-	private Quester MainQuester => MainChar?.GetComponent<Quester>();
+	public static Character MainCharacter { get; private set; }
+	public static Action OnMainCharacterUpdated;
+	private Quester MainQuester { get; set; }
 	[SerializeField] private IInteractor playerTriggerer;
 	private IInteractor PlayerTriggerer
-		=> playerTriggerer ?? (playerTriggerer = MainChar.GetComponent<IInteractor>());
+		=> playerTriggerer ?? (playerTriggerer = MainCharacter.GetComponent<IInteractor>());
 	private MainHatchPrompt mainHatch;
 	private MainHatchPrompt MainHatch
 		=> mainHatch ?? (mainHatch = FindObjectOfType<MainHatchPrompt>());
@@ -35,7 +32,8 @@ public class NarrativeManager : MonoBehaviour, IChatter
 	public bool CanSendDialogue { get; set; } = true;
 
 	[SerializeField] private TY4PlayingUI ty4pUI;
-	[SerializeField] private ConversationWithActions
+	[SerializeField] public ConversationWithActions
+		wormholeRecoveryConversation,
 		useThrustersConversation,
 		completedFirstGatheringQuestConversation,
 		useRepairKitConversation,
@@ -43,23 +41,22 @@ public class NarrativeManager : MonoBehaviour, IChatter
 		foundShipConversation,
 		foundDerangedBotConversation,
 		acquiredEnergySourceConversation,
-		rechargedTheShipConversation,
+		_shuttleNeedsRepairsDialogue,
+		_preparingToRechargeShipDialogue,
+		_doesntHaveEnergySourceYetDialogue,
+		_decidedNotToRechargeTheShipYetDialogue,
+		_rechargingTheShipDialogue,
 		questionHowToObtainEnergySourceConversation;
 
 	private List<ConversationWithActions> conversations;
 
-	[Header("Entity Profiles")]
-	[SerializeField] private CharacterProfile claire;
-
-	[SerializeField] private Entity botHivePrefab, soloBotPrefab;
-
-	public event Action<ConversationWithActions, bool> OnSendActiveDialogue;
-	public event Action<ConversationWithActions, bool> OnSendPassiveDialogue;
+	[SerializeField] private Entity botHivePrefab, soloBotPrefab, mainCharacterPrefab;
 
 	private void Awake()
 	{
 		conversations = new List<ConversationWithActions>
 		{
+			wormholeRecoveryConversation,
 			useThrustersConversation,
 			completedFirstGatheringQuestConversation,
 			useRepairKitConversation,
@@ -67,23 +64,63 @@ public class NarrativeManager : MonoBehaviour, IChatter
 			foundShipConversation,
 			foundDerangedBotConversation,
 			acquiredEnergySourceConversation,
-			rechargedTheShipConversation,
+			_shuttleNeedsRepairsDialogue,
+			_preparingToRechargeShipDialogue,
+			_doesntHaveEnergySourceYetDialogue,
+			_decidedNotToRechargeTheShipYetDialogue,
 			questionHowToObtainEnergySourceConversation
 		};
+
+		EntityGenerator.AddListener(CreateMainCharacter);
 	}
 
-	private void OnEnable()
+	private void OnDestroy()
 	{
-		Quester quester = MainQuester;
-		if (quester == null) return;
-		quester.OnQuestCompleted += EvaluateQuest;
+		if (MainQuester == null) return;
+		MainQuester.OnQuestCompleted += EvaluateQuest;
 	}
 
-	private void OnDisable()
+	public static void AddListener(Action action)
 	{
-		Quester quester = MainQuester;
-		if (quester == null) return;
-		quester.OnQuestCompleted -= EvaluateQuest;
+		if (MainCharacter == null)
+		{
+			OnMainCharacterUpdated += action;
+		}
+		else
+		{
+			action?.Invoke();
+		}
+	}
+
+	private void CreateMainCharacter()
+	{
+		if (MainCharacter != null) return;
+
+		SpawnableEntity se = EntityGenerator.GetSpawnableEntity(mainCharacterPrefab);
+		if (se == null) return;
+
+		List<Entity> spawnedEntities = EntityGenerator.SpawnEntity(se);
+		Character c = (Character)spawnedEntities.FirstOrDefault(t => t.IsA<Character>());
+		SetMainCharacter(c);
+	}
+
+	private void SetMainCharacter(Character c)
+	{
+		if (c == MainCharacter) return;
+
+		if (MainQuester != null)
+		{
+			MainQuester.OnQuestCompleted -= EvaluateQuest;
+		}
+
+		MainCharacter = c;
+		MainQuester = MainCharacter.GetComponentInChildren<Quester>();
+		OnMainCharacterUpdated?.Invoke();
+
+		if (MainQuester != null)
+		{
+			MainQuester.OnQuestCompleted += EvaluateQuest;
+		}
 	}
 
 	private void EvaluateQuest(Quest completedQuest)
@@ -120,7 +157,7 @@ public class NarrativeManager : MonoBehaviour, IChatter
 
 		GiveQuest(MainQuester, FirstGatheringQuest);
 		ActivateScriptedDrops(true);
-		StartDialogue(useThrustersConversation, true);
+		StartPassiveDialogue(useThrustersConversation);
 		TutPrompts?.drillInputPromptInfo.SetIgnore(false);
 	}
 
@@ -136,10 +173,10 @@ public class NarrativeManager : MonoBehaviour, IChatter
 			List<QuestRequirement> qReqs = new List<QuestRequirement>();
 
 			qReqs.Add(new GatheringQReq(Item.GetItemByName("Copper"), 2,
-				MainChar, "Obtain {0} {1} from asteroids: {2} / {0}"));
+				MainCharacter, "Obtain {0} {1} from asteroids: {2} / {0}"));
 
 			qReqs.Add(new GatheringQReq(Item.GetItemByName("Iron"),
-				MainChar, "Obtain {0} {1} from asteroids: {2} / {0}"));
+				MainCharacter, "Obtain {0} {1} from asteroids: {2} / {0}"));
 
 			m_firstGatheringQuest = new Quest(
 				"Gather materials",
@@ -155,13 +192,13 @@ public class NarrativeManager : MonoBehaviour, IChatter
 	{
 		ActivateScriptedDrops(false);
 		StartCraftYourFirstRepairKitQuest();
-		StartDialogue(completedFirstGatheringQuestConversation, true);
+		StartPassiveDialogue(completedFirstGatheringQuestConversation);
 		TutPrompts?.drillInputPromptInfo.SetIgnore(true);
 	}
 
 	public void StartCraftYourFirstRepairKitQuest()
 	{
-		if (MainChar == null) return;
+		if (MainCharacter == null) return;
 
 		GiveQuest(MainQuester, CraftYourFirstRepairKitQuest);
 		TutPrompts?.pauseInputPromptInfo.SetIgnore(false);
@@ -178,7 +215,7 @@ public class NarrativeManager : MonoBehaviour, IChatter
 
 			List<QuestRequirement> qReqs = new List<QuestRequirement>();
 			qReqs.Add(new CraftingQReq(Item.GetItemByName("Repair Kit"),
-				MainChar, "Construct {0} {1} using 2 copper and 1 iron"));
+				MainCharacter, "Construct {0} {1} using 2 copper and 1 iron"));
 
 			m_craftYourFirstRepairKitQuest = new Quest(
 				"Construct a Repair Kit",
@@ -192,13 +229,13 @@ public class NarrativeManager : MonoBehaviour, IChatter
 	private void CompletedCraftYourFirstRepairKitQuest()
 	{
 		StartRepairTheShuttleQuest();
-		StartDialogue(useRepairKitConversation, true);
+		StartPassiveDialogue(useRepairKitConversation);
 		TutPrompts?.pauseInputPromptInfo.SetIgnore(true);
 	}
 
 	public void StartRepairTheShuttleQuest()
 	{
-		if (MainChar == null) return;
+		if (MainCharacter == null) return;
 
 		GiveQuest(MainQuester, RepairTheShuttleQuest);
 		TutPrompts?.repairKitInputPromptInfo.SetIgnore(false);
@@ -214,7 +251,7 @@ public class NarrativeManager : MonoBehaviour, IChatter
 			List<QuestReward> qRewards = new List<QuestReward>();
 
 			List<QuestRequirement> qReqs = new List<QuestRequirement>();
-			qReqs.Add(new ItemUseQReq(Item.GetItemByName("Repair Kit"), MainChar));
+			qReqs.Add(new ItemUseQReq(Item.GetItemByName("Repair Kit"), MainCharacter));
 
 			m_repairTheShuttleQuest = new Quest(
 				"Repair the Shuttle",
@@ -228,13 +265,13 @@ public class NarrativeManager : MonoBehaviour, IChatter
 	private void CompletedRepairTheShuttleQuest()
 	{
 		StartReturnToTheShipQuest();
-		StartDialogue(findShipConversation, true);
+		StartPassiveDialogue(findShipConversation);
 		TutPrompts?.repairKitInputPromptInfo.SetIgnore(true);
 	}
 
 	public void StartReturnToTheShipQuest()
 	{
-		if (MainChar == null) return;
+		if (MainCharacter == null) return;
 
 		GiveQuest(MainQuester, ReturnToTheShipQuest);
 	}
@@ -249,7 +286,7 @@ public class NarrativeManager : MonoBehaviour, IChatter
 			List<QuestReward> qRewards = new List<QuestReward>();
 
 			List<QuestRequirement> qReqs = new List<QuestRequirement>();
-			AttachableWaypoint wp = WaypointManager.CreateAttachableWaypoint(MainHatch, 1f, MainChar);
+			AttachableWaypoint wp = WaypointManager.CreateAttachableWaypoint(MainHatch, 1f, MainCharacter);
 			qReqs.Add(new WaypointQReq(wp, "Return to the ship."));
 
 			m_returnToTheShipQuest = new Quest(
@@ -265,12 +302,12 @@ public class NarrativeManager : MonoBehaviour, IChatter
 
 	private void CompletedReturnToTheShipQuest()
 	{
-		StartDialogue(foundShipConversation, false);
+		StartActiveDialogue(foundShipConversation);
 	}
 
 	public void StartFindEnergySourceQuest()
 	{
-		if (MainChar == null) return;
+		if (MainCharacter == null) return;
 
 		GiveQuest(MainQuester, FindEnergySourceQuest);
 	}
@@ -294,16 +331,16 @@ public class NarrativeManager : MonoBehaviour, IChatter
 			List<QuestReward> qRewards = new List<QuestReward>();
 
 			List<QuestRequirement> qReqs = new List<QuestRequirement>();
-			AttachableWaypoint wp = WaypointManager.CreateAttachableWaypoint(newEntity, 1f, MainChar);
+			AttachableWaypoint wp = WaypointManager.CreateAttachableWaypoint(newEntity, 1f, MainCharacter);
 			Action waypointReachedAction = null;
 			waypointReachedAction = () =>
 			{
-				StartDialogue(foundDerangedBotConversation, false);
+				StartActiveDialogue(foundDerangedBotConversation);
 				wp.OnWaypointReached -= waypointReachedAction;
 			};
 			wp.OnWaypointReached += waypointReachedAction;
 			qReqs.Add(new GatheringQReq(Item.GetItemByName("Corrupted Corvorite"),
-				MainChar, "Find the nearby energy source.", wp));
+				MainCharacter, "Find the nearby energy source.", wp));
 
 			m_findEnergySourceQuest = new Quest(
 				"Acquire an Energy Source",
@@ -317,12 +354,12 @@ public class NarrativeManager : MonoBehaviour, IChatter
 	private void CompletedFindEnergySourceQuest()
 	{
 		StartRechargeTheShipQuest();
-		StartDialogue(acquiredEnergySourceConversation, true);
+		StartPassiveDialogue(acquiredEnergySourceConversation);
 	}
 
 	public void StartRechargeTheShipQuest()
 	{
-		if (MainChar == null) return;
+		if (MainCharacter == null) return;
 
 		GiveQuest(MainQuester, RechargeTheShipQuest);
 	}
@@ -338,8 +375,10 @@ public class NarrativeManager : MonoBehaviour, IChatter
 
 			List<QuestRequirement> qReqs = new List<QuestRequirement>();
 
-			AttachableWaypoint wp = WaypointManager.CreateAttachableWaypoint(MainHatch, 1f, MainChar);
-			qReqs.Add(new InteractionQReq(MainHatch, MainChar, "Return to the ship.", wp));
+			AttachableWaypoint wp = WaypointManager.CreateAttachableWaypoint(MainHatch, 1f, MainCharacter);
+			ItemCollection delivery = new ItemCollection(new ItemStack(Item.GetItemByName("Corrupted Corvorite")));
+			MainHatch.ExpectDelivery(MainCharacter, delivery);
+			qReqs.Add(new DeliveryQReq(MainHatch, MainCharacter, delivery, "Deliver the energy source to the ship.", wp));
 
 			m_rechargeTheShipQuest = new Quest(
 				"Recharge the Ship",
@@ -352,16 +391,13 @@ public class NarrativeManager : MonoBehaviour, IChatter
 
 	private void CompletedRechargeTheShipQuest()
 	{
-		StartDialogue(rechargedTheShipConversation, false);
-		TakeItem(Item.GetItemByName("Corrupted Corvorite"), 1);
-		MainHatch.IsLocked = false;
-		shipRechargedStat.SetValue(true);
+		StartActiveDialogue(_rechargingTheShipDialogue);
 	}
 
 	public void ActivateScriptedDrops(bool activate)
 		=> scriptedDrops.scriptedDropsActive = activate;
 
-	public void TakeItem(ItemObject type, int amount) => MainChar.TakeItem(type, amount);
+	public bool TakeItem(ItemObject type, int amount) => MainCharacter.TakeItem(type, amount);
 
 	private void GiveQuest(Quester quester, Quest q) => quester.AcceptQuest(q);
 
@@ -372,26 +408,21 @@ public class NarrativeManager : MonoBehaviour, IChatter
 
 	public void StartActiveDialogue(ConversationEvent ce)
 	{
-		StartDialogue(GetConversation(ce), false);
+		StartActiveDialogue(GetConversation(ce));
+	}
+
+	public void StartActiveDialogue(ConversationWithActions cwa)
+	{
+		ActiveDialogueController.StartConversation(cwa);
 	}
 
 	public void StartPassiveDialogue(ConversationEvent ce)
 	{
-		StartDialogue(GetConversation(ce), true);
+		StartPassiveDialogue(GetConversation(ce));
 	}
 
-	public void StartDialogue(ConversationWithActions ce, bool chat)
+	public void StartPassiveDialogue(ConversationWithActions cwa)
 	{
-		if (chat)
-		{
-			OnSendPassiveDialogue?.Invoke(ce, true);
-			return;
-		}
-		OnSendActiveDialogue?.Invoke(ce, true);
-	}
-
-	public void AllowSendingDialogue(bool allow)
-	{
-		CanSendDialogue = allow;
+		PassiveDialogueController.StartConversation(cwa);
 	}
 }

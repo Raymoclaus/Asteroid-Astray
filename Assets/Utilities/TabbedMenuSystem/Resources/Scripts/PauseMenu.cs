@@ -1,44 +1,74 @@
 ﻿using UnityEngine;
 using TabbedMenuSystem;
+using InputHandlerSystem;
+using System;
 
 public class PauseMenu : TabbedMenuController
 {
+	public static event Action OnStartedOpening, OnFinishedOpening, OnStartedClosing, OnFinishedClosing;
+
 	[SerializeField] private CanvasGroup cGroup;
+	[SerializeField] private GameAction _pauseAction;
+	[SerializeField] private float _shiftDuration = 0.5f;
 
 	private void Awake()
 	{
-		Pause.OnPause += Open;
-		Pause.OnResume += Close;
-
-		if (Pause.IsPaused)
-		{
-			InstantOpen();
-		}
-		else
-		{
-			InstantClose();
-		}
+		InstantClose();
 	}
 
-	private void OnDestroy()
+	private void Update()
 	{
-		Pause.OnPause -= Open;
-		Pause.OnResume -= Close;
+		if (IsShifting) return;
+
+		if (InputManager.GetInputDown(_pauseAction))
+		{
+			if (IsOpen)
+			{
+				Close();
+			}
+			else
+			{
+				Open();
+			}
+		}
 	}
 
 	public override void Open()
 	{
 		base.Open();
-		StartCoroutine(TimedAction(Pause.SHIFT_DURATION,
-			(float delta) => cGroup.alpha = delta,
-			null));
+		IsShifting = true;
+		OnStartedOpening?.Invoke();
+
+		StartCoroutine(TimedAction(_shiftDuration,
+			delta =>
+			{
+				TimeController.SetTimeScale(this, 1f - delta);
+				cGroup.alpha = delta;
+			},
+			() =>
+			{
+				IsShifting = false;
+				OnFinishedOpening?.Invoke();
+			}));
 	}
 
 	public override void Close()
 	{
-		StartCoroutine(TimedAction(Pause.SHIFT_DURATION,
-			(float delta) => cGroup.alpha = 1f - delta,
-			base.Close));
+		IsShifting = true;
+		OnStartedClosing?.Invoke();
+
+		StartCoroutine(TimedAction(_shiftDuration,
+			delta =>
+			{
+				TimeController.SetTimeScale(this, delta);
+				cGroup.alpha = 1f - delta;
+			},
+			() =>
+			{
+				IsShifting = false;
+				base.Close();
+				OnFinishedClosing?.Invoke();
+			}));
 	}
 
 	protected void InstantOpen()
@@ -52,4 +82,6 @@ public class PauseMenu : TabbedMenuController
 		cGroup.alpha = 0f;
 		base.Close();
 	}
+
+	private bool IsShifting { get; set; }
 }

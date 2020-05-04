@@ -24,6 +24,6 @@ public class ExitPlanetPrompt : MonoBehaviour
 	public void Activate(bool activate)
 	{
 		promptObject.SetActive(activate);
-		Pause.InstantPause(activate);
+		TimeController.SetTimeScale(this, activate ? 0f : 1f);
 	}
 }

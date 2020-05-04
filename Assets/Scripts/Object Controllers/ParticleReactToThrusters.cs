@@ -1,29 +1,28 @@
-﻿using System.Collections;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class ParticleReactToThrusters : MonoBehaviour
 {
-	public ParticleSystem ps;
-	//for getting its rotation and apply velocity based on rotation
-	public ThrusterController thruster;
-	public Component thrusterRef;
-	List<ParticleSystem.Particle> parts = new List<ParticleSystem.Particle>();
-	public float thrusterResistance = 0.1f;
+	[SerializeField] private ParticleSystem ps;
+	private List<ParticleSystem.Particle> parts = new List<ParticleSystem.Particle>();
+	[SerializeField] private float thrusterResistance = 0.1f;
+	//this is static because OnParticleTrigger cannot tell which collider was triggered, so I will only let one thing affect particles
+	private static ThrusterController _thrusterController;
+	private static event Action OnThrusterControllerChanged;
 
-	private void Awake()
+	private void OnEnable()
 	{
-		ps = ps ?? GetComponent<ParticleSystem>();
-		thruster = thruster ?? FindObjectOfType<ThrusterController>();
+		if (_thrusterController != null)
+		{
+			UpdateTrigger();
+		}
+		OnThrusterControllerChanged += UpdateTrigger;
 	}
 
-	private void Update()
+	private void OnDisable()
 	{
-		if (thrusterRef == null)
-		{
-			thrusterRef = thrusterRef == null ? thruster.thrusterCol : thrusterRef;
-			ps.trigger.SetCollider(0, thrusterRef);
-		}
+		OnThrusterControllerChanged -= UpdateTrigger;
 	}
 
 	private void OnParticleTrigger()
@@ -32,9 +31,9 @@ public class ParticleReactToThrusters : MonoBehaviour
 		if (numEnter == 0) return;
 
 		Vector3 velocity = Vector3.zero;
-		if (thruster != null)
+		if (_thrusterController != null)
 		{
-			velocity = thruster.ThrusterDirection* thrusterResistance;
+			velocity = _thrusterController.ThrusterDirection * thrusterResistance;
 		}
 
 		for (int i = 0; i < numEnter; i++)
@@ -45,5 +44,16 @@ public class ParticleReactToThrusters : MonoBehaviour
 		}
 
 		ps.SetTriggerParticles(ParticleSystemTriggerEventType.Inside, parts);
+	}
+
+	private void UpdateTrigger()
+	{
+		ps.trigger.SetCollider(0, _thrusterController.ThrusterCollider);
+	}
+
+	public static void SetThrusterController(ThrusterController tc)
+	{
+		_thrusterController = tc;
+		OnThrusterControllerChanged?.Invoke();
 	}
 }

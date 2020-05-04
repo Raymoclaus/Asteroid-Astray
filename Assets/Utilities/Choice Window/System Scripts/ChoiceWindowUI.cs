@@ -18,7 +18,7 @@ public class ChoiceWindowUI : MonoBehaviour
 
 	private void Update()
 	{
-		canvasGroup.alpha += Time.deltaTime / Mathf.Min(0.001f, fadeInDuration);
+		canvasGroup.alpha += Time.unscaledDeltaTime / Mathf.Min(0.001f, fadeInDuration);
 	}
 
 	public TextButtonUI AddTextButton(string label, UnityAction onClickListener)
@@ -40,5 +40,10 @@ public class ChoiceWindowUI : MonoBehaviour
 	public void SetMessage(string text)
 	{
 		message.text = text;
+	}
+
+	public void Close()
+	{
+		Destroy(gameObject);
 	}
 }

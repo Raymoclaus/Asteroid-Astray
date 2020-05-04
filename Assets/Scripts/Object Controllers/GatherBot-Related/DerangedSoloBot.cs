@@ -12,7 +12,7 @@ public class DerangedSoloBot : SoloBot
 	[SerializeField] private float sparkChance = 0.02f;
 	[SerializeField] private float sparkKickBackStrength = 1f;
 	[SerializeField] private float sparkMinimumDelay = 1f;
-	[SerializeField] private ConversationWithActions destroyingFirstDerangedBot;
+	[SerializeField] private ConversationEvent destroyingFirstDerangedBot;
 	private float lastSparkTime;
 
 	protected override void OnSpawn()
@@ -30,7 +30,7 @@ public class DerangedSoloBot : SoloBot
 			default:
 				if (newState == AIState.Dying)
 				{
-					SendPassiveDialogue(destroyingFirstDerangedBot, true);
+					NarrativeManager.StartPassiveDialogue(destroyingFirstDerangedBot);
 				}
 				base.SetState(newState);
 				break;

@@ -1,7 +1,9 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using CustomDataTypes;
+using Random = UnityEngine.Random;
 
 public class EntityGenerator : MonoBehaviour
 {
@@ -102,15 +104,13 @@ public class EntityGenerator : MonoBehaviour
 				true);
 			minRange++;
 		}
-		return ChunkCoords.Invalid;
+		return coords;
 	}
 
 	public static void FillChunk(ChunkCoords cc, bool excludePriority = false)
 	{
 		//don't bother if the given coordinates are not valid
 		if (!cc.IsValid()) return;
-		//if these coordinates have no been generated yet then reserve some space for the new coordinates
-		instance.GenerateVoid(cc);
 		//don't bother if the coordinates have already been filled
 		if (instance.Chunk(cc)) return;
 		//flag that this chunk coordinates was filled
@@ -309,31 +309,6 @@ public class EntityGenerator : MonoBehaviour
 		}
 	}
 
-	/// Increases capacity of the fill trigger list to accomodate given coordinates
-	private void GenerateVoid(ChunkCoords cc)
-	{
-		//ignore if given coordinates are invalid or they already exist
-		if (!cc.IsValid()) return;
-
-		//add more quadrants until enough exist to make the given coordinates valid
-		while (wasFilled.Count <= (int)cc.quadrant)
-		{
-			wasFilled.Add(new List<List<bool>>());
-		}
-
-		//add more quadrants until enough exist to make the given coordinates valid
-		while (Quad(cc).Count <= cc.x)
-		{
-			Quad(cc).Add(new List<bool>());
-		}
-
-		//add more quadrants until enough exist to make the given coordinates valid
-		while (Column(cc).Count <= cc.y)
-		{
-			Column(cc).Add(false);
-		}
-	}
-
 	private void LoadPrefabs()
 	{
 		Debug.Log("Loading Entity Generator");
@@ -363,11 +338,47 @@ public class EntityGenerator : MonoBehaviour
 		return true;
 	}
 
-	private bool Chunk(ChunkCoords cc) => Column(cc)[cc.y];
+	private bool Chunk(ChunkCoords cc)
+	{
+		try
+		{
+			return Column(cc)[cc.y];
+		}
+		catch (ArgumentOutOfRangeException e)
+		{
+			GenerateVoid(cc);
+			return Chunk(cc);
+		}
+	}
 
 	private List<bool> Column(ChunkCoords cc) => Quad(cc)[cc.x];
 
 	private List<List<bool>> Quad(ChunkCoords cc) => wasFilled[(int)cc.quadrant];
+
+	/// Increases capacity of the fill trigger list to accomodate given coordinates
+	private void GenerateVoid(ChunkCoords cc)
+	{
+		//ignore if given coordinates are invalid or they already exist
+		if (!cc.IsValid()) return;
+
+		//add more quadrants until enough exist to make the given coordinates valid
+		while (wasFilled.Count <= (int)cc.quadrant)
+		{
+			wasFilled.Add(new List<List<bool>>());
+		}
+
+		//add more quadrants until enough exist to make the given coordinates valid
+		while (Quad(cc).Count <= cc.x)
+		{
+			Quad(cc).Add(new List<bool>());
+		}
+
+		//add more quadrants until enough exist to make the given coordinates valid
+		while (Column(cc).Count <= cc.y)
+		{
+			Column(cc).Add(false);
+		}
+	}
 
 	private struct SpawnableEntityChance
 	{

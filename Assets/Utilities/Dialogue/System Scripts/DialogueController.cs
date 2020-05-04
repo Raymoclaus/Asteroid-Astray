@@ -207,9 +207,9 @@ namespace DialogueSystem
 		protected virtual int GetTextLength(string text)
 			=> text?.CountExcludingRichTextTags() ?? 0;
 
-		public virtual void StartDialogue(ConversationWithActions newConversation, bool skip)
+		public virtual void StartDialogue(ConversationWithActions newConversation)
 		{
-			if ((DialogueIsRunning && !skip) || newConversation == null) return;
+			if (newConversation == null) return;
 			enabled = true;
 			Setup(newConversation);
 			TriggerCurrentEvent();

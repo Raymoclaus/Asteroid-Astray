@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace InputHandlerSystem
@@ -20,24 +19,8 @@ namespace InputHandlerSystem
 			keyLayout, ps4Layout
 		};
 
-		private static InputContext[] contexts;
-		private static InputContext[] Contexts
-			=> contexts != null
-				? contexts
-				: (contexts = Resources.LoadAll<InputContext>("Input Contexts"));
-
 		//keep track of current context
-		private static InputContext currentContext;
-		public static InputContext CurrentContext
-		{
-			get => currentContext;
-			set
-			{
-				currentContext = value;
-				Debug.Log($"Input context set to {currentContext.contextName}");
-				OnContextChanged?.Invoke();
-			}
-		}
+		private static InputContext _currentContext;
 
 		public static event Action OnInputModeChanged, OnContextChanged;
 
@@ -47,14 +30,14 @@ namespace InputHandlerSystem
 
 			//check current mode if input detected
 			CustomInputHandler currentHandler = GetHandler();
-			if (currentHandler?.ProcessInputs(CurrentContext) ?? false) return;
+			if (currentHandler?.ProcessInputs(GetCurrentContext()) ?? false) return;
 
 			//if no input detected in current, check other input methods for input
 			for (int i = 0; i < inputHandlers.Count; i++)
 			{
 				if (inputHandlers[i] == currentHandler) continue;
 
-				if (inputHandlers[i].ProcessInputs(CurrentContext))
+				if (inputHandlers[i].ProcessInputs(GetCurrentContext()))
 				{
 					mode = inputHandlers[i].GetInputMode();
 					break;
@@ -73,32 +56,32 @@ namespace InputHandlerSystem
 		{
 			if (action == null) return 0f;
 			CheckForModeUpdate();
-			return GetHandler()?.GetInput(action.ActionName, CurrentContext) ?? 0f;
+			return GetHandler()?.GetInput(action.ActionName, GetCurrentContext()) ?? 0f;
 		}
 
 		public static bool GetInputDown(GameAction action)
 		{
 			if (action == null) return false;
 			CheckForModeUpdate();
-			return GetHandler()?.GetInputDown(action.ActionName, CurrentContext) ?? false;
+			return GetHandler()?.GetInputDown(action.ActionName, GetCurrentContext()) ?? false;
 		}
 
 		public static bool GetInputUp(GameAction action)
 		{
 			if (action == null) return false;
 			CheckForModeUpdate();
-			return GetHandler()?.GetInputUp(action.ActionName, CurrentContext) ?? false;
+			return GetHandler()?.GetInputUp(action.ActionName, GetCurrentContext()) ?? false;
 		}
 
 		//returns whether the current context contains the given action
 		private static bool IsValidKey(string key)
-			=> CurrentContext?.IsValidAction(key) ?? false;
+			=> GetCurrentContext()?.IsValidAction(key) ?? false;
 
 		//returns the input combination for a given action to occur
 		public static ActionCombination GetBinding(string key)
 		{
 			CheckForModeUpdate();
-			return GetHandler()?.GetBinding(key, CurrentContext);
+			return GetHandler()?.GetBinding(key, GetCurrentContext());
 		}
 
 		//returns the angle in degrees that the shuttle should turn to
@@ -120,25 +103,26 @@ namespace InputHandlerSystem
 			return null;
 		}
 
-		public static void SetContext(string contextName)
+		public static InputContext GetCurrentContext()
 		{
-			if (CurrentContext != null && CurrentContext.contextName == contextName) return;
-			
-			if (Contexts.Length == 0) return;
-
-			for (int i = 0; i < Contexts.Length; i++)
-			{
-				if (string.Compare(Contexts[i].contextName.ToLower(), contextName.ToLower()) == 0)
-				{
-					CurrentContext = Contexts[i];
-					return;
-				}
-			}
-			return;
+			if (_currentContext != null) return _currentContext;
+			UnityEngine.Object.FindObjectOfType<SceneContextInitialiser>()?.SetContext();
+			return _currentContext;
 		}
 
-		public static List<string> GetCurrentActions() => GetActions(CurrentContext);
+		public static void SetCurrentContext(InputContext context)
+		{
+			if (context == null || _currentContext == context) return;
+			_currentContext = context;
+			Debug.Log($"Input context set to {_currentContext.contextName}");
+			OnContextChanged?.Invoke();
+		}
+
+		public static List<string> GetCurrentActions() => GetActions(GetCurrentContext());
 
 		public static List<string> GetActions(InputContext context) => context?.Actions;
+
+		public static bool CurrentContextContainsAction(GameAction action) =>
+			action.IntendedContext == GetCurrentContext();
 	}
 }

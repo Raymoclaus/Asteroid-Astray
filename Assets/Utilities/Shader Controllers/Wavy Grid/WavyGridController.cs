@@ -24,14 +24,14 @@ public class WavyGridController : MonoBehaviour
 		priorVignette = priorVignette ?? unpausedVignettePreset;
 		targetVignette = targetVignette ?? priorVignette;
 
-		Pause.OnPause += TransitionVignetteToPausedState;
-		Pause.OnResume += TransitionVignetteToUnpausedState;
+		PauseMenu.OnStartedOpening += TransitionVignetteToPausedState;
+		PauseMenu.OnStartedClosing += TransitionVignetteToUnpausedState;
 	}
 
 	private void OnDestroy()
 	{
-		Pause.OnPause -= TransitionVignetteToPausedState;
-		Pause.OnResume -= TransitionVignetteToUnpausedState;
+		PauseMenu.OnStartedOpening -= TransitionVignetteToPausedState;
+		PauseMenu.OnStartedClosing -= TransitionVignetteToUnpausedState;
 
 		SetWaveOffset(0f);
 		SetVignetteState(unpausedVignettePreset);

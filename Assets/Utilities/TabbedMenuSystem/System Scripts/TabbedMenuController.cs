@@ -21,10 +21,11 @@ namespace TabbedMenuSystem
 		[SerializeField] private int tabMinSortingOrder;
 		private IMenuContent currentContent;
 		[SerializeField] private float tabFadeDuration = 0.5f;
+		[SerializeField] private List<GameObject> _objList;
 
 		public virtual void Open()
 		{
-			gameObject.SetActive(true);
+			ActivateObjects(true);
 
 			ClearTabsHolder();
 			AddPreExistingMenuContentsToList();
@@ -36,11 +37,24 @@ namespace TabbedMenuSystem
 			KeyValuePair<int, IMenuContent> firstContent = menuContents.FirstOrDefault();
 			currentContent = firstContent.Value;
 			ContentToShow(currentContent, 0f);
+
+			IsOpen = true;
 		}
 
 		public virtual void Close()
 		{
-			gameObject.SetActive(false);
+			ActivateObjects(false);
+			IsOpen = false;
+		}
+
+		protected bool IsOpen { get; set; }
+
+		private void ActivateObjects(bool activate)
+		{
+			foreach (GameObject go in _objList)
+			{
+				go.SetActive(activate);
+			}
 		}
 
 		/// <summary>

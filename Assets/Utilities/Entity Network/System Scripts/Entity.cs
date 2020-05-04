@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using CustomDataTypes;
 using InventorySystem;
@@ -42,6 +43,9 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 	[SerializeField] protected RangedFloatComponent healthComponent;
 	[SerializeField] private LootComponent loot;
 
+	//first param Entity is the destroyer
+	public Action<Entity> OnDestroyed;
+
 	//layers
 	protected static int layerDrill = -1,
 		layerProjectile = -1,
@@ -70,6 +74,8 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 	public string UniqueID { get; set; }
 
 	public Vector3 Position => transform.position;
+
+	public RangedFloatComponent HealthComponent => healthComponent;
 
 	protected virtual void Awake()
 	{
@@ -215,7 +221,7 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 
 	public virtual ICombat GetICombat() => null;
 
-	public virtual EntityType GetEntityType() => EntityType.Entity;
+	public virtual EntityType EntityType => EntityType.Entity;
 
 	public virtual void DestroySelf(Entity destroyer, float dropModifier)
 	{
@@ -229,6 +235,7 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 		}
 		IInventoryHolder target = destroyer as IInventoryHolder;
 		DropLoot(target, dropModifier);
+		OnDestroyed?.Invoke(destroyer);
 		Destroy(gameObject);
 	}
 
@@ -253,11 +260,11 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 
 	public ChunkCoords GetCoords() => coords;
 
-	public override string ToString() => string.Format("{0} at coordinates {1}.", GetEntityType(), coords);
+	public override string ToString() => string.Format("{0} at coordinates {1}.", EntityType, coords);
 
 	protected virtual void GameObjectReEnabled() { }
 
-	public virtual Scan ReturnScan() => new Scan(GetEntityType(), healthComponent.CurrentRatio, GetLevel(), GetValue()); 
+	public virtual Scan ReturnScan() => new Scan(EntityType, healthComponent.CurrentRatio, GetLevel(), GetValue()); 
 
 	protected virtual int GetLevel() => 1;
 
@@ -352,7 +359,7 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 			launchTrail.SetFollowTarget(transform, launchDirection, launchTrailScale);
 		}
 
-		Pause.DelayedAction(() =>
+		TimeController.DelayedAction(() =>
 		{
 			launchTrail?.EndLaunchTrail();
 
@@ -531,7 +538,7 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 		DataModule module = new DataModule(POSITION_VAR_NAME, Position);
 		UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
 		//save entity type
-		module = new DataModule(ENTITY_TYPE_VAR_NAME, GetEntityType());
+		module = new DataModule(ENTITY_TYPE_VAR_NAME, EntityType);
 		UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
 		//save unique ID
 		module = new DataModule(UNIQUE_ID_VAR_NAME, UniqueID);

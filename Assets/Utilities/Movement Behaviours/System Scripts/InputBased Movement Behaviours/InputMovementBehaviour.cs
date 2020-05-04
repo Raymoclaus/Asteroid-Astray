@@ -7,11 +7,6 @@ namespace MovementBehaviours
 	{
 		[SerializeField] private GameAction upAction, rightAction, downAction, leftAction;
 
-		private void Awake()
-		{
-			InputManager.SetContext("Ground");
-		}
-
 		public override void TriggerUpdate()
 		{
 			GetMovementInput();

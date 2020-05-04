@@ -1,6 +1,6 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using System.Collections.Generic;
-using UnityEngine.Events;
 using InputHandlerSystem;
 using QuestSystem;
 using QuestSystem.UI;
@@ -12,8 +12,9 @@ using AudioUtilities;
 using DialogueSystem;
 using StatisticsTracker;
 using SaveSystem;
+using Random = UnityEngine.Random;
 
-public class Shuttle : Character, IStunnable, ICombat
+public class Shuttle : Character, IStunnable, ICombat, IPlayableCharacter, ISpeedController, IHatchEnterer
 {
 	[Header("Shuttle Fields")]
 	[Tooltip("Requires reference to the SpriteRenderer of the shuttle.")]
@@ -33,7 +34,7 @@ public class Shuttle : Character, IStunnable, ICombat
 	[Tooltip("Controls how effective the shuttle's deceleration mechanism is.")] [Range(0f, 1f)]
 	public float decelerationEffectiveness = 0.01f;
 	//used as a temporary storage for rigidbody velocity when the constraints are frozen
-	public Vector3 velocity;
+	private Vector3 velocity;
 	//the rotation that the shuttle should be at
 	public Vector3 rot;
 	//force of acceleration via the shuttle
@@ -96,11 +97,9 @@ public class Shuttle : Character, IStunnable, ICombat
 		set => canLaunch = value;
 	}
 	[SerializeField] private float launchDamage = 500f;
-	public bool hasControl = true;
+	[SerializeField] private bool hasControl = true;
 	[SerializeField] private bool autoPilot;
 	public bool isKinematic;
-	[SerializeField] private TY4PlayingUI ty4pUI;
-	public UnityEvent EnteringShip;
 	public bool CanBoost { get; private set; } = true;
 	//how long a boost can last
 	[SerializeField] private RangedFloatComponent boostComponent;
@@ -135,15 +134,19 @@ public class Shuttle : Character, IStunnable, ICombat
 		shootAction;
 	[SerializeField] private GameAction[] slotActions = new GameAction[8];
 	[SerializeField] private BoolStatTracker shuttleRepairedStat, mainHatchLockedStat;
-	[SerializeField] private MainHatchPrompt mainHatch;
-	[SerializeField] private ConversationWithActions wormholeRecoveryConversation;
+	private MainHatchPrompt mainHatch;
+	[SerializeField] private ConversationEvent wormholeRecoveryConversation,
+		_shuttleNeedsRepairsDialogue,
+		_preparingToRechargeShipDialogue,
+		_doesntHaveEnergySourceYetDialogue,
+		_decidedNotToRechargeTheShipYetDialogue,
+		_rechargingTheShipDialogue;
+	[SerializeField] private DynamicEngineNoise engineNoise;
+	private Quester _quester;
+	[SerializeField] private float _drillLaunchPauseTime = 0.375f;
 
-	public delegate void GoInputEventHandler();
-	public event GoInputEventHandler OnGoInput;
-	public delegate void LaunchInputEventHandler();
-	public event LaunchInputEventHandler OnLaunchInput;
-	public delegate void DrillCompleteEventHandler(bool successful);
-	public event DrillCompleteEventHandler OnDrillComplete;
+	public event Action OnGoInput, OnLaunchInput;
+	public event Action<bool> OnDrillComplete;
 
 	protected override void Awake()
 	{
@@ -155,11 +158,14 @@ public class Shuttle : Character, IStunnable, ICombat
 		boostComponent.SetToUpperLimit();
 		boostRechargeTimerID = "Boost Recharge Timer" + gameObject.GetInstanceID();
 		TimerTracker.AddTimer(boostRechargeTimerID, 0f, null, null);
-		QuestPopupUI.SetQuester(GetComponent<Quester>());
+		_quester = GetComponent<Quester>();
+		QuestPopupUI.SetQuester(_quester);
 		AttachToInventoryUI();
 
 		OnItemsCollected += ReceiveItem;
 		FindObjectOfType<ItemPopupUI>()?.SetInventoryHolder(this);
+		mainHatch = FindObjectOfType<MainHatchPrompt>();
+		defaultWaypoint = mainHatch.GetWaypoint();
 
 		//start repair shuttle questline if shuttle is damaged
 		if (shuttleRepairedStat.IsFalse)
@@ -173,15 +179,12 @@ public class Shuttle : Character, IStunnable, ICombat
 			Vector2 randomPos = new Vector2(Mathf.Sin(randomAngle), Mathf.Cos(randomAngle));
 			randomPos *= Random.value * 15f + 30f;
 			Teleport(pos + randomPos);
-			//lock main ship's hatch
-			mainHatch.IsLocked = true;
 			//shuttle can't attack
 			CanAttack = false;
 			//disable distance UI
 			DistanceUI.Hidden = true;
 			//start recovery dialogue
-			LoadingController.AddListener(
-				() => SendActiveDialogue(wormholeRecoveryConversation, true));
+			NarrativeManager?.StartActiveDialogue(wormholeRecoveryConversation);
 		}
 	}
 
@@ -201,9 +204,13 @@ public class Shuttle : Character, IStunnable, ICombat
 			//calculate position based on input
 			CalculateForces();
 		}
+
+		engineNoise.Speed = Speed;
 	}
 
 	private void FixedUpdate() => rb.AddForce(accel);
+
+	public RangedFloatComponent BoostComponent => boostComponent;
 
 	//Checks for input related to movement and calculates acceleration
 	private void GetMovementInput()
@@ -224,7 +231,7 @@ public class Shuttle : Character, IStunnable, ICombat
 		//automatically look for the nearest asteroid
 		if (autoPilot)
 		{
-			if (Pause.timeSinceOpen - autoPilotTimer > 0f || followTarget == null)
+			if (TimeController.TimeSinceOpen - autoPilotTimer > 0f || followTarget == null)
 			{
 				SearchForNearestAsteroid();
 			}
@@ -397,12 +404,14 @@ public class Shuttle : Character, IStunnable, ICombat
 		return ld;
 	}
 
+	public float Speed => velocity.magnitude;
+
 	public void ReceiveItem(ItemObject type, int amount)
 	{
 		if (type == ItemObject.Blank || amount == 0) return;
 
 		//increase pitch of sound for successive resource collection, reset after a break
-		if (Pause.timeSinceOpen - resourceCollectedTime < 1f)
+		if (TimeController.TimeSinceOpen - resourceCollectedTime < 1f)
 		{
 			resourceCollectedPitch += resourceCollectedPitchIncreaseAmount;
 		}
@@ -411,7 +420,7 @@ public class Shuttle : Character, IStunnable, ICombat
 			resourceCollectedPitch = 1f;
 		}
 
-		resourceCollectedTime = Pause.timeSinceOpen;
+		resourceCollectedTime = TimeController.TimeSinceOpen;
 		//play resource collect sound
 		if (AudioMngr)
 		{
@@ -448,13 +457,13 @@ public class Shuttle : Character, IStunnable, ICombat
 		}
 
 		followTarget = closestAsteroid.transform;
-		autoPilotTimer = Pause.timeSinceOpen;
+		autoPilotTimer = TimeController.TimeSinceOpen;
 	}
 
 	private void SetRot(float newRot) => rot.z = ((newRot % 360f) + 360f) % 360f;
 
-	public override EntityType GetEntityType() => EntityType.Shuttle;
-	
+	public override EntityType EntityType => EntityType.Shuttle;
+
 	protected override void CheckItemUsageInput()
 	{
 		base.CheckItemUsageInput();
@@ -570,7 +579,7 @@ public class Shuttle : Character, IStunnable, ICombat
 		rb.constraints = RigidbodyConstraints2D.None;
 		accel = Vector2.zero;
 		velocity = Vector3.zero;
-		Pause.DelayedAction(() =>
+		TimeController.DelayedAction(() =>
 		{
 			stunned = false;
 			rb.constraints = RigidbodyConstraints2D.FreezeRotation;
@@ -583,7 +592,7 @@ public class Shuttle : Character, IStunnable, ICombat
 		
 		if (autoPilot)
 		{
-			return target.GetEntityType() == EntityType.Asteroid;
+			return target.EntityType== EntityType.Asteroid;
 		}
 		return true;
 	}
@@ -607,7 +616,7 @@ public class Shuttle : Character, IStunnable, ICombat
 
 		if (dead)
 		{
-			ty4pUI?.SetActive(true);
+			OnDestroyed?.Invoke(destroyer);
 			healthComponent.SetToUpperLimit();
 			shieldValue.SetToUpperLimit();
 		}
@@ -620,7 +629,7 @@ public class Shuttle : Character, IStunnable, ICombat
 
 	private void Boost(bool input)
 	{
-		if (CanBoost && input && boostComponent.CurrentRatio > 0f && !Pause.IsStopped)
+		if (CanBoost && input && boostComponent.CurrentRatio > 0f && !TimeController.IsStopped)
 		{
 			if (!IsBoosting)
 			{
@@ -637,7 +646,7 @@ public class Shuttle : Character, IStunnable, ICombat
 					effect.eulerAngles = effectRotation;
 					screenRippleSO.StartRipple(this, distortionLevel: 0.02f);
 					isTemporarilyInvincible = true;
-					Pause.DelayedAction(() => isTemporarilyInvincible = false, boostInvulnerabilityTime, true);
+					TimeController.DelayedAction(() => isTemporarilyInvincible = false, boostInvulnerabilityTime, true);
 				}
 			}
 			IsBoosting = true;
@@ -681,11 +690,11 @@ public class Shuttle : Character, IStunnable, ICombat
 
 		if (!CameraControl.IsInView(target.gameObject)) return;
 
-		switch (target.GetEntityType())
+		switch (target.EntityType)
 		{
 			case EntityType.BotHive:
 			case EntityType.GatherBot:
-				Pause.TemporarySlowDownEffect();
+				TimeController.TemporarilySetTimeScale(this, 0.1f, 1f);
 				break;
 		}
 	}
@@ -694,7 +703,7 @@ public class Shuttle : Character, IStunnable, ICombat
 		laserAttached
 		&& !IsBoosting
 		&& InputManager.GetInput(shootAction) > 0f
-		&& !Pause.IsStopped
+		&& !TimeController.IsStopped
 		&& hasControl
 		&& canShoot;
 
@@ -702,7 +711,7 @@ public class Shuttle : Character, IStunnable, ICombat
 		straightWeaponAttached
 		&& !IsBoosting
 		&& InputManager.GetInput(shootAction) > 0f
-		&& !Pause.IsStopped
+		&& !TimeController.IsStopped
 		&& hasControl
 		&& canShoot;
 
@@ -735,6 +744,10 @@ public class Shuttle : Character, IStunnable, ICombat
 		DrillLaunchArcDisable();
 		CameraControl?.SetConstantSize(false);
 		CameraControl?.SetLookAheadDistance(false);
+		CameraControl?.CamShake();
+		CameraControl?.QuickZoom(0.8f, _drillLaunchPauseTime, true);
+		TimeController.TemporarilySetTimeScale(this, 0f, _drillLaunchPauseTime);
+		screenRippleSO.StartRipple(this, _drillLaunchPauseTime);
 	}
 
 	public override float GetLaunchDamage() => launchDamage;
@@ -769,7 +782,7 @@ public class Shuttle : Character, IStunnable, ICombat
 
 	public override bool TakeItem(ItemObject type, int amount) => DefaultInventory.RemoveItem(type, amount);
 
-	public override Scan ReturnScan() => new Scan(GetEntityType(), 1f, GetLevel(), GetValue());
+	public override Scan ReturnScan() => new Scan(EntityType, 1f, GetLevel(), GetValue());
 
 	protected override int GetLevel() => base.GetLevel();
 
@@ -780,9 +793,9 @@ public class Shuttle : Character, IStunnable, ICombat
 		&& drillIsActive
 		&& InputManager.GetInput(cancelDrillingAction) == 0f;
 
-	public void EnterShip()
+	public void EnterHatch(Vector3 hatchPosition)
 	{
-		EnteringShip?.Invoke();
+		FindObjectOfType<FadeScreen>()?.FadeOut(3f);
 		//GameEvents.Save();
 
 		hasControl = false;
@@ -804,7 +817,7 @@ public class Shuttle : Character, IStunnable, ICombat
 		{
 			float evaluation = easeInEaseOut.Evaluate(delta);
 			rot.z = Mathf.LerpAngle(currentAngle, 0f, evaluation);
-			transform.position = Vector3.Lerp(currentPos, mainHatch.transform.position, evaluation);
+			transform.position = Vector3.Lerp(currentPos, hatchPosition, evaluation);
 			CameraControl.SetLookAheadDistance(true, 1f - delta);
 		}, () =>
 		{
@@ -815,8 +828,6 @@ public class Shuttle : Character, IStunnable, ICombat
 				CameraControl.Zoom(0.5f + evaluation * 0.5f);
 			}, null);
 		});
-
-		//open hatch
 	}
 
 	public override bool StartedPerformingAction(GameAction action)
@@ -827,15 +838,61 @@ public class Shuttle : Character, IStunnable, ICombat
 
 	public override void Interact(object interactableObject)
 	{
-		if (interactableObject is MainHatchPrompt mainHatch)
+		if (interactableObject is MainHatchPrompt hatch)
 		{
-			EnterShip();
+			if (!shuttleRepairedStat.value)
+			{
+				//play dialogue about shuttle needing repairs first
+				NarrativeManager.StartPassiveDialogue(_shuttleNeedsRepairsDialogue);
+			}
+			else if (hatch.IsPoweredDown)
+			{
+				ItemObject corruptedCorvorite = Item.GetItemByName("Corrupted Corvorite");
+				if (_quester.IsNameOfActiveQuest("Recharge the Ship")
+					&& HasItem(corruptedCorvorite))
+				{
+					//play dialogue about preparing to recharge the ship
+					NarrativeManager.StartActiveDialogue(_preparingToRechargeShipDialogue);
+					//when dialogue ends, create a choice window
+					Action showChoice = null;
+					showChoice = () =>
+					{
+						TimeController.SetTimeScale(this, 0f);
+						ChoiceWindowUI choice = ChoiceWindowGenerator.CreateChoiceWindow();
+						choice.SetMessage("Do you want to use 1 [Corrupted Corvorite]?\n" +
+							"(It will be removed from your inventory.)");
+						choice.AddTextButton("Yes", () =>
+						{
+							choice.Close();
+							TimeController.SetTimeScale(this, 1f);
+							Deliver(new ItemCollection(new ItemStack(corruptedCorvorite)), hatch);
+						});
+						choice.AddTextButton("No", () =>
+						{
+							choice.Close();
+							TimeController.SetTimeScale(this, 1f);
+							NarrativeManager.StartActiveDialogue(_decidedNotToRechargeTheShipYetDialogue);
+						});
+
+						ActiveDialogueController._instance.OnDialogueEnded -= showChoice;
+					};
+					ActiveDialogueController._instance.OnDialogueEnded += showChoice;
+				}
+				else
+				{
+					//play dialogue about needing to find the energy source first
+					NarrativeManager.StartPassiveDialogue(_doesntHaveEnergySourceYetDialogue);
+				}
+			}
+
 			return;
 		}
 
 		if (interactableObject is Planet planet)
 		{
 			SceneLoader.LoadScene("PlanetScene");
+
+			return;
 		}
 	}
 
@@ -846,6 +903,14 @@ public class Shuttle : Character, IStunnable, ICombat
 	public override void ReceiveRecoil(Vector3 recoilVector)
 	{
 		rb.AddForce(recoilVector);
+	}
+
+	public Character GetCharacter() => this;
+
+	public bool HasControl
+	{
+		get => hasControl;
+		set => hasControl = value;
 	}
 
 	public override SaveType SaveType => SaveType.FullSave;

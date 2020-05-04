@@ -34,6 +34,16 @@ namespace QuestSystem
 		public Quest GetNextAvailableQuest()
 			=> activeQuests.FirstOrDefault(t => !t.IsComplete);
 
+		public bool CompletedListContains(System.Func<Quest, bool> predicate)
+		{
+			return completedQuests.FirstOrDefault(predicate) != null;
+		}
+
+		public bool ActiveListContains(System.Func<Quest, bool> predicate)
+		{
+			return activeQuests.FirstOrDefault(predicate) != null;
+		}
+
 		private const string SAVE_TAG_NAME = "Quest Log";
 		public void Save(SaveTag parentTag)
 		{

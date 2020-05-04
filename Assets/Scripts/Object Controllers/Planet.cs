@@ -8,7 +8,7 @@ public class Planet : Entity
 {
 	[SerializeField] private Transform spriteTransform;
 
-	public override EntityType GetEntityType() => EntityType.Planet;
+	public override EntityType EntityType => EntityType.Planet;
 
 	public string planetName = "Default Planet Name";
 	//private int exploredCount = 0;

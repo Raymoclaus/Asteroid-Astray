@@ -316,7 +316,7 @@ public class GatherBot : Character, IStunnable, ICombat
 	{
 		if (waitingForResources) return;
 
-		if (Pause.timeSinceOpen - searchTimer > scanInterval || targetEntity == null)
+		if (TimeController.TimeSinceOpen - searchTimer > scanInterval || targetEntity == null)
 		{
 			SearchForNearestAsteroid();
 		}
@@ -521,7 +521,7 @@ public class GatherBot : Character, IStunnable, ICombat
 		if (IncrementOutOfRangeCounter(found)) return;
 
 		//bots attack by circling its target and firing
-		float orbitAngle = Mathf.PI * 2f / (hive?.childBots.Count ?? 1) * dockID + Pause.timeSinceOpen * orbitSpeed;
+		float orbitAngle = Mathf.PI * 2f / (hive?.childBots.Count ?? 1) * dockID + TimeController.TimeSinceOpen * orbitSpeed;
 		Vector2 orbitPos = new Vector2(Mathf.Sin(orbitAngle), Mathf.Cos(orbitAngle)) * orbitRange;
 		float distanceFromTarget = Vector2.Distance(currentPos, enemyPos);
 
@@ -760,7 +760,7 @@ public class GatherBot : Character, IStunnable, ICombat
 		}
 
 		targetEntity = closestAsteroid;
-		searchTimer = Pause.timeSinceOpen;
+		searchTimer = TimeController.TimeSinceOpen;
 	}
 
 	private float AdjustForMomentum(float lookDir)
@@ -957,7 +957,7 @@ public class GatherBot : Character, IStunnable, ICombat
 		}
 
 		//determine suspect based on entity type
-		EntityType type = e.GetEntityType();
+		EntityType type = e.EntityType;
 		if (type == EntityType.Shuttle) return true;
 		if (type == EntityType.BotHive) return (Entity)threat != hive;
 		if (type == EntityType.GatherBot) return !IsSibling(e);
@@ -1167,7 +1167,7 @@ public class GatherBot : Character, IStunnable, ICombat
 			drill.drillTarget?.StopDrilling(drill);
 		}
 		shakeFX.Begin();
-		Pause.DelayedAction(() =>
+		TimeController.DelayedAction(() =>
 		{
 			if (this == null) return;
 			StartCoroutine(ChargeForcePulse());
@@ -1189,7 +1189,7 @@ public class GatherBot : Character, IStunnable, ICombat
 
 	//returns whether the entity is a sibling gather bot (bot produced by the same hive)
 	private bool IsSibling(Entity e) => 
-		e.GetEntityType() == EntityType.GatherBot
+		e.EntityType== EntityType.GatherBot
 		&& hive != null
 		&& ((GatherBot)e).hive == hive;
 
@@ -1328,8 +1328,8 @@ public class GatherBot : Character, IStunnable, ICombat
 		return collectedAmount;
 	}
 
-	public override EntityType GetEntityType() => EntityType.GatherBot;
-	
+	public override EntityType EntityType => EntityType.GatherBot;
+
 	protected virtual AttackViability EvaluateScan(Scan sc)
 	{
 		float baseThreatMultiplier = 1f;

@@ -9,7 +9,6 @@ public class SaveFileCardGenerator : MonoBehaviour
 	private const string DELETE_FILE_MESSAGE = "Are you sure you want to permanently delete file \"{0}\"?",
 		RENAME_FILE_MESSAGE = "Choose a new name for file \"{0}\".";
 	[SerializeField] private SaveFileCardController placecardPrefab;
-	[SerializeField] private ChoiceWindowGenerator choiceWindowGenerator;
 	[SerializeField] private Sprite tickIcon, crossIcon;
 
 	private void Awake()
@@ -46,17 +45,17 @@ public class SaveFileCardGenerator : MonoBehaviour
 
 	public void DeleteFile(SaveFileCardController sfcc)
 	{
-		ChoiceWindowUI window = choiceWindowGenerator.CreateChoiceWindow();
+		ChoiceWindowUI window = ChoiceWindowGenerator.CreateChoiceWindow();
 		string message = string.Format(DELETE_FILE_MESSAGE, sfcc.FileName);
 		window.SetMessage(message);
 		UnityAction cancelListener = () =>
 		{
-			Destroy(window.gameObject);
+			window.Close();
 		};
 		UnityAction deleteListener = () =>
 		{
 			sfcc.DeleteFile();
-			cancelListener?.Invoke();
+			window.Close();
 		};
 		window.AddIconButton(tickIcon, deleteListener);
 		IconButtonUI cancelButton = window.AddIconButton(crossIcon, cancelListener);
@@ -65,7 +64,7 @@ public class SaveFileCardGenerator : MonoBehaviour
 
 	public void RenameFile(SaveFileCardController sfcc)
 	{
-		TextEntryWindowUI window = choiceWindowGenerator.CreateTextEntryWindow();
+		TextEntryWindowUI window = ChoiceWindowGenerator.CreateTextEntryWindow();
 		string message = string.Format(RENAME_FILE_MESSAGE, sfcc.FileName);
 		window.SetMessage(message);
 		UnityAction cancelListener = () =>

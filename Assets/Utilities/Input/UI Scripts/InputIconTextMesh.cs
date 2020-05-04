@@ -74,7 +74,7 @@ namespace InputHandlerSystem.UI
 		}
 
 		private static TMP_SpriteAssetContainer GetCurrentSpriteContainer(string action)
-			=> GetSpriteContainer(action, InputManager.CurrentContext);
+			=> GetSpriteContainer(action, InputManager.GetCurrentContext());
 
 		private static TMP_SpriteAssetContainer GetSpriteContainer(string action, InputContext context)
 		{

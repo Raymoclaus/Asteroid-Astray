@@ -6,20 +6,17 @@ using InventorySystem;
 using InventorySystem.UI;
 using TriggerSystem;
 using ValueComponents;
-using DialogueSystem;
 using AttackData;
 using EquipmentSystem;
 using InputHandlerSystem;
 using SaveSystem;
 
-public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
+public class Character : Entity, IInteractor, ICrafter, IAttacker, IDeliverer
 {
 	[Header("Character Fields")]
 
 	[SerializeField] private Storage defaultInventory;
 	[SerializeField] private List<Storage> inventories;
-	public event Action<ConversationWithActions, bool> OnSendActiveDialogue;
-	public event Action<ConversationWithActions, bool> OnSendPassiveDialogue;
 	public event Action<IActor> OnDisabled;
 
 	[SerializeField] private float itemUseCooldownDuration = 1f;
@@ -40,7 +37,11 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 	[SerializeField] private LaunchTrailController launchTrailEffect;
 	[SerializeField] private GameObject drillLaunchImpactEffect;
 
-	[SerializeField] private VicinityWaypoint defaultWaypoint, currentWaypoint;
+	protected VicinityWaypoint defaultWaypoint, currentWaypoint;
+	private NarrativeManager _narrativeManager;
+	protected NarrativeManager NarrativeManager => _narrativeManager != null
+		? _narrativeManager
+		: (_narrativeManager = FindObjectOfType<NarrativeManager>());
 
 	public Action<Entity> OnEntityDestroyed;
 	public event Action<ItemObject, int> OnItemsCollected, OnItemUsed;
@@ -95,6 +96,8 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 		}
 	}
 
+	public RangedFloatComponent ShieldComponent => shieldValue;
+
 	public override bool TakeDamage(float damage, Vector2 damagePos,
 		Entity destroyer, float dropModifier, bool flash)
 	{
@@ -139,7 +142,7 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 		if (used)
 		{
 			TimerTracker.SetTimer(itemUseCooldownTimerID, itemUseCooldownDuration);
-			OnItemUsed(type, amountUsed);
+			OnItemUsed?.Invoke(type, amountUsed);
 		}
 		return used;
 	}
@@ -347,25 +350,39 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 
 	public bool Craft(CraftingRecipe recipe)
 	{
-		List<ItemStack> ingredients = recipe.IngredientsCopy;
-		for (int i = 0; i < ingredients.Count; i++)
-		{
-			ItemStack stack = ingredients[i];
-			ItemObject type = stack.ItemType;
-			Storage inv = GetAppropriateInventory(type);
-			if (ItemStack.Count(inv.ItemStacks, type) < stack.Amount) return false;
-		}
+		if (!CanCraftRecipe(recipe)) return false;
 
-		defaultInventory.RemoveItems(ingredients);
+		List<ItemStack> ingredients = recipe.IngredientsCopy;
 		List<ItemStack> results = recipe.ResultsCopy;
-		if (!defaultInventory.CanFit(results))
-		{
-			defaultInventory.AddItems(ingredients);
-			return false;
-		}
+
+		RemoveItemsFromInventories(ingredients);
+		AddItemsToInventories(results);
 
 		OnItemsCrafted?.Invoke(results);
-		defaultInventory.AddItems(results);
+		return true;
+	}
+
+	private void AddItemsToInventories(List<ItemStack> stacks)
+	{
+		foreach (ItemStack stack in stacks)
+		{
+			ItemObject itemType = stack.ItemType;
+			Storage inv = GetAppropriateInventory(itemType);
+			inv.AddItem(stack);
+		}
+	}
+
+	private bool RemoveItemsFromInventories(List<ItemStack> stacks)
+	{
+		if (!HasItems(stacks)) return false;
+
+		foreach (ItemStack stack in stacks)
+		{
+			ItemObject itemType = stack.ItemType;
+			Storage inv = GetAppropriateInventory(itemType);
+			inv.RemoveItem(stack);
+		}
+
 		return true;
 	}
 
@@ -377,12 +394,25 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 		InventoryTab.SetInventoryHolder(this);
 	}
 
+	public bool HasItem(ItemObject itemType) => HasItems(new ItemStack(itemType));
+
+	public bool HasItems(ItemStack stack)
+	{
+		ItemObject itemType = stack.ItemType;
+		Storage inv = GetAppropriateInventory(itemType);
+		if (inv == null) return false;
+		int totalCount = ItemStack.Count(inv.ItemStacks, itemType);
+		int expectedAmount = stack.Amount;
+		return totalCount >= expectedAmount;
+	}
+
 	public bool HasItems(List<ItemStack> stacks)
 	{
 		for (int i = 0; i < stacks.Count; i++)
 		{
 			ItemObject type = stacks[i].ItemType;
 			Storage inv = GetAppropriateInventory(type);
+			if (inv == null) return false;
 			int expectedAmount = ItemStack.Count(stacks, type);
 			if (ItemStack.Count(inv.ItemStacks, type) < expectedAmount) return false;
 		}
@@ -416,20 +446,10 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 		return true;
 	}
 
-	public VicinityWaypoint GetWaypoint => currentWaypoint != null ? currentWaypoint
+	public VicinityWaypoint GetTargetWaypoint => currentWaypoint != null ? currentWaypoint
 		: defaultWaypoint;
 
 	public Vector3 Position => transform.position;
-
-	protected void SendActiveDialogue(ConversationWithActions dialogue, bool skip)
-	{
-		OnSendActiveDialogue?.Invoke(dialogue, skip);
-	}
-
-	protected void SendPassiveDialogue(ConversationWithActions dialogue, bool skip)
-	{
-		OnSendPassiveDialogue?.Invoke(dialogue, skip);
-	}
 
 	public virtual void ReceiveRecoil(Vector3 recoilVector)
 	{
@@ -451,19 +471,12 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 
 	public virtual bool ShouldAttack(GameAction action)
 		=> !IsRecovering
-		   && !Pause.IsStopped
+		   && !TimeController.IsStopped
 			&& CanAttack;
-
-	public void AllowSendingDialogue(bool allow)
-	{
-		CanSendDialogue = allow;
-	}
 
 	public bool CanAttack { get; set; } = true;
 
 	public float DamageMultiplier => damageMultiplier;
-
-	public bool CanSendDialogue { get; set; } = true;
 
 	private const string MAX_SHIELD_VAR_NAME = "MaxShield",
 		CURRENT_SHIELD_VAR_NAME = "CurrentShield";
@@ -489,5 +502,24 @@ public class Character : Entity, IInteractor, ICrafter, IChatter, IAttacker
 			module = new DataModule(CURRENT_SHIELD_VAR_NAME, shieldValue.CurrentValue);
 			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
 		}
+	}
+
+	public bool Deliver(IDelivery delivery, IDeliveryReceiver receiver)
+	{
+		if (!receiver.IsExpectingDelivery(this, delivery)) return false;
+
+		if (delivery is ItemCollection collection)
+		{
+			List<ItemStack> stacks = collection.GetCollectionCopy();
+			if (!HasItems(stacks)) return false;
+
+			bool deliveryReceived = receiver.ReceiveDelivery(this, delivery);
+			if (!deliveryReceived) return false;
+
+			RemoveItemsFromInventories(stacks);
+			return true;
+		}
+
+		return false;
 	}
 }
