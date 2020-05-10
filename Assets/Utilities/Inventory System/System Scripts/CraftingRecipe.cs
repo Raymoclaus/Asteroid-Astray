@@ -59,6 +59,6 @@ namespace InventorySystem
 		}
 
 		public int GetPriority(ItemStack stack)
-			=> Item.TypeRarity(stack.ItemType) * stack.Amount;
+			=> stack.ItemType.GetTypeRarity() * stack.Amount;
 	}
 }

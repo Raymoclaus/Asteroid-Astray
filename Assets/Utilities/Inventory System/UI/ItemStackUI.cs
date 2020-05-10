@@ -54,7 +54,7 @@ namespace InventorySystem.UI
 			img.enabled = ItemType != ItemObject.Blank;
 			if (ItemType != ItemObject.Blank)
 			{
-				img.sprite = Item.GetItemSprite(ItemType);
+				img.sprite = ItemType.GetItemSprite();
 			}
 		}
 

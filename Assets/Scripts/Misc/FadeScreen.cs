@@ -19,11 +19,14 @@ public class FadeScreen : MonoBehaviour
 		System.Action<float> updatedAction = null)
 	{
 		curve = curve ?? fadeInCurve;
-		Coroutines.TimedAction(duration, (float delta) =>
-		{
-			CGroup.alpha = EvaluateCurve(curve, delta);
-			updatedAction?.Invoke(delta);
-		}, finishedAction);
+		Coroutines.TimedAction(duration,
+			delta =>
+			{
+				CGroup.alpha = EvaluateCurve(curve, delta);
+				updatedAction?.Invoke(delta);
+			},
+			finishedAction,
+			false);
 	}
 
 	public void FadeOut(float duration = 1f, AnimationCurve curve = null,
@@ -31,11 +34,14 @@ public class FadeScreen : MonoBehaviour
 		System.Action<float> updatedAction = null)
 	{
 		curve = curve ?? fadeOutCurve;
-		Coroutines.TimedAction(duration, (float delta) =>
-		{
-			CGroup.alpha = EvaluateCurve(curve, delta);
-			updatedAction?.Invoke(delta);
-		}, finishedAction);
+		Coroutines.TimedAction(duration,
+			delta =>
+			{
+				CGroup.alpha = EvaluateCurve(curve, delta);
+				updatedAction?.Invoke(delta);
+			},
+			finishedAction,
+			false);
 	}
 
 	public void FadeIn(float duration)

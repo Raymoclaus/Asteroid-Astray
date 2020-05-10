@@ -41,13 +41,24 @@ namespace QuestSystem.Requirements
 			QuestRequirementCompleted();
 		}
 
-		private const string SAVE_TAG_NAME = "Interaction Requirement";
-		public override void Save(SaveTag parentTag)
+		private const string REQUIREMENT_TYPE = "Interaction Requirement",
+			INTERACTABLE_ID_VAR_NAME = "Interactable ID",
+			INTERACTOR_ID_VAR_NAME = "Interactor ID";
+
+		public override string GetRequirementType() => REQUIREMENT_TYPE;
+
+		public override void Save(string filename, SaveTag parentTag)
 		{
+			base.Save(filename, parentTag);
+
 			//create main tag
-			SaveTag mainTag = new SaveTag(SAVE_TAG_NAME, parentTag);
-			//save waypoint ID
-			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, WaypointID);
+			SaveTag mainTag = new SaveTag(SaveTagName, parentTag);
+			//save interactable ID
+			DataModule module = new DataModule(INTERACTABLE_ID_VAR_NAME, InteractableID);
+			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
+			//save interactor ID
+			module = new DataModule(INTERACTOR_ID_VAR_NAME, ExpectedInteractorID);
+			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
 		}
 	}
 }

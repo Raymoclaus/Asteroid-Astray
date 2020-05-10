@@ -61,6 +61,12 @@ namespace SaveSystem
 
 		}
 
+		public DataModule(string pName, string data)
+			: this(pName, data.GetType().ToString(), data)
+		{
+
+		}
+
 		public DataModule(string pName, object data)
 			: this(pName, data.GetType().ToString(), data.ToString())
 		{

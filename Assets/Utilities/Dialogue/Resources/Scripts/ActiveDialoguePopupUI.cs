@@ -6,7 +6,7 @@ namespace DialogueSystem.UI
 	public class ActiveDialoguePopupUI : GameDialoguePopupUI, IElementHider
 	{
 		[SerializeField] private UIGroupHider groupHider;
-		public UIGroupHider GroupHider => groupHider;
+		[SerializeField] private CanvasGroup _canvasGroup;
 
 		public event Action<IElementHider> OnActivate;
 		public event Action<IElementHider> OnDeactivate;
@@ -43,6 +43,8 @@ namespace DialogueSystem.UI
 				}
 			}
 		}
+		
+		public UIGroupHider GroupHider => groupHider;
 
 		public override void SetDialogueController(DialogueController newController)
 		{
@@ -60,11 +62,21 @@ namespace DialogueSystem.UI
 		private void Activate()
 		{
 			OnActivate?.Invoke(this);
+
+			Coroutines.TimedAction(0.5f,
+				delta => _canvasGroup.alpha = delta,
+				null,
+				true);
 		}
 
 		private void Deactivate()
 		{
 			OnDeactivate?.Invoke(this);
+
+			Coroutines.TimedAction(0.5f,
+				delta => _canvasGroup.alpha = 1f - delta,
+				null,
+				true);
 		}
 
 		protected override void CreatePopupOfCurrentLine()

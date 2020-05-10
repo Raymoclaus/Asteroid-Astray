@@ -91,7 +91,7 @@ namespace DialogueSystem
 			}
 		}
 
-		protected virtual void Skip()
+		public virtual void Skip()
 		{
 			if (!DialogueIsRunning) return;
 

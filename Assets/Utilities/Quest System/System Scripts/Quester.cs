@@ -48,16 +48,18 @@ namespace QuestSystem
 
 		public void ReceiveReward(object reward) => OnRewardReceived?.Invoke(reward);
 
-		private const string SAVE_TAG_NAME = "Quester";
+		private const string SAVE_TAG_NAME = "Quester",
+			TOP_PRIORITY_QUEST_VAR_NAME = "Top Priority Quest";
 
-		public void Save(SaveTag parentTag)
+		public void Save(string filename, SaveTag parentTag)
 		{
 			//create main tag
 			SaveTag mainTag = new SaveTag(SAVE_TAG_NAME, parentTag);
 			//save quest log
-			questLog.Save(mainTag);
+			questLog.Save(filename, mainTag);
 			//save name of top priority quest
-			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, TopPriorityQuest.Name);
+			DataModule module = new DataModule(TOP_PRIORITY_QUEST_VAR_NAME, TopPriorityQuest?.Name ?? string.Empty);
+			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
 		}
 
 		public bool IsNameOfCompletedQuest(string questName)

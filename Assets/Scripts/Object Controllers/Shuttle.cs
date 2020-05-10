@@ -142,6 +142,7 @@ public class Shuttle : Character, IStunnable, ICombat, IPlayableCharacter, ISpee
 		_decidedNotToRechargeTheShipYetDialogue,
 		_rechargingTheShipDialogue;
 	[SerializeField] private DynamicEngineNoise engineNoise;
+	[SerializeField] private ThrusterController _thrusterController;
 	private Quester _quester;
 	[SerializeField] private float _drillLaunchPauseTime = 0.375f;
 
@@ -206,6 +207,9 @@ public class Shuttle : Character, IStunnable, ICombat, IPlayableCharacter, ISpee
 		}
 
 		engineNoise.Speed = Speed;
+		_thrusterController.Speed = Speed;
+		_thrusterController.IsAccelerating = accel != Vector2.zero;
+		_thrusterController.ZRotation = rot.z;
 	}
 
 	private void FixedUpdate() => rb.AddForce(accel);
@@ -805,7 +809,7 @@ public class Shuttle : Character, IStunnable, ICombat, IPlayableCharacter, ISpee
 
 		//load next scene
 		SceneLoader.SceneAsync scene = SceneLoader.PrepareScene("ShipScene");
-		Coroutines.TimedAction(3f, null, () => SceneLoader.LoadPreparedScene(scene));
+		Coroutines.TimedAction(3f, null, () => SceneLoader.LoadPreparedScene(scene), false);
 
 		//move shuttle to center
 		velocity = Vector3.zero;
@@ -813,21 +817,27 @@ public class Shuttle : Character, IStunnable, ICombat, IPlayableCharacter, ISpee
 		rb.velocity = Vector3.zero;
 		Vector3 currentPos = transform.position;
 		float currentAngle = rot.z;
-		Coroutines.TimedAction(2f, (float delta) =>
-		{
-			float evaluation = easeInEaseOut.Evaluate(delta);
-			rot.z = Mathf.LerpAngle(currentAngle, 0f, evaluation);
-			transform.position = Vector3.Lerp(currentPos, hatchPosition, evaluation);
-			CameraControl.SetLookAheadDistance(true, 1f - delta);
-		}, () =>
-		{
-			//zoom camera in when movement is finished
-			Coroutines.TimedAction(1f, (float delta) =>
+		Coroutines.TimedAction(2f,
+			delta =>
 			{
-				float evaluation = cameraZoomOnEnterShip.Evaluate(1f - delta);
-				CameraControl.Zoom(0.5f + evaluation * 0.5f);
-			}, null);
-		});
+				float evaluation = easeInEaseOut.Evaluate(delta);
+				rot.z = Mathf.LerpAngle(currentAngle, 0f, evaluation);
+				transform.position = Vector3.Lerp(currentPos, hatchPosition, evaluation);
+				CameraControl.SetLookAheadDistance(true, 1f - delta);
+			},
+			() =>
+			{
+				//zoom camera in when movement is finished
+				Coroutines.TimedAction(1f,
+					delta =>
+					{
+						float evaluation = cameraZoomOnEnterShip.Evaluate(1f - delta);
+						CameraControl.Zoom(0.5f + evaluation * 0.5f);
+					},
+					null,
+					false);
+			},
+			false);
 	}
 
 	public override bool StartedPerformingAction(GameAction action)
@@ -865,7 +875,7 @@ public class Shuttle : Character, IStunnable, ICombat, IPlayableCharacter, ISpee
 						{
 							choice.Close();
 							TimeController.SetTimeScale(this, 1f);
-							Deliver(new ItemCollection(new ItemStack(corruptedCorvorite)), hatch);
+							Deliver(new ItemCollection(corruptedCorvorite), hatch);
 						});
 						choice.AddTextButton("No", () =>
 						{
@@ -914,4 +924,14 @@ public class Shuttle : Character, IStunnable, ICombat, IPlayableCharacter, ISpee
 	}
 
 	public override SaveType SaveType => SaveType.FullSave;
+
+	public override void Save(string filename, SaveTag parentTag)
+	{
+		base.Save(filename, parentTag);
+
+		//create main tag
+		SaveTag mainTag = new SaveTag(SaveTagName, parentTag);
+		//save quester info
+		_quester.Save(filename, mainTag);
+	}
 }

@@ -29,13 +29,8 @@ namespace QuestSystem.Requirements
 			QuestRequirementCompleted();
 		}
 
-		private const string SAVE_TAG_NAME = "Waypoint Requirement";
-		public override void Save(SaveTag parentTag)
-		{
-			//create main tag
-			SaveTag mainTag = new SaveTag(SAVE_TAG_NAME, parentTag);
-			//save waypoint ID
-			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, WaypointID);
-		}
+		private const string REQUIREMENT_TYPE = "Waypoint Requirement";
+
+		public override string GetRequirementType() => REQUIREMENT_TYPE;
 	}
 }

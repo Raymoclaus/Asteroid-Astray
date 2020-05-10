@@ -600,7 +600,7 @@ namespace SaveSystem
 				if (parts.Length < 1) return -4;
 
 				//get tag at current line, after removing additional characters
-				if (!IsTag(parts[0])) continue;
+				if (!IsTag(line)) continue;
 				string tagString = parts[0]
 					.Replace("[", string.Empty)
 					.Replace("]", string.Empty)
@@ -665,7 +665,9 @@ namespace SaveSystem
 		}
 
 		/// <summary>
-		/// Checks to see if a string contains a tag with expected formatting. (i.e. contains a left square bracket followed by a right bracket with any number of characters in between).
+		/// Checks to see if a string contains a tag with expected formatting.
+		/// (i.e. contains a left square bracket followed by a right bracket with any number of characters in between).
+		/// E.g. "/t[tagName]|1"
 		/// </summary>
 		/// <param name="s"></param>
 		/// <returns></returns>

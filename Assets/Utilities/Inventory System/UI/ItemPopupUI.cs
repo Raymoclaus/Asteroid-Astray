@@ -348,11 +348,11 @@ namespace InventorySystem.UI
 				SetAmount(Amount + amount);
 			}
 
-			public Sprite Spr => Item.GetItemSprite(ItemType);
+			public Sprite Spr => ItemType.GetItemSprite();
 
-			public string ItemName => Item.TypeName(ItemType);
+			public string ItemName => ItemType.GetTypeName();
 
-			public string Description => Item.Description(ItemType);
+			public string Description => ItemType.GetDescription();
 
 			public string Counter => $"(x{Amount})";
 		}

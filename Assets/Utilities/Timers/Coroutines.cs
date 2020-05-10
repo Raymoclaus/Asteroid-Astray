@@ -10,8 +10,8 @@ public static class Coroutines
 		: (meh = new GameObject("Coroutines Object").AddComponent<MonoEventHolder>());
 
 	public static Coroutine TimedAction(float duration, Action<float> timedAction,
-		Action finishedAction)
-		=> Start(PActionTimer(new ActionOverTime(duration, timedAction), finishedAction));
+		Action finishedAction, bool unscaledTime)
+		=> Start(PActionTimer(new ActionOverTime(duration, timedAction, unscaledTime), finishedAction));
 
 	private static IEnumerator PActionTimer(ActionOverTime timerAction,
 		Action finishedAction)

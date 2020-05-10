@@ -19,23 +19,23 @@ namespace InventorySystem.UI
 
 		private void SetImage(ItemObject type)
 		{
-			image.sprite = Item.GetItemSprite(type);
+			image.sprite = type.GetItemSprite();
 			image.color = type == ItemObject.Blank ? Color.clear : Color.white;
 		}
 
 		private void SetItemName(ItemObject type)
 		{
-			itemName.text = Item.TypeName(type);
+			itemName.text = type.GetTypeName();
 		}
 
 		private void SetDescription(ItemObject type)
 		{
-			description.text = Item.Description(type);
+			description.text = type.GetDescription();
 		}
 
 		private void SetFlavourText(ItemObject type)
 		{
-			flavourText.text = Item.FlavourText(type);
+			flavourText.text = type.GetFlavourText();
 		}
 	}
 }

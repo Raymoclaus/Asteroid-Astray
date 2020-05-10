@@ -6,22 +6,35 @@ namespace QuestSystem
 	public class ItemQReward : QuestReward
 	{
 		public ItemStack stack;
-		private string formattedString = "{0} (x{1})";
 
-		public ItemQReward(ItemStack stack) => this.stack = stack;
+		public ItemQReward(string description, ItemStack stack) : base(description)
+		{
+			this.stack = stack;
+		}
 
-		public override string GetRewardName()
-			=> string.Format(formattedString, Item.TypeName(stack.ItemType), stack.Amount);
+		public ItemQReward(ItemStack stack) : this("{0} (x{1})", stack)
+		{
+
+		}
+
+		public override string GetRewardDescription()
+			=> string.Format(Description, stack.ItemType.ItemName, stack.Amount);
 
 		public override void GiveReward(Quester quester) => quester.ReceiveReward(stack);
 
-		private const string SAVE_TAG_NAME = "Item Reward";
-		public override void Save(SaveTag parentTag)
+		protected override string GetRewardType() => REWARD_TYPE;
+
+		private const string REWARD_TYPE = "Item Reward",
+			ITEM_STACK_VAR_NAME = "Item Stack";
+		
+		public override void Save(string filename, SaveTag parentTag)
 		{
+			base.Save(filename, parentTag);
 			//create main tag
-			SaveTag mainTag = new SaveTag(SAVE_TAG_NAME, parentTag);
-			//save item
-			stack.Save(mainTag);
+			SaveTag mainTag = new SaveTag(SaveTagName, parentTag);
+			//save item stack
+			DataModule module = new DataModule(ITEM_STACK_VAR_NAME, stack);
+			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
 		}
 	}
 

@@ -168,7 +168,7 @@ public class WormholeSceneController : MonoBehaviour
 
 	private IEnumerator TimerAction(float duration, Action<float> action, Action finishTimerAction)
 	{
-		yield return new ActionOverTime(duration, action);
+		yield return new ActionOverTime(duration, action, false);
 		finishTimerAction?.Invoke();
 	}
 }

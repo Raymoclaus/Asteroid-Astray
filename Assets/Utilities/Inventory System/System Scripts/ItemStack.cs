@@ -13,13 +13,13 @@ namespace InventorySystem
 		[SerializeField]
 		private int amount;
 
-		public bool IsMaxed => amount == Item.StackLimit(type);
+		public bool IsMaxed => amount == type.GetStackLimit();
 
 		public ItemStack(ItemObject type, int amount)
 		{
 			this.type = amount <= 0 ? ItemObject.Blank : type;
 			this.amount = type == ItemObject.Blank ? 0
-				: Mathf.Min(Mathf.Max(1, amount), Item.StackLimit(type));
+				: Mathf.Min(Mathf.Max(1, amount), type.GetStackLimit());
 		}
 
 		public ItemStack(ItemObject type)
@@ -49,7 +49,7 @@ namespace InventorySystem
 			{
 				if (value > 0)
 				{
-					amount = Mathf.Min(value, Item.StackLimit(type));
+					amount = Mathf.Min(value, type.GetStackLimit());
 				}
 				else
 				{
@@ -64,10 +64,10 @@ namespace InventorySystem
 			if (num <= 0) return num;
 
 			amount += num;
-			int leftOver = Mathf.Max(amount - Item.StackLimit(type), 0);
-			if (amount > Item.StackLimit(type))
+			int leftOver = Mathf.Max(amount - type.GetStackLimit(), 0);
+			if (amount > type.GetStackLimit())
 			{
-				amount = Item.StackLimit(type);
+				amount = type.GetStackLimit();
 			}
 			return leftOver;
 		}
@@ -103,7 +103,7 @@ namespace InventorySystem
 			{
 				if (stacks[i].ItemType == type)
 				{
-					int difference = Item.StackLimit(type) - stacks[i].Amount;
+					int difference = type.GetStackLimit() - stacks[i].Amount;
 					if (difference > 0)
 					{
 						int add = Math.Min(num, difference);
@@ -170,7 +170,7 @@ namespace InventorySystem
 			{
 				if (stacks[i].ItemType == ItemObject.Blank)
 				{
-					int add = Math.Min(num, Item.StackLimit(type));
+					int add = Math.Min(num, type.GetStackLimit());
 					num -= add;
 					stacks[i].ItemType = type;
 					stacks[i].AddAmount(add);
@@ -246,7 +246,7 @@ namespace InventorySystem
 			amount = 0;
 		}
 
-		public int Value => Item.TypeRarity(type) * amount;
+		public int Value => type.GetTypeRarity() * amount;
 
 		/// <summary>
 		/// Iterates through stacks and combines stacks of similar type if they are not at maximum limit.
@@ -348,7 +348,7 @@ namespace InventorySystem
 				if (!includeEmptyStacks && stacks[i].ItemType == ItemObject.Blank) continue;
 				ItemObject stackType = stacks[i].ItemType;
 				if (stackType != ItemObject.Blank && stackType != type) continue;
-				int maxAmount = Item.StackLimit(type);
+				int maxAmount = type.GetStackLimit();
 				int leftOver = maxAmount - stacks[i].Amount;
 				count += leftOver;
 			}
@@ -468,23 +468,23 @@ namespace InventorySystem
 			for (int i = 0; i < stacks.Count; i++)
 			{
 				ItemStack stack = stacks[i];
-				if (rarity != Item.TypeRarity(stack.ItemType)) continue;
+				if (rarity != stack.ItemType.GetTypeRarity()) continue;
 				count += stack.Amount;
 			}
 
 			return count;
 		}
 
+		//expected format: "<amount>x<itemType>" spaces are removed automatically
+		//example: "5xStone"
 		public static bool TryParse(string toParse, out ItemStack result)
 		{
 			try
 			{
 				toParse = toParse.Replace(" ", string.Empty);
 				string[] args = toParse.Split('x');
-				int amount;
-				ItemObject type;
-				int.TryParse(args[0], out amount);
-				type = Item.GetItemByName(args[1]);
+				int.TryParse(args[0], out int amount);
+				ItemObject type = Item.GetItemByName(args[1]);
 				result = new ItemStack(type, amount);
 				return true;
 			}
@@ -506,17 +506,6 @@ namespace InventorySystem
 				result = new ItemStack();
 				return false;
 			}
-		}
-
-		private const string SAVE_TAG_NAME = "Item Stack";
-		public void Save(SaveTag parentTag)
-		{
-			//create main tag
-			SaveTag mainTag = new SaveTag(SAVE_TAG_NAME, parentTag);
-			//save item name
-			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, ItemType);
-			//save item amount
-			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, Amount);
 		}
 	}
 }

@@ -39,13 +39,28 @@ namespace QuestSystem.Requirements
 			QuestRequirementCompleted();
 		}
 
-		private const string SAVE_TAG_NAME = "Delivery Requirement";
-		public override void Save(SaveTag parentTag)
+		private const string REQUIREMENT_TYPE = "Delivery Requirement",
+			DELIVERY_RECEIVER_ID_VAR_NAME = "Delivery Receiver ID",
+			DELIVERER_ID_VAR_NAME = "Deliverer ID",
+			DELIVERY_DETAILS_VAR_NAME = "Delivery Details";
+
+		public override string GetRequirementType() => REQUIREMENT_TYPE;
+
+		public override void Save(string filename, SaveTag parentTag)
 		{
+			base.Save(filename, parentTag);
+
 			//create main tag
-			SaveTag mainTag = new SaveTag(SAVE_TAG_NAME, parentTag);
-			//save waypoint ID
-			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, WaypointID);
+			SaveTag mainTag = new SaveTag(SaveTagName, parentTag);
+			//save delivery receiver ID
+			DataModule module = new DataModule(DELIVERY_RECEIVER_ID_VAR_NAME, DeliveryReceiverID);
+			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
+			//save deliverer ID
+			module = new DataModule(DELIVERER_ID_VAR_NAME, DelivererID);
+			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
+			//save delivery details
+			module = new DataModule(DELIVERY_DETAILS_VAR_NAME, QuestDelivery.GetOrderDetails());
+			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
 		}
 	}
 }

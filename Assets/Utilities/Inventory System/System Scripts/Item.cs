@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using JetBrains.Annotations;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace InventorySystem
@@ -10,33 +9,41 @@ namespace InventorySystem
 
 		public const int MIN_RARITY = 0;
 
-		private static ItemObject[] itemTypes;
-		public static ItemObject[] ItemTypes
-			=> itemTypes != null
-				? itemTypes
-				: (itemTypes = Resources.LoadAll<ItemObject>(string.Empty));
-
-		public static ItemObject GetItemByName(string name, bool caseSensitive = false)
+		private static Dictionary<string, ItemObject> _itemTypes;
+		public static Dictionary<string, ItemObject> ItemTypes
 		{
-			if (caseSensitive)
+			get
 			{
-				return ItemTypes.FirstOrDefault(t => t.ItemName == name);
+				if (_itemTypes != null) return _itemTypes;
+				ItemObject[] items = Resources.LoadAll<ItemObject>(string.Empty);
+				_itemTypes = new Dictionary<string, ItemObject>();
+				foreach (ItemObject item in items)
+				{
+					_itemTypes.Add(item.ItemName, item);
+				}
+
+				return _itemTypes;
 			}
-			return ItemTypes.FirstOrDefault(t => t.ItemName.ToLower() == name.ToLower());
 		}
 
-		public static string TypeName(ItemObject item) => item?.ItemName ?? default;
+		public static ItemObject GetItemByName(string name)
+		{
+			if (!ItemTypes.ContainsKey(name)) return ItemObject.Blank;
+			return ItemTypes[name];
+		}
 
-		public static int TypeRarity(ItemObject item) => item?.Rarity ?? default;
+		public static string GetTypeName(this ItemObject item) => item?.ItemName ?? default;
 
-		public static int StackLimit(ItemObject item) => item?.StackLimit ?? default;
+		public static int GetTypeRarity(this ItemObject item) => item?.Rarity ?? default;
 
-		public static bool IsKeyItem(ItemObject item) => item?.IsKeyItem ?? default;
+		public static int GetStackLimit(this ItemObject item) => item?.StackLimit ?? default;
 
-		public static string Description(ItemObject item) => item?.Description ?? default;
+		public static bool GetIsKeyItem(this ItemObject item) => item?.IsKeyItem ?? default;
 
-		public static string FlavourText(ItemObject item) => item?.FlavourText ?? default;
+		public static string GetDescription(this ItemObject item) => item?.Description ?? default;
 
-		public static Sprite GetItemSprite(ItemObject item) => item?.Icon;
+		public static string GetFlavourText(this ItemObject item) => item?.FlavourText ?? default;
+
+		public static Sprite GetItemSprite(this ItemObject item) => item?.Icon;
 	}
 }

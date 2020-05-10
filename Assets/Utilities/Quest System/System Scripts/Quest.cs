@@ -27,6 +27,7 @@ namespace QuestSystem
 			for (int i = 0; i < Requirements.Count; i++)
 			{
 				QuestRequirement requirement = Requirements[i];
+				requirement.id = i;
 				requirement.OnQuestRequirementCompleted += EvaluateRequirements;
 			}
 		}
@@ -53,24 +54,30 @@ namespace QuestSystem
 
 		public bool CompareName(Quest other) => Name == other.Name;
 
-		private const string SAVE_TAG_NAME = "Quest";
-		public void Save(SaveTag parentTag)
+		protected string SaveTagName => $"Quest:{Name}";
+
+		private const string QUEST_NAME_VAR_NAME = "Quest Name",
+			DESCRIPTION_VAR_NAME = "Description";
+
+		public void Save(string filename, SaveTag parentTag)
 		{
 			//create main tag
-			SaveTag mainTag = new SaveTag(SAVE_TAG_NAME, parentTag);
+			SaveTag mainTag = new SaveTag(SaveTagName, parentTag);
 			//save name
-			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, Name);
+			DataModule module = new DataModule(QUEST_NAME_VAR_NAME, Name);
+			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
 			//save description
-			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, Description);
+			module = new DataModule(DESCRIPTION_VAR_NAME, Description);
+			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
 			//save rewards
 			foreach (QuestReward reward in Rewards)
 			{
-				reward.Save(mainTag);
+				reward.Save(filename, mainTag);
 			}
 			//save requirements
 			foreach (QuestRequirement requirement in Requirements)
 			{
-				requirement.Save(mainTag);
+				requirement.Save(filename, mainTag);
 			}
 		}
 	}

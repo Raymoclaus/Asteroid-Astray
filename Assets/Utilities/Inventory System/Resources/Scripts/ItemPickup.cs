@@ -28,7 +28,7 @@ namespace InventorySystem
 
 		private void UpdateSprite()
 		{
-			sprRend.sprite = Item.GetItemSprite(itemType);
+			sprRend.sprite = itemType.GetItemSprite();
 		}
 
 		public void SendItem(IInteractor interactor) => interactor.Interact(itemType);

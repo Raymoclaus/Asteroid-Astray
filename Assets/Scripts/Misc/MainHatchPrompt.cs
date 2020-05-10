@@ -35,14 +35,19 @@ public class MainHatchPrompt : MonoBehaviour, IActionMessageReceiver, IWaypointa
 		{
 			if (interactor is IHatchEnterer hatchEnterer)
 			{
-				Open();
-				hatchEnterer.EnterHatch(Position);
+				BringObjectThroughHatch(hatchEnterer);
 			}
 		}
 
 		OnInteracted?.Invoke(interactor);
 
 		interactor.Interact(this);
+	}
+
+	public void BringObjectThroughHatch(IHatchEnterer obj)
+	{
+		Open();
+		obj.EnterHatch(Position);
 	}
 
 	public bool IsPoweredDown => !_shipIsPoweredUpStat.value;

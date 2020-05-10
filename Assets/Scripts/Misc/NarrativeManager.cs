@@ -19,9 +19,9 @@ public class NarrativeManager : MonoBehaviour
 	[SerializeField] private IInteractor playerTriggerer;
 	private IInteractor PlayerTriggerer
 		=> playerTriggerer ?? (playerTriggerer = MainCharacter.GetComponent<IInteractor>());
-	private MainHatchPrompt mainHatch;
+	private MainHatchPrompt _mainHatch;
 	private MainHatchPrompt MainHatch
-		=> mainHatch ?? (mainHatch = FindObjectOfType<MainHatchPrompt>());
+		=> _mainHatch ?? (_mainHatch = FindObjectOfType<MainHatchPrompt>());
 	private IActionTrigger MainHatchTrigger
 		=> MainHatch.GetComponentInChildren<IActionTrigger>();
 	[SerializeField] private DerangedSoloBot derangedSoloBotPrefab;
@@ -392,6 +392,14 @@ public class NarrativeManager : MonoBehaviour
 	private void CompletedRechargeTheShipQuest()
 	{
 		StartActiveDialogue(_rechargingTheShipDialogue);
+	}
+
+	public void BringCharacterThroughMainHatch()
+	{
+		if (MainCharacter is IHatchEnterer obj)
+		{
+			MainHatch.BringObjectThroughHatch(obj);
+		}
 	}
 
 	public void ActivateScriptedDrops(bool activate)

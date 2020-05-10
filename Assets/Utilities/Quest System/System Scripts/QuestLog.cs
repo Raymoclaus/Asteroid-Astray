@@ -10,7 +10,7 @@ namespace QuestSystem
 		private List<Quest> completedQuests = new List<Quest>();
 
 		public bool HasActiveQuest
-			=> activeQuests.Exists(t => !t.IsComplete);
+			=> activeQuests.Count > 0;
 
 		public void AddQuest(Quest quest)
 		{
@@ -45,19 +45,20 @@ namespace QuestSystem
 		}
 
 		private const string SAVE_TAG_NAME = "Quest Log";
-		public void Save(SaveTag parentTag)
+
+		public void Save(string filename, SaveTag parentTag)
 		{
 			//create main tag
 			SaveTag mainTag = new SaveTag(SAVE_TAG_NAME, parentTag);
 			//iterate over all completed quests
 			foreach (Quest q in completedQuests)
 			{
-				q.Save(mainTag);
+				q.Save(filename, mainTag);
 			}
 			//iterate over all active quests
 			foreach (Quest q in activeQuests)
 			{
-				q.Save(mainTag);
+				q.Save(filename, mainTag);
 			}
 		}
 	}

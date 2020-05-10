@@ -62,25 +62,34 @@ namespace QuestSystem.Requirements
 		}
 
 		public override string GetDescription =>
-			string.Format(description, amountNeeded, Item.TypeName(typeNeeded), currentAmount);
+			string.Format(description, amountNeeded, typeNeeded.ItemName, currentAmount);
 
-		private const string SAVE_TAG_NAME = "Gathering Requirement";
-		public override void Save(SaveTag parentTag)
+		private const string REQUIREMENT_TYPE = "Gathering Requirement",
+			TYPE_NEEDED_VAR_NAME = "Type Needed",
+			AMOUNT_NEEDED_VAR_NAME = "Amount Needed",
+			CURRENT_PROGRESS_VAR_NAME = "Current Progress",
+			INVENTORY_HOLDER_ID_VAR_NAME = "Inventory Holder ID";
+
+		public override string GetRequirementType() => REQUIREMENT_TYPE;
+
+		public override void Save(string filename, SaveTag parentTag)
 		{
+			base.Save(filename, parentTag);
+
 			//create main tag
-			SaveTag mainTag = new SaveTag(SAVE_TAG_NAME, parentTag);
-			//save description
-			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, description);
-			//save waypoint ID
-			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, WaypointID);
+			SaveTag mainTag = new SaveTag(SaveTagName, parentTag);
 			//save item type
-			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, typeNeeded);
+			DataModule module = new DataModule(TYPE_NEEDED_VAR_NAME, typeNeeded.GetTypeName());
+			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
 			//save amount needed
-			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, amountNeeded);
+			module = new DataModule(AMOUNT_NEEDED_VAR_NAME, amountNeeded);
+			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
 			//save current progress
-			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, currentAmount);
-			//save crafter ID
-			UnifiedSaveLoad.UpdateUnifiedSaveFile(mainTag, InventoryHolderID);
+			module = new DataModule(CURRENT_PROGRESS_VAR_NAME, currentAmount);
+			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
+			//save inventory holder ID
+			module = new DataModule(INVENTORY_HOLDER_ID_VAR_NAME, InventoryHolderID);
+			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
 		}
 	}
 }

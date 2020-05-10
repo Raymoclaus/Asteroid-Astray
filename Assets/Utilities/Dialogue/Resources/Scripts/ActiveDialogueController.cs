@@ -40,6 +40,11 @@ namespace DialogueSystem
 			_previousContext = InputManager.GetCurrentContext();
 			InputManager.SetCurrentContext(_activeDialogueContext);
 
+			if (PassiveDialogueController._instance?.DialogueIsRunning ?? false)
+			{
+				PassiveDialogueController._instance.Skip();
+			}
+
 			base.StartDialogue(newConversation);
 		}
 

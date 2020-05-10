@@ -33,16 +33,6 @@ namespace InventorySystem
 			private set => itemStacks = value;
 		}
 
-		public void SetData(InventoryData data)
-		{
-			if (data.stacks != null)
-			{
-				size = data.size;
-				ItemStacks = data.stacks;
-			}
-			TrimPadStacks();
-		}
-
 		public int AmountOfItem(ItemObject type)
 		{
 			int amount = 0;
@@ -199,7 +189,7 @@ namespace InventorySystem
 				ItemObject type = ItemStacks[i].ItemType;
 				if (type == exclude) continue;
 
-				if (Item.TypeRarity(type) == rarity)
+				if (type.GetTypeRarity() == rarity)
 				{
 					int stackAmount = ItemStacks[i].Amount;
 					if (stackAmount > 0)
@@ -355,8 +345,7 @@ namespace InventorySystem
 			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
 		}
 
-		private const char STACK_SEPARATOR = ',',
-			AMOUNT_SEPARATOR = ':';
+		private const char STACK_SEPARATOR = ',';
 
 		private string GetStacksString()
 		{
@@ -367,7 +356,7 @@ namespace InventorySystem
 				ItemStack stack = ItemStacks[i];
 				if (stack.Amount != 0)
 				{
-					builder.Append($"{stack.Amount}{AMOUNT_SEPARATOR}{stack.ItemType}");
+					builder.Append(stack);
 				}
 
 				if (i < ItemStacks.Count - 1)
@@ -377,21 +366,6 @@ namespace InventorySystem
 			}
 
 			return builder.ToString();
-		}
-
-		public InventoryData GetInventoryData() => new InventoryData(ItemStacks, size);
-
-		[Serializable]
-		public struct InventoryData
-		{
-			public List<ItemStack> stacks;
-			public int size;
-
-			public InventoryData(List<ItemStack> stacks, int size)
-			{
-				this.stacks = stacks;
-				this.size = size;
-			}
 		}
 	}
 }

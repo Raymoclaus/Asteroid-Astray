@@ -478,6 +478,25 @@ public class Character : Entity, IInteractor, ICrafter, IAttacker, IDeliverer
 
 	public float DamageMultiplier => damageMultiplier;
 
+	public bool Deliver(IDelivery delivery, IDeliveryReceiver receiver)
+	{
+		if (!receiver.IsExpectingDelivery(this, delivery)) return false;
+
+		if (delivery is ItemCollection collection)
+		{
+			List<ItemStack> stacks = collection.Stacks;
+			if (!HasItems(stacks)) return false;
+
+			bool deliveryReceived = receiver.ReceiveDelivery(this, delivery);
+			if (!deliveryReceived) return false;
+
+			RemoveItemsFromInventories(stacks);
+			return true;
+		}
+
+		return false;
+	}
+
 	private const string MAX_SHIELD_VAR_NAME = "MaxShield",
 		CURRENT_SHIELD_VAR_NAME = "CurrentShield";
 
@@ -502,24 +521,5 @@ public class Character : Entity, IInteractor, ICrafter, IAttacker, IDeliverer
 			module = new DataModule(CURRENT_SHIELD_VAR_NAME, shieldValue.CurrentValue);
 			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
 		}
-	}
-
-	public bool Deliver(IDelivery delivery, IDeliveryReceiver receiver)
-	{
-		if (!receiver.IsExpectingDelivery(this, delivery)) return false;
-
-		if (delivery is ItemCollection collection)
-		{
-			List<ItemStack> stacks = collection.GetCollectionCopy();
-			if (!HasItems(stacks)) return false;
-
-			bool deliveryReceived = receiver.ReceiveDelivery(this, delivery);
-			if (!deliveryReceived) return false;
-
-			RemoveItemsFromInventories(stacks);
-			return true;
-		}
-
-		return false;
 	}
 }

@@ -119,10 +119,10 @@ public class EnergyShieldMaterialManager : MonoBehaviour, IEquipment, IShieldMat
 
 	public void Shrink()
 	{
-		Coroutines.TimedAction(1f, (float delta) =>
-		{
-			SetScaleMod(1f - delta);
-		}, null);
+		Coroutines.TimedAction(1f,
+			delta => SetScaleMod(1f - delta),
+			null,
+			false);
 	}
 
 	public void SetDefaultScale() => SetScaleMod(1f);
