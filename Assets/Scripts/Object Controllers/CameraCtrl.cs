@@ -32,10 +32,9 @@ public class CameraCtrl : MonoBehaviour
 	private float distanceAheadModifier = 2f;
 	private float moveAheadSpeedModifier = 2f;
 	private float constantSize = 2f;
-
 	public int TotalViewRange => ENTITY_VIEW_RANGE + RangeModifier;
-
 	public ChunkFiller chunkFiller;
+	private EntityNetwork _entityNetwork;
 
 	private void Start()
 	{
@@ -45,8 +44,12 @@ public class CameraCtrl : MonoBehaviour
 		coords = new ChunkCoords(transform.position, EntityNetwork.CHUNK_SIZE);
 		//start camera size at minimum size
 		CamSize = minCamSize;
-		
-		LoadingController.AddListener(Initialise);
+
+		LoadingController loadingController = FindObjectOfType<LoadingController>();
+		if (loadingController != null)
+		{
+			loadingController.OnLoadingComplete.RunWhenReady(Initialise);
+		}
 	}
 
 	private void Initialise()
@@ -74,6 +77,15 @@ public class CameraCtrl : MonoBehaviour
 		prevPos = pos;
 	}
 
+	private EntityNetwork EntityNetwork
+	{
+		get
+		{
+			if (_entityNetwork != null && !_entityNetwork.Equals(null)) return _entityNetwork;
+			return _entityNetwork = FindObjectOfType<EntityNetwork>();
+		}
+	}
+
 	/// Only called if position of the camera changes
 	private void Moved(Vector2 newPos)
 	{
@@ -86,7 +98,6 @@ public class CameraCtrl : MonoBehaviour
 	private void CoordsChanged(ChunkCoords newCoords, ChunkCoords oldCoords)
 	{
 		coords = newCoords;
-		if (!EntityNetwork.IsReady) return;
 		UpdateEntitiesInView(newCoords, oldCoords);
 	}
 

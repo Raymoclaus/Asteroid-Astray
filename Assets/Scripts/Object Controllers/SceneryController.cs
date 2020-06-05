@@ -1,11 +1,12 @@
-﻿using System;
-using System.Threading;
-using System.Collections.Generic;
-using UnityEngine;
-using System.Collections;
-using CielaSpike;
-using System.IO;
+﻿using CielaSpike;
 using CustomDataTypes;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading;
+using SceneControllers;
+using UnityEngine;
 
 public class SceneryController : MonoBehaviour
 {
@@ -68,7 +69,7 @@ public class SceneryController : MonoBehaviour
 
 	private int freeWorkers;
 	
-	private static event Action OnStarFieldCreated;
+	public InvocableOneShotEvent OnStarFieldCreated = new InvocableOneShotEvent();
 
 	private void Awake()
 	{
@@ -80,18 +81,6 @@ public class SceneryController : MonoBehaviour
 		instance = this;
 
 		InitialSetup();
-	}
-
-	public static void AddListener(Action action)
-	{
-		if (IsDone)
-		{
-			action?.Invoke();
-		}
-		else if (action != null)
-		{
-			OnStarFieldCreated += action;
-		}
 	}
 
 	private void InitialSetup()
@@ -182,8 +171,7 @@ public class SceneryController : MonoBehaviour
 
 				SetUpScenery(cc, loopedCoords);
 				return false;
-			},
-			true);
+			});
 	}
 
 	private void SetUpScenery(ChunkCoords cc, ChunkCoords loopedCoords)
@@ -314,8 +302,7 @@ public class SceneryController : MonoBehaviour
 		if (texturesGenerated)
 		{
 			Debug.Log("Scenery Controller Loaded");
-			OnStarFieldCreated?.Invoke();
-			OnStarFieldCreated = null;
+			OnStarFieldCreated.Invoke();
 			yield break;
 		}
 
@@ -434,8 +421,7 @@ public class SceneryController : MonoBehaviour
 		}
 		Debug.Log("Scenery Controller Loaded");
 		texturesGenerated = true;
-		OnStarFieldCreated?.Invoke();
-		OnStarFieldCreated = null;
+		OnStarFieldCreated.Invoke();
 	}
 
 	private IEnumerator GenerateTexture(Star[] stars, Color[] tex, int start,

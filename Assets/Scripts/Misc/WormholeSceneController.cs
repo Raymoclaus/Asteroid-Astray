@@ -1,9 +1,9 @@
 ﻿using CurveTracerSystem;
 using CustomYieldInstructions;
+using DialogueSystem;
 using SceneControllers;
 using System;
 using System.Collections;
-using DialogueSystem;
 using UnityEngine;
 
 public class WormholeSceneController : MonoBehaviour

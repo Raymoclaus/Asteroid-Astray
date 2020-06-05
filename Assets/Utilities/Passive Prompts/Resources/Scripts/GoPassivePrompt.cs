@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-public class GoPassivePrompt : PassivePromptController
+﻿public class GoPassivePrompt : PassivePromptController
 {
 	private Character MainCharacter => NarrativeManager.MainCharacter;
 

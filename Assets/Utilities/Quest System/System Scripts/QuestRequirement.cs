@@ -1,55 +1,65 @@
 ﻿using SaveSystem;
+using System;
+using UnityEngine;
 
 namespace QuestSystem
 {
 	public abstract class QuestRequirement
 	{
 		protected string description;
-		protected IWaypoint waypoint;
-		protected string WaypointID { get; set; } = string.Empty;
+		public IWaypoint Waypoint { get; private set; }
+		public string WaypointID { get; private set; } = string.Empty;
 		public int id;
+		public bool Completed { get; private set; }
+		public bool RemoveWaypointOnCompletion { get; set; } = true;
+
+		public event Action OnQuestRequirementUpdated, OnQuestRequirementCompleted;
+
+		protected QuestRequirement()
+		{
+
+		}
 
 		public QuestRequirement(string description, IWaypoint waypoint)
 		{
 			this.description = description;
-			this.waypoint = waypoint;
+			Waypoint = waypoint;
 			WaypointID = waypoint?.UniqueID ?? string.Empty;
 		}
 
-		public bool Completed { get; private set; }
-		protected bool active = false;
+		public virtual void Activate()
+		{
 
-		public delegate void QuestRequirementUpdatedEventHandler();
-		public event QuestRequirementUpdatedEventHandler OnQuestRequirementUpdated;
+		}
+		
 		public void QuestRequirementUpdated()
 		{
 			SteamPunkConsole.WriteLine($"Requirement Updated: {GetDescription}");
 			OnQuestRequirementUpdated?.Invoke();
 		}
-
-		public delegate void QuestRequirementCompletedEventHandler();
-		public event QuestRequirementCompletedEventHandler OnQuestRequirementCompleted;
+		
 		public virtual void QuestRequirementCompleted()
 		{
 			Completed = true;
+			if (Waypoint != null && !Waypoint.Equals(null))
+			{
+				Waypoint.Remove();
+			}
 			OnQuestRequirementCompleted?.Invoke();
 		}
 
 		public virtual string GetDescription => description;
 
-		public virtual string GetWaypointID => WaypointID;
+		public string SaveTagName => $"{SAVE_TAG_NAME}:{id}";
 
-		public virtual void Activate() => active = true;
-
-		public string SaveTagName => $"Quest Requirement:{id}";
-
-		private const string DESCRIPTION_VAR_NAME = "Description",
+		private const string SAVE_TAG_NAME = "Quest Requirement",
+			DESCRIPTION_VAR_NAME = "Description",
 			WAYPOINTID_VAR_NAME = "Waypoint ID",
 			COMPLETED_VAR_NAME = "Completed",
 			ACTIVE_VAR_NAME = "Active",
-			REQUIREMENT_TYPE_VAR_NAME = "Requirement Type";
-
-		public abstract string GetRequirementType();
+			REQUIREMENT_TYPE_VAR_NAME = "Requirement Type",
+			REQUIREMENT_ID_VAR_NAME = "Requirement ID",
+			WAYPOINT_REMOVAL_VAR_NAME = "Remove Waypoint On Completion";
 
 		public virtual void Save(string filename, SaveTag parentTag)
 		{
@@ -59,7 +69,7 @@ namespace QuestSystem
 			DataModule module = new DataModule(DESCRIPTION_VAR_NAME, description);
 			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
 			//save requirement type
-			module = new DataModule(REQUIREMENT_TYPE_VAR_NAME, GetRequirementType());
+			module = new DataModule(REQUIREMENT_TYPE_VAR_NAME, GetType().AssemblyQualifiedName);
 			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
 			//save waypoint ID
 			module = new DataModule(WAYPOINTID_VAR_NAME, WaypointID);
@@ -67,9 +77,119 @@ namespace QuestSystem
 			//save completed state
 			module = new DataModule(COMPLETED_VAR_NAME, Completed);
 			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
-			//save active state
-			module = new DataModule(ACTIVE_VAR_NAME, active);
+			//save requirement ID
+			module = new DataModule(REQUIREMENT_ID_VAR_NAME, id);
 			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
+			//save waypoint removal option
+			module = new DataModule(WAYPOINT_REMOVAL_VAR_NAME, RemoveWaypointOnCompletion);
+			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
+		}
+
+		public static bool RecogniseTag(SaveTag tag)
+		{
+			return tag.TagName.StartsWith(SAVE_TAG_NAME);
+		}
+
+		public static QuestRequirement LoadQuestRequirementFromFile(string filename, SaveTag tag)
+		{
+			DataModule typeModule = UnifiedSaveLoad.GetModuleOfParameter(filename, tag, REQUIREMENT_TYPE_VAR_NAME);
+			Type requirementType = Type.GetType(typeModule.data);
+			Type baseRequirementType = typeof(QuestRequirement);
+			if (requirementType == null
+			    || requirementType == baseRequirementType
+			    || !requirementType.IsSubclassOf(baseRequirementType))
+			{
+				Debug.Log("Requirement type data could not be parsed.");
+				return null;
+			}
+
+			QuestRequirement qr = (QuestRequirement) Activator.CreateInstance(requirementType, true);
+
+			UnifiedSaveLoad.IterateTagContents(
+				filename,
+				tag,
+				parameterCallBack: module => qr.ApplyData(module),
+				subtagCallBack: subtag => qr.CheckSubtag(filename, subtag));
+			
+			return qr;
+		}
+
+		protected virtual bool ApplyData(DataModule module)
+		{
+			switch (module.parameterName)
+			{
+				default:
+					return false;
+				case DESCRIPTION_VAR_NAME:
+				{
+					description = module.data;
+					break;
+				}
+				case WAYPOINTID_VAR_NAME:
+				{
+					WaypointID = module.data;
+					if (WaypointID != string.Empty)
+					{
+						IUnique obj = UniqueIDGenerator.GetObjectByID(WaypointID);
+						if (obj != null && obj is IWaypoint wp)
+						{
+							Waypoint = wp;
+						}
+						else
+						{
+							UniqueIDGenerator.OnIDUpdated += WaitForObject;
+
+							void WaitForObject(string ID)
+							{
+								if (ID != WaypointID) return;
+								IUnique o = UniqueIDGenerator.GetObjectByID(ID);
+								if (o != null && o is IWaypoint w)
+								{
+									Waypoint = w;
+									UniqueIDGenerator.OnIDUpdated -= WaitForObject;
+								}
+							}
+						}
+					}
+
+					break;
+				}
+				case COMPLETED_VAR_NAME:
+				{
+					bool foundVal = bool.TryParse(module.data, out bool val);
+					if (foundVal)
+					{
+						Completed = val;
+					}
+					else
+					{
+						Debug.Log("Completed data could not be parsed.");
+					}
+
+					break;
+				}
+				case REQUIREMENT_ID_VAR_NAME:
+				{
+					bool foundVal = int.TryParse(module.data, out int val);
+					if (foundVal)
+					{
+						id = val;
+					}
+					else
+					{
+						Debug.Log("Requirement ID data could not be parsed.");
+					}
+
+					break;
+				}
+			}
+
+			return true;
+		}
+
+		protected virtual bool CheckSubtag(string filename, SaveTag subtag)
+		{
+			return false;
 		}
 	}
 }

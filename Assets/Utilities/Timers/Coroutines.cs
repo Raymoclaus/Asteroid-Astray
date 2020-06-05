@@ -1,7 +1,7 @@
-﻿using System;
+﻿using CustomYieldInstructions;
+using System;
 using System.Collections;
 using UnityEngine;
-using CustomYieldInstructions;
 
 public static class Coroutines
 {

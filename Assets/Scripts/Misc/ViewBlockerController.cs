@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class ViewBlockerController : MonoBehaviour
@@ -10,7 +9,12 @@ public class ViewBlockerController : MonoBehaviour
 	private void Awake()
 	{
 		cGroup.alpha = 1f;
-		SceneryController.AddListener(() => StartCoroutine(Reveal()));
+
+		SceneryController sc = FindObjectOfType<SceneryController>();
+		if (sc != null)
+		{
+			sc.OnStarFieldCreated.RunWhenReady(() => StartCoroutine(Reveal()));
+		}
 	}
 
 	private IEnumerator Reveal()

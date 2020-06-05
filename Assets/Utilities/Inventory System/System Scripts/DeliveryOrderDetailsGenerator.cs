@@ -1,6 +1,6 @@
-﻿using System;
+﻿using GenericExtensions;
+using System;
 using System.Text;
-using GenericExtensions;
 
 public static class DeliveryOrderDetailsGenerator
 {

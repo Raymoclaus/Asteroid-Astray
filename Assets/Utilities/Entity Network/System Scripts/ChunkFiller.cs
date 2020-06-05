@@ -1,6 +1,6 @@
-﻿using UnityEngine;
+﻿using CustomDataTypes;
 using System.Collections.Generic;
-using CustomDataTypes;
+using UnityEngine;
 
 public class ChunkFiller : MonoBehaviour
 {
@@ -8,11 +8,17 @@ public class ChunkFiller : MonoBehaviour
 	private Vector2 _prevPos = Vector2.positiveInfinity;
 	public int FillRange = 2;
 	[HideInInspector] public int RangeIncrease;
+	private static EntityGenerator _entityGenerator;
 
 	private void Start()
 	{
 		enabled = false;
-		LoadingController.AddListener(Initialise);
+
+		LoadingController loadingController = FindObjectOfType<LoadingController>();
+		if (loadingController != null)
+		{
+			loadingController.OnLoadingComplete.RunWhenReady(Initialise);
+		}
 	}
 
 	private void Initialise()
@@ -26,6 +32,15 @@ public class ChunkFiller : MonoBehaviour
 	private void Update()
 	{
 		CheckForMovement();
+	}
+
+	private static EntityGenerator EntityGenerator
+	{
+		get
+		{
+			if (_entityGenerator != null && !_entityGenerator.Equals(null)) return _entityGenerator;
+			return _entityGenerator = FindObjectOfType<EntityGenerator>();
+		}
 	}
 
 	public void CheckForMovement()

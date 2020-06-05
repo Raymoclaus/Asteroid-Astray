@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-namespace AttackData
+﻿namespace AttackData
 {
 	public class DestroyOnContactWithLayersComponent : LayerComponent
 	{

@@ -1,14 +1,12 @@
-﻿using System;
+﻿using CustomDataTypes;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using CustomDataTypes;
 using Random = UnityEngine.Random;
 
 public class EntityGenerator : MonoBehaviour
 {
-	private static EntityGenerator instance;
-	
 	//keeps track of whether chunks have been filled already. Prevents chunk from refilling if emptied by player
 	private List<List<List<bool>>> wasFilled = new List<List<List<bool>>>();
 	//List of empty game objects to store entities in and keep the hierarchy organised
@@ -18,71 +16,64 @@ public class EntityGenerator : MonoBehaviour
 	//maximum amount of chunks to fill per frame
 	private int maxChunkBatchFill = 5;
 	private bool batcherRunning = false;
-	private static event System.Action OnPrefabsLoaded;
+	private EntityNetwork _entityNetwork;
+	public InvocableOneShotEvent OnPrefabsLoaded = new InvocableOneShotEvent();
 
 	private void Awake()
 	{
-		if (instance != this && instance != null)
-		{
-			Destroy(gameObject);
-			return;
-		}
-		instance = this;
-
 		LoadPrefabs();
 		
 		SteamPunkConsole.GetCommandsFromType(GetType());
 	}
 
-	public static bool IsReady
-		=> instance != null
-		&& EntityPrefabLoader.IsReady;
-
-	public static void AddListener(System.Action action)
+	private EntityNetwork EntityNetwork
 	{
-		if (IsReady)
+		get
 		{
-			action?.Invoke();
-		}
-		else if (action != null)
-		{
-			OnPrefabsLoaded += action;
+			if (_entityNetwork != null && !_entityNetwork.Equals(null)) return _entityNetwork;
+			return _entityNetwork = FindObjectOfType<EntityNetwork>();
 		}
 	}
 
-	public static List<Entity> SpawnEntity(SpawnableEntity se)
+	public static bool IsReady
+		=> EntityPrefabLoader.IsReady;
+
+	public List<Entity> SpawnEntity(SpawnableEntity se)
 	{
 		if (se == null) return null;
 
-		ChunkCoords cc = instance.ClosestValidNonFilledChunk(se);
+		ChunkCoords cc = ClosestValidNonFilledChunk(se);
 		if (cc == ChunkCoords.Invalid) return null;
 
 		ChunkCoords emptyChunk = GetNearbyEmptyChunk();
 		return SpawnEntityInChunk(se, emptyChunk);
 	}
 
-	public static List<Entity> SpawnEntity(Entity e)
+	public List<Entity> SpawnEntity(Entity e)
 	{
 		if (e == null) return null;
 
-		SpawnableEntity se = GetSpawnableEntity(e);
+		SpawnableEntity se = GetSpawnableEntityByPrefabReference(e);
 		return SpawnEntity(se);
 	}
 
-	public static List<Entity> SpawnEntity(string entityName)
+	public List<Entity> SpawnEntity(string entityName)
 	{
-		SpawnableEntity se = GetSpawnableEntity(entityName);
+		SpawnableEntity se = GetSpawnableEntityByEntityName(entityName);
 		return SpawnEntity(se);
 	}
 
-	public static SpawnableEntity GetSpawnableEntity(string entityName)
-		=> EntityPrefabLoader.GetSpawnableEntity(entityName);
+	public static SpawnableEntity GetSpawnableEntityByEntityName(string entityName)
+		=> EntityPrefabLoader.GetSpawnableEntityByEntityName(entityName);
 
-	public static SpawnableEntity GetSpawnableEntity(Entity e)
-		=> EntityPrefabLoader.GetSpawnableEntity(e);
+	public static SpawnableEntity GetSpawnableEntityByPrefabReference(Entity e)
+		=> EntityPrefabLoader.GetSpawnableEntityByPrefabReference(e);
 
-	public static SpawnableEntity GetSpawnableEntity(System.Type type)
-		=> EntityPrefabLoader.GetSpawnableEntity(type);
+	public static SpawnableEntity GetSpawnableEntityByPrefabType(Type type)
+		=> EntityPrefabLoader.GetSpawnableEntityByPrefabType(type);
+
+	public static SpawnableEntity GetSpawnableEntityByFileName(string filename)
+		=> EntityPrefabLoader.GetSpawnableEntityByFileName(filename);
 
 	private ChunkCoords ClosestValidNonFilledChunk(SpawnableEntity se)
 	{
@@ -100,29 +91,28 @@ public class EntityGenerator : MonoBehaviour
 					}
 
 					return false;
-				},
-				true);
+				});
 			minRange++;
 		}
 		return coords;
 	}
 
-	public static void FillChunk(ChunkCoords cc, bool excludePriority = false)
+	public void FillChunk(ChunkCoords cc, bool excludePriority = false)
 	{
 		//don't bother if the given coordinates are not valid
 		if (!cc.IsValid()) return;
 		//don't bother if the coordinates have already been filled
-		if (instance.Chunk(cc)) return;
+		if (Chunk(cc)) return;
 		//flag that this chunk coordinates was filled
-		instance.Column(cc)[cc.y] = true;
+		Column(cc)[cc.y] = true;
 
 		//look through the space priority entities and check if one may spawn
-		SpawnableEntity se = instance.ChooseEntityToSpawn(
+		SpawnableEntity se = ChooseEntityToSpawn(
 			ChunkCoords.GetCenterCell(cc, EntityNetwork.CHUNK_SIZE).magnitude);
 		SpawnEntityInChunkNonAlloc(se, cc);
 	}
 
-	public static List<Entity> SpawnEntityInChunk(SpawnableEntity se, ChunkCoords cc)
+	public List<Entity> SpawnEntityInChunk(SpawnableEntity se, ChunkCoords cc)
 	{
 		if (se == null) return null;
 		//determine how many to spawn
@@ -135,18 +125,18 @@ public class EntityGenerator : MonoBehaviour
 		return spawnedEntities;
 	}
 
-	public static void SpawnEntityInChunkNonAlloc(SpawnableEntity se, ChunkCoords cc)
+	public void SpawnEntityInChunkNonAlloc(SpawnableEntity se, ChunkCoords cc)
 	{
 		if (se == null) return;
 		//determine how many to spawn
 		int numToSpawn = Random.Range(se.minSpawnCountInChunk, se.maxSpawnCountInChunk + 1);
 		for (int j = 0; j < numToSpawn; j++)
 		{
-			SpawnOneEntityInChunkNonAlloc(se, cc);
+			SpawnOneEntityInChunk(se, cc);
 		}
 	}
 
-	public static Entity SpawnOneEntityInChunk(SpawnableEntity se, ChunkCoords cc)
+	public Entity SpawnOneEntityInChunk(SpawnableEntity se, ChunkCoords cc)
 	{
 		//pick a position within the chunk coordinates
 		Vector2 spawnPos = Vector2.zero;
@@ -161,39 +151,22 @@ public class EntityGenerator : MonoBehaviour
 				spawnPos = ChunkCoords.GetCenterCell(cc, EntityNetwork.CHUNK_SIZE);
 				break;
 		}
+		return InstantiateEntity(se, spawnPos);
+	}
+
+	public Entity InstantiateEntity(SpawnableEntity se, Vector2 spawnPos)
+	{
 		//spawn it
 		Entity newEntity = Instantiate(
 			se.prefab,
 			spawnPos,
 			Quaternion.identity,
-			instance.holders[se.entityName].transform);
+			holders[se.entityName].transform);
+		newEntity.PrefabID = se.name;
 		return newEntity;
 	}
 
-	public static void SpawnOneEntityInChunkNonAlloc(SpawnableEntity se, ChunkCoords cc)
-	{
-		//pick a position within the chunk coordinates
-		Vector2 spawnPos = Vector2.zero;
-		Vector2Pair range = ChunkCoords.GetCellArea(cc, EntityNetwork.CHUNK_SIZE);
-		switch (se.posType)
-		{
-			case SpawnableEntity.SpawnPosition.Random:
-				spawnPos.x = Random.Range(range.a.x, range.b.x);
-				spawnPos.y = Random.Range(range.a.y, range.b.y);
-				break;
-			case SpawnableEntity.SpawnPosition.Center:
-				spawnPos = ChunkCoords.GetCenterCell(cc, EntityNetwork.CHUNK_SIZE);
-				break;
-		}
-		//spawn it
-		Entity newEntity = Instantiate(
-			se.prefab,
-			spawnPos,
-			Quaternion.identity,
-			instance.holders[se.entityName].transform);
-	}
-
-	public static ChunkCoords GetNearbyEmptyChunk()
+	public ChunkCoords GetNearbyEmptyChunk()
 	{
 		int range = 0;
 		ChunkCoords pos = new ChunkCoords(IntPair.zero, EntityNetwork.CHUNK_SIZE);
@@ -204,7 +177,7 @@ public class EntityGenerator : MonoBehaviour
 				for (pos.y = -range; pos.y <= range;)
 				{
 					ChunkCoords validCC = pos.Validate();
-					if (!instance.ChunkExists(validCC) || !instance.Chunk(validCC)) return validCC;
+					if (!ChunkExists(validCC) || !Chunk(validCC)) return validCC;
 					pos.y += pos.x <= -range || pos.x >= range ?
 						1 : range * 2;
 				}
@@ -216,7 +189,7 @@ public class EntityGenerator : MonoBehaviour
 		return ChunkCoords.Invalid;
 	}
 
-	public static List<Entity> SpawnEntityInChunkNorthOfCamera(SpawnableEntity se)
+	public List<Entity> SpawnEntityInChunkNorthOfCamera(SpawnableEntity se)
 	{
 		Vector3 cameraPos = Camera.main.transform.position;
 		ChunkCoords cc = new ChunkCoords(cameraPos, EntityNetwork.CHUNK_SIZE);
@@ -226,13 +199,13 @@ public class EntityGenerator : MonoBehaviour
 	}
 
 	[SteamPunkConsoleCommand(command = "Spawn", info = "Spawns named entity in chunk north of the camera.")]
-	public static List<Entity> SpawnEntityInChunkNorthOfCamera(string entityName)
+	public List<Entity> SpawnEntityInChunkNorthOfCamera(string entityName)
 	{
 		Vector3 cameraPos = Camera.main.transform.position;
 		ChunkCoords cc = new ChunkCoords(cameraPos, EntityNetwork.CHUNK_SIZE);
 		cc.y++;
 		cc = cc.Validate();
-		SpawnableEntity se = GetSpawnableEntity(entityName);
+		SpawnableEntity se = GetSpawnableEntityByEntityName(entityName);
 		return SpawnEntityInChunk(se, cc);
 	}
 
@@ -272,7 +245,7 @@ public class EntityGenerator : MonoBehaviour
 		return cachedChances;
 	}
 
-	public static void InstantFillChunks(List<ChunkCoords> coords)
+	public void InstantFillChunks(List<ChunkCoords> coords)
 	{
 		for (int i = 0; i < coords.Count; i++)
 		{
@@ -300,12 +273,12 @@ public class EntityGenerator : MonoBehaviour
 		}
 	}
 
-	public static void EnqueueBatchOrder(List<ChunkCoords> coords)
+	public void EnqueueBatchOrder(List<ChunkCoords> coords)
 	{
-		instance.chunkBatches.AddRange(coords);
-		if (!instance.batcherRunning)
+		chunkBatches.AddRange(coords);
+		if (!batcherRunning)
 		{
-			instance.StartCoroutine(instance.ChunkBatchOrder());
+			StartCoroutine(ChunkBatchOrder());
 		}
 	}
 

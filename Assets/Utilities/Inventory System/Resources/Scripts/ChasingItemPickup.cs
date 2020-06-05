@@ -1,6 +1,6 @@
-﻿using UnityEngine;
+﻿using GenericExtensions;
 using MovementBehaviours;
-using GenericExtensions;
+using UnityEngine;
 
 namespace InventorySystem
 {

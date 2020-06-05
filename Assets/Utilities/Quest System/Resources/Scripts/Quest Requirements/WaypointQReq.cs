@@ -1,9 +1,14 @@
-﻿using SaveSystem;
+﻿using UnityEngine;
 
 namespace QuestSystem.Requirements
 {
 	public class WaypointQReq : QuestRequirement
 	{
+		protected WaypointQReq() : base()
+		{
+
+		}
+
 		public WaypointQReq(IWaypoint waypoint, string description)
 			: base(description, waypoint)
 		{
@@ -13,24 +18,24 @@ namespace QuestSystem.Requirements
 		public override void Activate()
 		{
 			base.Activate();
-			waypoint.OnWaypointReached += EvaluateEvent;
+			Waypoint.OnWaypointReached += EvaluateEvent;
 		}
 
 		public override void QuestRequirementCompleted()
 		{
 			base.QuestRequirementCompleted();
-			waypoint.OnWaypointReached -= EvaluateEvent;
+			Waypoint.OnWaypointReached -= EvaluateEvent;
 		}
 
 		private void EvaluateEvent()
 		{
-			if (Completed || !active) return;
+			if (Completed)
+			{
+				Debug.Log("Quest requirement already completed.");
+				return;
+			}
 
 			QuestRequirementCompleted();
 		}
-
-		private const string REQUIREMENT_TYPE = "Waypoint Requirement";
-
-		public override string GetRequirementType() => REQUIREMENT_TYPE;
 	}
 }

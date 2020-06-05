@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using TabbedMenuSystem;
 using UnityEngine;
 
 namespace InventorySystem.UI

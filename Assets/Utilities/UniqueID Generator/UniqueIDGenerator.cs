@@ -1,15 +1,18 @@
-﻿using System;
+﻿using SaveSystem;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using SaveSystem;
+using UnityEngine;
 
 public static class UniqueIDGenerator
 {
 	private static Dictionary<string, IUnique> uniqueIDs = new Dictionary<string, IUnique>();
-	private static Random r = new Random();
 	private const int MIN_LENGTH = 8;
+
+	public static InvocableOneShotEvent OnLoaded = new InvocableOneShotEvent();
+	public static event Action<string> OnIDUpdated;
 
 	/// <summary>
 	/// Adds an ID to the list that is not attached to an object.
@@ -20,6 +23,7 @@ public static class UniqueIDGenerator
 	{
 		if (IDExists(ID)) return false;
 		uniqueIDs.Add(ID, null);
+		OnIDUpdated?.Invoke(ID);
 		return true;
 	}
 
@@ -39,10 +43,24 @@ public static class UniqueIDGenerator
 		}
 		else if (IDExists(obj.UniqueID))
 		{
-			return GetObjectByID(obj.UniqueID) == obj;
+			IUnique objAtID = GetObjectByID(obj.UniqueID);
+			if (objAtID == obj)
+			{
+				return true;
+			}
+			else if (objAtID == null)
+			{
+				SetObjectToID(obj.UniqueID, obj);
+				return true;
+			}
+			else
+			{
+				return false;
+			}
 		}
 		
 		uniqueIDs.Add(obj.UniqueID, obj);
+		OnIDUpdated?.Invoke(obj.UniqueID);
 		return true;
 	}
 	
@@ -78,6 +96,7 @@ public static class UniqueIDGenerator
 		}
 
 		uniqueIDs[ID] = obj;
+		OnIDUpdated?.Invoke(obj.UniqueID);
 		return true;
 	}
 
@@ -92,7 +111,15 @@ public static class UniqueIDGenerator
 	{
 		if (obj == null) return false;
 		if (GetObjectByID(obj.UniqueID) != obj) return false;
-		return uniqueIDs.Remove(obj.UniqueID);
+		if (uniqueIDs.Remove(obj.UniqueID))
+		{
+			OnIDUpdated?.Invoke(obj.UniqueID);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 
 	/// <summary>
@@ -109,7 +136,16 @@ public static class UniqueIDGenerator
 		{
 			obj.UniqueID = null;
 		}
-		return uniqueIDs.Remove(ID);
+
+		if (uniqueIDs.Remove(ID))
+		{
+			OnIDUpdated?.Invoke(obj.UniqueID);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 
 	public static bool IDExists(string ID)
@@ -137,23 +173,34 @@ public static class UniqueIDGenerator
 		=> !IDExists(ID)
 		   && ID.Length >= MIN_LENGTH;
 
-	private const string FILE_NAME = "Generated IDs.txt";
+	public static void Reset() => uniqueIDs.Clear();
 
+	private const string TEMP_SAVE_FILE_NAME = "Generated IDs";
+	
 	public static void Save()
 	{
-		string path = $"{SaveLoad.PathToCurrentSave}{FILE_NAME}";
+		string path = SaveLoad.PathToCurrentSave;
+		string filename = SaveLoad.RelativeKeyPath(TEMP_SAVE_FILE_NAME);
 		string[] IDs = uniqueIDs.Keys.ToArray();
-		File.WriteAllLines(path, uniqueIDs.Keys);
+		Directory.CreateDirectory(path);
+		File.WriteAllLines(filename, uniqueIDs.Keys);
 	}
 
 	public static void Load()
 	{
-		string path = $"{SaveLoad.PathToCurrentSave}{FILE_NAME}";
-		uniqueIDs.Clear();
+		Debug.Log("Unique ID Generator: Begin Loading");
 
-		foreach (string line in File.ReadLines(path))
+		Reset();
+
+		if (SaveLoad.RelativeSaveFileExists(TEMP_SAVE_FILE_NAME))
 		{
-			AddID(line);
+			foreach (string line in SaveLoad.LoadTextLines(TEMP_SAVE_FILE_NAME))
+			{
+				AddID(line);
+			}
 		}
+
+		OnLoaded.Invoke();
+		Debug.Log("Unique ID Generator: Finished Loading");
 	}
 }

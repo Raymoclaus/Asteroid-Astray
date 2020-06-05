@@ -5,17 +5,17 @@ namespace SaveSystem
 {
 	public class SaveTag
 	{
-		public string Tag { get; set; }
+		public string TagName { get; set; }
 		public SaveTag PriorTag { get; set; }
 
 		/// <summary>
 		/// Used for indented tags with a parent tag
 		/// </summary>
-		/// <param name="tag">Name of tag</param>
+		/// <param name="tagName">Name of tag</param>
 		/// <param name="priorTag">Name of parent tag</param>
-		public SaveTag(string tag, SaveTag priorTag)
+		public SaveTag(string tagName, SaveTag priorTag)
 		{
-			Tag = tag;
+			TagName = tagName;
 			if (priorTag != this)
 			{
 				PriorTag = priorTag;
@@ -25,8 +25,8 @@ namespace SaveSystem
 		/// <summary>
 		/// Used for base level tags with no parent tags
 		/// </summary>
-		/// <param name="tag"></param>
-		public SaveTag(string tag) : this(tag, null)
+		/// <param name="tagName"></param>
+		public SaveTag(string tagName) : this(tagName, null)
 		{
 
 		}
@@ -67,11 +67,11 @@ namespace SaveSystem
 
 		public override string ToString()
 		{
-			StringBuilder sb = new StringBuilder(Tag);
+			StringBuilder sb = new StringBuilder(TagName);
 			SaveTag check = PriorTag;
 			while (check != null)
 			{
-				sb.Insert(0, $"{check.Tag} > ");
+				sb.Insert(0, $"{check.TagName} > ");
 				check = check.PriorTag;
 			}
 
@@ -88,8 +88,8 @@ namespace SaveSystem
 				return aIsNull == bIsNull;
 			}
 
-			string checkA = a.Tag;
-			string checkB = b.Tag;
+			string checkA = a.TagName;
+			string checkB = b.TagName;
 
 			//check if tags are the same
 			if (checkA != checkB) return false;
@@ -117,8 +117,8 @@ namespace SaveSystem
 				return aIsNull != bIsNull;
 			}
 
-			string checkA = a.Tag;
-			string checkB = b.Tag;
+			string checkA = a.TagName;
+			string checkB = b.TagName;
 
 			//check if tags are the same
 			if (checkA != checkB) return true;

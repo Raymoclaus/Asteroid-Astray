@@ -7,14 +7,14 @@ namespace StatisticsTracker
 	public class FloatStatTracker : StatTracker
 	{
 		public event Action<float, float> OnValueUpdated;
-		public float value;
-		public float defaultValue;
+		[SerializeField] private float value;
+		[SerializeField] private float defaultValue;
 
 		public override Type FieldType => value.GetType();
 
 		public override string ValueString => value.ToString();
 
-		public override bool Parse(string valueString)
+		public override bool TryParse(string valueString)
 		{
 			bool successful = float.TryParse(valueString, out float val);
 			if (!successful)
@@ -26,6 +26,8 @@ namespace StatisticsTracker
 			SetValue(val);
 			return true;
 		}
+
+		public float Value => value;
 
 		public void SetValue(float val)
 		{

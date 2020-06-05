@@ -1,7 +1,7 @@
-﻿using UnityEngine;
+﻿using CustomDataTypes;
 using MovementBehaviours;
 using System;
-using CustomDataTypes;
+using UnityEngine;
 
 namespace PhysicsControllers
 {

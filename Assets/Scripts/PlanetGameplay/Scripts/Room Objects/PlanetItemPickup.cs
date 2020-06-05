@@ -1,6 +1,4 @@
 ﻿using InventorySystem;
-using System.Collections;
-using System.Collections.Generic;
 using TriggerSystem;
 using TriggerSystem.MessageReceivers;
 using UnityEngine;

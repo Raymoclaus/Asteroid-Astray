@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
+﻿using System.Reflection;
 
 namespace SaveSystem
 {
@@ -79,5 +77,19 @@ namespace SaveSystem
 				parameterName,
 				parameterType,
 				data);
+
+		public static bool operator ==(DataModule a, DataModule b)
+		{
+			return a.parameterName == b.parameterName
+			       && a.parameterType == b.parameterType
+			       && a.data == b.data;
+		}
+
+		public static bool operator !=(DataModule a, DataModule b)
+		{
+			return a.parameterName != b.parameterName
+			       || a.parameterType != b.parameterType
+			       || a.data != b.data;
+		}
 	}
 }

@@ -1,6 +1,4 @@
-﻿using SaveSystem;
-
-namespace QuestSystem
+﻿namespace QuestSystem
 {
 	public class ActionQReward : QuestReward
 	{

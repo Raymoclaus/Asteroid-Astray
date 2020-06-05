@@ -1,5 +1,5 @@
-﻿using UnityEngine;
-using InventorySystem;
+﻿using InventorySystem;
+using UnityEngine;
 
 namespace TriggerSystem.MessageReceivers
 {

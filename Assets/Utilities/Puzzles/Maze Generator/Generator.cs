@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using CustomDataTypes;
+﻿using CustomDataTypes;
+using System.Collections.Generic;
 
 namespace Puzzles.Maze
 {

@@ -1,9 +1,8 @@
 ﻿using System;
-using UnityEngine;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using TMPro;
+using UnityEngine;
 
 namespace InputHandlerSystem.UI
 {

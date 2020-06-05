@@ -1,6 +1,4 @@
 ﻿using UnityEngine;
-using System;
-using CustomDataTypes;
 
 [CreateAssetMenu(menuName = "Scriptable Objects/Spawnable Entity")]
 public class SpawnableEntity : ScriptableObject

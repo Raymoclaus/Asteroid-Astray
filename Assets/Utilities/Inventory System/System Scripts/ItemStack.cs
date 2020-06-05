@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using SaveSystem;
 using UnityEngine;
 
 namespace InventorySystem
@@ -490,19 +489,16 @@ namespace InventorySystem
 			}
 			catch (ArgumentException e)
 			{
-				Debug.LogError(e);
 				result = new ItemStack();
 				return false;
 			}
 			catch (IndexOutOfRangeException e)
 			{
-				Debug.LogError(e);
 				result = new ItemStack();
 				return false;
 			}
 			catch (Exception e)
 			{
-				Debug.LogError(e);
 				result = new ItemStack();
 				return false;
 			}

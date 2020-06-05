@@ -1,8 +1,8 @@
-﻿using UnityEngine;
+﻿using InventorySystem;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using PR = PromptSystem.PromptRequests;
-using InventorySystem;
 
 public class TutorialPrompts : MonoBehaviour
 {
@@ -17,7 +17,11 @@ public class TutorialPrompts : MonoBehaviour
 
 	private void Awake()
 	{
-		LoadingController.AddListener(SetUp);
+		LoadingController loadingController = FindObjectOfType<LoadingController>();
+		if (loadingController != null)
+		{
+			loadingController.OnLoadingComplete.RunWhenReady(SetUp);
+		}
 	}
 
 	private void SetUp()

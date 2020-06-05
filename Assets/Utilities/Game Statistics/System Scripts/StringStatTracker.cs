@@ -7,20 +7,22 @@ namespace StatisticsTracker
 	public class StringStatTracker : StatTracker
 	{
 		public event Action<string, string> OnValueUpdated;
-		public string value;
-		public string defaultValue;
+		[SerializeField] private string value;
+		[SerializeField] private string defaultValue;
 
 		public override Type FieldType => value.GetType();
 
 		public override string ValueString => value;
 
-		public override bool Parse(string valueString)
+		public override bool TryParse(string valueString)
 		{
 			SetValue(valueString);
 			return true;
 		}
 
 		public override void ResetToDefault() => SetValue(defaultValue);
+
+		public string Value => value;
 
 		public void SetValue(string val)
 		{

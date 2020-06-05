@@ -30,9 +30,9 @@ public class Asteroid : Entity
 
 	[SerializeField] private LimitedScriptedDrops scriptedDrops;
 
-	protected override void Awake()
+	protected override void Initialise()
 	{
-		base.Awake();
+		base.Initialise();
 		RandomMovement();
 	}
 
@@ -77,7 +77,7 @@ public class Asteroid : Entity
 	{
 		base.DropLoot(target, dropModifier);
 
-		if (scriptedDrops.scriptedDropsActive)
+		if (scriptedDrops.ScriptedDropsIsActive)
 		{
 			LootGroup group = scriptedDrops.GetScriptedDrop(target);
 			List<ItemStack> stacks = group.GetStacks;

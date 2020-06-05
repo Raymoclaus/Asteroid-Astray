@@ -1,5 +1,5 @@
-﻿using System.Collections;
-using EquipmentSystem;
+﻿using EquipmentSystem;
+using System.Collections;
 using UnityEngine;
 using ValueComponents;
 

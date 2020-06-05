@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using StatisticsTracker;
+﻿using StatisticsTracker;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class ReuniteWithDendroCutscene : MonoBehaviour
@@ -11,7 +11,7 @@ public class ReuniteWithDendroCutscene : MonoBehaviour
 
 	private void Start()
 	{
-		if (hubEnteredCounter.value == 1)
+		if (hubEnteredCounter.Value == 1)
 		{
 			//activate cutscene-specific objects
 			ActivateGameObjects(cutsceneSpecificObjects, true);

@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
-using AttackData;
+﻿using AttackData;
 using InputHandlerSystem;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace EquipmentSystem

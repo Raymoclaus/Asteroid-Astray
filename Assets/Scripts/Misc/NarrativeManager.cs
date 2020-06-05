@@ -1,35 +1,29 @@
 ﻿using CustomDataTypes;
+using DialogueSystem;
+using GenericExtensions;
 using InventorySystem;
 using QuestSystem;
 using QuestSystem.Requirements;
+using SaveSystem;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DialogueSystem;
-using GenericExtensions;
 using TriggerSystem;
 using UnityEngine;
 
 public class NarrativeManager : MonoBehaviour
 {
-	[SerializeField] private LimitedScriptedDrops scriptedDrops;
 	public static Character MainCharacter { get; private set; }
-	public static Action OnMainCharacterUpdated;
-	private Quester MainQuester { get; set; }
-	[SerializeField] private IInteractor playerTriggerer;
-	private IInteractor PlayerTriggerer
-		=> playerTriggerer ?? (playerTriggerer = MainCharacter.GetComponent<IInteractor>());
-	private MainHatchPrompt _mainHatch;
-	private MainHatchPrompt MainHatch
-		=> _mainHatch ?? (_mainHatch = FindObjectOfType<MainHatchPrompt>());
-	private IActionTrigger MainHatchTrigger
-		=> MainHatch.GetComponentInChildren<IActionTrigger>();
-	[SerializeField] private DerangedSoloBot derangedSoloBotPrefab;
-	private TutorialPrompts tutPrompts;
-	private TutorialPrompts TutPrompts
-		=> tutPrompts ?? (tutPrompts = FindObjectOfType<TutorialPrompts>());
-
+	public static event Action OnMainCharacterUpdated;
+	public InvocableOneShotEvent OnLoaded = new InvocableOneShotEvent();
 	public bool CanSendDialogue { get; set; } = true;
+	[SerializeField] private LimitedScriptedDrops scriptedDrops;
+	[SerializeField] private IInteractor playerTriggerer;
+	[SerializeField] private Character mainCharacterPrefab;
+	[SerializeField] private DerangedSoloBot derangedSoloBotPrefab;
+	private MainHatchPrompt _mainHatch;
+	private TutorialPrompts tutPrompts;
+	private Quester MainQuester { get; set; }
 
 	[SerializeField] private TY4PlayingUI ty4pUI;
 	[SerializeField] public ConversationWithActions
@@ -49,8 +43,7 @@ public class NarrativeManager : MonoBehaviour
 		questionHowToObtainEnergySourceConversation;
 
 	private List<ConversationWithActions> conversations;
-
-	[SerializeField] private Entity botHivePrefab, soloBotPrefab, mainCharacterPrefab;
+	private EntityGenerator _entityGenerator;
 
 	private void Awake()
 	{
@@ -71,13 +64,24 @@ public class NarrativeManager : MonoBehaviour
 			questionHowToObtainEnergySourceConversation
 		};
 
-		EntityGenerator.AddListener(CreateMainCharacter);
+		OneShotEventGroupWait wait = new OneShotEventGroupWait(false,
+			UniqueIDGenerator.OnLoaded);
+
+		_entityGenerator = FindObjectOfType<EntityGenerator>();
+		if (_entityGenerator != null)
+		{
+			wait.AddEventToWaitFor(_entityGenerator.OnPrefabsLoaded);
+		}
+
+		wait.Start();
+		wait.RunWhenReady(Load);
 	}
 
 	private void OnDestroy()
 	{
 		if (MainQuester == null) return;
-		MainQuester.OnQuestCompleted += EvaluateQuest;
+		MainQuester.OnQuestCompleted += EvaluateCompletedQuest;
+		MainQuester.OnQuestAccepted += EvaluateAcceptedQuest;
 	}
 
 	public static void AddListener(Action action)
@@ -92,14 +96,26 @@ public class NarrativeManager : MonoBehaviour
 		}
 	}
 
+	private MainHatchPrompt MainHatch
+		=> _mainHatch ?? (_mainHatch = FindObjectOfType<MainHatchPrompt>());
+
+	private IActionTrigger MainHatchTrigger
+		=> MainHatch.GetComponentInChildren<IActionTrigger>();
+
+	private IInteractor PlayerTriggerer
+		=> playerTriggerer ?? (playerTriggerer = MainCharacter.GetComponent<IInteractor>());
+
+	private TutorialPrompts TutPrompts
+		=> tutPrompts ?? (tutPrompts = FindObjectOfType<TutorialPrompts>());
+
 	private void CreateMainCharacter()
 	{
-		if (MainCharacter != null) return;
+		Debug.Log("Creating Main Character");
 
-		SpawnableEntity se = EntityGenerator.GetSpawnableEntity(mainCharacterPrefab);
+		SpawnableEntity se = EntityGenerator.GetSpawnableEntityByPrefabReference(mainCharacterPrefab);
 		if (se == null) return;
 
-		List<Entity> spawnedEntities = EntityGenerator.SpawnEntity(se);
+		List<Entity> spawnedEntities = _entityGenerator.SpawnEntity(se);
 		Character c = (Character)spawnedEntities.FirstOrDefault(t => t.IsA<Character>());
 		SetMainCharacter(c);
 	}
@@ -110,59 +126,98 @@ public class NarrativeManager : MonoBehaviour
 
 		if (MainQuester != null)
 		{
-			MainQuester.OnQuestCompleted -= EvaluateQuest;
+			MainQuester.OnQuestCompleted -= EvaluateCompletedQuest;
+			MainQuester.OnQuestAccepted -= EvaluateAcceptedQuest;
 		}
 
+		bool mainCharacterAlreadyFound = MainCharacter != null;
 		MainCharacter = c;
 		MainQuester = MainCharacter.GetComponentInChildren<Quester>();
 		OnMainCharacterUpdated?.Invoke();
 
+		if (!mainCharacterAlreadyFound)
+		{
+			OnLoaded.Invoke();
+			Debug.Log("Main Character found");
+		}
+
 		if (MainQuester != null)
 		{
-			MainQuester.OnQuestCompleted += EvaluateQuest;
+			MainQuester.OnQuestCompleted += EvaluateCompletedQuest;
+			MainQuester.OnQuestAccepted += EvaluateAcceptedQuest;
 		}
 	}
 
-	private void EvaluateQuest(Quest completedQuest)
+	private void EvaluateAcceptedQuest(Quest acceptedQuest)
+	{
+		if (acceptedQuest.CompareName(FirstGatheringQuest))
+		{
+			scriptedDrops.ActivateScriptedDrops(MainCharacter.UniqueID);
+			StartPassiveDialogue(useThrustersConversation);
+			TutPrompts?.drillInputPromptInfo.SetIgnore(false);
+		}
+		else if (acceptedQuest.CompareName(CraftYourFirstRepairKitQuest))
+		{
+			TutPrompts?.pauseInputPromptInfo.SetIgnore(false);
+		}
+		else if (acceptedQuest.CompareName(RepairTheShuttleQuest))
+		{
+			TutPrompts?.repairKitInputPromptInfo.SetIgnore(false);
+		}
+		else if (acceptedQuest.CompareName(ReturnToTheShipQuest))
+		{
+
+		}
+		else if (acceptedQuest.CompareName(FindEnergySourceQuest))
+		{
+
+		}
+		else if (acceptedQuest.CompareName(RechargeTheShipQuest))
+		{
+
+		}
+	}
+
+	private void EvaluateCompletedQuest(Quest completedQuest)
 	{
 		if (completedQuest.CompareName(FirstGatheringQuest))
 		{
-			CompletedFirstGatheringQuest();
+			scriptedDrops.DeactivateScriptedDrops();
+			StartCraftYourFirstRepairKitQuest();
+			StartPassiveDialogue(completedFirstGatheringQuestConversation);
+			TutPrompts?.drillInputPromptInfo.SetIgnore(true);
 		}
 		else if (completedQuest.CompareName(CraftYourFirstRepairKitQuest))
 		{
-			CompletedCraftYourFirstRepairKitQuest();
+			StartRepairTheShuttleQuest();
+			StartPassiveDialogue(useRepairKitConversation);
+			TutPrompts?.pauseInputPromptInfo.SetIgnore(true);
 		}
 		else if (completedQuest.CompareName(RepairTheShuttleQuest))
 		{
-			CompletedRepairTheShuttleQuest();
+			StartReturnToTheShipQuest();
+			StartPassiveDialogue(findShipConversation);
+			TutPrompts?.repairKitInputPromptInfo.SetIgnore(true);
 		}
 		else if (completedQuest.CompareName(ReturnToTheShipQuest))
 		{
-			CompletedReturnToTheShipQuest();
+			StartActiveDialogue(foundShipConversation);
 		}
 		else if (completedQuest.CompareName(FindEnergySourceQuest))
 		{
-			CompletedFindEnergySourceQuest();
+			StartRechargeTheShipQuest();
+			StartPassiveDialogue(acquiredEnergySourceConversation);
 		}
 		else if (completedQuest.CompareName(RechargeTheShipQuest))
 		{
-			CompletedRechargeTheShipQuest();
+			StartActiveDialogue(_rechargingTheShipDialogue);
 		}
 	}
 
-	public void StartFirstGatheringQuest()
-	{
-		if (MainQuester == null) return;
-
-		GiveQuest(MainQuester, FirstGatheringQuest);
-		ActivateScriptedDrops(true);
-		StartPassiveDialogue(useThrustersConversation);
-		TutPrompts?.drillInputPromptInfo.SetIgnore(false);
-	}
+	#region Quest Definitions
 
 	private Quest m_firstGatheringQuest;
-	private Quest FirstGatheringQuest
+	public Quest FirstGatheringQuest
 	{
 		get
 		{
@@ -182,30 +237,14 @@ public class NarrativeManager : MonoBehaviour
 				"Gather materials",
 				"We need some materials so that we can repair our communications system. Once that" +
 				" is done, we should be able to find our way back to Dendro and the ship.",
-				MainQuester, qRewards, qReqs);
+				qRewards, qReqs);
 
 			return m_firstGatheringQuest;
 		}
 	}
 
-	private void CompletedFirstGatheringQuest()
-	{
-		ActivateScriptedDrops(false);
-		StartCraftYourFirstRepairKitQuest();
-		StartPassiveDialogue(completedFirstGatheringQuestConversation);
-		TutPrompts?.drillInputPromptInfo.SetIgnore(true);
-	}
-
-	public void StartCraftYourFirstRepairKitQuest()
-	{
-		if (MainCharacter == null) return;
-
-		GiveQuest(MainQuester, CraftYourFirstRepairKitQuest);
-		TutPrompts?.pauseInputPromptInfo.SetIgnore(false);
-	}
-
 	private Quest m_craftYourFirstRepairKitQuest;
-	private Quest CraftYourFirstRepairKitQuest
+	public Quest CraftYourFirstRepairKitQuest
 	{
 		get
 		{
@@ -220,29 +259,14 @@ public class NarrativeManager : MonoBehaviour
 			m_craftYourFirstRepairKitQuest = new Quest(
 				"Construct a Repair Kit",
 				"Now that we have the necessary materials, we should try constructing a repair kit.",
-				MainQuester, qRewards, qReqs);
+				qRewards, qReqs);
 
 			return m_craftYourFirstRepairKitQuest;
 		}
 	}
 
-	private void CompletedCraftYourFirstRepairKitQuest()
-	{
-		StartRepairTheShuttleQuest();
-		StartPassiveDialogue(useRepairKitConversation);
-		TutPrompts?.pauseInputPromptInfo.SetIgnore(true);
-	}
-
-	public void StartRepairTheShuttleQuest()
-	{
-		if (MainCharacter == null) return;
-
-		GiveQuest(MainQuester, RepairTheShuttleQuest);
-		TutPrompts?.repairKitInputPromptInfo.SetIgnore(false);
-	}
-
 	private Quest m_repairTheShuttleQuest;
-	private Quest RepairTheShuttleQuest
+	public Quest RepairTheShuttleQuest
 	{
 		get
 		{
@@ -256,28 +280,14 @@ public class NarrativeManager : MonoBehaviour
 			m_repairTheShuttleQuest = new Quest(
 				"Repair the Shuttle",
 				"Using this repair kit should be enough to fix the communications system. Then we can finally get back to the ship.",
-				MainQuester, qRewards, qReqs);
+				qRewards, qReqs);
 
 			return m_repairTheShuttleQuest;
 		}
 	}
 
-	private void CompletedRepairTheShuttleQuest()
-	{
-		StartReturnToTheShipQuest();
-		StartPassiveDialogue(findShipConversation);
-		TutPrompts?.repairKitInputPromptInfo.SetIgnore(true);
-	}
-
-	public void StartReturnToTheShipQuest()
-	{
-		if (MainCharacter == null) return;
-
-		GiveQuest(MainQuester, ReturnToTheShipQuest);
-	}
-
 	private Quest m_returnToTheShipQuest;
-	private Quest ReturnToTheShipQuest
+	public Quest ReturnToTheShipQuest
 	{
 		get
 		{
@@ -286,34 +296,24 @@ public class NarrativeManager : MonoBehaviour
 			List<QuestReward> qRewards = new List<QuestReward>();
 
 			List<QuestRequirement> qReqs = new List<QuestRequirement>();
+
 			AttachableWaypoint wp = WaypointManager.CreateAttachableWaypoint(MainHatch, 1f, MainCharacter);
-			qReqs.Add(new WaypointQReq(wp, "Return to the ship."));
+			WaypointQReq waypointRequirement = new WaypointQReq(wp, "Return to the ship.");
+			qReqs.Add(waypointRequirement);
 
 			m_returnToTheShipQuest = new Quest(
 				"Find the ship",
 				"Communication and Navigation systems on the shuttle have been restored," +
 				" but we still can't contact Dendro. Find your way back to the ship and" +
 				" check if Dendro is still alright.",
-				MainQuester, qRewards, qReqs);
+				qRewards, qReqs);
 
 			return m_returnToTheShipQuest;
 		}
 	}
 
-	private void CompletedReturnToTheShipQuest()
-	{
-		StartActiveDialogue(foundShipConversation);
-	}
-
-	public void StartFindEnergySourceQuest()
-	{
-		if (MainCharacter == null) return;
-
-		GiveQuest(MainQuester, FindEnergySourceQuest);
-	}
-
 	private Quest m_findEnergySourceQuest;
-	private Quest FindEnergySourceQuest
+	public Quest FindEnergySourceQuest
 	{
 		get
 		{
@@ -324,48 +324,30 @@ public class NarrativeManager : MonoBehaviour
 			//Check if a deranged bot already exists.
 
 			//create a deranged bot
-			ChunkCoords emptyChunk = EntityGenerator.GetNearbyEmptyChunk();
-			SpawnableEntity se = EntityGenerator.GetSpawnableEntity("deranged bot");
-			Entity newEntity = EntityGenerator.SpawnOneEntityInChunk(se, emptyChunk);
+			ChunkCoords emptyChunk = _entityGenerator.GetNearbyEmptyChunk();
+			SpawnableEntity se = EntityGenerator.GetSpawnableEntityByPrefabReference(derangedSoloBotPrefab);
+			Entity newEntity = _entityGenerator.SpawnOneEntityInChunk(se, emptyChunk);
 
 			List<QuestReward> qRewards = new List<QuestReward>();
 
 			List<QuestRequirement> qReqs = new List<QuestRequirement>();
+
 			AttachableWaypoint wp = WaypointManager.CreateAttachableWaypoint(newEntity, 1f, MainCharacter);
-			Action waypointReachedAction = null;
-			waypointReachedAction = () =>
-			{
-				StartActiveDialogue(foundDerangedBotConversation);
-				wp.OnWaypointReached -= waypointReachedAction;
-			};
-			wp.OnWaypointReached += waypointReachedAction;
-			qReqs.Add(new GatheringQReq(Item.GetItemByName("Corrupted Corvorite"),
-				MainCharacter, "Find the nearby energy source.", wp));
+			GatheringQReq gatheringRequirement = new GatheringQReq(Item.GetItemByName("Corrupted Corvorite"),
+				MainCharacter, "Find the nearby energy source.", wp);
+			qReqs.Add(gatheringRequirement);
 
 			m_findEnergySourceQuest = new Quest(
 				"Acquire an Energy Source",
 				"The ship appears intact, however it is in a powered-down state. We need to find an energy source.",
-				MainQuester, qRewards, qReqs);
+				qRewards, qReqs);
 
 			return m_findEnergySourceQuest;
 		}
 	}
 
-	private void CompletedFindEnergySourceQuest()
-	{
-		StartRechargeTheShipQuest();
-		StartPassiveDialogue(acquiredEnergySourceConversation);
-	}
-
-	public void StartRechargeTheShipQuest()
-	{
-		if (MainCharacter == null) return;
-
-		GiveQuest(MainQuester, RechargeTheShipQuest);
-	}
-
 	private Quest m_rechargeTheShipQuest;
-	private Quest RechargeTheShipQuest
+	public Quest RechargeTheShipQuest
 	{
 		get
 		{
@@ -378,21 +360,38 @@ public class NarrativeManager : MonoBehaviour
 			AttachableWaypoint wp = WaypointManager.CreateAttachableWaypoint(MainHatch, 1f, MainCharacter);
 			ItemCollection delivery = new ItemCollection(new ItemStack(Item.GetItemByName("Corrupted Corvorite")));
 			MainHatch.ExpectDelivery(MainCharacter, delivery);
-			qReqs.Add(new DeliveryQReq(MainHatch, MainCharacter, delivery, "Deliver the energy source to the ship.", wp));
+			DeliveryQReq deliveryRequirement = new DeliveryQReq(MainHatch, MainCharacter, delivery,
+				"Deliver the energy source to the ship.", wp);
+			qReqs.Add(deliveryRequirement);
 
 			m_rechargeTheShipQuest = new Quest(
 				"Recharge the Ship",
 				"Now that we have an energy source, we should take it back to the ship and restore power so that we can finally get back inside.",
-				MainQuester, qRewards, qReqs);
+				qRewards, qReqs);
 
 			return m_rechargeTheShipQuest;
 		}
 	}
 
-	private void CompletedRechargeTheShipQuest()
-	{
-		StartActiveDialogue(_rechargingTheShipDialogue);
-	}
+	#endregion Quest Definitions
+
+	#region StartQuest Methods
+
+	public void StartQuest(Quest q) => MainQuester.AcceptQuest(q);
+
+	public void StartFirstGatheringQuest() => StartQuest(FirstGatheringQuest);
+
+	public void StartCraftYourFirstRepairKitQuest() => StartQuest(CraftYourFirstRepairKitQuest);
+
+	public void StartRepairTheShuttleQuest() => StartQuest(RepairTheShuttleQuest);
+
+	public void StartReturnToTheShipQuest() => StartQuest(ReturnToTheShipQuest);
+
+	public void StartFindEnergySourceQuest() => StartQuest(FindEnergySourceQuest);
+
+	public void StartRechargeTheShipQuest() => StartQuest(RechargeTheShipQuest);
+
+	#endregion StartQuest Methods
 
 	public void BringCharacterThroughMainHatch()
 	{
@@ -401,13 +400,6 @@ public class NarrativeManager : MonoBehaviour
 			MainHatch.BringObjectThroughHatch(obj);
 		}
 	}
-
-	public void ActivateScriptedDrops(bool activate)
-		=> scriptedDrops.scriptedDropsActive = activate;
-
-	public bool TakeItem(ItemObject type, int amount) => MainCharacter.TakeItem(type, amount);
-
-	private void GiveQuest(Quester quester, Quest q) => quester.AcceptQuest(q);
 
 	private ConversationWithActions GetConversation(ConversationEvent ce)
 	{
@@ -432,5 +424,127 @@ public class NarrativeManager : MonoBehaviour
 	public void StartPassiveDialogue(ConversationWithActions cwa)
 	{
 		PassiveDialogueController.StartConversation(cwa);
+	}
+
+	private const string TEMP_SAVE_FILE_NAME = "NarrativeManager_tmp",
+		PERMANENT_SAVE_FILE_NAME = "NarrativeManager",
+		SAVE_TAG_NAME = "NarrativeManager",
+		MAIN_CHARACTER_ID_VAR_NAME = "Main Character ID";
+
+	/// <summary>
+	/// Grabs all data from a temporary save file and places it into a permanent one.
+	/// </summary>
+	public static void PermanentSave()
+	{
+		//check if a temporary save file exists
+		if (!SaveLoad.RelativeSaveFileExists(TEMP_SAVE_FILE_NAME))
+		{
+			Debug.LogWarning("No temporary save file exists for the entity network");
+			return;
+		}
+		//copy data from temporary file
+		string text = SaveLoad.LoadText(TEMP_SAVE_FILE_NAME);
+		//overwrite the permanent file with the copied data
+		SaveLoad.SaveText(PERMANENT_SAVE_FILE_NAME, text);
+		//delete the temporary file
+		DeleteTemporarySave();
+	}
+
+	/// <summary>
+	/// Grabs data from all saveable entities and puts it all into a temporary file.
+	/// </summary>
+	public void TemporarySave()
+	{
+		//delete existing temporary file
+		DeleteTemporarySave();
+		//reopen the file (which will recreate the file if second argument is true)
+		UnifiedSaveLoad.OpenFile(TEMP_SAVE_FILE_NAME, true);
+		//create a main tag
+		SaveTag mainTag = new SaveTag(SAVE_TAG_NAME);
+		//save main character ID
+		DataModule module = new DataModule(MAIN_CHARACTER_ID_VAR_NAME, MainCharacter?.UniqueID ?? string.Empty);
+		UnifiedSaveLoad.UpdateOpenedFile(TEMP_SAVE_FILE_NAME, mainTag, module);
+		//save the data now in temp memory into a file
+		UnifiedSaveLoad.SaveOpenedFile(TEMP_SAVE_FILE_NAME);
+	}
+
+	public static void DeleteTemporarySave()
+	{
+		//delete existing temporary file
+		SaveLoad.DeleteSaveFile(TEMP_SAVE_FILE_NAME);
+		//close the file because it was deleted
+		UnifiedSaveLoad.CloseFile(TEMP_SAVE_FILE_NAME);
+	}
+
+	public void Load()
+	{
+		Debug.Log("Narrative Manager: Loading");
+		//check if save file exists
+		bool tempSaveExists = SaveLoad.RelativeSaveFileExists(TEMP_SAVE_FILE_NAME);
+		bool permanentSaveExists = SaveLoad.RelativeSaveFileExists(PERMANENT_SAVE_FILE_NAME);
+		string filename = null;
+		if (tempSaveExists)
+		{
+			filename = TEMP_SAVE_FILE_NAME;
+		}
+		else if (permanentSaveExists)
+		{
+			filename = PERMANENT_SAVE_FILE_NAME;
+		}
+		else
+		{
+			Debug.Log("Narrative Manager: Nothing to load, continuing");
+			CreateMainCharacter();
+			OnLoaded.Invoke();
+			return;
+		}
+
+		//open the save file
+		UnifiedSaveLoad.OpenFile(filename, false);
+		//create save tag
+		SaveTag mainTag = new SaveTag(SAVE_TAG_NAME);
+
+		UnifiedSaveLoad.IterateTagContents(
+			filename,
+			mainTag,
+			parameterCallBack: module => ApplyData(module),
+			subtagCallBack: subtag => CheckSubtag(TEMP_SAVE_FILE_NAME, subtag));
+
+		OnLoaded.Invoke();
+		Debug.Log("Narrative Manager: Loaded");
+	}
+
+	public bool ApplyData(DataModule module)
+	{
+		switch (module.parameterName)
+		{
+			default:
+				return false;
+			case MAIN_CHARACTER_ID_VAR_NAME:
+			{
+				if (module.data == string.Empty)
+				{
+					CreateMainCharacter();
+				}
+				else
+				{
+					//find main character with ID
+					IUnique obj = UniqueIDGenerator.GetObjectByID(module.data);
+					if (obj is Character character)
+					{
+						SetMainCharacter(character);
+					}
+				}
+
+				break;
+			}
+		}
+
+		return true;
+	}
+
+	public bool CheckSubtag(string filename, SaveTag subtag)
+	{
+		return false;
 	}
 }

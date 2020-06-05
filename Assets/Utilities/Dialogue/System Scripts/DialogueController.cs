@@ -1,6 +1,6 @@
-﻿using System;
+﻿using InputHandlerSystem;
+using System;
 using System.Collections.Generic;
-using InputHandlerSystem;
 using UnityEngine;
 
 namespace DialogueSystem

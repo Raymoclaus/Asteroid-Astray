@@ -1,6 +1,6 @@
-﻿using System;
-using DialogueSystem.UI;
+﻿using DialogueSystem.UI;
 using InputHandlerSystem;
+using System;
 using UnityEngine;
 
 namespace DialogueSystem

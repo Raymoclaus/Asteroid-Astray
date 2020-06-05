@@ -19,15 +19,18 @@ namespace InventorySystem
 				_itemTypes = new Dictionary<string, ItemObject>();
 				foreach (ItemObject item in items)
 				{
-					_itemTypes.Add(item.ItemName, item);
+					_itemTypes.Add(Sanitise(item.ItemName), item);
 				}
 
 				return _itemTypes;
 			}
 		}
 
+		private static string Sanitise(string input) => input.ToLower().Replace(" ", string.Empty);
+
 		public static ItemObject GetItemByName(string name)
 		{
+			name = Sanitise(name);
 			if (!ItemTypes.ContainsKey(name)) return ItemObject.Blank;
 			return ItemTypes[name];
 		}

@@ -1,11 +1,11 @@
-﻿using System.Collections.Generic;
-using System;
-using UnityEngine;
-using InventorySystem;
+﻿using AudioUtilities;
 using CustomDataTypes;
-using AudioUtilities;
-using Random = UnityEngine.Random;
+using InventorySystem;
 using SaveSystem;
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using Random = UnityEngine.Random;
 
 [RequireComponent(typeof(HiveInventory))]
 public class BotHive : Character, ICombat
@@ -48,9 +48,10 @@ public class BotHive : Character, ICombat
 	//cache
 	private List<ChunkCoords> botOccupiedCoords = new List<ChunkCoords>();
 
-	protected override void Awake()
+	protected override void Initialise()
 	{
-		base.Awake();
+		base.Initialise();
+
 		docks = new Transform[dockHolder.childCount];
 		for (int i = 0; i < dockHolder.childCount; i++)
 		{
@@ -224,8 +225,7 @@ public class BotHive : Character, ICombat
 				{
 					botOccupiedCoords.Add(cc);
 					return false;
-				},
-				false);
+				});
 		}
 
 		//find a random nearby coordinate that is not already occupied
@@ -246,8 +246,7 @@ public class BotHive : Character, ICombat
 					}
 
 					return false;
-				},
-				false);
+				});
 			searchRange++;
 		}
 

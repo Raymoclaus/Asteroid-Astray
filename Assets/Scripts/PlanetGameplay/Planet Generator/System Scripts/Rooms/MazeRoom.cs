@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using CustomDataTypes;
 using Puzzles.Maze;
-using CustomDataTypes;
+using System.Collections.Generic;
+using UnityEngine;
 
 public class MazeRoom : DungeonRoom
 {

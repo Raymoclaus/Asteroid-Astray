@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-public class SoloBot : GatherBot
+﻿public class SoloBot : GatherBot
 {
 	protected override void OnSpawn()
 	{

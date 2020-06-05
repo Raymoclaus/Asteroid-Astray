@@ -1,5 +1,4 @@
-﻿using System;
-using CustomDataTypes;
+﻿using CustomDataTypes;
 using TriggerSystem;
 using TriggerSystem.MessageReceivers;
 using UnityEngine;

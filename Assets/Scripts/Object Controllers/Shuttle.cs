@@ -1,17 +1,17 @@
-﻿using System;
-using UnityEngine;
-using System.Collections.Generic;
+﻿using AudioUtilities;
+using DialogueSystem;
 using InputHandlerSystem;
-using QuestSystem;
-using QuestSystem.UI;
 using InventorySystem;
 using InventorySystem.UI;
-using ValueComponents;
-using SceneControllers;
-using AudioUtilities;
-using DialogueSystem;
-using StatisticsTracker;
+using QuestSystem;
+using QuestSystem.UI;
 using SaveSystem;
+using SceneControllers;
+using StatisticsTracker;
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using ValueComponents;
 using Random = UnityEngine.Random;
 
 public class Shuttle : Character, IStunnable, ICombat, IPlayableCharacter, ISpeedController, IHatchEnterer
@@ -134,24 +134,27 @@ public class Shuttle : Character, IStunnable, ICombat, IPlayableCharacter, ISpee
 		shootAction;
 	[SerializeField] private GameAction[] slotActions = new GameAction[8];
 	[SerializeField] private BoolStatTracker shuttleRepairedStat, mainHatchLockedStat;
-	private MainHatchPrompt mainHatch;
+	private MainHatchPrompt _mainHatch;
 	[SerializeField] private ConversationEvent wormholeRecoveryConversation,
 		_shuttleNeedsRepairsDialogue,
 		_preparingToRechargeShipDialogue,
 		_doesntHaveEnergySourceYetDialogue,
 		_decidedNotToRechargeTheShipYetDialogue,
-		_rechargingTheShipDialogue;
+		_rechargingTheShipDialogue,
+		_foundDerangedBotDialogue;
 	[SerializeField] private DynamicEngineNoise engineNoise;
 	[SerializeField] private ThrusterController _thrusterController;
 	private Quester _quester;
 	[SerializeField] private float _drillLaunchPauseTime = 0.375f;
+	[SerializeField] private BoolStatTracker _distanceUIVisibilityTracker;
 
 	public event Action OnGoInput, OnLaunchInput;
 	public event Action<bool> OnDrillComplete;
 
-	protected override void Awake()
+	protected override void Initialise()
 	{
-		base.Awake();
+		base.Initialise();
+
 		if (CameraControl) CameraControl.followTarget = this;
 
 		canDrill = true;
@@ -159,23 +162,20 @@ public class Shuttle : Character, IStunnable, ICombat, IPlayableCharacter, ISpee
 		boostComponent.SetToUpperLimit();
 		boostRechargeTimerID = "Boost Recharge Timer" + gameObject.GetInstanceID();
 		TimerTracker.AddTimer(boostRechargeTimerID, 0f, null, null);
-		_quester = GetComponent<Quester>();
-		QuestPopupUI.SetQuester(_quester);
+		QuestPopupUI.SetQuester(Quester);
 		AttachToInventoryUI();
 
 		OnItemsCollected += ReceiveItem;
 		FindObjectOfType<ItemPopupUI>()?.SetInventoryHolder(this);
-		mainHatch = FindObjectOfType<MainHatchPrompt>();
-		defaultWaypoint = mainHatch.GetWaypoint();
 
 		//start repair shuttle questline if shuttle is damaged
-		if (shuttleRepairedStat.IsFalse)
+		if (!_quester.IsNameOfActiveQuest("Gather materials") && !_quester.IsNameOfCompletedQuest("Gather materials"))
 		{
 			//reduce health by repair kit heal amount
 			//TODO: define repair kit value somewhere
 			DecreaseCurrentHealth(200f);
 			//choose a random starting location nearby the main ship
-			Vector2 pos = mainHatch.transform.position;
+			Vector2 pos = MainHatch.transform.position;
 			float randomAngle = Random.value * Mathf.PI * 2f;
 			Vector2 randomPos = new Vector2(Mathf.Sin(randomAngle), Mathf.Cos(randomAngle));
 			randomPos *= Random.value * 15f + 30f;
@@ -183,7 +183,7 @@ public class Shuttle : Character, IStunnable, ICombat, IPlayableCharacter, ISpee
 			//shuttle can't attack
 			CanAttack = false;
 			//disable distance UI
-			DistanceUI.Hidden = true;
+			DistanceUI.IsHidden = true;
 			//start recovery dialogue
 			NarrativeManager?.StartActiveDialogue(wormholeRecoveryConversation);
 		}
@@ -494,7 +494,7 @@ public class Shuttle : Character, IStunnable, ICombat, IPlayableCharacter, ISpee
 
 		if (type.ItemName == "Repair Kit")
 		{
-			DistanceUI.Hidden = false;
+			DistanceUI.IsHidden = false;
 			shuttleRepairedStat.SetValue(true);
 		}
 
@@ -797,6 +797,36 @@ public class Shuttle : Character, IStunnable, ICombat, IPlayableCharacter, ISpee
 		&& drillIsActive
 		&& InputManager.GetInput(cancelDrillingAction) == 0f;
 
+	private Quester Quester
+	{
+		get
+		{
+			if (_quester != null) return _quester;
+			_quester = GetComponent<Quester>();
+			_quester.OnQuestAccepted += AcceptedQuest;
+			return _quester;
+		}
+	}
+
+	private void AcceptedQuest(Quest q)
+	{
+		if (q.Name == "Acquire an Energy Source")
+		{
+			if (q.Requirements.Count == 0) return;
+			QuestRequirement qr = q.Requirements[0];
+			if (qr.Completed) return;
+			IWaypoint wp = qr.Waypoint;
+			if (wp == null) return;
+			Action action = null;
+			action = () =>
+			{
+				NarrativeManager.StartActiveDialogue(_foundDerangedBotDialogue);
+				wp.OnWaypointReached -= action;
+			};
+			wp.OnWaypointReached += action;
+		}
+	}
+
 	public void EnterHatch(Vector3 hatchPosition)
 	{
 		FindObjectOfType<FadeScreen>()?.FadeOut(3f);
@@ -840,6 +870,17 @@ public class Shuttle : Character, IStunnable, ICombat, IPlayableCharacter, ISpee
 			false);
 	}
 
+	protected override void CreateDefaultWaypoint()
+	{
+		MainHatch.OnLoaded.RunWhenReady(() =>
+		{
+			defaultWaypoint = WaypointManager.CreateAttachableWaypoint(MainHatch, 1f, this);
+		});
+	}
+
+	private MainHatchPrompt MainHatch =>
+		_mainHatch != null ? _mainHatch : (_mainHatch = FindObjectOfType<MainHatchPrompt>());
+
 	public override bool StartedPerformingAction(GameAction action)
 		=> InputManager.GetInputDown(action);
 
@@ -850,7 +891,7 @@ public class Shuttle : Character, IStunnable, ICombat, IPlayableCharacter, ISpee
 	{
 		if (interactableObject is MainHatchPrompt hatch)
 		{
-			if (!shuttleRepairedStat.value)
+			if (shuttleRepairedStat.Value == false)
 			{
 				//play dialogue about shuttle needing repairs first
 				NarrativeManager.StartPassiveDialogue(_shuttleNeedsRepairsDialogue);
@@ -858,7 +899,7 @@ public class Shuttle : Character, IStunnable, ICombat, IPlayableCharacter, ISpee
 			else if (hatch.IsPoweredDown)
 			{
 				ItemObject corruptedCorvorite = Item.GetItemByName("Corrupted Corvorite");
-				if (_quester.IsNameOfActiveQuest("Recharge the Ship")
+				if (Quester.IsNameOfActiveQuest("Recharge the Ship")
 					&& HasItem(corruptedCorvorite))
 				{
 					//play dialogue about preparing to recharge the ship
@@ -932,6 +973,26 @@ public class Shuttle : Character, IStunnable, ICombat, IPlayableCharacter, ISpee
 		//create main tag
 		SaveTag mainTag = new SaveTag(SaveTagName, parentTag);
 		//save quester info
-		_quester.Save(filename, mainTag);
+		Quester.Save(filename, mainTag);
+	}
+
+	protected override bool CheckSubtag(string filename, SaveTag subtag)
+	{
+		if (base.CheckSubtag(filename, subtag)) return true;
+
+		if (Quester.RecogniseTag(subtag))
+		{
+			UnifiedSaveLoad.IterateTagContents(
+				filename,
+				subtag,
+				parameterCallBack: module => Quester.ApplyData(module),
+				subtagCallBack: st => Quester.CheckSubtag(filename, st));
+
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 }

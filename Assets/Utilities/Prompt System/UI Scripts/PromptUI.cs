@@ -1,7 +1,7 @@
-﻿using UnityEngine;
-using UnityEngine.UI;
+﻿using InputHandlerSystem.UI;
 using System.Collections;
-using InputHandlerSystem.UI;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace PromptSystem.UI
 {

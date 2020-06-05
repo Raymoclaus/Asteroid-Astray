@@ -1,7 +1,6 @@
-﻿using System.Collections;
-using DialogueSystem;
-using DialogueSystem.UI;
+﻿using DialogueSystem;
 using SaveSystem;
+using System.Collections;
 using UnityEngine;
 
 public class DerangedSoloBot : SoloBot
@@ -12,7 +11,7 @@ public class DerangedSoloBot : SoloBot
 	[SerializeField] private float sparkChance = 0.02f;
 	[SerializeField] private float sparkKickBackStrength = 1f;
 	[SerializeField] private float sparkMinimumDelay = 1f;
-	[SerializeField] private ConversationEvent destroyingFirstDerangedBot;
+	[SerializeField] private ConversationWithActions destroyingFirstDerangedBot;
 	private float lastSparkTime;
 
 	protected override void OnSpawn()
@@ -28,12 +27,14 @@ public class DerangedSoloBot : SoloBot
 		switch (newState)
 		{
 			default:
+				base.SetState(newState);
+				break;
+			case AIState.Dying:
 				if (newState == AIState.Dying)
 				{
 					NarrativeManager.StartPassiveDialogue(destroyingFirstDerangedBot);
 				}
-				base.SetState(newState);
-				break;
+				goto default;
 			case AIState.Spawning:
 			case AIState.Scanning:
 			case AIState.Gathering:

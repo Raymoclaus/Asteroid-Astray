@@ -1,9 +1,10 @@
-﻿using System.Collections.Generic;
-using SaveSystem;
+﻿using SaveSystem;
+using System.Collections.Generic;
 
 namespace QuestSystem.Requirements
 {
 	using InventorySystem;
+	using UnityEngine;
 
 	public class CraftingQReq : QuestRequirement
 	{
@@ -12,6 +13,11 @@ namespace QuestSystem.Requirements
 		private int currentAmount = 0;
 		private ICrafter crafter;
 		private string CrafterID { get; set; }
+
+		protected CraftingQReq() : base()
+		{
+
+		}
 
 		public CraftingQReq(ItemObject typeNeeded, int amountNeeded,
 			ICrafter crafter, string description = null)
@@ -45,7 +51,11 @@ namespace QuestSystem.Requirements
 
 		private void EvaluateEvent(List<ItemStack> stacks)
 		{
-			if (Completed || !active) return;
+			if (Completed)
+			{
+				Debug.Log("Quest requirement already completed.");
+				return;
+			}
 
 			if (CrafterID != crafter.UniqueID) return;
 
@@ -73,13 +83,10 @@ namespace QuestSystem.Requirements
 		public override string GetDescription
 			=> string.Format(description, amountNeeded, typeNeeded.ItemName, currentAmount);
 
-		private const string REQUIREMENT_TYPE = "Crafting Requirement",
-			TYPE_NEEDED_VAR_NAME = "Type Needed",
+		private const string TYPE_NEEDED_VAR_NAME = "Type Needed",
 			AMOUNT_NEEDED_VAR_NAME = "Amount Needed",
 			CURRENT_PROGRESS_VAR_NAME = "Current Progress",
 			CRAFTER_ID_VAR_NAME = "Crafter ID";
-
-		public override string GetRequirementType() => REQUIREMENT_TYPE;
 
 		public override void Save(string filename, SaveTag parentTag)
 		{
@@ -99,6 +106,63 @@ namespace QuestSystem.Requirements
 			//save crafter ID
 			module = new DataModule(CRAFTER_ID_VAR_NAME, CrafterID);
 			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
+		}
+
+		protected override bool ApplyData(DataModule module)
+		{
+			if (base.ApplyData(module)) return true;
+
+			switch (module.parameterName)
+			{
+				default:
+					return false;
+				case TYPE_NEEDED_VAR_NAME:
+					typeNeeded = Item.GetItemByName(module.data);
+					if (typeNeeded == ItemObject.Blank)
+					{
+						Debug.Log("Type Needed data could not be parsed.");
+					}
+					break;
+				case AMOUNT_NEEDED_VAR_NAME:
+				{
+					bool foundVal = int.TryParse(module.data, out int val);
+					if (foundVal)
+					{
+						amountNeeded = val;
+					}
+					else
+					{
+							Debug.Log("Amount needed data could not be parsed.");
+					}
+				}
+					break;
+				case CURRENT_PROGRESS_VAR_NAME:
+					{
+						bool foundVal = int.TryParse(module.data, out int val);
+						if (foundVal)
+						{
+							currentAmount = val;
+						}
+						else
+						{
+							Debug.Log("Current Progress data could not be parsed.");
+						}
+					}
+					break;
+				case CRAFTER_ID_VAR_NAME:
+					CrafterID = module.data;
+					if (CrafterID != string.Empty)
+					{
+						IUnique obj = UniqueIDGenerator.GetObjectByID(CrafterID);
+						if (obj is ICrafter c)
+						{
+							crafter = c;
+						}
+					}
+					break;
+			}
+
+			return true;
 		}
 	}
 }

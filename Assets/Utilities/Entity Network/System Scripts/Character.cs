@@ -1,15 +1,16 @@
-﻿using System;
-using System.Linq;
-using System.Collections.Generic;
-using UnityEngine;
-using InventorySystem;
-using InventorySystem.UI;
-using TriggerSystem;
-using ValueComponents;
-using AttackData;
+﻿using AttackData;
 using EquipmentSystem;
 using InputHandlerSystem;
+using InventorySystem;
+using InventorySystem.UI;
+using QuestSystem;
 using SaveSystem;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using TriggerSystem;
+using UnityEngine;
+using ValueComponents;
 
 public class Character : Entity, IInteractor, ICrafter, IAttacker, IDeliverer
 {
@@ -37,7 +38,7 @@ public class Character : Entity, IInteractor, ICrafter, IAttacker, IDeliverer
 	[SerializeField] private LaunchTrailController launchTrailEffect;
 	[SerializeField] private GameObject drillLaunchImpactEffect;
 
-	protected VicinityWaypoint defaultWaypoint, currentWaypoint;
+	protected IWaypoint defaultWaypoint, currentWaypoint;
 	private NarrativeManager _narrativeManager;
 	protected NarrativeManager NarrativeManager => _narrativeManager != null
 		? _narrativeManager
@@ -47,9 +48,10 @@ public class Character : Entity, IInteractor, ICrafter, IAttacker, IDeliverer
 	public event Action<ItemObject, int> OnItemsCollected, OnItemUsed;
 	public event Action<List<ItemStack>> OnItemsCrafted;
 
-	protected override void Awake()
+	protected override void Initialise()
 	{
-		base.Awake();
+		base.Initialise();
+
 		itemUseCooldownTimerID = gameObject.GetInstanceID() + "Item Use Cooldown Timer";
 		TimerTracker.AddTimer(itemUseCooldownTimerID, 0f, null, null);
 		if (ShieldIsEquipped)
@@ -64,7 +66,12 @@ public class Character : Entity, IInteractor, ICrafter, IAttacker, IDeliverer
 		{
 			inventories.Add(DefaultInventory);
 		}
-		
+
+		if (defaultWaypoint == null)
+		{
+			CreateDefaultWaypoint();
+		}
+
 		SteamPunkConsole.GetCommandsFromType(GetType());
 	}
 
@@ -446,8 +453,13 @@ public class Character : Entity, IInteractor, ICrafter, IAttacker, IDeliverer
 		return true;
 	}
 
-	public VicinityWaypoint GetTargetWaypoint => currentWaypoint != null ? currentWaypoint
+	public IWaypoint GetTargetWaypoint => currentWaypoint != null ? currentWaypoint
 		: defaultWaypoint;
+
+	protected virtual void CreateDefaultWaypoint()
+	{
+
+	}
 
 	public Vector3 Position => transform.position;
 
@@ -498,7 +510,8 @@ public class Character : Entity, IInteractor, ICrafter, IAttacker, IDeliverer
 	}
 
 	private const string MAX_SHIELD_VAR_NAME = "MaxShield",
-		CURRENT_SHIELD_VAR_NAME = "CurrentShield";
+		CURRENT_SHIELD_VAR_NAME = "CurrentShield",
+		DEFAULT_WAYPOINT_ID_VAR_NAME = "Default Waypoint ID";
 
 	public override void Save(string filename, SaveTag parentTag)
 	{
@@ -511,15 +524,113 @@ public class Character : Entity, IInteractor, ICrafter, IAttacker, IDeliverer
 		{
 			storage.Save(filename, mainTag);
 		}
+		//save default waypoint ID
+		DataModule module = new DataModule(DEFAULT_WAYPOINT_ID_VAR_NAME, defaultWaypoint?.UniqueID ?? string.Empty);
+		UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
 
 		if (shieldValue != null && ShieldIsEquipped)
 		{
 			//save shield max value
-			DataModule module = new DataModule(MAX_SHIELD_VAR_NAME, shieldValue.UpperLimit);
+			module = new DataModule(MAX_SHIELD_VAR_NAME, shieldValue.UpperLimit);
 			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
 			//save shield current value
 			module = new DataModule(CURRENT_SHIELD_VAR_NAME, shieldValue.CurrentValue);
 			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
 		}
+	}
+
+	protected override bool ApplyData(DataModule module)
+	{
+		if (base.ApplyData(module)) return true;
+
+		switch (module.parameterName)
+		{
+			default:
+				return false;
+			case MAX_SHIELD_VAR_NAME:
+			{
+				bool foundMaxShield = float.TryParse(module.data, out float maxShield);
+				if (foundMaxShield)
+				{
+					ShieldComponent.SetUpperLimit(maxShield, false);
+				}
+				else
+				{
+					Debug.Log("Max Shield data could not be parsed");
+				}
+
+				break;
+			}
+			case CURRENT_SHIELD_VAR_NAME:
+			{
+				bool foundCurrentShield = float.TryParse(module.data, out float currentShield);
+				if (foundCurrentShield)
+				{
+					ShieldComponent.SetValue(currentShield);
+				}
+				else
+				{
+					Debug.Log("Current Shield data could not be parsed");
+				}
+
+				break;
+			}
+			case DEFAULT_WAYPOINT_ID_VAR_NAME:
+			{
+				if (module.data != string.Empty)
+				{
+					IUnique obj = UniqueIDGenerator.GetObjectByID(module.data);
+					if (obj != null && obj is IWaypoint waypoint)
+					{
+						defaultWaypoint = waypoint;
+					}
+					else
+					{
+						UniqueIDGenerator.OnIDUpdated += WaitForWaypointToLoad;
+
+						void WaitForWaypointToLoad(string ID)
+						{
+							if (ID != module.data) return;
+							IUnique o = UniqueIDGenerator.GetObjectByID(ID);
+							if (o != null && o is IWaypoint wp)
+							{
+								defaultWaypoint = wp;
+								UniqueIDGenerator.OnIDUpdated -= WaitForWaypointToLoad;
+							}
+
+						}
+						}
+				}
+				else
+				{
+					CreateDefaultWaypoint();
+				}
+
+				break;
+			}
+		}
+
+		return true;
+	}
+
+	protected override bool CheckSubtag(string filename, SaveTag subtag)
+	{
+		if (base.CheckSubtag(filename, subtag)) return true;
+
+		foreach (Storage storage in inventories)
+		{
+			if (storage.RecogniseTag(subtag))
+			{
+				UnifiedSaveLoad.IterateTagContents(
+					filename,
+					subtag,
+					parameterCallBack: module => storage.ApplyData(module),
+					subtagCallBack: st => storage.CheckSubtag(filename, st));
+				storage.TrimPadStacks();
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

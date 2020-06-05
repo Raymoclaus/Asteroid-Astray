@@ -1,125 +1,44 @@
-﻿using System;
-using System.Collections.Generic;
-using InputHandlerSystem;
+﻿using StatisticsTracker;
 using UnityEngine;
 
 public class LoadingController : MonoBehaviour
 {
-	private static LoadingController instance;
-	
-	private List<bool> loadingReady = new List<bool>();
 	[SerializeField] private GameObject holder;
-	private bool finishedLoading = false;
-	public static bool IsLoading
-	{
-		get
-		{
-			if (instance == null)
-			{
-				instance = FindObjectOfType<LoadingController>();
-			}
-			return !instance?.finishedLoading ?? false;
-		}
-	}
 
-	private static event Action OnLoadingComplete;
+	public OneShotEventGroupWait OnLoadingComplete = new OneShotEventGroupWait(false,
+		UniqueIDGenerator.OnLoaded);
 
 	private void Awake()
 	{
-		if (instance == null)
-		{
-			instance = this;
-		}
-		else if (instance != this)
-		{
-			Destroy(gameObject);
-			return;
-		}
-
 		holder.SetActive(true);
-		AddListener(() =>
-		{
-			holder.SetActive(false);
-		});
+		UniqueIDGenerator.Load();
+		StatisticsIO.Load();
 
-		if (FindObjectOfType<SceneryController>())
+		SceneryController sceneryController = FindObjectOfType<SceneryController>();
+		if (sceneryController != null)
 		{
-			int ID = loadingReady.Count;
-			loadingReady.Add(false);
-			SceneryController.AddListener(() =>
-			{
-				Ready(ID);
-			});
+			OnLoadingComplete.AddEventToWaitFor(sceneryController.OnStarFieldCreated);
 		}
 
-		if (FindObjectOfType<EntityGenerator>())
+		EntityGenerator entityGenerator = FindObjectOfType<EntityGenerator>();
+		if (entityGenerator != null)
 		{
-			int ID = loadingReady.Count;
-			loadingReady.Add(false);
-			EntityGenerator.AddListener(() =>
-			{
-				Ready(ID);
-			});
+			OnLoadingComplete.AddEventToWaitFor(entityGenerator.OnPrefabsLoaded);
 		}
 
-		if (FindObjectOfType<EntityNetwork>())
+		EntityNetwork entityNetwork = FindObjectOfType<EntityNetwork>();
+		if (entityNetwork != null)
 		{
-			int ID = loadingReady.Count;
-			loadingReady.Add(false);
-			EntityNetwork.AddListener(() =>
-			{
-				Ready(ID);
-			});
+			OnLoadingComplete.AddEventToWaitFor(entityNetwork.OnLoaded);
 		}
 
-		if (FindObjectOfType<NarrativeManager>())
+		NarrativeManager narrativeManager = FindObjectOfType<NarrativeManager>();
+		if (narrativeManager != null)
 		{
-			int ID = loadingReady.Count;
-			loadingReady.Add(false);
-			Action action = null;
-			action = () =>
-			{
-				Ready(ID);
-				NarrativeManager.OnMainCharacterUpdated -= action;
-			};
-			NarrativeManager.AddListener(action);
-		}
-	}
-
-	public static void AddListener(Action action)
-	{
-		if (!IsLoading)
-		{
-			action?.Invoke();
-		}
-		else if (action != null)
-		{
-			OnLoadingComplete += action;
-		}
-	}
-
-	private void Ready(int index)
-	{
-		if (index >= 0 && index < loadingReady.Count)
-		{
-			loadingReady[index] = true;
+			OnLoadingComplete.AddEventToWaitFor(narrativeManager.OnLoaded);
 		}
 
-		if (AllEssentialSystemsReady())
-		{
-			OnLoadingComplete?.Invoke();
-			OnLoadingComplete = null;
-		}
-	}
-
-	private bool AllEssentialSystemsReady()
-	{
-		for (int i = 0; i < loadingReady.Count; i++)
-		{
-			bool b = loadingReady[i];
-			if (!b) return false;
-		}
-		finishedLoading = true;
-		return true;
+		OnLoadingComplete.Start();
+		OnLoadingComplete.RunWhenReady(() => holder.SetActive(false));
 	}
 }

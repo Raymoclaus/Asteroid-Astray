@@ -1,7 +1,7 @@
-﻿using System;
+﻿using SaveSystem;
+using System;
 using System.Collections.Generic;
 using System.Text;
-using SaveSystem;
 using UnityEngine;
 
 namespace InventorySystem
@@ -155,7 +155,7 @@ namespace InventorySystem
 			return true;
 		}
 
-		private void TrimPadStacks()
+		public void TrimPadStacks()
 		{
 			if (ItemStacks == null)
 			{
@@ -320,9 +320,10 @@ namespace InventorySystem
 		public Action<int, int> GetSizeChangedInvoker
 			=> (int oldSize, int newSize) => OnSizeChanged?.Invoke(oldSize, newSize);
 
-		private string SaveTagName => $"Inventory:{InventoryName}";
+		private string SaveTagName => $"{SAVE_TAG_NAME}:{InventoryName}";
 
-		private const string NAME_VAR_NAME = "InventoryName",
+		private const string SAVE_TAG_NAME = "Inventory",
+			NAME_VAR_NAME = "InventoryName",
 			SIZE_VAR_NAME = "Size",
 			NO_LIMIT_VAR_NAME = "NoLimit",
 			STACKS_VAR_NAME = "Stacks";
@@ -366,6 +367,85 @@ namespace InventorySystem
 			}
 
 			return builder.ToString();
+		}
+
+		public bool RecogniseTag(SaveTag tag)
+		{
+			return tag.TagName == SaveTagName;
+		}
+
+		public bool ApplyData(DataModule module)
+		{
+			switch (module.parameterName)
+			{
+				default:
+					return false;
+				case NAME_VAR_NAME:
+					break;
+				case SIZE_VAR_NAME:
+				{
+					bool foundVal = int.TryParse(module.data, out int val);
+					if (foundVal)
+					{
+						size = val;
+					}
+					else
+					{
+						Debug.Log("Size data could not be parsed.");
+					}
+
+					break;
+				}
+				case NO_LIMIT_VAR_NAME:
+				{
+					bool foundVal = bool.TryParse(module.data, out bool val);
+					if (foundVal)
+					{
+						noLimit = val;
+					}
+					else
+					{
+						Debug.Log("No Limit data could not be parsed.");
+					}
+
+					break;
+				}
+				case STACKS_VAR_NAME:
+				{
+					string[] stackStrings = module.data.Split(STACK_SEPARATOR);
+					
+					for (int i = 0; i < stackStrings.Length; i++)
+					{
+						string stackString = stackStrings[i];
+						if (stackString == string.Empty) continue;
+						bool foundStack = ItemStack.TryParse(stackString, out ItemStack stack);
+						if (foundStack)
+						{
+							if (i < ItemStacks.Count)
+							{
+								ItemStacks[i] = stack;
+							}
+							else
+							{
+								ItemStacks.Add(stack);
+							}
+						}
+						else
+						{
+							Debug.Log($"Stack data {i} could not be parsed.");
+						}
+					}
+
+					break;
+				}
+			}
+
+			return true;
+		}
+
+		public bool CheckSubtag(string filename, SaveTag subtag)
+		{
+			return false;
 		}
 	}
 }

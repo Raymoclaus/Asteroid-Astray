@@ -1,6 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using SaveSystem;
+﻿using SaveSystem;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -8,95 +7,35 @@ namespace StatisticsTracker
 {
 	public static class StatisticsIO
 	{
-		public static readonly SaveTag saveTag = new SaveTag("Statistics");
+		public const string SAVE_FILE_NAME = "Statistics",
+			SAVE_TAG_NAME = "Statistics";
+		private static Dictionary<string, StatTracker> _trackers;
 
-		private static Dictionary<string, StatTracker> trackers = new Dictionary<string, StatTracker>();
-
-		[SteamPunkConsoleCommand(command = "loadStats", info = "Loads the game data")]
-		public static void Load()
+		private static Dictionary<string, StatTracker> Trackers
 		{
-			SteamPunkConsole.WriteLine("Loading StatTrackers");
-
-			//get file name
-			string fileName = UnifiedSaveLoad.SAVE_FILENAME;
-			//Get all StatTrackers
-			StatTracker[] stats = GetAllStatTrackers();
-			//Query UnifiedSaveLoad for each stat tracker name
-			for (int i = 0; i < stats.Length; i++)
+			get
 			{
-				//get parameter name
-				string pName = stats[i].name;
-				Debug.Log(pName);
-				//query UnifiedSaveLoad
-				string line = UnifiedSaveLoad.GetLineOfParameter(fileName, saveTag, pName);
-				if (line == null)
+				if (_trackers != null) return _trackers;
+
+				_trackers = new Dictionary<string, StatTracker>();
+
+				StatTracker[] stats = Resources.LoadAll<StatTracker>(string.Empty);
+				foreach (StatTracker stat in stats)
 				{
-					stats[i].ResetToDefault();
+					AddToDictionary(stat);
 				}
-				else
-				{
-					//convert line to a data module
-					DataModule module = UnifiedSaveLoad.ConvertParameterLineToModule(line);
-					//send the data to the stat tracker
-					bool successful = stats[i].Parse(module.data);
-					if (!successful)
-					{
-						stats[i].ResetToDefault();
-					}
-				}
+
+				return _trackers;
 			}
-
-			SteamPunkConsole.WriteLine("StatTracker Loading Successful");
-		}
-
-		[SteamPunkConsoleCommand(command = "saveStats", info = "Saves the game data")]
-		[MenuItem("Game Statistics/Save All")]
-		public static void SaveAll()
-		{
-			//get all statistics scriptable objects
-			StatTracker[] stats = GetAllStatTrackers();
-
-			//iterate over the statistics
-			for (int i = 0; i < stats.Length; i++)
-			{
-				StatTracker stat = stats[i];
-				DataModule module = new DataModule(
-					stat.name,
-					stat.FieldType.ToString(),
-					stat.ValueString);
-				UnifiedSaveLoad.UpdateUnifiedSaveFile(saveTag, module);
-				string entry = module.ToString();
-				SteamPunkConsole.WriteLine(entry);
-			}
-			UnifiedSaveLoad.SaveUnifiedSaveFile();
-			
-			SteamPunkConsole.WriteLine("Save Successful");
 		}
 
 		[SteamPunkConsoleCommand(command = "resetStats", info = "Resets all stats to default values and saves.")]
 		public static void ResetAllStats()
 		{
-			StatTracker[] stats = GetAllStatTrackers();
-			for (int i = 0; i < stats.Length; i++)
+			foreach (StatTracker stat in Trackers.Values)
 			{
-				stats[i].ResetToDefault();
+				stat.ResetToDefault();
 			}
-
-			if (!Application.isEditor)
-			{
-				SteamPunkConsole.WriteLine("Stats have been reset to default values.");
-				SaveAll();
-			}
-		}
-
-		private static StatTracker[] GetAllStatTrackers()
-		{
-			StatTracker[] t = Resources.LoadAll<StatTracker>("StatTrackers");
-			for (int i = 0; i < t.Length; i++)
-			{
-				AddToDictionary(t[i]);
-			}
-			return t;
 		}
 
 		[SteamPunkConsoleCommand(command = "resetStat", info = "Resets a specific stat.")]
@@ -110,52 +49,105 @@ namespace StatisticsTracker
 		[SteamPunkConsoleCommand(command = "statList", info = "Prints a list of available stat names.")]
 		public static void StatList()
 		{
-			StatTracker[] stats = Resources.LoadAll<StatTracker>("StatTrackers");
 			SteamPunkConsole.WriteLine($"List of available stat names");
 			SteamPunkConsole.WriteLine($"============================");
-			for (int i = 0; i < stats.Length; i++)
+			foreach (StatTracker stat in Trackers.Values)
 			{
-				SteamPunkConsole.WriteLine(stats[i].name.Replace(' ', '_'));
+				SteamPunkConsole.WriteLine(stat.SaveTagName);
 			}
 		}
 
+		public static string Sanitise(string input) => input.ToLower().Replace(" ", "_");
+
 		[SteamPunkConsoleCommand(command = "setStat", info = "Sets the value of the stat with the given name to the given value.")]
-		public static void SetStat(string statName, string value)
+		public static bool SetStat(string statName, string value)
 		{
 			StatTracker stat = GetTracker(statName);
-			if (stat == null) return;
-			bool successful = stat.Parse(value);
+			if (stat == null) return false;
+			bool successful = stat.TryParse(value);
 			if (successful)
 			{
-				SteamPunkConsole.WriteLine($"{stat.name} set to {value}.");
+				SteamPunkConsole.WriteLine($"{stat.SaveTagName} set to {value}.");
+				return true;
+			}
+			else
+			{
+				SteamPunkConsole.WriteLine($"{stat.SaveTagName} could not be set to {value}");
+				return false;
 			}
 		}
 
 		public static StatTracker GetTracker(string parameterName)
 		{
-			parameterName = parameterName.Replace('_', ' ');
-			if (trackers.ContainsKey(parameterName))
+			parameterName = Sanitise(parameterName);
+
+			if (Trackers.ContainsKey(parameterName))
 			{
-				return trackers[parameterName];
-			}
-			StatTracker stat = Resources.LoadAll<StatTracker>(string.Empty).FirstOrDefault(t => t.name == parameterName);
-			if (stat == null)
-			{
-				SteamPunkConsole.WriteLine($"No tracker with the name, \"{parameterName}\" exists.");
+				return Trackers[parameterName];
 			}
 			else
 			{
-				AddToDictionary(stat);
+				return null;
 			}
-
-			return stat;
 		}
 
 		private static void AddToDictionary(StatTracker tracker)
 		{
 			if (tracker == null) return;
-			if (trackers.ContainsKey(tracker.name)) return;
-			trackers.Add(tracker.name, tracker);
+			if (Trackers.ContainsKey(tracker.SaveTagName)) return;
+			Trackers.Add(tracker.SaveTagName, tracker);
+		}
+
+		[MenuItem("Game Statistics/Save")]
+		public static void Save()
+		{
+			SteamPunkConsole.WriteLine("StatTrackers: Begin Saving");
+
+			//open file
+			UnifiedSaveLoad.OpenFile(SAVE_FILE_NAME, true);
+			//create main tag
+			SaveTag mainTag = new SaveTag(SAVE_TAG_NAME);
+			//iterate over the statistics
+			foreach (StatTracker stat in Trackers.Values)
+			{
+				stat.Save(SAVE_FILE_NAME, mainTag);
+			}
+			//save file
+			UnifiedSaveLoad.SaveOpenedFile(SAVE_FILE_NAME);
+			
+			SteamPunkConsole.WriteLine("StatTrackers: Finished Saving");
+		}
+
+		[MenuItem("Game Statistics/Load")]
+		public static void Load()
+		{
+			SteamPunkConsole.WriteLine("StatTrackers: Begin Loading");
+
+			//reset defaults
+			ResetAllStats();
+			//create main tag
+			SaveTag mainTag = new SaveTag(SAVE_TAG_NAME);
+			//iterate contents of file
+			UnifiedSaveLoad.IterateTagContents(
+				SAVE_FILE_NAME,
+				mainTag,
+				module => ApplyData(module),
+				subtag => CheckSubtag(SAVE_FILE_NAME, subtag));
+
+			SteamPunkConsole.WriteLine("StatTrackers: Loading Successful");
+		}
+
+		private static bool ApplyData(DataModule module)
+		{
+			if (!Trackers.ContainsKey(module.parameterName)) return false;
+			StatTracker stat = GetTracker(module.parameterName);
+			stat.ApplyData(module);
+			return true;
+		}
+
+		private static bool CheckSubtag(string filename, SaveTag subtag)
+		{
+			return false;
 		}
 	}
 }

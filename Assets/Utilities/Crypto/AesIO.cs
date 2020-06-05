@@ -2,8 +2,6 @@
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
-using SaveSystem;
-using UnityEditor;
 public static class AesIO
 {
 	private const string KEY = @"*F.®)¿-jM-ŽÆéÝ¼¦IôÄ¤ëpÀ\~	",

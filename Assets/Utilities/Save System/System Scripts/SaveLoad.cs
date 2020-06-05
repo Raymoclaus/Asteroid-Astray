@@ -1,4 +1,7 @@
-﻿using System.Diagnostics;
+﻿using InventorySystem;
+using QuestSystem;
+using StatisticsTracker;
+using System.Diagnostics;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
@@ -10,27 +13,9 @@ namespace SaveSystem
 		public static readonly string path = Application.persistentDataPath + "/saves/",
 			extension = ".txt";
 
-		public static string CurrentSave { get; set; }
+		public static string CurrentSave { get; set; } = "0";
 
-		public static string PathToCurrentSave
-		{
-			get
-			{
-				if (CurrentSave == null)
-				{
-					SaveFile firstSave = SaveReader.GetFirstSaveFile();
-					if (firstSave == null)
-					{
-						CurrentSave = GenerateUniqueSaveName();
-					}
-					else
-					{
-						CurrentSave = firstSave.Name;
-					}
-				}
-				return $"{path}{CurrentSave}/";
-			}
-		}
+		public static string PathToCurrentSave => $"{path}{CurrentSave}/";
 
 		public static void SaveText(string key, string textToSave)
 		{
@@ -49,6 +34,13 @@ namespace SaveSystem
 			if (!RelativeSaveFileExists(key)) return default;
 			string text = File.ReadAllText(RelativeKeyPath(key));
 			return text;
+		}
+
+		public static string[] LoadTextLines(string key)
+		{
+			if (!RelativeSaveFileExists(key)) return default;
+			string[] lines = File.ReadAllLines(RelativeKeyPath(key));
+			return lines;
 		}
 
 		public static string RelativeKeyPath(string key) => $"{PathToCurrentSave}{key}{extension}";
@@ -97,6 +89,27 @@ namespace SaveSystem
 			}
 
 			return count.ToString();
+		}
+
+		[MenuItem("Temp/Temporary Save All")]
+		public static void TempSaveAll()
+		{
+			Object.FindObjectOfType<EntityNetwork>()?.TemporarySave();
+			UniqueIDGenerator.Save();
+			Object.FindObjectOfType<MainHatchPrompt>()?.TemporarySave();
+			Object.FindObjectOfType<NarrativeManager>()?.TemporarySave();
+			ScriptedDropsIO.Save();
+			StatisticsIO.Save();
+			WaypointManager.TemporarySave();
+		}
+
+		[MenuItem("Temp/Permanent Save All")]
+		public static void PermanentSaveAll()
+		{
+			EntityNetwork.PermanentSave();
+			MainHatchPrompt.PermanentSave();
+			NarrativeManager.PermanentSave();
+			WaypointManager.PermanentSave();
 		}
 	}
 }

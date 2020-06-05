@@ -170,7 +170,7 @@ namespace SaveSystem
 				int linesBeingAdded = 1;
 				//create a string for the tag
 				string tagString = string.Format(TAG_FORMAT,
-					currentTag.Tag,
+					currentTag.TagName,
 					linesBeingAdded - 1,
 					new string('\t', currentTag.IndentCount),
 					TAG_CONTAINER_LEFT,
@@ -196,7 +196,7 @@ namespace SaveSystem
 			=> GetIndexOfTag(filename, tag) >= 0;
 
 		public static void IterateTagContents(string filename, SaveTag tag, Action<DataModule> parameterCallBack,
-			Action<SaveTag> tagCallBack)
+			Action<SaveTag> subtagCallBack)
 		{
 			//ensure tag is valid
 			if (tag == null) return;
@@ -220,11 +220,11 @@ namespace SaveSystem
 					continue;
 				}
 				//invoke tag callback if line is a tag
-				if (tagCallBack != null && IsTag(line))
+				if (subtagCallBack != null && IsTag(line))
 				{
 					string tagName = GetNameOfTagLine(line);
 					SaveTag st = new SaveTag(tagName, tag);
-					tagCallBack?.Invoke(st);
+					subtagCallBack?.Invoke(st);
 					int tagContentLength = GetLineCountFromTag(line);
 					i += tagContentLength;
 					continue;
@@ -431,6 +431,13 @@ namespace SaveSystem
 			return line;
 		}
 
+		public static DataModule GetModuleOfParameter(string filename, SaveTag tag, string parameterName)
+		{
+			string parameterLine = GetLineOfParameter(filename, tag, parameterName);
+			DataModule module = ConvertParameterLineToModule(parameterLine);
+			return module;
+		}
+
 		/// <summary>
 		/// Search a file for a parameter name under the given tag.
 		/// </summary>
@@ -607,7 +614,7 @@ namespace SaveSystem
 					.Replace("\t", string.Empty);
 
 				//compare the found tag with the tag we're looking for
-				if (tagString == check.Tag)
+				if (tagString == check.TagName)
 				{
 					//if the history is empty, this was the original tag we're looking for
 					if (tagHistory.Count == 0) return i;
@@ -756,9 +763,12 @@ namespace SaveSystem
 
 		public static DataModule ConvertParameterLineToModule(string line)
 		{
+			if (line == null) return DataModule.INVALID_DATA_MODULE;
+
 			line = line.Replace("\t", string.Empty);
 			string[] parts = line.Split(SEPARATOR);
 			if (parts.Length != 3) return DataModule.INVALID_DATA_MODULE;
+
 			DataModule module = new DataModule(parts[0], parts[1], parts[2]);
 			return module;
 		}

@@ -1,7 +1,6 @@
-﻿using System;
-using System.Collections;
+﻿using AttackData;
+using System;
 using System.Collections.Generic;
-using AttackData;
 using TriggerSystem;
 using UnityEngine;
 

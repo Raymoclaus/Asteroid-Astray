@@ -1,5 +1,6 @@
 ﻿using SaveSystem;
 using TriggerSystem;
+using UnityEngine;
 
 namespace QuestSystem.Requirements
 {
@@ -9,6 +10,11 @@ namespace QuestSystem.Requirements
 		private string InteractableID { get; set; }
 		private IInteractor expectedInteractor;
 		private string ExpectedInteractorID { get; set; }
+
+		protected InteractionQReq() : base()
+		{
+
+		}
 
 		public InteractionQReq(IInteractable interactable,
 			IInteractor expectedInteractor, string description, IWaypoint waypoint)
@@ -34,18 +40,19 @@ namespace QuestSystem.Requirements
 
 		private void EvaluateEvent(IInteractor interactor)
 		{
-			if (Completed || !active) return;
+			if (Completed)
+			{
+				Debug.Log("Quest requirement already completed.");
+				return;
+			}
 
 			if (expectedInteractor != interactor) return;
 
 			QuestRequirementCompleted();
 		}
 
-		private const string REQUIREMENT_TYPE = "Interaction Requirement",
-			INTERACTABLE_ID_VAR_NAME = "Interactable ID",
+		private const string INTERACTABLE_ID_VAR_NAME = "Interactable ID",
 			INTERACTOR_ID_VAR_NAME = "Interactor ID";
-
-		public override string GetRequirementType() => REQUIREMENT_TYPE;
 
 		public override void Save(string filename, SaveTag parentTag)
 		{
@@ -59,6 +66,41 @@ namespace QuestSystem.Requirements
 			//save interactor ID
 			module = new DataModule(INTERACTOR_ID_VAR_NAME, ExpectedInteractorID);
 			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
+		}
+
+		protected override bool ApplyData(DataModule module)
+		{
+			if (base.ApplyData(module)) return true;
+
+			switch (module.parameterName)
+			{
+				default:
+					return false;
+				case INTERACTABLE_ID_VAR_NAME:
+					InteractableID = module.data;
+					if (InteractableID != string.Empty)
+					{
+						IUnique obj = UniqueIDGenerator.GetObjectByID(InteractableID);
+						if (obj is IInteractable ia)
+						{
+							interactable = ia;
+						}
+					}
+					break;
+				case INTERACTOR_ID_VAR_NAME:
+					ExpectedInteractorID = module.data;
+					if (ExpectedInteractorID != string.Empty)
+					{
+						IUnique obj = UniqueIDGenerator.GetObjectByID(ExpectedInteractorID);
+						if (obj is IInteractor ia)
+						{
+							expectedInteractor = ia;
+						}
+					}
+					break;
+			}
+
+			return true;
 		}
 	}
 }

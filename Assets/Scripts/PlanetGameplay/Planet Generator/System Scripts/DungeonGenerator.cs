@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using CustomDataTypes;
+using System.Collections.Generic;
 using UnityEngine;
-using CustomDataTypes;
 
 public class DungeonGenerator
 {

@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System;
 
 namespace QuestSystem.Requirements
 {
@@ -13,6 +12,11 @@ namespace QuestSystem.Requirements
 		private int currentAmount = 0;
 		private IInventoryHolder inventoryHolder;
 		private string InventoryHolderID { get; set; }
+
+		protected GatheringQReq() : base()
+		{
+
+		}
 
 		public GatheringQReq(ItemObject typeNeeded, int amountNeeded,
 			IInventoryHolder inventoryHolder, string description = null, IWaypoint waypoint = null)
@@ -46,7 +50,11 @@ namespace QuestSystem.Requirements
 
 		private void EvaluateEvent(ItemObject type, int amount)
 		{
-			if (Completed || !active) return;
+			if (Completed)
+			{
+				Debug.Log("Quest requirement already completed.");
+				return;
+			}
 
 			if (inventoryHolder.UniqueID != InventoryHolderID) return;
 
@@ -64,13 +72,10 @@ namespace QuestSystem.Requirements
 		public override string GetDescription =>
 			string.Format(description, amountNeeded, typeNeeded.ItemName, currentAmount);
 
-		private const string REQUIREMENT_TYPE = "Gathering Requirement",
-			TYPE_NEEDED_VAR_NAME = "Type Needed",
+		private const string TYPE_NEEDED_VAR_NAME = "Type Needed",
 			AMOUNT_NEEDED_VAR_NAME = "Amount Needed",
 			CURRENT_PROGRESS_VAR_NAME = "Current Progress",
 			INVENTORY_HOLDER_ID_VAR_NAME = "Inventory Holder ID";
-
-		public override string GetRequirementType() => REQUIREMENT_TYPE;
 
 		public override void Save(string filename, SaveTag parentTag)
 		{
@@ -90,6 +95,63 @@ namespace QuestSystem.Requirements
 			//save inventory holder ID
 			module = new DataModule(INVENTORY_HOLDER_ID_VAR_NAME, InventoryHolderID);
 			UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
+		}
+
+		protected override bool ApplyData(DataModule module)
+		{
+			if (base.ApplyData(module)) return true;
+
+			switch (module.parameterName)
+			{
+				default:
+					return false;
+				case TYPE_NEEDED_VAR_NAME:
+					typeNeeded = Item.GetItemByName(module.data);
+					if (typeNeeded == ItemObject.Blank)
+					{
+						Debug.Log("Type Needed data could not be parsed.");
+					}
+					break;
+				case AMOUNT_NEEDED_VAR_NAME:
+				{
+					bool foundVal = int.TryParse(module.data, out int val);
+					if (foundVal)
+					{
+						amountNeeded = val;
+					}
+					else
+					{
+						Debug.Log("Amount needed data could not be parsed.");
+					}
+				}
+					break;
+				case CURRENT_PROGRESS_VAR_NAME:
+				{
+					bool foundVal = int.TryParse(module.data, out int val);
+					if (foundVal)
+					{
+						currentAmount = val;
+					}
+					else
+					{
+							Debug.Log("Current Progress data could not be parsed.");
+					}
+				}
+					break;
+				case INVENTORY_HOLDER_ID_VAR_NAME:
+					InventoryHolderID = module.data;
+					if (InventoryHolderID != string.Empty)
+					{
+						IUnique obj = UniqueIDGenerator.GetObjectByID(InventoryHolderID);
+						if (obj is IInventoryHolder ih)
+						{
+							inventoryHolder = ih;
+						}
+					}
+					break;
+			}
+
+			return true;
 		}
 	}
 }

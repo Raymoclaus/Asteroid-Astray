@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-public static class Constants
+﻿public static class Constants
 {
 	//the size of chunks for groups of asteroids. Try not to use smaller than 10 if keeping default camera size
 	public const int CHUNK_SIZE = 10;

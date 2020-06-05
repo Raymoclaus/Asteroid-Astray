@@ -1,5 +1,5 @@
-﻿using UnityEngine;
-using AttackData;
+﻿using AttackData;
+using UnityEngine;
 
 namespace EquipmentSystem
 {

@@ -1,9 +1,9 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using SaveSystem;
+﻿using SaveSystem;
 using SceneControllers;
 using StatisticsTracker;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using UnityEngine;
 
 public class MainMenuUI : MonoBehaviour
@@ -11,6 +11,7 @@ public class MainMenuUI : MonoBehaviour
 	[SerializeField] private MoveTriggerCanvasGroup mainMenu, loadingMenu;
 	private List<MoveTriggerCanvasGroup> mtcg = new List<MoveTriggerCanvasGroup>();
 	[SerializeField] private SceneChanger sceneChanger;
+	[SerializeField] private StringStatTracker currentSceneTracker;
 
 	private void Awake()
 	{
@@ -57,11 +58,9 @@ public class MainMenuUI : MonoBehaviour
 		StatisticsIO.ResetAllStats();
 		string uniqueName = SaveLoad.GenerateUniqueSaveName();
 		SaveLoad.CurrentSave = uniqueName;
-		StatisticsIO.SaveAll();
-
-		StatTracker currentScene = StatisticsIO.GetTracker("Current Scene");
-		SceneTracker.AttachToSceneLoader();
-		sceneChanger.LoadScene(currentScene.ValueString);
+		SaveReader.Save(uniqueName);
+		
+		sceneChanger.LoadScene(currentSceneTracker.Value);
 	}
 
 	public void OpenMainMenu()

@@ -1,8 +1,7 @@
-﻿using System.Linq;
+﻿using InventorySystem;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
-using InventorySystem;
-using InventorySystem.UI;
 
 public class HotBarUI : MonoBehaviour
 {

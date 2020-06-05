@@ -1,7 +1,7 @@
-﻿using UnityEngine;
-using TabbedMenuSystem;
-using InputHandlerSystem;
+﻿using InputHandlerSystem;
 using System;
+using TabbedMenuSystem;
+using UnityEngine;
 
 public class PauseMenu : TabbedMenuController
 {

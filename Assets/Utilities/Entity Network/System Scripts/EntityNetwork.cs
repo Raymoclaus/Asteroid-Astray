@@ -1,9 +1,8 @@
-﻿using System;
+﻿using CustomDataTypes;
+using SaveSystem;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
-using CustomDataTypes;
-using SaveSystem;
-using UnityEditor;
 using SaveType = SaveSystem.SaveType;
 
 /// Keeps track of all entities in an organised network based on their position.
@@ -12,7 +11,6 @@ using SaveType = SaveSystem.SaveType;
 /// Intended for use with procedurally-generated content.
 public class EntityNetwork : MonoBehaviour
 {
-	private static EntityNetwork instance;
 	private static int QuadrantCount
 		=> ChunkCoords.DIRECTION_COUNT;
 	//Determines the physical size of cells in the grid
@@ -23,44 +21,29 @@ public class EntityNetwork : MonoBehaviour
 	private HashSet<ChunkCoords> occupiedCoords = new HashSet<ChunkCoords>();
 	//dictionary by type, containing dictionary by coordinates
 	private Dictionary<Type, Dictionary<ChunkCoords, HashSet<Entity>>> entitiesByTypePerCoordinates = new Dictionary<Type, Dictionary<ChunkCoords, HashSet<Entity>>>();
-	//check if grid has already been created
-	private bool gridIsSetUp = false;
+	private EntityGenerator _entityGenerator;
 
-	private static event Action OnLoaded;
+	public InvocableOneShotEvent OnLoaded = new InvocableOneShotEvent();
 
 	private void Awake()
 	{
-		if (instance != this && instance != null)
-		{
-			Destroy(gameObject);
-			return;
-		}
-		instance = this;
+		OneShotEventGroupWait wait = new OneShotEventGroupWait(false,
+			UniqueIDGenerator.OnLoaded);
 
-		Debug.Log("Loading Entity Network");
-		gridIsSetUp = true;
-		Load();
-		Debug.Log("Entity Network Loaded");
-		OnLoaded?.Invoke();
-		OnLoaded = null;
+		_entityGenerator = FindObjectOfType<EntityGenerator>();
+		if (_entityGenerator != null)
+		{
+			wait.AddEventToWaitFor(_entityGenerator.OnPrefabsLoaded);
+		}
+
+		wait.Start();
+		wait.RunWhenReady(Load);
 	}
 
-	public static void AddListener(Action action)
-	{
-		if (IsReady)
-		{
-			action?.Invoke();
-		}
-		else if (action != null)
-		{
-			OnLoaded += action;
-		}
-	}
-
-	public static bool IsReady => instance != null && instance.gridIsSetUp;
+	public bool IsReady => OnLoaded.Invoked;
 
 	/// Returns a list of all entities located in cells within range of the given coordinates
-	public static bool IterateEntitiesInRange(ChunkCoords center, int range, Func<Entity, bool> action)
+	public bool IterateEntitiesInRange(ChunkCoords center, int range, Func<Entity, bool> action)
 	{
 		return IterateCoordsInRange(
 			center,
@@ -68,11 +51,10 @@ public class EntityNetwork : MonoBehaviour
 			cc =>
 			{
 				return IterateEntitiesAtCoord(cc, action);
-			},
-			false);
+			});
 	}
 
-	public static bool IterateEntitiesAtCoord(ChunkCoords coord, Func<Entity, bool> action)
+	public bool IterateEntitiesAtCoord(ChunkCoords coord, Func<Entity, bool> action)
 	{
 		if (!ChunkExists(coord)) return false;
 		List<Entity> entities = Chunk(coord);
@@ -85,7 +67,7 @@ public class EntityNetwork : MonoBehaviour
 	}
 
 	/// Iterates over a given list and checks if a given entity is within the set
-	private static bool EntityIsInSet(Entity e, List<Entity> set)
+	private bool EntityIsInSet(Entity e, List<Entity> set)
 	{
 		if (set == null) return false;
 
@@ -99,13 +81,13 @@ public class EntityNetwork : MonoBehaviour
 
 	/// Returns a list of coordinates around a given center coordinate in a specified range
 	public static bool IterateCoordsInRange(ChunkCoords center, int range,
-		Func<ChunkCoords, bool> action, bool ignoreLackOfExistenceInGrid)
+		Func<ChunkCoords, bool> action)
 	{
 		int r = range + 2;
 		//loop through surrounding chunks
 		for (int i = 0; i <= range; i++)
 		{
-			if (IterateCoordsOnRangeBorder(center, i, action, ignoreLackOfExistenceInGrid))
+			if (IterateCoordsOnRangeBorder(center, i, action))
 			{
 				return true;
 			}
@@ -116,7 +98,7 @@ public class EntityNetwork : MonoBehaviour
 
 	/// Returns a list of coordinates that are a specified distance from a given center coordinate
 	public static bool IterateCoordsOnRangeBorder(ChunkCoords center, int range,
-		Func<ChunkCoords, bool> exitCondition, bool ignoreLackOfExistenceInGrid)
+		Func<ChunkCoords, bool> exitCondition)
 	{
 		int r = range * 8;
 
@@ -126,10 +108,7 @@ public class EntityNetwork : MonoBehaviour
 			for (pos.y = -range; pos.y <= range;)
 			{
 				ChunkCoords validCC = (center + pos).Validate();
-				if (ignoreLackOfExistenceInGrid || ChunkExists(validCC))
-				{
-					if (exitCondition?.Invoke(validCC) ?? false) return true;
-				}
+				if (exitCondition?.Invoke(validCC) ?? false) return true;
 				pos.y += pos.x <= -range || pos.x >= range ?
 					1 : range * 2;
 			}
@@ -141,7 +120,7 @@ public class EntityNetwork : MonoBehaviour
 	}
 
 	/// Adds a given entity to the list at given coordinates
-	public static bool AddEntity(Entity e, ChunkCoords cc)
+	public bool AddEntity(Entity e, ChunkCoords cc)
 	{
 		//check if the given coordinates are valid
 		if (!cc.IsValid())
@@ -150,23 +129,23 @@ public class EntityNetwork : MonoBehaviour
 			return false;
 		}
 		//make sure that the chunk with those coordinates exists
-		instance.EnsureChunkExists(cc);
+		EnsureChunkExists(cc);
 		//add entity to that chunk
 		Chunk(cc).Add(e);
 		//set entity's coordinates to be equal to the given coordinates
 		e.SetCoordinates(cc);
 		//add entity to type-sorted list
-		instance.AddEntityToTypeSortedList(e);
+		AddEntityToTypeSortedList(e);
 		//update list of occupied coordinates
 		if (Chunk(cc).Count == 1)
 		{
-			instance.occupiedCoords.Add(cc);
+			occupiedCoords.Add(cc);
 		}
 		return true;
 	}
 
 	/// Removes an entity from the network
-	public static bool RemoveEntity(Entity e, EntityType? type = null)
+	public bool RemoveEntity(Entity e, EntityType? type = null)
 	{
 		ChunkCoords cc = e.GetCoords();
 		if (!ChunkExists(cc)) return false;
@@ -177,10 +156,10 @@ public class EntityNetwork : MonoBehaviour
 			if (chunk[i] == e)
 			{
 				chunk.RemoveAt(i);
-				instance.RemoveEntityFromTypeSortedList(e);
+				RemoveEntityFromTypeSortedList(e);
 				if (chunk.Count == 0)
 				{
-					instance.occupiedCoords.Remove(cc);
+					occupiedCoords.Remove(cc);
 				}
 				return true;
 			}
@@ -223,12 +202,12 @@ public class EntityNetwork : MonoBehaviour
 	}
 
 	/// Iterates through all entities and performs the action once for each entity
-	public static void AccessAllEntities(Action<Entity> act, EntityType? onlyType = null)
+	public void AccessAllEntities(Action<Entity> act, EntityType? onlyType = null)
 	{
 		ChunkCoords check = ChunkCoords.Zero;
 		bool limitCheck = onlyType != null;
 		//Check every direction
-		for (int dir = 0; dir < instance.grid.Count; dir++)
+		for (int dir = 0; dir < grid.Count; dir++)
 		{
 			check.quadrant = (Quadrant) dir;
 			//Check every column
@@ -254,12 +233,12 @@ public class EntityNetwork : MonoBehaviour
 		}
 	}
 
-	public static void DestroyAllEntities()
+	public void DestroyAllEntities()
 		=> AccessAllEntities((Entity e) => e.DestroySelf(null, 0f));
 
 	/// Removes an entity from its position in the network and replaces it and the given destination
 	/// This will mostly be used by entities themselves as they are responsible for determining their place in the network
-	public static bool Reposition(Entity e, ChunkCoords destChunk)
+	public bool Reposition(Entity e, ChunkCoords destChunk)
 	{
 		if (e.GetCoords() == destChunk) return true;
 
@@ -275,22 +254,22 @@ public class EntityNetwork : MonoBehaviour
 		return false;
 	}
 
-	public static List<Entity> Chunk(ChunkCoords cc) => Column(cc)[cc.y];
+	public List<Entity> Chunk(ChunkCoords cc) => Column(cc)[cc.y];
 
-	public static List<List<Entity>> Column(ChunkCoords cc) => Quad(cc)[cc.x];
+	public List<List<Entity>> Column(ChunkCoords cc) => Quad(cc)[cc.x];
 
-	public static List<List<List<Entity>>> Quad(ChunkCoords cc)
-		=> instance.grid[(int)cc.quadrant];
+	public List<List<List<Entity>>> Quad(ChunkCoords cc)
+		=> grid[(int)cc.quadrant];
 
 	/// Returns whether a given chunk is valid and exists in the network
-	public static bool ChunkExists(ChunkCoords cc)
+	private bool ChunkExists(ChunkCoords cc)
 	{
 		//if coordinates are invalid then chunk definitely doesn't exist
 		if (!cc.IsValid() || !IsReady) return false;
 
 		//if the quadrant doesn't have x amount of columns or that column doesn't have y amount of cells,
 		//the chunk doesn't exist
-		if ((int) cc.quadrant >= instance.grid.Count
+		if ((int) cc.quadrant >= grid.Count
 		    || cc.x >= Quad(cc).Count
 		    || cc.y >= Column(cc).Count) return false;
 
@@ -318,13 +297,13 @@ public class EntityNetwork : MonoBehaviour
 	}
 
 	/// Returns whether an entity is at a specific location
-	public static bool ConfirmLocation(Entity e, ChunkCoords c)
+	public bool ConfirmLocation(Entity e, ChunkCoords c)
 	{
 		return EntityIsInSet(e, Chunk(c));
 	}
 
 	/// Returns whether a chunk contains any entities of a certain type
-	public static bool ContainsType(EntityType type, ChunkCoords c, Entity entToExclude = null)
+	public bool ContainsType(EntityType type, ChunkCoords c, Entity entToExclude = null)
 	{
 		if (!ChunkExists(c)) return false;
 
@@ -338,51 +317,26 @@ public class EntityNetwork : MonoBehaviour
 
 	private const string TEMP_SAVE_FILE_NAME = "EntityNetwork_tmp",
 		PERMANENT_SAVE_FILE_NAME = "EntityNetwork",
-		SAVE_TAG = "EntityNetwork",
-		ENTITY_SAVE_TAG = "Entities";
-
-	/// <summary>
-	/// Grabs all data from a temporary save file and places it into a permanent one.
-	/// </summary>
-	[MenuItem("Temp/Permanent Save Entity Network")]
-	public static void PermanentSave()
-	{
-		//check if a temporary save file exists
-		if (!SaveLoad.RelativeSaveFileExists(TEMP_SAVE_FILE_NAME))
-		{
-			Debug.LogWarning("No temporary save file exists for the entity network");
-			return;
-		}
-		//copy data from temporary file
-		string text = SaveLoad.LoadText(TEMP_SAVE_FILE_NAME);
-		//overwrite the permanent file with the copied data
-		SaveLoad.SaveText(PERMANENT_SAVE_FILE_NAME, text);
-		//delete the temporary file
-		SaveLoad.DeleteSaveFile(TEMP_SAVE_FILE_NAME);
-		//close the file to prevent issues later
-		UnifiedSaveLoad.CloseFile(TEMP_SAVE_FILE_NAME);
-	}
+		SAVE_TAG_NAME = "EntityNetwork",
+		ENTITIES_TAG_NAME = "Entities";
 
 	/// <summary>
 	/// Grabs data from all saveable entities and puts it all into a temporary file.
 	/// </summary>
-	[MenuItem("Temp/Temporary Save Entity Network")]
-	public static void TemporarySave()
+	public void TemporarySave()
 	{
 		//delete existing temporary file
-		SaveLoad.DeleteSaveFile(TEMP_SAVE_FILE_NAME);
-		//close the file because it was deleted
-		UnifiedSaveLoad.CloseFile(TEMP_SAVE_FILE_NAME);
+		DeleteTemporarySave();
 		//reopen the file (which will recreate the file if second argument is true)
 		UnifiedSaveLoad.OpenFile(TEMP_SAVE_FILE_NAME, true);
 		//create a main tag
-		SaveTag mainTag = new SaveTag(SAVE_TAG);
+		SaveTag mainTag = new SaveTag(SAVE_TAG_NAME);
 		//create a tag to put all entities under
-		SaveTag entityTag = new SaveTag(ENTITY_SAVE_TAG, mainTag);
+		SaveTag entityTag = new SaveTag(ENTITIES_TAG_NAME, mainTag);
 		//loop over entities to save fully
-		foreach (Type t in instance.entitiesByTypePerCoordinates.Keys)
+		foreach (Type t in entitiesByTypePerCoordinates.Keys)
 		{
-			Dictionary<ChunkCoords, HashSet<Entity>> chunkSet = instance.entitiesByTypePerCoordinates[t];
+			Dictionary<ChunkCoords, HashSet<Entity>> chunkSet = entitiesByTypePerCoordinates[t];
 			bool skip = false;
 			bool amountOnly = false;
 			foreach (ChunkCoords cc in chunkSet.Keys)
@@ -423,14 +377,41 @@ public class EntityNetwork : MonoBehaviour
 				if (skip) break;
 			}
 		}
-		//loop over entities to only save amounts of per chunk
 
 		//save the data now in temp memory into a file
 		UnifiedSaveLoad.SaveOpenedFile(TEMP_SAVE_FILE_NAME);
 	}
 
-	public static void Load()
+	/// <summary>
+	/// Grabs all data from a temporary save file and places it into a permanent one.
+	/// </summary>
+	public static void PermanentSave()
 	{
+		//check if a temporary save file exists
+		if (!SaveLoad.RelativeSaveFileExists(TEMP_SAVE_FILE_NAME))
+		{
+			Debug.LogWarning("No temporary save file exists for the entity network");
+			return;
+		}
+		//copy data from temporary file
+		string text = SaveLoad.LoadText(TEMP_SAVE_FILE_NAME);
+		//overwrite the permanent file with the copied data
+		SaveLoad.SaveText(PERMANENT_SAVE_FILE_NAME, text);
+		//delete the temporary file
+		DeleteTemporarySave();
+	}
+
+	public static void DeleteTemporarySave()
+	{
+		//delete existing temporary file
+		SaveLoad.DeleteSaveFile(TEMP_SAVE_FILE_NAME);
+		//close the file because it was deleted
+		UnifiedSaveLoad.CloseFile(TEMP_SAVE_FILE_NAME);
+	}
+
+	public void Load()
+	{
+		Debug.Log("Entity Network Data: Begin Loading");
 		//check if save file exists
 		bool tempSaveExists = SaveLoad.RelativeSaveFileExists(TEMP_SAVE_FILE_NAME);
 		bool permanentSaveExists = SaveLoad.RelativeSaveFileExists(PERMANENT_SAVE_FILE_NAME);
@@ -445,22 +426,42 @@ public class EntityNetwork : MonoBehaviour
 		}
 		else
 		{
+			Debug.Log("Entity Network Data: Nothing to load, continuing");
+			OnLoaded.Invoke();
 			return;
 		}
 
 		//open the save file
 		UnifiedSaveLoad.OpenFile(filename, false);
 		//create save tag
-		SaveTag mainTag = new SaveTag(SAVE_TAG);
+		SaveTag mainTag = new SaveTag(SAVE_TAG_NAME);
 		//create sub-tag that entities are placed under
-		SaveTag entityTag = new SaveTag(ENTITY_SAVE_TAG, mainTag);
-		//create callbacks
-		Action<DataModule> parameterCallBack = null;
-		Action<SaveTag> tagCallBack = tag =>
-		{
-
-		};
+		SaveTag entityTag = new SaveTag(ENTITIES_TAG_NAME, mainTag);
 		//iterate over entity tag
-		UnifiedSaveLoad.IterateTagContents(filename, entityTag, parameterCallBack, tagCallBack);
+		UnifiedSaveLoad.IterateTagContents(
+			filename,
+			entityTag,
+			parameterCallBack: module => ApplyData(module),
+			subtagCallBack: subtag => CheckSubtag(filename, subtag));
+
+		Debug.Log("Entity Network Data: Loaded");
+		OnLoaded.Invoke();
+	}
+
+	private bool ApplyData(DataModule module)
+	{
+		switch (module.parameterName)
+		{
+			default:
+				return false;
+		}
+
+		return true;
+	}
+
+	private bool CheckSubtag(string filename, SaveTag subtag)
+	{
+		Entity.LoadEntityFromFile(filename, subtag);
+		return true;
 	}
 }

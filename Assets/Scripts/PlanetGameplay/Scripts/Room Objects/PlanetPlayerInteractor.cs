@@ -1,5 +1,4 @@
-﻿using System;
-using CustomDataTypes;
+﻿using CustomDataTypes;
 using InventorySystem;
 using TriggerSystem.Actors.Interactors;
 using UnityEngine;

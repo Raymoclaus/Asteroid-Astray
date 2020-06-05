@@ -1,97 +1,100 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
-using StatisticsTracker;
-using UnityEditor;
-using UnityEngine;
 
 namespace SaveSystem
 {
 	public static class SaveReader
 	{
-		[MenuItem("Temp/Read Files")]
+		private const string SAVE_FILE_NAME = "file data",
+			SAVE_TAG_NAME = "SaveCard",
+			FILE_ID_VAR_NAME = "File ID";
+
 		public static List<SaveFile> GetSaves()
 		{
 			List<SaveFile> saves = new List<SaveFile>();
-			DirectoryInfo directory = new DirectoryInfo(SaveLoad.path);
-			string parameterName = "story progression";
-			string originalSaveName = SaveLoad.CurrentSave;
-			SaveLoad.CurrentSave = null;
-
-			foreach (DirectoryInfo di in directory.EnumerateDirectories())
+			IterateValidSaveFileDirectories(di =>
 			{
-				string saveFilePath = $"{di.Name}/{UnifiedSaveLoad.SAVE_FILENAME}";
-				string saveFileFullPath = $"{di.FullName}/{UnifiedSaveLoad.SAVE_FILENAME}{SaveLoad.extension}";
-				bool fileExists = File.Exists(saveFileFullPath);
-				if (!fileExists) continue;
-				Debug.Log(saveFilePath);
-				bool saveExists = SaveLoad.RelativeSaveFileExists(saveFilePath);
-				if (!saveExists) continue;
-				string progressLine = UnifiedSaveLoad.GetLineOfParameter(
-					saveFilePath, StatisticsIO.saveTag, parameterName);
-				DataModule module = UnifiedSaveLoad.ConvertParameterLineToModule(progressLine);
-				Debug.Log($"Name: {module.parameterName}, Value: {module.data}");
-				if (module.parameterName == null) continue;
 				saves.Add(new SaveFile(di));
-			}
-
-			SaveLoad.CurrentSave = originalSaveName;
+				return false;
+			});
 			return saves;
 		}
 
-		[MenuItem("Save System/Get Save File Count")]
-		public static int GetSaveFileCount()
+		private static void IterateValidSaveFileDirectories(Func<DirectoryInfo, bool> function)
 		{
+			if (function == null) return;
+
 			DirectoryInfo directory = new DirectoryInfo(SaveLoad.path);
-			string parameterName = "story progression";
 			string originalSaveName = SaveLoad.CurrentSave;
 			SaveLoad.CurrentSave = null;
 
-			int count = 0;
 			foreach (DirectoryInfo di in directory.EnumerateDirectories())
 			{
-				string saveFilePath = $"{di.Name}/{UnifiedSaveLoad.SAVE_FILENAME}";
-				string saveFileFullPath = $"{di.FullName}/{UnifiedSaveLoad.SAVE_FILENAME}{SaveLoad.extension}";
-				bool fileExists = File.Exists(saveFileFullPath);
-				if (!fileExists) continue;
-				string progressLine = UnifiedSaveLoad.GetLineOfParameter(
-					saveFilePath, StatisticsIO.saveTag, parameterName);
-				DataModule module = UnifiedSaveLoad.ConvertParameterLineToModule(progressLine);
-				Debug.Log($"Name: {module.parameterName}, Value: {module.data}");
-				if (module.parameterName == null) continue;
-				count++;
+				SaveLoad.CurrentSave = di.Name;
+				bool currentSaveIsValid = VerifyCurrentSave();
+				if (!currentSaveIsValid) continue;
+				bool endIteration = function.Invoke(di);
+				if (endIteration) return;
 			}
 
 			SaveLoad.CurrentSave = originalSaveName;
-			SteamPunkConsole.WriteLine($"{count} save files found.");
+		}
+
+		private static bool VerifyCurrentSave()
+		{
+			bool saveExists = SaveLoad.RelativeSaveFileExists(SAVE_FILE_NAME);
+			if (!saveExists) return false;
+
+			SaveTag saveTag = new SaveTag(SAVE_TAG_NAME);
+			DataModule module = UnifiedSaveLoad.GetModuleOfParameter(SAVE_FILE_NAME, saveTag, FILE_ID_VAR_NAME);
+			if (module == DataModule.INVALID_DATA_MODULE) return false;
+
+			return true;
+		}
+		
+		public static int GetSaveFileCount()
+		{
+			int count = 0;
+
+			IterateValidSaveFileDirectories(di =>
+			{
+				count++;
+				return false;
+			});
+
 			return count;
 		}
 
-		public static SaveFile GetFirstSaveFile()
+		public static bool DirectoryWithNameExists(string dirName)
 		{
-			DirectoryInfo directory = new DirectoryInfo(SaveLoad.path);
-			string parameterName = "story progression";
-			string originalSaveName = SaveLoad.CurrentSave;
-			SaveLoad.CurrentSave = null;
+			bool found = false;
 
-			foreach (DirectoryInfo di in directory.EnumerateDirectories())
+			IterateValidSaveFileDirectories(di =>
 			{
-				string saveFilePath = $"{di.Name}/{UnifiedSaveLoad.SAVE_FILENAME}";
-				string saveFileFullPath = $"{di.FullName}/{UnifiedSaveLoad.SAVE_FILENAME}{SaveLoad.extension}";
-				bool fileExists = File.Exists(saveFileFullPath);
-				if (!fileExists) continue;
-				Debug.Log(saveFilePath);
-				bool saveExists = SaveLoad.RelativeSaveFileExists(saveFilePath);
-				if (!saveExists) continue;
-				string progressLine = UnifiedSaveLoad.GetLineOfParameter(
-					saveFilePath, StatisticsIO.saveTag, parameterName);
-				DataModule module = UnifiedSaveLoad.ConvertParameterLineToModule(progressLine);
-				Debug.Log($"Name: {module.parameterName}, Value: {module.data}");
-				if (module.parameterName == null) continue;
-				SaveLoad.CurrentSave = originalSaveName;
-				return new SaveFile(di);
-			}
+				if (di.Name == dirName)
+				{
+					found = true;
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			});
 
-			return null;
+			return found;
+		}
+
+		public static void Save(string fileID)
+		{
+			//open file
+			UnifiedSaveLoad.OpenFile(SAVE_FILE_NAME, true);
+			//create main tag
+			SaveTag mainTag = new SaveTag(SAVE_TAG_NAME);
+			//save file id
+			DataModule module = new DataModule(FILE_ID_VAR_NAME, fileID);
+			UnifiedSaveLoad.UpdateOpenedFile(SAVE_FILE_NAME, mainTag, module);
 		}
 	} 
 }

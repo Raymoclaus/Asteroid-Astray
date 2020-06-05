@@ -1,5 +1,4 @@
 ﻿using InputHandlerSystem;
-using System;
 using UnityEngine;
 
 namespace AttackData

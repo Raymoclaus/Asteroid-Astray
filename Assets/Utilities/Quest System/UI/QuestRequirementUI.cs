@@ -1,5 +1,5 @@
-﻿using UnityEngine;
-using TMPro;
+﻿using TMPro;
+using UnityEngine;
 
 namespace QuestSystem.UI
 {
@@ -17,7 +17,9 @@ namespace QuestSystem.UI
 
 		private void LateUpdate()
 		{
-			string targetWaypointID = requirement.GetWaypointID;
+			if (requirement == null || quester == null) return;
+
+			string targetWaypointID = requirement.WaypointID;
 			IWaypoint targetWaypoint = WaypointManager.GetWaypointByID(targetWaypointID);
 			if (requirement.Completed || targetWaypoint == null)
 			{

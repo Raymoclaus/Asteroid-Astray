@@ -1,6 +1,6 @@
-﻿using UnityEngine;
+﻿using EquipmentSystem;
 using System.Collections.Generic;
-using EquipmentSystem;
+using UnityEngine;
 
 public class DrillBit : MonoBehaviour, IEquipment
 {

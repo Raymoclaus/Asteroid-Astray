@@ -7,14 +7,14 @@ namespace StatisticsTracker
 	public class BoolStatTracker : StatTracker
 	{
 		public event Action<bool, bool> OnValueUpdated;
-		public bool value;
-		public bool defaultValue;
+		[SerializeField] private bool value;
+		[SerializeField] private bool defaultValue;
 
 		public override Type FieldType => value.GetType();
 
 		public override string ValueString => value.ToString();
 
-		public override bool Parse(string valueString)
+		public override bool TryParse(string valueString)
 		{
 			bool successful = bool.TryParse(valueString, out bool val);
 			if (!successful)
@@ -26,6 +26,8 @@ namespace StatisticsTracker
 			SetValue(val);
 			return true;
 		}
+
+		public bool Value => value;
 
 		public void SetValue(bool val)
 		{

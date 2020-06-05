@@ -1,7 +1,5 @@
-﻿using System.Linq;
-using InventorySystem.UI;
+﻿using TriggerSystem;
 using UnityEngine;
-using TriggerSystem;
 
 namespace InventorySystem
 {

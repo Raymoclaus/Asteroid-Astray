@@ -1,15 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using UnityEngine;
-using CustomDataTypes;
-using InventorySystem;
-using ValueComponents;
-using TriggerSystem;
-using AttackData;
+﻿using AttackData;
 using AudioUtilities;
+using CustomDataTypes;
 using InputHandlerSystem;
+using InventorySystem;
 using QuestSystem;
 using SaveSystem;
+using System;
+using System.Collections.Generic;
+using TriggerSystem;
+using UnityEngine;
+using ValueComponents;
 
 public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageReceiver, IWaypointable
 {
@@ -42,6 +42,9 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 
 	[SerializeField] protected RangedFloatComponent healthComponent;
 	[SerializeField] private LootComponent loot;
+	private static EntityNetwork _entityNetwork;
+	private static LoadingController _loadingController;
+	private static EntityGenerator _entityGenerator;
 
 	//first param Entity is the destroyer
 	public Action<Entity> OnDestroyed;
@@ -73,26 +76,40 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 
 	public string UniqueID { get; set; }
 
+	public string PrefabID { get; set; }
+
 	public Vector3 Position => transform.position;
 
 	public RangedFloatComponent HealthComponent => healthComponent;
 
-	protected virtual void Awake()
+	protected void Awake()
 	{
 		enabled = false;
-		LoadingController.AddListener(Initialise);
+
+		if (_entityNetwork == null || _entityNetwork.Equals(null))
+		{
+			_entityNetwork = FindObjectOfType<EntityNetwork>();
+		}
+
+		if (_loadingController == null || _loadingController.Equals(null))
+		{
+			_loadingController = FindObjectOfType<LoadingController>();
+		}
+
+		_loadingController.OnLoadingComplete.RunWhenReady(Initialise);
 	}
 
-	public virtual void Initialise()
+	protected virtual void Initialise()
 	{
 		coords = new ChunkCoords(transform.position, EntityNetwork.CHUNK_SIZE);
-		EntityNetwork.AddEntity(this, coords);
+		_entityNetwork.AddEntity(this, coords);
 		RepositionInNetwork(true);
 		enabled = true;
 
-		if (UniqueID == null)
+		bool addedSuccessfully = UniqueIDGenerator.AddObject(this);
+		if (!addedSuccessfully)
 		{
-			UniqueIDGenerator.AddObject(this);
+			Debug.Log("Could not be treated as a unique object.");
 		}
 	}
 
@@ -100,9 +117,36 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 
 	private void OnDestroy()
 	{
-		EntityNetwork.RemoveEntity(this);
+		_entityNetwork.RemoveEntity(this);
 		mainCam = null;
 		mainCamCtrl = null;
+	}
+
+	protected static EntityNetwork EntityNetwork
+	{
+		get
+		{
+			if (_entityNetwork != null && !_entityNetwork.Equals(null)) return _entityNetwork;
+			return _entityNetwork = FindObjectOfType<EntityNetwork>();
+		}
+	}
+
+	protected static LoadingController LoadingController
+	{
+		get
+		{
+			if (_loadingController != null && !_loadingController.Equals(null)) return _loadingController;
+			return _loadingController = FindObjectOfType<LoadingController>();
+		}
+	}
+
+	protected static EntityGenerator EntityGenerator
+	{
+		get
+		{
+			if (_entityGenerator != null && !_entityGenerator.Equals(null)) return _entityGenerator;
+			return _entityGenerator = FindObjectOfType<EntityGenerator>();
+		}
 	}
 
 	public bool IsInPhysicsRange { get; set; } = true;
@@ -113,7 +157,7 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 		ChunkCoords newCc = new ChunkCoords(transform.position, EntityNetwork.CHUNK_SIZE);
 		if (newCc == coords && !forceUpdate) return;
 
-		EntityNetwork.Reposition(this, newCc);
+		_entityNetwork.Reposition(this, newCc);
 
 		bool foundInPhysicsRange = CheckIfInPhysicsRange();
 		bool foundInViewRange = CheckInCameraViewRange();
@@ -229,9 +273,9 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 		{
 			destroyer.DestroyedAnEntity(this);
 		}
-		if (EntityNetwork.ConfirmLocation(this, coords))
+		if (_entityNetwork.ConfirmLocation(this, coords))
 		{
-			EntityNetwork.RemoveEntity(this);
+			_entityNetwork.RemoveEntity(this);
 		}
 		IInventoryHolder target = destroyer as IInventoryHolder;
 		DropLoot(target, dropModifier);
@@ -525,8 +569,8 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 
 	protected string SaveTagName => $"{GetType()}:{UniqueID}";
 	private const string POSITION_VAR_NAME = "Position",
-		ENTITY_TYPE_VAR_NAME = "EntityType",
 		UNIQUE_ID_VAR_NAME = "UniqueID",
+		PREFAB_ID_VAR_NAME = "Prefab ID",
 		MAX_HEALTH_VAR_NAME = "MaxHealth",
 		CURRENT_HEALTH_VAR_NAME = "CurrentHealth";
 
@@ -537,11 +581,11 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 		//save position
 		DataModule module = new DataModule(POSITION_VAR_NAME, Position);
 		UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
-		//save entity type
-		module = new DataModule(ENTITY_TYPE_VAR_NAME, EntityType);
-		UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
 		//save unique ID
 		module = new DataModule(UNIQUE_ID_VAR_NAME, UniqueID);
+		UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
+		//save prefab ID
+		module = new DataModule(PREFAB_ID_VAR_NAME, PrefabID);
 		UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
 		//save max health
 		module = new DataModule(MAX_HEALTH_VAR_NAME, healthComponent.UpperLimit);
@@ -549,6 +593,83 @@ public class Entity : MonoBehaviour, IActionMessageReceiver, IAttackMessageRecei
 		//save current health
 		module = new DataModule(CURRENT_HEALTH_VAR_NAME, healthComponent.CurrentValue);
 		UnifiedSaveLoad.UpdateOpenedFile(filename, mainTag, module);
+	}
+
+	public static void LoadEntityFromFile(string filename, SaveTag entityTag)
+	{
+		DataModule prefabIDModule = UnifiedSaveLoad.GetModuleOfParameter(filename, entityTag, PREFAB_ID_VAR_NAME);
+		if (prefabIDModule == DataModule.INVALID_DATA_MODULE) return;
+		SpawnableEntity se = EntityGenerator.GetSpawnableEntityByFileName(prefabIDModule.data);
+		if (se == null) return;
+		if (EntityGenerator == null) return;
+		Entity newEntity = EntityGenerator.InstantiateEntity(se, Vector2.zero);
+		UnifiedSaveLoad.IterateTagContents(
+			filename,
+			entityTag,
+			parameterCallBack: module => newEntity.ApplyData(module),
+			subtagCallBack: subtag => newEntity.CheckSubtag(filename, subtag));
+	}
+
+	/// <summary>
+	/// Parses the data module and applies the data to this entity.
+	/// </summary>
+	/// <param name="module"></param>
+	/// <returns>Returns true if the module was recognised.</returns>
+	protected virtual bool ApplyData(DataModule module)
+	{
+		switch (module.parameterName)
+		{
+			default:
+				return false;
+			case POSITION_VAR_NAME:
+				bool foundPosition = module.data.TryParseToVector3(out Vector3 pos);
+				if (foundPosition)
+				{
+					Teleport(pos);
+				}
+				else
+				{
+					Debug.Log("Position data could not be parsed.", gameObject);
+				}
+				break;
+			case UNIQUE_ID_VAR_NAME:
+				UniqueID = module.data;
+				bool addedSuccessfully = UniqueIDGenerator.SetObjectToID(UniqueID, this);
+				if (!addedSuccessfully)
+				{
+					Debug.Log("Could not be treated as a unique object.");
+				}
+				break;
+			case MAX_HEALTH_VAR_NAME:
+				bool foundMaxHealth = float.TryParse(module.data, out float maxHealth);
+				if (foundMaxHealth)
+				{
+					HealthComponent.SetUpperLimit(maxHealth, false);
+				}
+				else
+				{
+					Debug.Log("Max Health data could not be parsed");
+				}
+				break;
+			case CURRENT_HEALTH_VAR_NAME:
+				bool foundCurrentHealth = float.TryParse(module.data, out float currentHealth);
+				if (foundCurrentHealth)
+				{
+					HealthComponent.SetValue(currentHealth);
+				}
+				else
+				{
+					Debug.Log("Current Health data could not be parsed");
+				}
+				break;
+		}
+
+		return true;
+	}
+
+	protected virtual bool CheckSubtag(string filename, SaveTag subtag)
+	{
+		return false;
 	}
 }
 

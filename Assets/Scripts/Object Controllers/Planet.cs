@@ -1,7 +1,5 @@
 ﻿using SaveSystem;
 using SceneControllers;
-using TriggerSystem;
-using TriggerSystem.Triggers;
 using UnityEngine;
 
 public class Planet : Entity
@@ -14,9 +12,9 @@ public class Planet : Entity
 	//private int exploredCount = 0;
 	public float difficultyModifier = 1f;
 
-	protected override void Awake()
+	protected override void Initialise()
 	{
-		base.Awake();
+		base.Initialise();
 
 		Vector2 originalPos = transform.position;
 		float distance = originalPos.magnitude;

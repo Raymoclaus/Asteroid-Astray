@@ -1,9 +1,11 @@
-﻿using SaveSystem;
-using TMPro;
-using UnityEngine;
-using System.IO;
+﻿using InventorySystem;
+using QuestSystem;
+using SaveSystem;
 using SceneControllers;
 using StatisticsTracker;
+using System.IO;
+using TMPro;
+using UnityEngine;
 
 public class SaveFileCardController : MonoBehaviour
 {
@@ -12,6 +14,7 @@ public class SaveFileCardController : MonoBehaviour
 	private SaveFile file;
 	private SaveFileCardGenerator generator;
 	[SerializeField] private SceneChanger sceneChanger;
+	[SerializeField] private StringStatTracker currentSceneTracker;
 
 	public string FileName => file.Name;
 
@@ -77,10 +80,17 @@ public class SaveFileCardController : MonoBehaviour
 	public void LoadFileButton()
 	{
 		SaveLoad.CurrentSave = FileName;
-		StatisticsIO.Load();
 
-		StatTracker currentScene = StatisticsIO.GetTracker("Current Scene");
-		SceneTracker.AttachToSceneLoader();
-		sceneChanger.LoadScene(currentScene.ValueString);
+		EntityNetwork.DeleteTemporarySave();
+		MainHatchPrompt.DeleteTemporarySave();
+		NarrativeManager.DeleteTemporarySave();
+		WaypointManager.DeleteTemporarySave();
+		StatisticsIO.ResetAllStats();
+		ScriptedDropsIO.Reset();
+
+		StatisticsIO.Load();
+		ScriptedDropsIO.Load();
+		
+		sceneChanger.LoadScene(currentSceneTracker.ValueString);
 	}
 }
