@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="DrillAnimEverything.png">
+	<!-- Created with Adobe Animate version 18.0.2.126 -->
+	<!-- http://www.adobe.com/products/animate.html -->
+	<SubTexture name="Everything0000" x="0" y="0" width="234" height="471" pivotX="288.1" pivotY="359.15" frameX="-153" frameY="-176" frameWidth="539" frameHeight="733"/>
+	<SubTexture name="Everything0001" x="234" y="0" width="234" height="479" frameX="-153" frameY="-176" frameWidth="539" frameHeight="733"/>
+	<SubTexture name="Everything0002" x="468" y="0" width="256" height="490" frameX="-144" frameY="-176" frameWidth="539" frameHeight="733"/>
+	<SubTexture name="Everything0003" x="724" y="0" width="165" height="563" frameX="-191" frameY="-166" frameWidth="539" frameHeight="733"/>
+	<SubTexture name="Everything0004" x="889" y="0" width="359" height="584" frameX="-91" frameY="-136" frameWidth="539" frameHeight="733"/>
+	<SubTexture name="Everything0005" x="1248" y="0" width="251" height="488" frameX="-145" frameY="-144" frameWidth="539" frameHeight="733"/>
+	<SubTexture name="Everything0006" x="1499" y="0" width="340" height="542" frameX="-114" frameY="-95" frameWidth="539" frameHeight="733"/>
+	<SubTexture name="Everything0007" x="0" y="584" width="405" height="567" frameX="-65" frameY="-146" frameWidth="539" frameHeight="733"/>
+	<SubTexture name="Everything0008" x="405" y="584" width="306" height="595" frameX="-117" frameY="-138" frameWidth="539" frameHeight="733"/>
+	<SubTexture name="Everything0009" x="711" y="584" width="366" height="496" frameX="-88" frameY="-142" frameWidth="539" frameHeight="733"/>
+	<SubTexture name="Everything0010" x="1077" y="584" width="354" height="565" frameX="-84" frameY="-129" frameWidth="539" frameHeight="733"/>
+	<SubTexture name="Everything0011" x="1431" y="584" width="333" height="629" frameX="-83" frameY="-51" frameWidth="539" frameHeight="733"/>
+	<SubTexture name="Everything0012" x="0" y="1213" width="369" height="495" frameX="-78" frameY="-140" frameWidth="539" frameHeight="733"/>
+	<SubTexture name="Everything0013" x="369" y="1213" width="377" height="591" frameX="-81" frameY="-114" frameWidth="539" frameHeight="733"/>
+	<SubTexture name="Everything0014" x="746" y="1213" width="299" height="542" frameX="-117" frameY="-144" frameWidth="539" frameHeight="733"/>
+	<SubTexture name="Everything0015" x="1045" y="1213" width="390" height="493" frameX="-76" frameY="-157" frameWidth="539" frameHeight="733"/>
+	<SubTexture name="Everything0016" x="1435" y="1213" width="417" height="593" frameX="-65" frameY="-132" frameWidth="539" frameHeight="733"/>
+	<SubTexture name="Everything0017" x="0" y="1806" width="272" height="590" frameX="-128" frameY="-129" frameWidth="539" frameHeight="733"/>
+	<SubTexture name="Everything0018" x="272" y="1806" width="398" height="645" frameX="-73" frameY="-55" frameWidth="539" frameHeight="733"/>
+	<SubTexture name="Everything0019" x="670" y="1806" width="313" height="521" frameX="-114" frameY="-152" frameWidth="539" frameHeight="733"/>
+	<SubTexture name="Everything0020" x="983" y="1806" width="405" height="650" frameX="-67" frameY="0" frameWidth="539" frameHeight="733"/>
+	<SubTexture name="Everything0021" x="1388" y="1806" width="512" height="610" frameX="-14" frameY="-32" frameWidth="539" frameHeight="733"/>
+	<SubTexture name="Everything0022" x="0" y="2456" width="539" height="589" frameX="0" frameY="-26" frameWidth="539" frameHeight="733"/>
+	<SubTexture name="Everything0023" x="539" y="2456" width="379" height="545" frameX="-86" frameY="-72" frameWidth="539" frameHeight="733"/>
+	<SubTexture name="Everything0024" x="918" y="2456" width="379" height="554" frameX="-87" frameY="-70" frameWidth="539" frameHeight="733"/>
+	<SubTexture name="Everything0025" x="1297" y="2456" width="379" height="568" frameX="-87" frameY="-70" frameWidth="539" frameHeight="733"/>
+	<SubTexture name="Everything0026" x="1676" y="2456" width="226" height="307" frameX="-162" frameY="-326" frameWidth="539" frameHeight="733"/>
+	<SubTexture name="Everything0027" x="0" y="3045" width="234" height="296" frameX="-153" frameY="-336" frameWidth="539" frameHeight="733"/>
+	<SubTexture name="Everything0028" x="234" y="3045" width="234" height="292" frameX="-153" frameY="-345" frameWidth="539" frameHeight="733"/>
+</TextureAtlas>

@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="JustTheStartupShip.png">
+	<!-- Created with Adobe Animate version 18.0.2.126 -->
+	<!-- http://www.adobe.com/products/animate.html -->
+	<SubTexture name="JustTheStartUpShip0000" x="0" y="0" width="234" height="286" pivotX="197.65" pivotY="120.75" frameX="-62" frameY="-122" frameWidth="359" frameHeight="490"/>
+	<SubTexture name="JustTheStartUpShip0001" x="234" y="0" width="234" height="287" frameX="-62" frameY="-129" frameWidth="359" frameHeight="490"/>
+	<SubTexture name="JustTheStartUpShip0002" x="468" y="0" width="256" height="229" frameX="-53" frameY="-198" frameWidth="359" frameHeight="490"/>
+	<SubTexture name="JustTheStartUpShip0003" x="724" y="0" width="159" height="410" frameX="-100" frameY="-80" frameWidth="359" frameHeight="490"/>
+	<SubTexture name="JustTheStartUpShip0004" x="0" y="410" width="359" height="481" frameX="0" frameY="0" frameWidth="359" frameHeight="490"/>
+</TextureAtlas>

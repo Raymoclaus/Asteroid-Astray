@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="JustTheAsteroid.png">
+	<!-- Created with Adobe Animate version 18.0.2.126 -->
+	<!-- http://www.adobe.com/products/animate.html -->
+	<SubTexture name="JustTheAsteroid0000" x="0" y="0" width="160" height="166" pivotX="154.05" pivotY="333.85" frameX="-62" frameY="-150" frameWidth="302" frameHeight="316"/>
+	<SubTexture name="JustTheAsteroid0001" x="0" y="0" width="160" height="166" frameX="-62" frameY="-150" frameWidth="302" frameHeight="316"/>
+	<SubTexture name="JustTheAsteroid0002" x="0" y="0" width="160" height="166" frameX="-62" frameY="-150" frameWidth="302" frameHeight="316"/>
+	<SubTexture name="JustTheAsteroid0003" x="160" y="0" width="160" height="167" frameX="-62" frameY="-140" frameWidth="302" frameHeight="316"/>
+	<SubTexture name="JustTheAsteroid0004" x="320" y="0" width="160" height="167" frameX="-62" frameY="-110" frameWidth="302" frameHeight="316"/>
+	<SubTexture name="JustTheAsteroid0005" x="480" y="0" width="161" height="167" frameX="-59" frameY="-118" frameWidth="302" frameHeight="316"/>
+	<SubTexture name="JustTheAsteroid0006" x="641" y="0" width="160" height="167" frameX="-66" frameY="-118" frameWidth="302" frameHeight="316"/>
+	<SubTexture name="JustTheAsteroid0007" x="801" y="0" width="160" height="167" frameX="-63" frameY="-120" frameWidth="302" frameHeight="316"/>
+	<SubTexture name="JustTheAsteroid0008" x="0" y="167" width="160" height="167" frameX="-63" frameY="-112" frameWidth="302" frameHeight="316"/>
+	<SubTexture name="JustTheAsteroid0009" x="160" y="167" width="160" height="167" frameX="-62" frameY="-116" frameWidth="302" frameHeight="316"/>
+	<SubTexture name="JustTheAsteroid0010" x="320" y="167" width="160" height="167" frameX="-62" frameY="-127" frameWidth="302" frameHeight="316"/>
+	<SubTexture name="JustTheAsteroid0011" x="480" y="167" width="160" height="167" frameX="-68" frameY="-125" frameWidth="302" frameHeight="316"/>
+	<SubTexture name="JustTheAsteroid0012" x="640" y="167" width="160" height="167" frameX="-59" frameY="-114" frameWidth="302" frameHeight="316"/>
+	<SubTexture name="JustTheAsteroid0013" x="800" y="167" width="160" height="167" frameX="-55" frameY="-127" frameWidth="302" frameHeight="316"/>
+	<SubTexture name="JustTheAsteroid0014" x="0" y="334" width="160" height="167" frameX="-62" frameY="-118" frameWidth="302" frameHeight="316"/>
+	<SubTexture name="JustTheAsteroid0015" x="160" y="334" width="160" height="167" frameX="-57" frameY="-131" frameWidth="302" frameHeight="316"/>
+	<SubTexture name="JustTheAsteroid0016" x="320" y="334" width="161" height="167" frameX="-59" frameY="-106" frameWidth="302" frameHeight="316"/>
+	<SubTexture name="JustTheAsteroid0017" x="481" y="334" width="160" height="166" frameX="-58" frameY="-118" frameWidth="302" frameHeight="316"/>
+	<SubTexture name="JustTheAsteroid0018" x="641" y="334" width="160" height="167" frameX="-62" frameY="-118" frameWidth="302" frameHeight="316"/>
+	<SubTexture name="JustTheAsteroid0019" x="801" y="334" width="161" height="167" frameX="-59" frameY="-126" frameWidth="302" frameHeight="316"/>
+	<SubTexture name="JustTheAsteroid0020" x="0" y="501" width="185" height="201" frameX="-45" frameY="-92" frameWidth="302" frameHeight="316"/>
+	<SubTexture name="JustTheAsteroid0021" x="185" y="501" width="234" height="273" frameX="-33" frameY="-6" frameWidth="302" frameHeight="316"/>
+	<SubTexture name="JustTheAsteroid0022" x="419" y="501" width="302" height="275" frameX="0" frameY="0" frameWidth="302" frameHeight="316"/>
+	<SubTexture name="JustTheAsteroid0023" x="721" y="501" width="0" height="0" frameX="-154" frameY="-333" frameWidth="302" frameHeight="316"/>
+	<SubTexture name="JustTheAsteroid0024" x="721" y="501" width="0" height="0" frameX="-154" frameY="-333" frameWidth="302" frameHeight="316"/>
+	<SubTexture name="JustTheAsteroid0025" x="721" y="501" width="0" height="0" frameX="-154" frameY="-333" frameWidth="302" frameHeight="316"/>
+	<SubTexture name="JustTheAsteroid0026" x="721" y="501" width="0" height="0" frameX="-154" frameY="-333" frameWidth="302" frameHeight="316"/>
+	<SubTexture name="JustTheAsteroid0027" x="721" y="501" width="0" height="0" frameX="-154" frameY="-333" frameWidth="302" frameHeight="316"/>
+	<SubTexture name="JustTheAsteroid0028" x="721" y="501" width="0" height="0" frameX="-154" frameY="-333" frameWidth="302" frameHeight="316"/>
+</TextureAtlas>

@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="JustTheEndShip.png">
+	<!-- Created with Adobe Animate version 18.0.2.126 -->
+	<!-- http://www.adobe.com/products/animate.html -->
+	<SubTexture name="JustTheEndShip0000" x="0" y="0" width="405" height="369" pivotX="288.1" pivotY="85.75" frameX="-67" frameY="-7" frameWidth="539" frameHeight="376"/>
+	<SubTexture name="JustTheEndShip0001" x="405" y="0" width="512" height="368" frameX="-14" frameY="0" frameWidth="539" frameHeight="376"/>
+	<SubTexture name="JustTheEndShip0002" x="0" y="369" width="539" height="341" frameX="0" frameY="0" frameWidth="539" frameHeight="376"/>
+	<SubTexture name="JustTheEndShip0003" x="539" y="369" width="303" height="332" frameX="-121" frameY="-11" frameWidth="539" frameHeight="376"/>
+	<SubTexture name="JustTheEndShip0004" x="0" y="710" width="319" height="326" frameX="-115" frameY="-24" frameWidth="539" frameHeight="376"/>
+	<SubTexture name="JustTheEndShip0005" x="319" y="710" width="171" height="322" frameX="-184" frameY="-42" frameWidth="539" frameHeight="376"/>
+	<SubTexture name="JustTheEndShip0006" x="490" y="710" width="226" height="307" frameX="-162" frameY="-52" frameWidth="539" frameHeight="376"/>
+	<SubTexture name="JustTheEndShip0007" x="716" y="710" width="234" height="296" frameX="-153" frameY="-62" frameWidth="539" frameHeight="376"/>
+	<SubTexture name="JustTheEndShip0008" x="0" y="1036" width="234" height="292" frameX="-153" frameY="-71" frameWidth="539" frameHeight="376"/>
+</TextureAtlas>

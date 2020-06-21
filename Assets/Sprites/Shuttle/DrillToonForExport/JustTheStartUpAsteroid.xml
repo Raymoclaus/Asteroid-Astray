@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="JustTheStartUpAsteroid.png">
+	<!-- Created with Adobe Animate version 18.0.2.126 -->
+	<!-- http://www.adobe.com/products/animate.html -->
+	<SubTexture name="JustTheStartUpAsteroid0000" x="0" y="0" width="160" height="166" pivotX="153.65" pivotY="223.15" frameX="-61" frameY="-40" frameWidth="273" frameHeight="324"/>
+	<SubTexture name="JustTheStartUpAsteroid0001" x="0" y="0" width="160" height="166" frameX="-61" frameY="-40" frameWidth="273" frameHeight="324"/>
+	<SubTexture name="JustTheStartUpAsteroid0002" x="0" y="0" width="160" height="166" frameX="-61" frameY="-40" frameWidth="273" frameHeight="324"/>
+	<SubTexture name="JustTheStartUpAsteroid0003" x="160" y="0" width="160" height="213" frameX="-61" frameY="-30" frameWidth="273" frameHeight="324"/>
+	<SubTexture name="JustTheStartUpAsteroid0004" x="0" y="213" width="273" height="324"/>
+</TextureAtlas>

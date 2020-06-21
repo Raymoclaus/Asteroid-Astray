@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="JustTheShip.png">
+	<!-- Created with Adobe Animate version 18.0.2.126 -->
+	<!-- http://www.adobe.com/products/animate.html -->
+	<SubTexture name="JustTheShip0000" x="0" y="0" width="234" height="286" pivotX="186.9" pivotY="77.3" frameX="-51" frameY="-79" frameWidth="332" frameHeight="451"/>
+	<SubTexture name="JustTheShip0001" x="234" y="0" width="234" height="287" frameX="-51" frameY="-86" frameWidth="332" frameHeight="451"/>
+	<SubTexture name="JustTheShip0002" x="468" y="0" width="256" height="229" frameX="-42" frameY="-155" frameWidth="332" frameHeight="451"/>
+	<SubTexture name="JustTheShip0003" x="724" y="0" width="159" height="410" frameX="-89" frameY="-37" frameWidth="332" frameHeight="451"/>
+	<SubTexture name="JustTheShip0004" x="883" y="0" width="323" height="432" frameX="0" frameY="-6" frameWidth="332" frameHeight="451"/>
+	<SubTexture name="JustTheShip0005" x="1206" y="0" width="251" height="333" frameX="-43" frameY="-17" frameWidth="332" frameHeight="451"/>
+	<SubTexture name="JustTheShip0006" x="1457" y="0" width="249" height="335" frameX="-44" frameY="-20" frameWidth="332" frameHeight="451"/>
+	<SubTexture name="JustTheShip0007" x="1706" y="0" width="231" height="409" frameX="-50" frameY="-22" frameWidth="332" frameHeight="451"/>
+	<SubTexture name="JustTheShip0008" x="0" y="432" width="259" height="443" frameX="-39" frameY="-8" frameWidth="332" frameHeight="451"/>
+	<SubTexture name="JustTheShip0009" x="259" y="432" width="251" height="339" frameX="-43" frameY="-17" frameWidth="332" frameHeight="451"/>
+	<SubTexture name="JustTheShip0010" x="510" y="432" width="249" height="386" frameX="-47" frameY="-26" frameWidth="332" frameHeight="451"/>
+	<SubTexture name="JustTheShip0011" x="759" y="432" width="231" height="375" frameX="-52" frameY="-23" frameWidth="332" frameHeight="451"/>
+	<SubTexture name="JustTheShip0012" x="990" y="432" width="259" height="347" frameX="-39" frameY="-6" frameWidth="332" frameHeight="451"/>
+	<SubTexture name="JustTheShip0013" x="1249" y="432" width="251" height="406" frameX="-43" frameY="-17" frameWidth="332" frameHeight="451"/>
+	<SubTexture name="JustTheShip0014" x="1500" y="432" width="249" height="384" frameX="-42" frameY="-20" frameWidth="332" frameHeight="451"/>
+	<SubTexture name="JustTheShip0015" x="1749" y="432" width="231" height="346" frameX="-53" frameY="-22" frameWidth="332" frameHeight="451"/>
+	<SubTexture name="JustTheShip0016" x="0" y="875" width="259" height="443" frameX="-42" frameY="0" frameWidth="332" frameHeight="451"/>
+	<SubTexture name="JustTheShip0017" x="259" y="875" width="251" height="427" frameX="-43" frameY="-10" frameWidth="332" frameHeight="451"/>
+	<SubTexture name="JustTheShip0018" x="510" y="875" width="249" height="404" frameX="-44" frameY="-14" frameWidth="332" frameHeight="451"/>
+	<SubTexture name="JustTheShip0019" x="759" y="875" width="245" height="368" frameX="-46" frameY="-23" frameWidth="332" frameHeight="451"/>
+	<SubTexture name="JustTheShip0020" x="1004" y="875" width="175" height="360" frameX="-82" frameY="-8" frameWidth="332" frameHeight="451"/>
+	<SubTexture name="JustTheShip0021" x="1179" y="875" width="206" height="354" frameX="-65" frameY="-6" frameWidth="332" frameHeight="451"/>
+	<SubTexture name="JustTheShip0022" x="1385" y="875" width="188" height="329" frameX="-64" frameY="-4" frameWidth="332" frameHeight="451"/>
+	<SubTexture name="JustTheShip0023" x="1573" y="875" width="303" height="332" frameX="-19" frameY="-3" frameWidth="332" frameHeight="451"/>
+	<SubTexture name="JustTheShip0024" x="0" y="1318" width="319" height="326" frameX="-13" frameY="-16" frameWidth="332" frameHeight="451"/>
+	<SubTexture name="JustTheShip0025" x="319" y="1318" width="171" height="322" frameX="-82" frameY="-34" frameWidth="332" frameHeight="451"/>
+	<SubTexture name="JustTheShip0026" x="490" y="1318" width="226" height="307" frameX="-60" frameY="-44" frameWidth="332" frameHeight="451"/>
+	<SubTexture name="JustTheShip0027" x="716" y="1318" width="234" height="296" frameX="-51" frameY="-54" frameWidth="332" frameHeight="451"/>
+	<SubTexture name="JustTheShip0028" x="950" y="1318" width="234" height="292" frameX="-51" frameY="-63" frameWidth="332" frameHeight="451"/>
+</TextureAtlas>

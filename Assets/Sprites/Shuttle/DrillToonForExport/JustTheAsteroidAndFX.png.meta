@@ -1,0 +1,811 @@
+fileFormatVersion: 2
+guid: 5f03e765c45eb854fba4980f1f5c6cd3
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 5272808191046219604
+    second: JustTheAsteroidAndFX0000
+  - first:
+      213: -2102349679746285302
+    second: JustTheAsteroidAndFX0001
+  - first:
+      213: 2342735883620105201
+    second: JustTheAsteroidAndFX0002
+  - first:
+      213: -7307127131407653695
+    second: JustTheAsteroidAndFX0003
+  - first:
+      213: 8082417115217524118
+    second: JustTheAsteroidAndFX0004
+  - first:
+      213: -7911779900147455464
+    second: JustTheAsteroidAndFX0005
+  - first:
+      213: 489596311986186724
+    second: JustTheAsteroidAndFX0006
+  - first:
+      213: -3946819601962784330
+    second: JustTheAsteroidAndFX0007
+  - first:
+      213: -66647639793119288
+    second: JustTheAsteroidAndFX0008
+  - first:
+      213: 4193246041140590548
+    second: JustTheAsteroidAndFX0009
+  - first:
+      213: -1779960824680812643
+    second: JustTheAsteroidAndFX0010
+  - first:
+      213: -1563203865553017970
+    second: JustTheAsteroidAndFX0011
+  - first:
+      213: 61911942538113280
+    second: JustTheAsteroidAndFX0012
+  - first:
+      213: -3810876645027451671
+    second: JustTheAsteroidAndFX0013
+  - first:
+      213: 1507858029712822596
+    second: JustTheAsteroidAndFX0014
+  - first:
+      213: 2701967018236849780
+    second: JustTheAsteroidAndFX0015
+  - first:
+      213: 4750031759160733220
+    second: JustTheAsteroidAndFX0016
+  - first:
+      213: 2214309657478743070
+    second: JustTheAsteroidAndFX0017
+  - first:
+      213: -4678817984829498158
+    second: JustTheAsteroidAndFX0018
+  - first:
+      213: 2804209116867076546
+    second: JustTheAsteroidAndFX0019
+  - first:
+      213: -545966035818471561
+    second: JustTheAsteroidAndFX0020
+  - first:
+      213: -3813964619496618768
+    second: JustTheAsteroidAndFX0021
+  - first:
+      213: 4052014488365388040
+    second: JustTheAsteroidAndFX0022
+  - first:
+      213: 5632435513426298425
+    second: JustTheAsteroidAndFX0023
+  - first:
+      213: -7004236719284079624
+    second: JustTheAsteroidAndFX0024
+  - first:
+      213: -4303302262097715097
+    second: JustTheAsteroidAndFX0025
+  - first:
+      213: -7014734711211787120
+    second: JustTheAsteroidAndFX0026
+  - first:
+      213: -7494040387799462805
+    second: JustTheAsteroidAndFX0027
+  - first:
+      213: -1349315395467893730
+    second: JustTheAsteroidAndFX0028
+  externalObjects: {}
+  serializedVersion: 10
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: -1
+    aniso: -1
+    mipBias: -100
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  platformSettings:
+  - serializedVersion: 3
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: JustTheAsteroidAndFX0000
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1882
+        width: 160
+        height: 166
+      alignment: 9
+      pivot: {x: 0.57906246, y: -0.103313215}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 5272808191046219604
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidAndFX0001
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1882
+        width: 160
+        height: 166
+      alignment: 9
+      pivot: {x: 0.57906246, y: -0.103313215}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -2102349679746285302
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidAndFX0002
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1882
+        width: 160
+        height: 166
+      alignment: 9
+      pivot: {x: 0.57906246, y: -0.103313215}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 2342735883620105201
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidAndFX0003
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 1835
+        width: 160
+        height: 213
+      alignment: 9
+      pivot: {x: 0.57906246, y: 0.09319252}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -7307127131407653695
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidAndFX0004
+      rect:
+        serializedVersion: 2
+        x: 320
+        y: 1724
+        width: 273
+        height: 324
+      alignment: 9
+      pivot: {x: 0.5628205, y: 0.31126544}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 8082417115217524118
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidAndFX0005
+      rect:
+        serializedVersion: 2
+        x: 593
+        y: 1881
+        width: 179
+        height: 167
+      alignment: 9
+      pivot: {x: 0.5343575, y: -0.2883233}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -7911779900147455464
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidAndFX0006
+      rect:
+        serializedVersion: 2
+        x: 772
+        y: 1791
+        width: 299
+        height: 257
+      alignment: 9
+      pivot: {x: 0.44698995, y: -0.027820988}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 489596311986186724
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidAndFX0007
+      rect:
+        serializedVersion: 2
+        x: 1071
+        y: 1763
+        width: 405
+        height: 285
+      alignment: 9
+      pivot: {x: 0.5522222, y: 0.2521053}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -3946819601962784330
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidAndFX0008
+      rect:
+        serializedVersion: 2
+        x: 1476
+        y: 1881
+        width: 160
+        height: 167
+      alignment: 9
+      pivot: {x: 0.57281244, y: -0.32425147}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -66647639793119288
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidAndFX0009
+      rect:
+        serializedVersion: 2
+        x: 1636
+        y: 1881
+        width: 217
+        height: 167
+      alignment: 9
+      pivot: {x: 0.5974654, y: -0.30029938}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 4193246041140590548
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidAndFX0010
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1507
+        width: 354
+        height: 217
+      alignment: 9
+      pivot: {x: 0.57810736, y: -0.06059905}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -1779960824680812643
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidAndFX0011
+      rect:
+        serializedVersion: 2
+        x: 354
+        y: 1457
+        width: 193
+        height: 267
+      alignment: 9
+      pivot: {x: 0.61994815, y: -0.15411983}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -1563203865553017970
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidAndFX0012
+      rect:
+        serializedVersion: 2
+        x: 547
+        y: 1546
+        width: 222
+        height: 178
+      alignment: 9
+      pivot: {x: 0.602027, y: -0.23117974}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 61911942538113280
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidAndFX0013
+      rect:
+        serializedVersion: 2
+        x: 769
+        y: 1477
+        width: 347
+        height: 247
+      alignment: 9
+      pivot: {x: 0.5811239, y: 0.0074899034}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -3810876645027451671
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidAndFX0014
+      rect:
+        serializedVersion: 2
+        x: 1116
+        y: 1510
+        width: 171
+        height: 214
+      alignment: 9
+      pivot: {x: 0.6061403, y: -0.0053738034}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 1507858029712822596
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidAndFX0015
+      rect:
+        serializedVersion: 2
+        x: 1287
+        y: 1423
+        width: 263
+        height: 301
+      alignment: 9
+      pivot: {x: 0.6260456, y: 0.32840535}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 2701967018236849780
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidAndFX0016
+      rect:
+        serializedVersion: 2
+        x: 1550
+        y: 1557
+        width: 384
+        height: 167
+      alignment: 9
+      pivot: {x: 0.5563802, y: -0.3601796}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 4750031759160733220
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidAndFX0017
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1234
+        width: 219
+        height: 189
+      alignment: 9
+      pivot: {x: 0.6285388, y: -0.21772483}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 2214309657478743070
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidAndFX0018
+      rect:
+        serializedVersion: 2
+        x: 219
+        y: 1105
+        width: 372
+        height: 318
+      alignment: 9
+      pivot: {x: 0.544758, y: 0.04355348}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -4678817984829498158
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidAndFX0019
+      rect:
+        serializedVersion: 2
+        x: 591
+        y: 1256
+        width: 161
+        height: 167
+      alignment: 9
+      pivot: {x: 0.59409934, y: -0.24041912}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 2804209116867076546
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidAndFX0020
+      rect:
+        serializedVersion: 2
+        x: 752
+        y: 1033
+        width: 328
+        height: 390
+      alignment: 9
+      pivot: {x: 0.6117378, y: 0.07910258}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -545966035818471561
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidAndFX0021
+      rect:
+        serializedVersion: 2
+        x: 1080
+        y: 1088
+        width: 267
+        height: 335
+      alignment: 9
+      pivot: {x: 0.57921344, y: 0.023432855}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -3813964619496618768
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidAndFX0022
+      rect:
+        serializedVersion: 2
+        x: 1347
+        y: 1145
+        width: 341
+        height: 278
+      alignment: 9
+      pivot: {x: 0.54149556, y: -0.19838127}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 4052014488365388040
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidAndFX0023
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 803
+        width: 379
+        height: 230
+      alignment: 9
+      pivot: {x: 0.5346966, y: -0.24847823}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 5632435513426298425
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidAndFX0024
+      rect:
+        serializedVersion: 2
+        x: 379
+        y: 823
+        width: 379
+        height: 210
+      alignment: 9
+      pivot: {x: 0.53205806, y: -0.37690473}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -7004236719284079624
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidAndFX0025
+      rect:
+        serializedVersion: 2
+        x: 758
+        y: 828
+        width: 379
+        height: 205
+      alignment: 9
+      pivot: {x: 0.53205806, y: -0.41048777}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -4303302262097715097
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidAndFX0026
+      rect:
+        serializedVersion: 2
+        x: 1137
+        y: 1033
+        width: 0
+        height: 0
+      alignment: 9
+      pivot: {x: 100000, y: -100000}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -7014734711211787120
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidAndFX0027
+      rect:
+        serializedVersion: 2
+        x: 1137
+        y: 1033
+        width: 0
+        height: 0
+      alignment: 9
+      pivot: {x: 100000, y: -100000}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -7494040387799462805
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidAndFX0028
+      rect:
+        serializedVersion: 2
+        x: 1137
+        y: 1033
+        width: 0
+        height: 0
+      alignment: 9
+      pivot: {x: 100000, y: -100000}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -1349315395467893730
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+  spritePackingTag: 
+  pSDRemoveMatte: 0
+  pSDShowRemoveMatteOption: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

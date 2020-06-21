@@ -1,0 +1,811 @@
+fileFormatVersion: 2
+guid: e04c4f4c3976d974ba7a860b8e97004d
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 2060915582793683092
+    second: JustTheShipAndFX0000
+  - first:
+      213: -8691459345906290379
+    second: JustTheShipAndFX0001
+  - first:
+      213: 5961983279444047951
+    second: JustTheShipAndFX0002
+  - first:
+      213: -21104918510753706
+    second: JustTheShipAndFX0003
+  - first:
+      213: -5633154187734183172
+    second: JustTheShipAndFX0004
+  - first:
+      213: -8100545057121694653
+    second: JustTheShipAndFX0005
+  - first:
+      213: -8130351184735813973
+    second: JustTheShipAndFX0006
+  - first:
+      213: -2016266511599551697
+    second: JustTheShipAndFX0007
+  - first:
+      213: 486533816911166734
+    second: JustTheShipAndFX0008
+  - first:
+      213: 6560492046670278424
+    second: JustTheShipAndFX0009
+  - first:
+      213: -6941151541388660903
+    second: JustTheShipAndFX0010
+  - first:
+      213: -4700904728858380096
+    second: JustTheShipAndFX0011
+  - first:
+      213: -8386262883255726055
+    second: JustTheShipAndFX0012
+  - first:
+      213: -3710990454099682569
+    second: JustTheShipAndFX0013
+  - first:
+      213: -9210717958556563110
+    second: JustTheShipAndFX0014
+  - first:
+      213: -3888004982009701844
+    second: JustTheShipAndFX0015
+  - first:
+      213: 3460448762210054751
+    second: JustTheShipAndFX0016
+  - first:
+      213: 4408438228967485619
+    second: JustTheShipAndFX0017
+  - first:
+      213: -6753806283066017509
+    second: JustTheShipAndFX0018
+  - first:
+      213: -8986641028020130974
+    second: JustTheShipAndFX0019
+  - first:
+      213: -2323932908676547640
+    second: JustTheShipAndFX0020
+  - first:
+      213: 5298350467260293347
+    second: JustTheShipAndFX0021
+  - first:
+      213: -7090842142006157050
+    second: JustTheShipAndFX0022
+  - first:
+      213: 2401567078868402021
+    second: JustTheShipAndFX0023
+  - first:
+      213: 1673942480669515956
+    second: JustTheShipAndFX0024
+  - first:
+      213: -6992063311812049241
+    second: JustTheShipAndFX0025
+  - first:
+      213: 1974360623054616808
+    second: JustTheShipAndFX0026
+  - first:
+      213: 3150995514353995804
+    second: JustTheShipAndFX0027
+  - first:
+      213: 3309309149999115392
+    second: JustTheShipAndFX0028
+  externalObjects: {}
+  serializedVersion: 10
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: -1
+    aniso: -1
+    mipBias: -100
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  platformSettings:
+  - serializedVersion: 3
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 4096
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Standalone
+    maxTextureSize: 4096
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: WebGL
+    maxTextureSize: 4096
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: JustTheShipAndFX0000
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1762
+        width: 234
+        height: 286
+      alignment: 9
+      pivot: {x: 0.57735044, y: 1.0043706}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 2060915582793683092
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheShipAndFX0001
+      rect:
+        serializedVersion: 2
+        x: 234
+        y: 1761
+        width: 234
+        height: 287
+      alignment: 9
+      pivot: {x: 0.57735044, y: 1.0287457}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -8691459345906290379
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheShipAndFX0002
+      rect:
+        serializedVersion: 2
+        x: 468
+        y: 1819
+        width: 256
+        height: 229
+      alignment: 9
+      pivot: {x: 0.56289065, y: 1.3373363}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 5961983279444047951
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheShipAndFX0003
+      rect:
+        serializedVersion: 2
+        x: 724
+        y: 1638
+        width: 159
+        height: 410
+      alignment: 9
+      pivot: {x: 0.61069185, y: 0.90060973}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -21104918510753706
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheShipAndFX0004
+      rect:
+        serializedVersion: 2
+        x: 883
+        y: 1567
+        width: 359
+        height: 481
+      alignment: 9
+      pivot: {x: 0.54902506, y: 0.7489605}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -5633154187734183172
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheShipAndFX0005
+      rect:
+        serializedVersion: 2
+        x: 1242
+        y: 1715
+        width: 251
+        height: 333
+      alignment: 9
+      pivot: {x: 0.57011956, y: 0.8175676}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -8100545057121694653
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheShipAndFX0006
+      rect:
+        serializedVersion: 2
+        x: 1493
+        y: 1706
+        width: 314
+        height: 342
+      alignment: 9
+      pivot: {x: 0.5544586, y: 0.8106725}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -8130351184735813973
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheShipAndFX0007
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1155
+        width: 328
+        height: 412
+      alignment: 9
+      pivot: {x: 0.5612805, y: 0.8574029}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -2016266511599551697
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheShipAndFX0008
+      rect:
+        serializedVersion: 2
+        x: 328
+        y: 1124
+        width: 306
+        height: 443
+      alignment: 9
+      pivot: {x: 0.55915034, y: 0.8425508}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 486533816911166734
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheShipAndFX0009
+      rect:
+        serializedVersion: 2
+        x: 634
+        y: 1219
+        width: 366
+        height: 348
+      alignment: 9
+      pivot: {x: 0.54672134, y: 0.79956895}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 6560492046670278424
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheShipAndFX0010
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 1181
+        width: 337
+        height: 386
+      alignment: 9
+      pivot: {x: 0.58486646, y: 0.86593264}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -6941151541388660903
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheShipAndFX0011
+      rect:
+        serializedVersion: 2
+        x: 1337
+        y: 1173
+        width: 333
+        height: 394
+      alignment: 9
+      pivot: {x: 0.61591595, y: 0.8128173}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -4700904728858380096
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheShipAndFX0012
+      rect:
+        serializedVersion: 2
+        x: 1670
+        y: 1218
+        width: 369
+        height: 349
+      alignment: 9
+      pivot: {x: 0.5693767, y: 0.7886819}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -8386262883255726055
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheShipAndFX0013
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 718
+        width: 377
+        height: 406
+      alignment: 9
+      pivot: {x: 0.5493369, y: 0.85036945}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -3710990454099682569
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheShipAndFX0014
+      rect:
+        serializedVersion: 2
+        x: 377
+        y: 740
+        width: 299
+        height: 384
+      alignment: 9
+      pivot: {x: 0.5722408, y: 0.8496094}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -9210717958556563110
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheShipAndFX0015
+      rect:
+        serializedVersion: 2
+        x: 676
+        y: 778
+        width: 390
+        height: 346
+      alignment: 9
+      pivot: {x: 0.5438462, y: 0.83887285}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -3888004982009701844
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheShipAndFX0016
+      rect:
+        serializedVersion: 2
+        x: 1066
+        y: 680
+        width: 417
+        height: 444
+      alignment: 9
+      pivot: {x: 0.535012, y: 0.8226351}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 3460448762210054751
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheShipAndFX0017
+      rect:
+        serializedVersion: 2
+        x: 1483
+        y: 694
+        width: 272
+        height: 430
+      alignment: 9
+      pivot: {x: 0.58860296, y: 0.83546513}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 4408438228967485619
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheShipAndFX0018
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 261
+        width: 398
+        height: 419
+      alignment: 9
+      pivot: {x: 0.5404523, y: 0.8120525}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -6753806283066017509
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheShipAndFX0019
+      rect:
+        serializedVersion: 2
+        x: 398
+        y: 307
+        width: 313
+        height: 373
+      alignment: 9
+      pivot: {x: 0.55623007, y: 0.83981234}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -8986641028020130974
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheShipAndFX0020
+      rect:
+        serializedVersion: 2
+        x: 711
+        y: 311
+        width: 405
+        height: 369
+      alignment: 9
+      pivot: {x: 0.5459259, y: 0.7865854}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -2323932908676547640
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheShipAndFX0021
+      rect:
+        serializedVersion: 2
+        x: 1116
+        y: 312
+        width: 512
+        height: 368
+      alignment: 9
+      pivot: {x: 0.5353516, y: 0.7669837}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 5298350467260293347
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheShipAndFX0022
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: -80
+        width: 539
+        height: 341
+      alignment: 9
+      pivot: {x: 0.53450835, y: 0.7485337}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -7090842142006157050
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheShipAndFX0023
+      rect:
+        serializedVersion: 2
+        x: 539
+        y: -71
+        width: 303
+        height: 332
+      alignment: 9
+      pivot: {x: 0.5514852, y: 0.7748494}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 2401567078868402021
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheShipAndFX0024
+      rect:
+        serializedVersion: 2
+        x: 842
+        y: -65
+        width: 319
+        height: 326
+      alignment: 9
+      pivot: {x: 0.54263324, y: 0.8105828}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 1673942480669515956
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheShipAndFX0025
+      rect:
+        serializedVersion: 2
+        x: 1161
+        y: -61
+        width: 171
+        height: 322
+      alignment: 9
+      pivot: {x: 0.608772, y: 0.86413044}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -6992063311812049241
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheShipAndFX0026
+      rect:
+        serializedVersion: 2
+        x: 1332
+        y: -46
+        width: 226
+        height: 307
+      alignment: 9
+      pivot: {x: 0.5579646, y: 0.89006513}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 1974360623054616808
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheShipAndFX0027
+      rect:
+        serializedVersion: 2
+        x: 1558
+        y: -35
+        width: 234
+        height: 296
+      alignment: 9
+      pivot: {x: 0.57735044, y: 0.9197635}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 3150995514353995804
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheShipAndFX0028
+      rect:
+        serializedVersion: 2
+        x: 1792
+        y: -31
+        width: 234
+        height: 292
+      alignment: 9
+      pivot: {x: 0.57735044, y: 0.9494863}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 3309309149999115392
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+  spritePackingTag: 
+  pSDRemoveMatte: 0
+  pSDShowRemoveMatteOption: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

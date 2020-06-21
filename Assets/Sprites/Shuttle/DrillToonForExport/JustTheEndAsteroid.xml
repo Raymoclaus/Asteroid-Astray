@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="JustTheEndAsteroid.png">
+	<!-- Created with Adobe Animate version 18.0.2.126 -->
+	<!-- http://www.adobe.com/products/animate.html -->
+	<SubTexture name="JustTheEndAsteroid0000" x="0" y="0" width="328" height="390" pivotX="202.8" pivotY="359.15" frameX="-2" frameY="0" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheEndAsteroid0001" x="328" y="0" width="267" height="335" frameX="-48" frameY="-32" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheEndAsteroid0002" x="595" y="0" width="341" height="278" frameX="-18" frameY="-26" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheEndAsteroid0003" x="0" y="390" width="379" height="230" frameX="0" frameY="-72" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheEndAsteroid0004" x="379" y="390" width="379" height="210" frameX="-1" frameY="-70" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheEndAsteroid0005" x="0" y="620" width="379" height="205" frameX="-1" frameY="-70" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheEndAsteroid0006" x="379" y="620" width="0" height="0" frameX="-202" frameY="-359" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheEndAsteroid0007" x="379" y="620" width="0" height="0" frameX="-202" frameY="-359" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheEndAsteroid0008" x="379" y="620" width="0" height="0" frameX="-202" frameY="-359" frameWidth="380" frameHeight="390"/>
+</TextureAtlas>

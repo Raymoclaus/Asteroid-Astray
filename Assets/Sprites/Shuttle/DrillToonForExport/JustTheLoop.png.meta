@@ -1,0 +1,475 @@
+fileFormatVersion: 2
+guid: 8b45c96350ca32d449347aba93d37a14
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -7321329767833650616
+    second: JustTheLoop0000
+  - first:
+      213: -951148345086569139
+    second: JustTheLoop0001
+  - first:
+      213: -1550822469329235720
+    second: JustTheLoop0002
+  - first:
+      213: 8171640053762666243
+    second: JustTheLoop0003
+  - first:
+      213: -5220923364897979707
+    second: JustTheLoop0004
+  - first:
+      213: 3770295475853002263
+    second: JustTheLoop0005
+  - first:
+      213: 9099990930223301172
+    second: JustTheLoop0006
+  - first:
+      213: -2058542095311090895
+    second: JustTheLoop0007
+  - first:
+      213: -5761081353255040862
+    second: JustTheLoop0008
+  - first:
+      213: -4174095112672679496
+    second: JustTheLoop0009
+  - first:
+      213: 8983600860727554884
+    second: JustTheLoop0010
+  - first:
+      213: -6940819344769846937
+    second: JustTheLoop0011
+  - first:
+      213: 5655852883986657886
+    second: JustTheLoop0012
+  - first:
+      213: -990279851327954851
+    second: JustTheLoop0013
+  - first:
+      213: 264480660721903578
+    second: JustTheLoop0014
+  externalObjects: {}
+  serializedVersion: 10
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: -1
+    aniso: -1
+    mipBias: -100
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  platformSettings:
+  - serializedVersion: 3
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: JustTheLoop0000
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1560
+        width: 251
+        height: 488
+      alignment: 9
+      pivot: {x: 0.57250994, y: 0.558709}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -7321329767833650616
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheLoop0001
+      rect:
+        serializedVersion: 2
+        x: 251
+        y: 1506
+        width: 340
+        height: 542
+      alignment: 9
+      pivot: {x: 0.5138235, y: 0.5122694}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -951148345086569139
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheLoop0002
+      rect:
+        serializedVersion: 2
+        x: 591
+        y: 1481
+        width: 405
+        height: 567
+      alignment: 9
+      pivot: {x: 0.5523457, y: 0.6237213}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -1550822469329235720
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheLoop0003
+      rect:
+        serializedVersion: 2
+        x: 996
+        y: 1453
+        width: 306
+        height: 595
+      alignment: 9
+      pivot: {x: 0.5611111, y: 0.6279832}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 8171640053762666243
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheLoop0004
+      rect:
+        serializedVersion: 2
+        x: 1302
+        y: 1552
+        width: 366
+        height: 496
+      alignment: 9
+      pivot: {x: 0.54836065, y: 0.56179434}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -5220923364897979707
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheLoop0005
+      rect:
+        serializedVersion: 2
+        x: 1668
+        y: 1483
+        width: 354
+        height: 565
+      alignment: 9
+      pivot: {x: 0.57824856, y: 0.5923009}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 3770295475853002263
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheLoop0006
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 824
+        width: 333
+        height: 629
+      alignment: 9
+      pivot: {x: 0.6177177, y: 0.5097774}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 9099990930223301172
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheLoop0007
+      rect:
+        serializedVersion: 2
+        x: 333
+        y: 958
+        width: 369
+        height: 495
+      alignment: 9
+      pivot: {x: 0.5710027, y: 0.5568687}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -2058542095311090895
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheLoop0008
+      rect:
+        serializedVersion: 2
+        x: 702
+        y: 862
+        width: 377
+        height: 591
+      alignment: 9
+      pivot: {x: 0.55092835, y: 0.58485615}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -5761081353255040862
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheLoop0009
+      rect:
+        serializedVersion: 2
+        x: 1079
+        y: 911
+        width: 299
+        height: 542
+      alignment: 9
+      pivot: {x: 0.5742475, y: 0.60267526}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -4174095112672679496
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheLoop0010
+      rect:
+        serializedVersion: 2
+        x: 1378
+        y: 960
+        width: 390
+        height: 493
+      alignment: 9
+      pivot: {x: 0.5453846, y: 0.5895537}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 8983600860727554884
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheLoop0011
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 231
+        width: 417
+        height: 593
+      alignment: 9
+      pivot: {x: 0.5364508, y: 0.61661047}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -6940819344769846937
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheLoop0012
+      rect:
+        serializedVersion: 2
+        x: 417
+        y: 234
+        width: 272
+        height: 590
+      alignment: 9
+      pivot: {x: 0.5908088, y: 0.6095763}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 5655852883986657886
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheLoop0013
+      rect:
+        serializedVersion: 2
+        x: 689
+        y: 179
+        width: 398
+        height: 645
+      alignment: 9
+      pivot: {x: 0.54195976, y: 0.52813953}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -990279851327954851
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheLoop0014
+      rect:
+        serializedVersion: 2
+        x: 1087
+        y: 303
+        width: 313
+        height: 521
+      alignment: 9
+      pivot: {x: 0.55814695, y: 0.6020153}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 264480660721903578
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+  spritePackingTag: 
+  pSDRemoveMatte: 0
+  pSDShowRemoveMatteOption: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

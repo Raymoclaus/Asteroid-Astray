@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="ShuttleSpin.png">
+	<!-- Created with Adobe Animate version 18.0.2.126 -->
+	<!-- http://www.adobe.com/products/animate.html -->
+	<SubTexture name="Spin0000" x="0" y="0" width="235" height="198" pivotX="-128.25" pivotY="-331.25" frameX="-1" frameY="-1" frameWidth="237" frameHeight="233"/>
+	<SubTexture name="Spin0001" x="235" y="0" width="227" height="207" frameX="-1" frameY="-1" frameWidth="237" frameHeight="233"/>
+	<SubTexture name="Spin0002" x="462" y="0" width="206" height="213" frameX="-9" frameY="-2" frameWidth="237" frameHeight="233"/>
+	<SubTexture name="Spin0003" x="668" y="0" width="170" height="221" frameX="-28" frameY="-2" frameWidth="237" frameHeight="233"/>
+	<SubTexture name="Spin0004" x="838" y="0" width="125" height="229" frameX="-53" frameY="0" frameWidth="237" frameHeight="233"/>
+	<SubTexture name="Spin0005" x="0" y="229" width="86" height="233" frameX="-76" frameY="0" frameWidth="237" frameHeight="233"/>
+	<SubTexture name="Spin0006" x="86" y="229" width="78" height="232" frameX="-83" frameY="0" frameWidth="237" frameHeight="233"/>
+	<SubTexture name="Spin0007" x="164" y="229" width="100" height="228" frameX="-81" frameY="0" frameWidth="237" frameHeight="233"/>
+	<SubTexture name="Spin0008" x="264" y="229" width="136" height="223" frameX="-74" frameY="0" frameWidth="237" frameHeight="233"/>
+	<SubTexture name="Spin0009" x="400" y="229" width="173" height="213" frameX="-56" frameY="-1" frameWidth="237" frameHeight="233"/>
+	<SubTexture name="Spin0010" x="573" y="229" width="198" height="206" frameX="-39" frameY="0" frameWidth="237" frameHeight="233"/>
+	<SubTexture name="Spin0011" x="771" y="229" width="212" height="199" frameX="-23" frameY="-1" frameWidth="237" frameHeight="233"/>
+	<SubTexture name="Spin0012" x="0" y="462" width="217" height="192" frameX="-10" frameY="-1" frameWidth="237" frameHeight="233"/>
+	<SubTexture name="Spin0013" x="217" y="462" width="212" height="199" frameX="-2" frameY="-1" frameWidth="237" frameHeight="233"/>
+	<SubTexture name="Spin0014" x="429" y="462" width="198" height="206" frameX="0" frameY="0" frameWidth="237" frameHeight="233"/>
+	<SubTexture name="Spin0015" x="627" y="462" width="173" height="213" frameX="-8" frameY="-1" frameWidth="237" frameHeight="233"/>
+	<SubTexture name="Spin0016" x="800" y="462" width="136" height="223" frameX="-27" frameY="0" frameWidth="237" frameHeight="233"/>
+	<SubTexture name="Spin0017" x="0" y="685" width="100" height="228" frameX="-56" frameY="0" frameWidth="237" frameHeight="233"/>
+	<SubTexture name="Spin0018" x="100" y="685" width="78" height="232" frameX="-76" frameY="0" frameWidth="237" frameHeight="233"/>
+	<SubTexture name="Spin0019" x="178" y="685" width="86" height="233" frameX="-75" frameY="0" frameWidth="237" frameHeight="233"/>
+	<SubTexture name="Spin0020" x="264" y="685" width="125" height="229" frameX="-59" frameY="0" frameWidth="237" frameHeight="233"/>
+	<SubTexture name="Spin0021" x="389" y="685" width="170" height="221" frameX="-39" frameY="-2" frameWidth="237" frameHeight="233"/>
+	<SubTexture name="Spin0022" x="559" y="685" width="206" height="213" frameX="-22" frameY="-2" frameWidth="237" frameHeight="233"/>
+	<SubTexture name="Spin0023" x="765" y="685" width="227" height="207" frameX="-9" frameY="-1" frameWidth="237" frameHeight="233"/>
+</TextureAtlas>

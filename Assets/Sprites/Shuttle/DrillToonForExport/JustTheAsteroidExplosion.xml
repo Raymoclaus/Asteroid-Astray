@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="JustTheAsteroidExplosion.png">
+	<!-- Created with Adobe Animate version 18.0.2.126 -->
+	<!-- http://www.adobe.com/products/animate.html -->
+	<SubTexture name="JustTheAsteroidExplosion0000" x="0" y="0" width="0" height="0" pivotX="202.8" pivotY="359.15" frameX="-202" frameY="-359" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheAsteroidExplosion0001" x="0" y="0" width="0" height="0" frameX="-202" frameY="-359" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheAsteroidExplosion0002" x="0" y="0" width="0" height="0" frameX="-202" frameY="-359" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheAsteroidExplosion0003" x="0" y="0" width="0" height="0" frameX="-202" frameY="-359" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheAsteroidExplosion0004" x="0" y="0" width="0" height="0" frameX="-202" frameY="-359" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheAsteroidExplosion0005" x="0" y="0" width="0" height="0" frameX="-202" frameY="-359" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheAsteroidExplosion0006" x="0" y="0" width="0" height="0" frameX="-202" frameY="-359" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheAsteroidExplosion0007" x="0" y="0" width="0" height="0" frameX="-202" frameY="-359" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheAsteroidExplosion0008" x="0" y="0" width="0" height="0" frameX="-202" frameY="-359" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheAsteroidExplosion0009" x="0" y="0" width="0" height="0" frameX="-202" frameY="-359" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheAsteroidExplosion0010" x="0" y="0" width="0" height="0" frameX="-202" frameY="-359" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheAsteroidExplosion0011" x="0" y="0" width="0" height="0" frameX="-202" frameY="-359" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheAsteroidExplosion0012" x="0" y="0" width="0" height="0" frameX="-202" frameY="-359" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheAsteroidExplosion0013" x="0" y="0" width="0" height="0" frameX="-202" frameY="-359" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheAsteroidExplosion0014" x="0" y="0" width="0" height="0" frameX="-202" frameY="-359" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheAsteroidExplosion0015" x="0" y="0" width="0" height="0" frameX="-202" frameY="-359" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheAsteroidExplosion0016" x="0" y="0" width="0" height="0" frameX="-202" frameY="-359" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheAsteroidExplosion0017" x="0" y="0" width="0" height="0" frameX="-202" frameY="-359" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheAsteroidExplosion0018" x="0" y="0" width="0" height="0" frameX="-202" frameY="-359" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheAsteroidExplosion0019" x="0" y="0" width="0" height="0" frameX="-202" frameY="-359" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheAsteroidExplosion0020" x="0" y="0" width="328" height="390" frameX="-2" frameY="0" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheAsteroidExplosion0021" x="328" y="0" width="250" height="304" frameX="-48" frameY="-63" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheAsteroidExplosion0022" x="578" y="0" width="341" height="230" frameX="-18" frameY="-74" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheAsteroidExplosion0023" x="0" y="390" width="379" height="230" frameX="0" frameY="-72" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheAsteroidExplosion0024" x="379" y="390" width="379" height="210" frameX="-1" frameY="-70" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheAsteroidExplosion0025" x="0" y="620" width="379" height="205" frameX="-1" frameY="-70" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheAsteroidExplosion0026" x="379" y="620" width="0" height="0" frameX="-202" frameY="-359" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheAsteroidExplosion0027" x="379" y="620" width="0" height="0" frameX="-202" frameY="-359" frameWidth="380" frameHeight="390"/>
+	<SubTexture name="JustTheAsteroidExplosion0028" x="379" y="620" width="0" height="0" frameX="-202" frameY="-359" frameWidth="380" frameHeight="390"/>
+</TextureAtlas>

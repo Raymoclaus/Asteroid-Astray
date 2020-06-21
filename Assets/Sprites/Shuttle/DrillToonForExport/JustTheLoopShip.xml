@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="JustTheLoopShip.png">
+	<!-- Created with Adobe Animate version 18.0.2.126 -->
+	<!-- http://www.adobe.com/products/animate.html -->
+	<SubTexture name="JustTheLoopShip0000" x="0" y="0" width="251" height="333" pivotX="223.7" pivotY="78.35" frameX="-80" frameY="-18" frameWidth="417" frameHeight="452"/>
+	<SubTexture name="JustTheLoopShip0001" x="251" y="0" width="314" height="342" frameX="-49" frameY="-14" frameWidth="417" frameHeight="452"/>
+	<SubTexture name="JustTheLoopShip0002" x="565" y="0" width="328" height="412" frameX="-39" frameY="-20" frameWidth="417" frameHeight="452"/>
+	<SubTexture name="JustTheLoopShip0003" x="893" y="0" width="306" height="443" frameX="-52" frameY="-9" frameWidth="417" frameHeight="452"/>
+	<SubTexture name="JustTheLoopShip0004" x="1199" y="0" width="366" height="348" frameX="-23" frameY="-9" frameWidth="417" frameHeight="452"/>
+	<SubTexture name="JustTheLoopShip0005" x="1565" y="0" width="337" height="386" frameX="-26" frameY="-27" frameWidth="417" frameHeight="452"/>
+	<SubTexture name="JustTheLoopShip0006" x="0" y="443" width="333" height="394" frameX="-18" frameY="-5" frameWidth="417" frameHeight="452"/>
+	<SubTexture name="JustTheLoopShip0007" x="333" y="443" width="369" height="349" frameX="-13" frameY="-5" frameWidth="417" frameHeight="452"/>
+	<SubTexture name="JustTheLoopShip0008" x="702" y="443" width="377" height="406" frameX="-16" frameY="-18" frameWidth="417" frameHeight="452"/>
+	<SubTexture name="JustTheLoopShip0009" x="1079" y="443" width="299" height="384" frameX="-52" frameY="-21" frameWidth="417" frameHeight="452"/>
+	<SubTexture name="JustTheLoopShip0010" x="1378" y="443" width="390" height="346" frameX="-11" frameY="-23" frameWidth="417" frameHeight="452"/>
+	<SubTexture name="JustTheLoopShip0011" x="0" y="849" width="417" height="444" frameX="0" frameY="0" frameWidth="417" frameHeight="452"/>
+	<SubTexture name="JustTheLoopShip0012" x="417" y="849" width="272" height="430" frameX="-63" frameY="-8" frameWidth="417" frameHeight="452"/>
+	<SubTexture name="JustTheLoopShip0013" x="689" y="849" width="398" height="419" frameX="-8" frameY="0" frameWidth="417" frameHeight="452"/>
+	<SubTexture name="JustTheLoopShip0014" x="1087" y="849" width="313" height="373" frameX="-49" frameY="-19" frameWidth="417" frameHeight="452"/>
+</TextureAtlas>

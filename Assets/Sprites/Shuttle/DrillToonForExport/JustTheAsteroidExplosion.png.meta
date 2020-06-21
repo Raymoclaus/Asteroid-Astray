@@ -1,0 +1,811 @@
+fileFormatVersion: 2
+guid: 745d67ea9a4d4f04bb42f15b3dd14eb5
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 8328688168598072742
+    second: JustTheAsteroidExplosion0000
+  - first:
+      213: -7702122374457622106
+    second: JustTheAsteroidExplosion0001
+  - first:
+      213: -2711851904780089109
+    second: JustTheAsteroidExplosion0002
+  - first:
+      213: -6008080093653368818
+    second: JustTheAsteroidExplosion0003
+  - first:
+      213: 6263281520566505154
+    second: JustTheAsteroidExplosion0004
+  - first:
+      213: -4917623178380423593
+    second: JustTheAsteroidExplosion0005
+  - first:
+      213: -5983685040850871287
+    second: JustTheAsteroidExplosion0006
+  - first:
+      213: -4925180936086679805
+    second: JustTheAsteroidExplosion0007
+  - first:
+      213: 8017800426535335559
+    second: JustTheAsteroidExplosion0008
+  - first:
+      213: -6250111677697523626
+    second: JustTheAsteroidExplosion0009
+  - first:
+      213: 7162732670712342129
+    second: JustTheAsteroidExplosion0010
+  - first:
+      213: -5309294235461293445
+    second: JustTheAsteroidExplosion0011
+  - first:
+      213: -3229459860043612334
+    second: JustTheAsteroidExplosion0012
+  - first:
+      213: -1779913384740076542
+    second: JustTheAsteroidExplosion0013
+  - first:
+      213: 8006598171475155305
+    second: JustTheAsteroidExplosion0014
+  - first:
+      213: -9140169639517022831
+    second: JustTheAsteroidExplosion0015
+  - first:
+      213: 8308655006860051595
+    second: JustTheAsteroidExplosion0016
+  - first:
+      213: 3769819749061123471
+    second: JustTheAsteroidExplosion0017
+  - first:
+      213: -5977586459719878867
+    second: JustTheAsteroidExplosion0018
+  - first:
+      213: 5470539220548907306
+    second: JustTheAsteroidExplosion0019
+  - first:
+      213: -649371611401949418
+    second: JustTheAsteroidExplosion0020
+  - first:
+      213: -3093107637916185446
+    second: JustTheAsteroidExplosion0021
+  - first:
+      213: 7103156073980340061
+    second: JustTheAsteroidExplosion0022
+  - first:
+      213: 3869378972972377467
+    second: JustTheAsteroidExplosion0023
+  - first:
+      213: 2848405255296125142
+    second: JustTheAsteroidExplosion0024
+  - first:
+      213: 8137375502535785616
+    second: JustTheAsteroidExplosion0025
+  - first:
+      213: 311848274135313246
+    second: JustTheAsteroidExplosion0026
+  - first:
+      213: 8886598499028439752
+    second: JustTheAsteroidExplosion0027
+  - first:
+      213: 8566435931422599062
+    second: JustTheAsteroidExplosion0028
+  externalObjects: {}
+  serializedVersion: 10
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: -1
+    aniso: -1
+    mipBias: -100
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  platformSettings:
+  - serializedVersion: 3
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: JustTheAsteroidExplosion0000
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1024
+        width: 0
+        height: 0
+      alignment: 9
+      pivot: {x: 100000, y: -100000}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 8328688168598072742
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidExplosion0001
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1024
+        width: 0
+        height: 0
+      alignment: 9
+      pivot: {x: 100000, y: -100000}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -7702122374457622106
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidExplosion0002
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1024
+        width: 0
+        height: 0
+      alignment: 9
+      pivot: {x: 100000, y: -100000}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -2711851904780089109
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidExplosion0003
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1024
+        width: 0
+        height: 0
+      alignment: 9
+      pivot: {x: 100000, y: -100000}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -6008080093653368818
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidExplosion0004
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1024
+        width: 0
+        height: 0
+      alignment: 9
+      pivot: {x: 100000, y: -100000}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 6263281520566505154
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidExplosion0005
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1024
+        width: 0
+        height: 0
+      alignment: 9
+      pivot: {x: 100000, y: -100000}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -4917623178380423593
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidExplosion0006
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1024
+        width: 0
+        height: 0
+      alignment: 9
+      pivot: {x: 100000, y: -100000}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -5983685040850871287
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidExplosion0007
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1024
+        width: 0
+        height: 0
+      alignment: 9
+      pivot: {x: 100000, y: -100000}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -4925180936086679805
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidExplosion0008
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1024
+        width: 0
+        height: 0
+      alignment: 9
+      pivot: {x: 100000, y: -100000}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 8017800426535335559
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidExplosion0009
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1024
+        width: 0
+        height: 0
+      alignment: 9
+      pivot: {x: 100000, y: -100000}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -6250111677697523626
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidExplosion0010
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1024
+        width: 0
+        height: 0
+      alignment: 9
+      pivot: {x: 100000, y: -100000}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 7162732670712342129
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidExplosion0011
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1024
+        width: 0
+        height: 0
+      alignment: 9
+      pivot: {x: 100000, y: -100000}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -5309294235461293445
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidExplosion0012
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1024
+        width: 0
+        height: 0
+      alignment: 9
+      pivot: {x: 100000, y: -100000}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -3229459860043612334
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidExplosion0013
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1024
+        width: 0
+        height: 0
+      alignment: 9
+      pivot: {x: 100000, y: -100000}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -1779913384740076542
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidExplosion0014
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1024
+        width: 0
+        height: 0
+      alignment: 9
+      pivot: {x: 100000, y: -100000}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 8006598171475155305
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidExplosion0015
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1024
+        width: 0
+        height: 0
+      alignment: 9
+      pivot: {x: 100000, y: -100000}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -9140169639517022831
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidExplosion0016
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1024
+        width: 0
+        height: 0
+      alignment: 9
+      pivot: {x: 100000, y: -100000}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 8308655006860051595
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidExplosion0017
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1024
+        width: 0
+        height: 0
+      alignment: 9
+      pivot: {x: 100000, y: -100000}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 3769819749061123471
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidExplosion0018
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1024
+        width: 0
+        height: 0
+      alignment: 9
+      pivot: {x: 100000, y: -100000}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -5977586459719878867
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidExplosion0019
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1024
+        width: 0
+        height: 0
+      alignment: 9
+      pivot: {x: 100000, y: -100000}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 5470539220548907306
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidExplosion0020
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 634
+        width: 328
+        height: 390
+      alignment: 9
+      pivot: {x: 0.61219513, y: 0.07910258}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -649371611401949418
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidExplosion0021
+      rect:
+        serializedVersion: 2
+        x: 328
+        y: 720
+        width: 250
+        height: 304
+      alignment: 9
+      pivot: {x: 0.6192, y: 0.025822388}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: -3093107637916185446
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidExplosion0022
+      rect:
+        serializedVersion: 2
+        x: 578
+        y: 794
+        width: 341
+        height: 230
+      alignment: 9
+      pivot: {x: 0.5419355, y: -0.23978259}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 7103156073980340061
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidExplosion0023
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 404
+        width: 379
+        height: 230
+      alignment: 9
+      pivot: {x: 0.53509235, y: -0.24847823}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 3869378972972377467
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidExplosion0024
+      rect:
+        serializedVersion: 2
+        x: 379
+        y: 424
+        width: 379
+        height: 210
+      alignment: 9
+      pivot: {x: 0.53245384, y: -0.37690473}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 2848405255296125142
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidExplosion0025
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 199
+        width: 379
+        height: 205
+      alignment: 9
+      pivot: {x: 0.53245384, y: -0.41048777}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 8137375502535785616
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidExplosion0026
+      rect:
+        serializedVersion: 2
+        x: 379
+        y: 404
+        width: 0
+        height: 0
+      alignment: 9
+      pivot: {x: 100000, y: -100000}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 311848274135313246
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidExplosion0027
+      rect:
+        serializedVersion: 2
+        x: 379
+        y: 404
+        width: 0
+        height: 0
+      alignment: 9
+      pivot: {x: 100000, y: -100000}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 8886598499028439752
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: JustTheAsteroidExplosion0028
+      rect:
+        serializedVersion: 2
+        x: 379
+        y: 404
+        width: 0
+        height: 0
+      alignment: 9
+      pivot: {x: 100000, y: -100000}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 
+      internalID: 8566435931422599062
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+  spritePackingTag: 
+  pSDRemoveMatte: 0
+  pSDShowRemoveMatteOption: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
