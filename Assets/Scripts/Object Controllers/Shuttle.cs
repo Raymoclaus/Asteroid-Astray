@@ -10,6 +10,7 @@ using SceneControllers;
 using StatisticsTracker;
 using System;
 using System.Collections.Generic;
+using GenericExtensions;
 using UnityEngine;
 using ValueComponents;
 using Random = UnityEngine.Random;
@@ -31,6 +32,7 @@ public class Shuttle : Character, IStunnable, ICombat, IPlayableCharacter, ISpee
 	[SerializeField] private float drillDamageMultiplier = 0.5f;
 	[Tooltip("Controls how quickly the shuttle can rotate.")]
 	public float MaxRotSpeed = 10f;
+	[SerializeField] private AnimationClip rotationClip;
 	[Tooltip("Controls how effective the shuttle's deceleration mechanism is.")] [Range(0f, 1f)]
 	public float decelerationEffectiveness = 0.01f;
 	//used as a temporary storage for rigidbody velocity when the constraints are frozen
@@ -270,16 +272,29 @@ public class Shuttle : Character, IStunnable, ICombat, IPlayableCharacter, ISpee
 
 		//determine how quickly to rotate
 		//rotMod controls how smoothly the rotation happens
-		float rotMod = Mathf.Abs((360f - rot.z) - lookDirection);
+		//get the difference between current rotation and look direction
+		float rotMod = rot.z.AngleDifference(-lookDirection, out bool clockwise);
+		//map value between -1 and 1
 		if (rotMod > 180f)
 		{
-			rotMod = Mathf.Abs(rotMod - 360f);
+			rotMod -= 360f;
 		}
-
 		rotMod /= 180f;
-		rotMod = Mathf.Pow(rotMod, 0.8f);
-		rot.y = Mathf.Lerp(rot.y, rotMod * 45f, Time.deltaTime * 60f);
-		SetRot(Mathf.MoveTowardsAngle(rot.z, -lookDirection, MaxRotSpeed * rotMod * Time.deltaTime * 60f));
+		//get the sign
+		float rotModSign = clockwise ? -1f : 1f;
+		//shift the values closer to 1
+		rotMod = Mathf.Pow(Mathf.Abs(rotMod), 0.8f) * rotModSign;
+		//adjust y rotation towards rotMod
+		rot.y = Mathf.Lerp(
+			rot.y,
+			rotMod * 90f,
+			Time.deltaTime * 60f);
+		//calculate and set z angle
+		float zAngle = Mathf.MoveTowardsAngle(
+			rot.z,
+			-lookDirection,
+			MaxRotSpeed * Mathf.Abs(rotMod) * Time.deltaTime * 60f);
+		SetRot(zAngle);
 
 		//reset acceleration
 		accel = Vector2.zero;
@@ -379,7 +394,17 @@ public class Shuttle : Character, IStunnable, ICombat, IPlayableCharacter, ISpee
 				Deceleration * decelerationModifier,
 				decelerationEffectiveness);
 			//set rotation
-			transform.eulerAngles = rot;
+			float frameCount = rotationClip.length * rotationClip.frameRate;
+			float normalisedRoll = rot.y / 180f + 0.5f / frameCount;
+			float rotationSign = Mathf.Sign(normalisedRoll);
+			if (normalisedRoll < 0f)
+			{
+				normalisedRoll += 2f;
+			}
+
+			normalisedRoll /= 2f;
+			shuttleAnimator.SetFloat("Roll", normalisedRoll);
+			transform.eulerAngles = new Vector3(rot.x, 0f, rot.z);
 		}
 	}
 
@@ -464,7 +489,7 @@ public class Shuttle : Character, IStunnable, ICombat, IPlayableCharacter, ISpee
 		autoPilotTimer = TimeController.TimeSinceOpen;
 	}
 
-	private void SetRot(float newRot) => rot.z = ((newRot % 360f) + 360f) % 360f;
+	private void SetRot(float newRot) => rot.z = newRot.WrapBetween(0f, 360f);
 
 	public override EntityType EntityType => EntityType.Shuttle;
 
