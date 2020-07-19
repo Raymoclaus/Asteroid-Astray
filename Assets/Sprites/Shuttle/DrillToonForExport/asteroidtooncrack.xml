@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="asteroidtooncrack.png">
+	<!-- Created with Adobe Animate version 18.0.2.126 -->
+	<!-- http://www.adobe.com/products/animate.html -->
+	<SubTexture name="crack0000" x="0" y="0" width="351" height="351" pivotX="191" pivotY="295.95"/>
+	<SubTexture name="crack0001" x="351" y="0" width="351" height="351"/>
+	<SubTexture name="crack0002" x="0" y="351" width="351" height="351"/>
+	<SubTexture name="crack0003" x="351" y="351" width="351" height="351"/>
+	<SubTexture name="crack0004" x="0" y="702" width="351" height="351"/>
+	<SubTexture name="crack0005" x="351" y="702" width="351" height="351"/>
+	<SubTexture name="crack0006" x="0" y="1053" width="351" height="351"/>
+	<SubTexture name="crack0007" x="351" y="1053" width="351" height="351"/>
+</TextureAtlas>

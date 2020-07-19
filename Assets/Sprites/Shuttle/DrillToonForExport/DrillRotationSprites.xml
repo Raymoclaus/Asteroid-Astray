@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="DrillRotationSprites.png">
+	<!-- Created with Adobe Animate version 18.0.2.126 -->
+	<!-- http://www.adobe.com/products/animate.html -->
+	<SubTexture name="DrillSpin0000" x="0" y="0" width="56" height="83" pivotX="-218.15" pivotY="-265.35"/>
+	<SubTexture name="DrillSpin0001" x="56" y="0" width="56" height="83"/>
+	<SubTexture name="DrillSpin0002" x="112" y="0" width="56" height="83"/>
+	<SubTexture name="DrillSpin0003" x="168" y="0" width="56" height="83"/>
+	<SubTexture name="DrillSpin0004" x="0" y="83" width="56" height="83"/>
+	<SubTexture name="DrillSpin0005" x="56" y="83" width="56" height="83"/>
+	<SubTexture name="DrillSpin0006" x="112" y="83" width="56" height="83"/>
+	<SubTexture name="DrillSpin0007" x="168" y="83" width="56" height="83"/>
+	<SubTexture name="DrillSpin0008" x="0" y="166" width="56" height="83"/>
+	<SubTexture name="DrillSpin0009" x="56" y="166" width="56" height="83"/>
+	<SubTexture name="DrillSpin0010" x="112" y="166" width="56" height="83"/>
+	<SubTexture name="DrillSpin0011" x="168" y="166" width="56" height="83"/>
+	<SubTexture name="DrillSpin0012" x="0" y="249" width="56" height="83"/>
+	<SubTexture name="DrillSpin0013" x="56" y="249" width="56" height="83"/>
+	<SubTexture name="DrillSpin0014" x="112" y="249" width="56" height="83"/>
+	<SubTexture name="DrillSpin0015" x="168" y="249" width="56" height="83"/>
+	<SubTexture name="DrillSpin0016" x="0" y="332" width="56" height="83"/>
+	<SubTexture name="DrillSpin0017" x="56" y="332" width="56" height="83"/>
+	<SubTexture name="DrillSpin0018" x="112" y="332" width="56" height="83"/>
+	<SubTexture name="DrillSpin0019" x="168" y="332" width="56" height="83"/>
+	<SubTexture name="DrillSpin0020" x="0" y="415" width="56" height="83"/>
+	<SubTexture name="DrillSpin0021" x="56" y="415" width="56" height="83"/>
+	<SubTexture name="DrillSpin0022" x="112" y="415" width="56" height="83"/>
+	<SubTexture name="DrillSpin0023" x="168" y="415" width="56" height="83"/>
+	<SubTexture name="DrillSpin0024" x="0" y="0" width="56" height="83"/>
+</TextureAtlas>
