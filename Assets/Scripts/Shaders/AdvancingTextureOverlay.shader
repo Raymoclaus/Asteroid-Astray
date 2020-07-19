@@ -35,6 +35,7 @@
 			CGPROGRAM
 			#pragma vertex vert
 			#pragma fragment frag
+			#pragma enable_d3d11_debug_symbols
 
 			#include "UnityCG.cginc"
 
@@ -60,6 +61,7 @@
 
 			sampler2D _MainTex, _OverlayTextures;
 			float4 _MainTex_ST, _OverlayTextures_ST;
+			static const float pi = 3.14159265359;
 			float _AtlasXPosition, _AtlasYPosition, _AtlasCellXScale, _AtlasCellYScale,
 				_CellWidth, _CellHeight, _Opacity, _AlphaCutout, _OverlayDarkenFactor,
 				_PivotX, _PivotY, _PivotXOffset, _PivotYOffset, _Angle, _ScaleXFromPivot,
@@ -107,26 +109,31 @@
 				return isInCell * tint;
 			}
 
-			fixed4 pivotCircle(float2 uv, fixed4 tint)
-			{
-				fixed2 pivotPoint = fixed2(_CellWidth * _PivotX, _CellHeight * _PivotY);
-				fixed bottomGap = 1.0 % _CellHeight;
-				uv.y -= bottomGap;
-				fixed2 framePos = fixed2(uv.x % _CellWidth, uv.y % _CellHeight);
-				fixed2 frameToPivotVec = framePos - pivotPoint;
-				fixed aspectRatio = _CellHeight / _CellWidth;
-				frameToPivotVec.x *= aspectRatio;
-				fixed distanceFromPivot = sqrt(frameToPivotVec.x * frameToPivotVec.x + frameToPivotVec.y * frameToPivotVec.y);
-				fixed pivotRadius = 0.005;
-				fixed isInRadius = step(distanceFromPivot, pivotRadius);
-				return isInRadius * tint;
-			}
-
 			float distance(float2 a, float2 b)
 			{
 				float xDist = a.x - b.x;
 				float yDist = a.y - b.y;
 				return sqrt(xDist * xDist + yDist * yDist);
+			}
+
+			fixed4 drawCircle(float2 uv, float2 pos, fixed4 tint, fixed circleRadius)
+			{
+				fixed aspectRatio = _CellWidth / _CellHeight;
+				fixed2 vectorToPos = uv - pos;
+				vectorToPos.y *= aspectRatio;
+				fixed distanceToPos = distance(vectorToPos, fixed2(0, 0));
+				fixed isInRadius = step(distanceToPos, circleRadius);
+				return isInRadius * tint;
+			}
+
+			fixed4 pointToColour(float2 pos)
+			{
+				return fixed4(pos.x, pos.y, (pos.x + pos.y) / 2.0, 1.0);
+			}
+
+			fixed degreesToRadians(fixed degrees)
+			{
+				return degrees * pi / 180;
 			}
 
 			fixed4 frag (v2f i) : SV_Target
@@ -136,42 +143,50 @@
 				//get colour from main texture
 				fixed4 originalCol = tex2D(_MainTex, i.uv);
 				//calculate number of columns and rows of cells in texture (only works assuming all cells are the same size)
-				uint columnCount = floor(1 / _CellWidth);
-				uint rowCount = floor(1 / _CellHeight);
+				fixed2 cellScale = fixed2(_CellWidth, _CellHeight);
+				fixed aspectRatio = _CellWidth / _CellHeight;
+				uint columnCount = floor(1 / cellScale.x);
+				uint rowCount = floor(1 / cellScale.y);
 				//get the int x/y of current frame as a grid (frame 0 at top left)
 				uint frameColumn = _Frame % columnCount;
 				uint frameRow = floor(_Frame / columnCount);
 				//convert the main UVs of the cell to 0/0 to 1/1 values
-				float2 mainOffset = float2(_AtlasXPosition, _AtlasYPosition);
 				float2 mainScale = float2(_AtlasCellXScale, _AtlasCellYScale);
+				float2 mainOffset = float2(_AtlasXPosition, _AtlasYPosition);
 				float2 adjustedMainUV = (i.uv - mainOffset) / mainScale;
 				//get the UVs from the overlay atlas frame (not in 0/0 to 1/1, use adjustedMainUV for that)
-				float2 overlayUV = float2(
-					_CellWidth * (frameColumn + adjustedMainUV.x),
-					1.0 - (frameRow + 1.0 - adjustedMainUV.y) * _CellHeight);
+				float2 frameUVOffset = float2(frameColumn * cellScale.x, 1.0 - frameRow * cellScale.y - cellScale.y);
+				float2 overlayUV = frameUVOffset + adjustedMainUV * cellScale;
 				overlayUV = overlayUV * _OverlayTextures_ST.xy + _OverlayTextures_ST.zw;
-				//offset
-				fixed2 inverseCellRatio = fixed2(1.0 / _CellWidth, 1.0 / _CellHeight);
-				fixed2 pivotOffset = fixed2(-_PivotXOffset, -_PivotYOffset) / inverseCellRatio;
-				fixed2 pivotPoint = fixed2(_CellWidth * _PivotX, _CellHeight * _PivotY) + pivotOffset;
-				overlayUV += pivotOffset;
+				//define image scale based on parameters
+				fixed2 imageScale = fixed2(_ScaleXFromPivot, _ScaleYFromPivot);
+				//define pivot point based on parameters
+				fixed2 pivotPoint = fixed2(_PivotX, _PivotY);
+				fixed2 pivotOffset = fixed2(-_PivotXOffset, -_PivotYOffset) * cellScale / imageScale;
 				//scaling
-				float distanceOfUVFromPivot = distance(overlayUV, overlayUV - adjustedMainUV + pivotPoint);
+				fixed2 pivotPointTextureCoordinate = frameUVOffset + pivotPoint * cellScale + pivotOffset;
+				fixed2 uvToPPVector = (overlayUV - pivotPointTextureCoordinate) / imageScale;
+				overlayUV = pivotPointTextureCoordinate + uvToPPVector;
+				//offset
+				overlayUV += pivotOffset / imageScale;
+				uvToPPVector = (overlayUV - pivotPointTextureCoordinate) / imageScale;
 				//rotation
+				fixed radians = degreesToRadians(_Angle);
+				fixed angleOfUV = -atan2(uvToPPVector.y, uvToPPVector.x) + pi / 2.0;
+				fixed uvDistanceToPivot = distance(uvToPPVector, fixed2(0.0, 0.0));
+				fixed2 rotatedVector = normalize(fixed2(sin(angleOfUV - radians), cos(angleOfUV - radians)));
+				overlayUV = pivotPointTextureCoordinate + rotatedVector * uvDistanceToPivot;
 				//get colour from overlay texture using calculated UVs
 				fixed4 overlayCol = tex2D(_OverlayTextures, overlayUV);
-
-				//only draw stuff that's in the correct frame
-				fixed2 currentFrameMin = fixed2(
-					frameColumn * _CellWidth,
-					1.0 - frameRow * _CellHeight - _CellHeight);
-				fixed isInColumn = step(overlayUV.x - currentFrameMin.x, _CellWidth) * step(0, overlayUV.x - currentFrameMin.x);
-				fixed isInRow = step(overlayUV.y - currentFrameMin.y, _CellHeight) * step(0, overlayUV.y - currentFrameMin.y);
+				//checks to see if the UV is in the correct frame row/column
+				fixed isInColumn = step(overlayUV.x - frameUVOffset.x, cellScale.x) * step(0, overlayUV.x - frameUVOffset.x);
+				fixed isInRow = step(overlayUV.y - frameUVOffset.y, cellScale.y) * step(0, overlayUV.y - frameUVOffset.y);
 				fixed isInCell = isInColumn * isInRow;
-
+				//cuts out the overlay colour if the original colour is transparent
 				overlayCol.a = lerp(overlayCol.a * isInCell, originalCol.a, (1.0 - originalCol.a) * _AlphaCutout);
+				//darkens the overlay colour based on the brightness of the original colour
 				overlayCol.rgb *= pow((originalCol.r + originalCol.g + originalCol.b) / 3.0, _OverlayDarkenFactor);
-
+				//fades the overlay based on opacity parameter
 				col = lerp(originalCol, overlayCol, overlayCol.a * _Opacity);
 
 				//DEBUG: tint current frame
@@ -183,11 +198,11 @@
 				//col = lerp(col, borders, borders.a);
 
 				//DEBUG: draw pivot point of current frame
-				fixed4 drawPivot = pivotCircle(overlayUV, fixed4(0, 1.0, 0, 1.0));
+				fixed4 drawPivot = drawCircle(overlayUV, pivotPointTextureCoordinate, fixed4(0, 1.0, 0, 1.0), 0.005);
 				col = lerp(col, drawPivot, drawPivot.a);
 				
 				//test
-				col = fixed4(distanceOfUVFromPivot, distanceOfUVFromPivot, distanceOfUVFromPivot, 1.0);
+				//col = pointToColour(aspectRatioFix);
 				return col;
 			}
 			ENDCG
