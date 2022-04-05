@@ -63,7 +63,10 @@ public class NarrativeManager : MonoBehaviour
 			_decidedNotToRechargeTheShipYetDialogue,
 			questionHowToObtainEnergySourceConversation
 		};
+	}
 
+	private void Start()
+	{
 		OneShotEventGroupWait wait = new OneShotEventGroupWait(false,
 			UniqueIDGenerator.OnLoaded);
 
@@ -73,8 +76,8 @@ public class NarrativeManager : MonoBehaviour
 			wait.AddEventToWaitFor(_entityGenerator.OnPrefabsLoaded);
 		}
 
-		wait.Start();
 		wait.RunWhenReady(Load);
+		wait.Start();
 	}
 
 	private void OnDestroy()
@@ -112,7 +115,7 @@ public class NarrativeManager : MonoBehaviour
 	{
 		Debug.Log("Creating Main Character");
 
-		SpawnableEntity se = EntityGenerator.GetSpawnableEntityByPrefabReference(mainCharacterPrefab);
+		SpawnableEntity se = EntityGenerator.GetSpawnableEntityByFileName(mainCharacterPrefab.name);
 		if (se == null) return;
 
 		List<Entity> spawnedEntities = _entityGenerator.SpawnEntity(se);
@@ -325,7 +328,7 @@ public class NarrativeManager : MonoBehaviour
 
 			//create a deranged bot
 			ChunkCoords emptyChunk = _entityGenerator.GetNearbyEmptyChunk();
-			SpawnableEntity se = EntityGenerator.GetSpawnableEntityByPrefabReference(derangedSoloBotPrefab);
+			SpawnableEntity se = EntityGenerator.GetSpawnableEntityByFileName(derangedSoloBotPrefab.name);
 			Entity newEntity = _entityGenerator.SpawnOneEntityInChunk(se, emptyChunk);
 
 			List<QuestReward> qRewards = new List<QuestReward>();
@@ -403,7 +406,7 @@ public class NarrativeManager : MonoBehaviour
 
 	private ConversationWithActions GetConversation(ConversationEvent ce)
 	{
-		return conversations.FirstOrDefault(t => t.conversationEvent == ce);
+		return conversations.FirstOrDefault(t => t.conversationEvent.name == ce.name);
 	}
 
 	public void StartActiveDialogue(ConversationEvent ce)

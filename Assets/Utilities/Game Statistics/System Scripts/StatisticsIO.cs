@@ -98,7 +98,9 @@ namespace StatisticsTracker
 			Trackers.Add(tracker.SaveTagName, tracker);
 		}
 
+#if UNITY_EDITOR
 		[MenuItem("Game Statistics/Save")]
+#endif
 		public static void Save()
 		{
 			SteamPunkConsole.WriteLine("StatTrackers: Begin Saving");
@@ -118,7 +120,9 @@ namespace StatisticsTracker
 			SteamPunkConsole.WriteLine("StatTrackers: Finished Saving");
 		}
 
+#if UNITY_EDITOR
 		[MenuItem("Game Statistics/Load")]
+#endif
 		public static void Load()
 		{
 			SteamPunkConsole.WriteLine("StatTrackers: Begin Loading");

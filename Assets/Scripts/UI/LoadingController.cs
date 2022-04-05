@@ -15,25 +15,25 @@ public class LoadingController : MonoBehaviour
 		StatisticsIO.Load();
 
 		SceneryController sceneryController = FindObjectOfType<SceneryController>();
-		if (sceneryController != null)
+		if (sceneryController != null && sceneryController.enabled)
 		{
 			OnLoadingComplete.AddEventToWaitFor(sceneryController.OnStarFieldCreated);
 		}
 
 		EntityGenerator entityGenerator = FindObjectOfType<EntityGenerator>();
-		if (entityGenerator != null)
+		if (entityGenerator != null && entityGenerator.enabled)
 		{
 			OnLoadingComplete.AddEventToWaitFor(entityGenerator.OnPrefabsLoaded);
 		}
 
 		EntityNetwork entityNetwork = FindObjectOfType<EntityNetwork>();
-		if (entityNetwork != null)
+		if (entityNetwork != null && entityNetwork.enabled)
 		{
 			OnLoadingComplete.AddEventToWaitFor(entityNetwork.OnLoaded);
 		}
 
 		NarrativeManager narrativeManager = FindObjectOfType<NarrativeManager>();
-		if (narrativeManager != null)
+		if (narrativeManager != null && narrativeManager.enabled)
 		{
 			OnLoadingComplete.AddEventToWaitFor(narrativeManager.OnLoaded);
 		}

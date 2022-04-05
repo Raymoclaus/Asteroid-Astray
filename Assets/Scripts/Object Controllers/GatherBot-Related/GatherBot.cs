@@ -1148,7 +1148,7 @@ public class GatherBot : Character, IStunnable, ICombat
 			colRb.AddTorque((UnityEngine.Random.value > 0.5 ? 1f : -1f) * explosionStrength * 5f);
 		}
 
-		Vector2 screenPos = Camera.main.WorldToViewportPoint(transform.position);
+		Vector2 screenPos = MainCam.WorldToViewportPoint(transform.position);
 		if (screenPos.x > -0.5f || screenPos.x < 1.5f || screenPos.y > -0.5f || screenPos.y < 1.5f)
 		{
 			screenRippleSO.StartRipple(this, distortionLevel: 0.03f,

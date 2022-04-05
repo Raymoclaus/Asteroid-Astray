@@ -47,7 +47,9 @@ namespace SaveSystem
 
 		public static bool RelativeSaveFileExists(string key) => File.Exists(RelativeKeyPath(key));
 
+#if UNITY_EDITOR
 		[MenuItem("Save System/Delete All Save Files")]
+#endif
 		public static void DeleteAllSaveFiles()
 		{
 			DirectoryInfo directory = new DirectoryInfo(path);
@@ -55,7 +57,9 @@ namespace SaveSystem
 			Directory.CreateDirectory(path);
 		}
 
+#if UNITY_EDITOR
 		[MenuItem("Save System/Open Save File Folder")]
+#endif
 		public static void OpenSaveFileFolder()
 		{
 			if (!Directory.Exists(path)) return;
@@ -91,7 +95,9 @@ namespace SaveSystem
 			return count.ToString();
 		}
 
+#if UNITY_EDITOR
 		[MenuItem("Temp/Temporary Save All")]
+#endif
 		public static void TempSaveAll()
 		{
 			Object.FindObjectOfType<EntityNetwork>()?.TemporarySave();
@@ -103,7 +109,9 @@ namespace SaveSystem
 			WaypointManager.TemporarySave();
 		}
 
+#if UNITY_EDITOR
 		[MenuItem("Temp/Permanent Save All")]
+#endif
 		public static void PermanentSaveAll()
 		{
 			EntityNetwork.PermanentSave();

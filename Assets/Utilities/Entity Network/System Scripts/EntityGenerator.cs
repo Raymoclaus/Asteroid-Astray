@@ -49,29 +49,6 @@ public class EntityGenerator : MonoBehaviour
 		return SpawnEntityInChunk(se, emptyChunk);
 	}
 
-	public List<Entity> SpawnEntity(Entity e)
-	{
-		if (e == null) return null;
-
-		SpawnableEntity se = GetSpawnableEntityByPrefabReference(e);
-		return SpawnEntity(se);
-	}
-
-	public List<Entity> SpawnEntity(string entityName)
-	{
-		SpawnableEntity se = GetSpawnableEntityByEntityName(entityName);
-		return SpawnEntity(se);
-	}
-
-	public static SpawnableEntity GetSpawnableEntityByEntityName(string entityName)
-		=> EntityPrefabLoader.GetSpawnableEntityByEntityName(entityName);
-
-	public static SpawnableEntity GetSpawnableEntityByPrefabReference(Entity e)
-		=> EntityPrefabLoader.GetSpawnableEntityByPrefabReference(e);
-
-	public static SpawnableEntity GetSpawnableEntityByPrefabType(Type type)
-		=> EntityPrefabLoader.GetSpawnableEntityByPrefabType(type);
-
 	public static SpawnableEntity GetSpawnableEntityByFileName(string filename)
 		=> EntityPrefabLoader.GetSpawnableEntityByFileName(filename);
 
@@ -205,7 +182,7 @@ public class EntityGenerator : MonoBehaviour
 		ChunkCoords cc = new ChunkCoords(cameraPos, EntityNetwork.CHUNK_SIZE);
 		cc.y++;
 		cc = cc.Validate();
-		SpawnableEntity se = GetSpawnableEntityByEntityName(entityName);
+		SpawnableEntity se = GetSpawnableEntityByFileName(entityName);
 		return SpawnEntityInChunk(se, cc);
 	}
 

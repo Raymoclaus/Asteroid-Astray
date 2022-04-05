@@ -10,39 +10,11 @@ public static class EntityPrefabLoader
 	public static event Action OnPrefabsLoaded;
 	public static bool IsReady { get; set; }
 
-	public static SpawnableEntity GetSpawnableEntityByPrefabReference(Entity e)
-	{
-		for (int i = 0; i < spawnableEntities.Count; i++)
-		{
-			if (spawnableEntities[i].prefab == e) return spawnableEntities[i];
-		}
-		return null;
-	}
-
-	public static SpawnableEntity GetSpawnableEntityByEntityName(string entityName)
-	{
-		entityName = entityName.Replace('_', ' ').ToLower();
-		for (int i = 0; i < spawnableEntities.Count; i++)
-		{
-			if (spawnableEntities[i].entityName.ToLower() == entityName) return spawnableEntities[i];
-		}
-		return null;
-	}
-
-	public static SpawnableEntity GetSpawnableEntityByPrefabType(Type type)
-	{
-		for (int i = 0; i < spawnableEntities.Count; i++)
-		{
-			if (spawnableEntities[i].prefab.GetType() == type) return spawnableEntities[i];
-		}
-		return null;
-	}
-
 	public static SpawnableEntity GetSpawnableEntityByFileName(string filename)
 	{
 		for (int i = 0; i < spawnableEntities.Count; i++)
 		{
-			if (spawnableEntities[i].name == filename) return spawnableEntities[i];
+			if (spawnableEntities[i].prefab.name == filename) return spawnableEntities[i];
 		}
 
 		return null;

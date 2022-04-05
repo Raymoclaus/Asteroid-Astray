@@ -21,9 +21,16 @@ namespace SaveSystem
 			return saves;
 		}
 
+		/// <summary>
+		/// Iterates over each folder in the save file directory.
+		/// Folders that don't contain the appropriate save files are skipped.
+		/// Invokes the function on every valid save folder until the given function specifies to stop iteration.
+		/// </summary>
+		/// <param name="function">Method exits if function is null. Return true to stop iteration, or false to continue.</param>
 		private static void IterateValidSaveFileDirectories(Func<DirectoryInfo, bool> function)
 		{
-			if (function == null) return;
+			if (function == null
+				|| !Directory.Exists(SaveLoad.path)) return;
 
 			DirectoryInfo directory = new DirectoryInfo(SaveLoad.path);
 			string originalSaveName = SaveLoad.CurrentSave;
@@ -35,7 +42,7 @@ namespace SaveSystem
 				bool currentSaveIsValid = VerifyCurrentSave();
 				if (!currentSaveIsValid) continue;
 				bool endIteration = function.Invoke(di);
-				if (endIteration) return;
+				if (endIteration) break;
 			}
 
 			SaveLoad.CurrentSave = originalSaveName;
@@ -95,6 +102,7 @@ namespace SaveSystem
 			//save file id
 			DataModule module = new DataModule(FILE_ID_VAR_NAME, fileID);
 			UnifiedSaveLoad.UpdateOpenedFile(SAVE_FILE_NAME, mainTag, module);
+			UnifiedSaveLoad.SaveOpenedFile(SAVE_FILE_NAME);
 		}
 	} 
 }

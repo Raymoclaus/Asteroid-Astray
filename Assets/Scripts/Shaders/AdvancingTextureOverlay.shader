@@ -8,6 +8,8 @@
 		_AtlasCellXScale("Atlas Cell X Scale", Range(0, 1)) = 1
 		_AtlasCellYScale("Atlas Cell Y Scale", Range(0, 1)) = 1
 		_OverlayTextures("Overlay Textures", 2D) = "white" {}
+		_OverlayTexWidth("Overlay Texture Width", float) = 256
+		_OverlayTexHeight("Overlay Texture Height", float) = 256
 		_CellWidth("Cell Width", Range(0, 1)) = 1
 		_CellHeight("Cell Height", Range(0, 1)) = 1
 		_Frame("Frame", int) = 0
@@ -21,6 +23,7 @@
 		_ScaleXFromPivot("Scale X", float) = 1.0
 		_ScaleYFromPivot("Scale Y", float) = 1.0
 		_Angle("Angle", float) = 0
+		_AngleStretch("Angle Stretch", float) = 1.0
 	}
 	SubShader
 	{
@@ -65,7 +68,7 @@
 			float _AtlasXPosition, _AtlasYPosition, _AtlasCellXScale, _AtlasCellYScale,
 				_CellWidth, _CellHeight, _Opacity, _AlphaCutout, _OverlayDarkenFactor,
 				_PivotX, _PivotY, _PivotXOffset, _PivotYOffset, _Angle, _ScaleXFromPivot,
-				_ScaleYFromPivot;
+				_ScaleYFromPivot, _OverlayTexWidth, _OverlayTexHeight, _AngleStretch;
 			uint _Frame;
 
 			fixed4 border(float2 uv)
@@ -138,15 +141,18 @@
 
 			fixed4 frag (v2f i) : SV_Target
 			{
+				fixed radians = degreesToRadians(_Angle);
+				fixed2 cellScale = fixed2(_CellWidth, _CellHeight);
+				fixed cellAspectRatio = _CellWidth / _CellHeight;
+				fixed overlayTexAspectRatio = _OverlayTexWidth / _OverlayTexHeight;
+				fixed2 imageScale = fixed2(_ScaleXFromPivot, _ScaleYFromPivot);
+
 				fixed4 col = fixed4(0, 0, 0, 0);
 				i.uv.xy = i.uv.xy * _MainTex_ST.xy + _MainTex_ST.zw;
 				//get colour from main texture
 				fixed4 originalCol = tex2D(_MainTex, i.uv);
 				//calculate number of columns and rows of cells in texture (only works assuming all cells are the same size)
-				fixed2 cellScale = fixed2(_CellWidth, _CellHeight);
-				fixed aspectRatio = _CellWidth / _CellHeight;
 				uint columnCount = floor(1 / cellScale.x);
-				uint rowCount = floor(1 / cellScale.y);
 				//get the int x/y of current frame as a grid (frame 0 at top left)
 				uint frameColumn = _Frame % columnCount;
 				uint frameRow = floor(_Frame / columnCount);
@@ -158,8 +164,6 @@
 				float2 frameUVOffset = float2(frameColumn * cellScale.x, 1.0 - frameRow * cellScale.y - cellScale.y);
 				float2 overlayUV = frameUVOffset + adjustedMainUV * cellScale;
 				overlayUV = overlayUV * _OverlayTextures_ST.xy + _OverlayTextures_ST.zw;
-				//define image scale based on parameters
-				fixed2 imageScale = fixed2(_ScaleXFromPivot, _ScaleYFromPivot);
 				//define pivot point based on parameters
 				fixed2 pivotPoint = fixed2(_PivotX, _PivotY);
 				fixed2 pivotOffset = fixed2(-_PivotXOffset, -_PivotYOffset) * cellScale / imageScale;
@@ -169,9 +173,10 @@
 				overlayUV = pivotPointTextureCoordinate + uvToPPVector;
 				//offset
 				overlayUV += pivotOffset / imageScale;
-				uvToPPVector = (overlayUV - pivotPointTextureCoordinate) / imageScale;
 				//rotation
-				fixed radians = degreesToRadians(_Angle);
+				fixed aspectRatioDelta = pow(-abs(2.0 * (fmod(radians, pi)) / pi - 1.0) + 1.0, _AngleStretch);
+				uvToPPVector.x = lerp(uvToPPVector.x, uvToPPVector.x * overlayTexAspectRatio, aspectRatioDelta);
+				uvToPPVector.y = lerp(uvToPPVector.y, uvToPPVector.y / overlayTexAspectRatio, aspectRatioDelta);
 				fixed angleOfUV = -atan2(uvToPPVector.y, uvToPPVector.x) + pi / 2.0;
 				fixed uvDistanceToPivot = distance(uvToPPVector, fixed2(0.0, 0.0));
 				fixed2 rotatedVector = normalize(fixed2(sin(angleOfUV - radians), cos(angleOfUV - radians)));
@@ -202,7 +207,7 @@
 				col = lerp(col, drawPivot, drawPivot.a);
 				
 				//test
-				//col = pointToColour(aspectRatioFix);
+				//col = pointToColour(aspectRatioDelta);
 				return col;
 			}
 			ENDCG

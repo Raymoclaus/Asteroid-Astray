@@ -55,7 +55,7 @@ namespace InputHandlerSystem
 		public static float GetInput(GameAction action)
 		{
 			InputContext currentContext = GetCurrentContext();
-			if (action == null || action.IntendedContext != currentContext) return 0f;
+			if (action == null || action.IntendedContext.contextName != currentContext.contextName) return 0f;
 			CheckForModeUpdate();
 			return GetHandler()?.GetInput(action.ActionName, currentContext) ?? 0f;
 		}
